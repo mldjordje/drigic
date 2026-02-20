@@ -1,8 +1,10 @@
-import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, or } from "drizzle-orm";
 import { z } from "zod";
-import { fail, ok, readJson } from "@/lib/api/http";
+import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
+import { addMinutes, findConflicts, resolveQuote } from "@/lib/booking/engine";
+import { getDefaultEmployee } from "@/lib/booking/config";
 
 export const runtime = "nodejs";
 
@@ -10,6 +12,16 @@ const updateSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["pending", "confirmed", "completed", "cancelled", "no_show"]).optional(),
   notes: z.string().max(1000).optional(),
+});
+
+const createSchema = z.object({
+  clientName: z.string().min(2).max(255),
+  phone: z.string().max(32).optional(),
+  email: z.string().email().optional(),
+  serviceIds: z.array(z.string().uuid()).min(1),
+  startAt: z.string().datetime(),
+  notes: z.string().max(1000).optional(),
+  status: z.enum(["pending", "confirmed"]).optional(),
 });
 
 export async function GET(request) {
@@ -142,4 +154,144 @@ export async function PATCH(request) {
   }
 
   return ok({ ok: true, data: updated });
+}
+
+export async function POST(request) {
+  const auth = await requireAdmin(request);
+  if (auth.error) {
+    return auth.error;
+  }
+
+  const body = await readJson(request);
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success) {
+    return fail(400, "Invalid payload", parsed.error.flatten());
+  }
+
+  const payload = parsed.data;
+  const phone = payload.phone?.trim() || null;
+  const email = payload.email?.trim().toLowerCase() || null;
+  if (!phone && !email) {
+    return fail(400, "Provide at least phone or email for the client.");
+  }
+
+  const db = getDb();
+  const quote = await resolveQuote(payload.serviceIds);
+  const employee = await getDefaultEmployee();
+  const startAt = new Date(payload.startAt);
+  const endsAt = addMinutes(startAt, quote.totalDurationMin);
+  const finalStatus = payload.status || "confirmed";
+
+  const createdBooking = await db.transaction(async (tx) => {
+    const conflicts = await findConflicts({
+      employeeId: employee.id,
+      startsAt: startAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+      tx,
+    });
+    if (conflicts.length) {
+      throw new Error("Selected slot overlaps with existing booking/block.");
+    }
+
+    const userFilter = [];
+    if (email) {
+      userFilter.push(eq(schema.users.email, email));
+    }
+    if (phone) {
+      userFilter.push(eq(schema.users.phone, phone));
+    }
+
+    let user = null;
+    if (userFilter.length === 1) {
+      [user] = await tx.select().from(schema.users).where(userFilter[0]).limit(1);
+    } else if (userFilter.length > 1) {
+      [user] = await tx
+        .select()
+        .from(schema.users)
+        .where(or(...userFilter))
+        .limit(1);
+    }
+
+    if (!user) {
+      const fallbackEmail =
+        email || `phone-${String(phone || Date.now()).replace(/\W+/g, "")}@drigic.local`;
+      [user] = await tx
+        .insert(schema.users)
+        .values({
+          email: fallbackEmail,
+          phone,
+          role: "client",
+        })
+        .returning();
+    } else {
+      const updates = { updatedAt: new Date() };
+      if (phone && !user.phone) {
+        updates.phone = phone;
+      }
+      if (Object.keys(updates).length > 1) {
+        const [updatedUser] = await tx
+          .update(schema.users)
+          .set(updates)
+          .where(eq(schema.users.id, user.id))
+          .returning();
+        user = updatedUser || user;
+      }
+    }
+
+    const [profile] = await tx
+      .select()
+      .from(schema.profiles)
+      .where(eq(schema.profiles.userId, user.id))
+      .limit(1);
+    if (!profile) {
+      await tx.insert(schema.profiles).values({
+        userId: user.id,
+        fullName: payload.clientName,
+      });
+    } else if (payload.clientName && profile.fullName !== payload.clientName) {
+      await tx
+        .update(schema.profiles)
+        .set({
+          fullName: payload.clientName,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.profiles.id, profile.id));
+    }
+
+    const [booking] = await tx
+      .insert(schema.bookings)
+      .values({
+        userId: user.id,
+        employeeId: employee.id,
+        startsAt: startAt,
+        endsAt,
+        status: finalStatus,
+        totalDurationMin: quote.totalDurationMin,
+        totalPriceRsd: quote.totalPriceRsd,
+        notes: payload.notes || "Booked by admin",
+      })
+      .returning();
+
+    await tx.insert(schema.bookingItems).values(
+      quote.items.map((item) => ({
+        bookingId: booking.id,
+        serviceId: item.serviceId,
+        serviceNameSnapshot: item.name,
+        durationMinSnapshot: item.durationMin,
+        priceRsdSnapshot: item.finalPriceRsd,
+      }))
+    );
+
+    await tx.insert(schema.bookingStatusLog).values({
+      bookingId: booking.id,
+      previousStatus: null,
+      nextStatus: finalStatus,
+      changedByUserId: auth.user.id,
+      note: "Booking created from admin calendar",
+    });
+
+    return booking;
+  });
+
+  return created({ ok: true, data: createdBooking, quote });
 }
