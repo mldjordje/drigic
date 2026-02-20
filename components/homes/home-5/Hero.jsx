@@ -42,11 +42,10 @@ export default function Hero() {
                       Dr Igić klinika estetske medicine
                     </h1>
                     <p className="hero-text" data-ani="slideindown" data-ani-delay="0.2s">
-                      Prirodna lepota bez preterivanja. Precizan, bezbedan i
-                      individualno planiran pristup za autentične rezultate.
+                      Prirodni rezultati, bez preterivanja.
                     </p>
                     <div className="hero-year-tag" data-ani="slideindown" data-ani-delay="0.3s">
-                      <h6>Dr Nikola Igić, sertifikovani doktor estetske i anti-age medicine</h6>
+                      <h6>Dr Nikola Igić</h6>
                     </div>
                   </div>
                 </div>
@@ -83,14 +82,13 @@ export default function Hero() {
                 <div className="col-lg-8">
                   <div className="hero-style5 glass-panel">
                     <h2 className="hero-title" data-ani="slideindown" data-ani-delay="0.1s">
-                      Harmonizacija lica i anti-age tretmani
+                      Botox, fileri i anti-age tretmani
                     </h2>
                     <p className="hero-text" data-ani="slideindown" data-ani-delay="0.2s">
-                      Botox, hijaluronski fileri i personalizovani anti-age
-                      protokoli sa fokusom na sklad i prirodan izgled.
+                      Personalizovan plan i siguran pristup za svaki termin.
                     </p>
                     <div className="hero-year-tag" data-ani="slideindown" data-ani-delay="0.3s">
-                      <h6>"Estetska medicina nije trend, to je profesija i poziv."</h6>
+                      <h6>Zakazivanje online</h6>
                     </div>
                   </div>
                 </div>

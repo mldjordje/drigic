@@ -5,7 +5,7 @@ import Image from "next/image";
 export default function Footer5() {
   return (
     <footer className="footer-wrapper footer-layout5 overflow-hidden">
-      <div className="footer-top space bg-theme">
+      <div className="footer-top space bg-theme" id="konsultacije">
         <div className="container">
           <div className="row align-items-center justify-content-between">
             <div className="col-lg-6">
