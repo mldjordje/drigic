@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { created, fail, readJson } from "@/lib/api/http";
+import { desc } from "drizzle-orm";
+import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 
@@ -12,6 +13,22 @@ const payloadSchema = z.object({
   endsAt: z.string().datetime().optional().nullable(),
   isActive: z.boolean().optional(),
 });
+
+export async function GET(request) {
+  const auth = await requireAdmin(request);
+  if (auth.error) {
+    return auth.error;
+  }
+
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(schema.homeAnnouncements)
+    .orderBy(desc(schema.homeAnnouncements.createdAt))
+    .limit(100);
+
+  return ok({ ok: true, data: rows });
+}
 
 export async function POST(request) {
   const auth = await requireAdmin(request);
@@ -39,4 +56,3 @@ export async function POST(request) {
 
   return created({ ok: true, data: record });
 }
-
