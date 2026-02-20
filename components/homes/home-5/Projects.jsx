@@ -1,54 +1,56 @@
-import { projects } from "@/data/portfolio";
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
 export default function Projects() {
+  const highlights = [
+    {
+      id: 1,
+      title: "Botox tretmani",
+      text: "Suptilna relaksacija mimičnih bora za svež i odmoran izgled.",
+      imageSrc: "/assets/img/slika1.png",
+    },
+    {
+      id: 2,
+      title: "Hijaluronski fileri",
+      text: "Konture, volumen i hidratacija uz prirodan rezultat.",
+      imageSrc: "/assets/img/normal/service_2-1.jpg",
+    },
+    {
+      id: 3,
+      title: "Before / After",
+      text: "Primer realnog rezultata uz očuvanu prirodnu ekspresiju lica.",
+      imageSrc: "/assets/img/before-after1.png",
+    },
+    {
+      id: 4,
+      title: "Anti-age planovi",
+      text: "Kombinovani pristup za prevenciju i korekciju znakova starenja.",
+      imageSrc: "/assets/img/normal/about_4-1.jpg",
+    },
+  ];
+
   return (
-    <div className="project-area-5 space overflow-hidden">
+    <div className="project-area-5 space overflow-hidden" id="rezultati">
       <div className="container">
         <div className="row justify-content-center">
-          <div className="col-xl-7 col-lg-8">
+          <div className="col-xl-8 col-lg-10">
             <div className="title-area text-center">
-              <h2 className="sec-title text-smoke">
-                Discover Our Selected Projects
-              </h2>
+              <h2 className="sec-title text-smoke">Najtraženiji tretmani i rezultati</h2>
             </div>
           </div>
         </div>
-        <div className="row gy-60 gx-60 justify-content-center">
-          {projects.map((project) => (
-            <div key={project.id} className="col-xl-6 col-lg-6">
-              <div className="portfolio-wrap style4">
-                <div
-                  className="portfolio-thumb wow img-custom-anim-top animated"
-                  data-wow-duration="1.5s"
-                  data-wow-delay="0.2s"
-                >
-                  <Link scroll={false} href={`/project-details/${project.id}`}>
-                    <Image
-                      width={618}
-                      height={470}
-                      src={project.imageSrc}
-                      alt="portfolio"
-                    />
-                  </Link>
+        <div className="row gy-40 gx-30 justify-content-center">
+          {highlights.map((item) => (
+            <div key={item.id} className="col-xl-6 col-lg-6">
+              <div className="portfolio-wrap style4 glass-panel h-100">
+                <div className="portfolio-thumb wow img-custom-anim-top animated" data-wow-duration="1.5s" data-wow-delay="0.2s">
+                  <Image width={618} height={470} src={item.imageSrc} alt={item.title} />
                 </div>
                 <div className="portfolio-details">
-                  <h3 className="portfolio-title">
-                    <Link
-                      scroll={false}
-                      href={`/project-details/${project.id}`}
-                    >
-                      {project.title}
-                    </Link>
-                  </h3>
+                  <h3 className="portfolio-title">{item.title}</h3>
                   <ul className="portfolio-meta">
-                    {project.categories.map((category, index) => (
-                      <li key={index}>
-                        <a href="#">{category}</a>
-                      </li>
-                    ))}
+                    <li>{item.text}</li>
                   </ul>
                 </div>
               </div>
@@ -56,14 +58,10 @@ export default function Projects() {
           ))}
         </div>
         <div className="btn-wrap mt-50 justify-content-center">
-          <Link
-            scroll={false}
-            href="/project"
-            className="btn bg-theme text-title"
-          >
+          <Link scroll={false} href="#konsultacije" className="btn bg-theme text-title">
             <span className="link-effect">
-              <span className="effect-1">VIEW ALL PROJECTS</span>
-              <span className="effect-1">VIEW ALL PROJECTS</span>
+              <span className="effect-1">ZAKAŽI PRVI PREGLED</span>
+              <span className="effect-1">ZAKAŽI PRVI PREGLED</span>
             </span>
           </Link>
         </div>

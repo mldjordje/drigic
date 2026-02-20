@@ -1,10 +1,27 @@
-"use client";
-import { testimonialData, testimonialData2 } from "@/data/testimonials";
+﻿"use client";
 import Image from "next/image";
 import React from "react";
 import Slider from "react-slick";
 
 export default function Testimonials() {
+  const testimonials = [
+    {
+      text: "Pristup je vrlo profesionalan, rezultat diskretan i baš prirodan.",
+      name: "Pacijentkinja",
+      designation: "Hijaluronski tretman",
+    },
+    {
+      text: "Sve je detaljno objašnjeno pre tretmana, osećao sam se potpuno sigurno.",
+      name: "Pacijent",
+      designation: "Botox tretman",
+    },
+    {
+      text: "Najviše mi znači što izgledam osveženo, a i dalje kao ja.",
+      name: "Pacijentkinja",
+      designation: "Anti-age plan",
+    },
+  ];
+
   const slickSettings = {
     slidesToShow: 1,
     dots: false,
@@ -16,33 +33,19 @@ export default function Testimonials() {
       {
         breakpoint: 1400,
         settings: {
-          centerPadding: "350px",
+          centerPadding: "320px",
           centerMode: true,
         },
       },
       {
-        breakpoint: 1200,
+        breakpoint: 992,
         settings: {
-          centerPadding: "250px",
+          centerPadding: "120px",
           centerMode: true,
         },
       },
       {
-        breakpoint: 1000,
-        settings: {
-          centerPadding: "200px",
-          centerMode: true,
-        },
-      },
-      {
-        breakpoint: 768,
-        settings: {
-          centerPadding: "100px",
-          centerMode: true,
-        },
-      },
-      {
-        breakpoint: 450,
+        breakpoint: 576,
         settings: {
           centerPadding: "10px",
           centerMode: true,
@@ -53,21 +56,18 @@ export default function Testimonials() {
 
   return (
     <div className="testimonial-area-2 space bg-gray overflow-hidden">
+      <div className="container">
+        <div className="title-area text-center">
+          <h2 className="sec-title text-smoke">Utisci pacijenata</h2>
+        </div>
+      </div>
       <div className="container-fluid p-0">
-        <Slider
-          {...slickSettings}
-          className="row global-carousel testi-slider2"
-        >
-          {testimonialData2.map((elm, i) => (
+        <Slider {...slickSettings} className="row global-carousel testi-slider2">
+          {testimonials.map((elm, i) => (
             <div key={i} className="col-lg-4">
-              <div className="testi-box style2">
+              <div className="testi-box style2 glass-panel">
                 <div className="quote-icon">
-                  <Image
-                    width={52}
-                    height={32}
-                    src="/assets/img/icon/quote.svg"
-                    alt="icon"
-                  />
+                  <Image width={52} height={32} src="/assets/img/icon/quote.svg" alt="icon" />
                 </div>
                 <p className="testi-box_text">“{elm.text}”</p>
                 <div className="testi-box_profile">

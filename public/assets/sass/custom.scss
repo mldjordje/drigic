@@ -122,3 +122,120 @@
 .rc-slider .rc-slider-tracks {
   background-color: var(--title-color);
 }
+
+/* Clinic glassmorphism theme */
+.clinic-home5 {
+  background: radial-gradient(circle at 0% 0%, rgba(217, 232, 248, 0.45), transparent 45%),
+    radial-gradient(circle at 100% 20%, rgba(217, 232, 248, 0.35), transparent 40%),
+    linear-gradient(180deg, #f6f9fe 0%, #edf4fc 100%);
+  color: #10243e;
+
+  .text-smoke,
+  .sec-text,
+  .portfolio-meta li,
+  p {
+    color: #10243e !important;
+  }
+
+  .glass-panel,
+  .process-card,
+  .portfolio-wrap.style4,
+  .testi-box.style2,
+  .blog-card.style3,
+  .about-content-wrap,
+  .footer-top-wrap {
+    background: rgba(217, 232, 248, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 12px 34px rgba(16, 36, 62, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .process-card-number,
+  .process-card-title,
+  .portfolio-title,
+  .blog-title,
+  .testi-box_name,
+  .sec-title,
+  .widget_title,
+  .footer-top-title {
+    color: #0b1f38 !important;
+  }
+
+  .hero-slider {
+    min-height: 92vh;
+    background-size: cover;
+    background-position: center;
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        120deg,
+        rgba(8, 26, 46, 0.58) 0%,
+        rgba(8, 26, 46, 0.42) 42%,
+        rgba(8, 26, 46, 0.3) 100%
+      );
+    }
+  }
+
+  .hero-style5 {
+    margin-top: 140px;
+    max-width: 720px;
+    padding: 36px 34px;
+    border-radius: 18px;
+  }
+
+  .hero-style5 .hero-title,
+  .hero-style5 .hero-text,
+  .hero-style5 .hero-year-tag h6 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 10px rgba(5, 16, 32, 0.3);
+  }
+
+  .hero-year-tag {
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+
+  .circle-btn.style2,
+  .btn.bg-theme {
+    background: rgba(217, 232, 248, 0.75) !important;
+    border-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 10px 24px rgba(16, 36, 62, 0.18);
+    color: #0a1f38 !important;
+  }
+
+  .header-layout2 .menu-area,
+  .header-layout2 .sticky-wrapper.header-sticky .menu-area {
+    background: rgba(217, 232, 248, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .header-layout2 .main-menu > ul > li > a,
+  .header-layout2 .search-btn {
+    color: #10243e;
+  }
+
+  .header-layout2 .header-logo img {
+    filter: none;
+  }
+
+  .faq-area-2 .accordion-card.style2 {
+    background: rgba(217, 232, 248, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .faq-area-2 .accordion-button,
+  .faq-area-2 .faq-text {
+    color: #10243e !important;
+  }
+
+  .footer-layout5 .copyright-wrap,
+  .footer-layout5 .widget-area {
+    border-color: rgba(16, 36, 62, 0.14);
+  }
+}

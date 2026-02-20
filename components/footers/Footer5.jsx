@@ -1,8 +1,6 @@
-import React from "react";
-import Socials from "./component/Socials";
-import FooterLinks3 from "./component/FooterLinks3";
-import FooterLinks4 from "./component/FooterLinks4";
+﻿import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer5() {
   return (
@@ -11,18 +9,18 @@ export default function Footer5() {
         <div className="container">
           <div className="row align-items-center justify-content-between">
             <div className="col-lg-6">
-              <h2 className="footer-top-title">Let’s Work Together</h2>
+              <h2 className="footer-top-title">Rezervišite konsultaciju kod Dr Igića</h2>
             </div>
             <div className="col-lg-5">
-              <div className="footer-top-wrap">
+              <div className="footer-top-wrap glass-panel">
                 <p className="mb-30">
-                  We are digital agency that helps businesses develop immersive
-                  and engaging user experiences
+                  Prvi korak ka prirodnoj i sigurnoj transformaciji je razgovor
+                  sa stručnjakom i personalizovan plan tretmana.
                 </p>
-                <Link scroll={false} href="/project" className="btn">
+                <Link scroll={false} href="/contact" className="btn">
                   <span className="link-effect">
-                    <span className="effect-1">LET'S TALK WITH US</span>
-                    <span className="effect-1">LET'S TALK WITH US</span>
+                    <span className="effect-1">POŠALJITE UPIT</span>
+                    <span className="effect-1">POŠALJITE UPIT</span>
                   </span>
                 </Link>
               </div>
@@ -35,33 +33,33 @@ export default function Footer5() {
           <div className="row justify-content-between">
             <div className="col-md-6 col-xl-5 col-lg-6">
               <div className="widget widget-about footer-widget">
-                <h3 className="widget_title">About Frisk</h3>
+                <Image width={138} height={55} src="/assets/img/logo.png" alt="Dr Igić logo" />
+                <h3 className="widget_title mt-30">Dr Igić klinika estetske medicine</h3>
                 <p className="about-text">
-                  If you ask our clients what it’s like working with talk how
-                  much we care about their success. relationships fuel real
-                  success. We love building brands
+                  Fokus na prirodan izgled, stručan i odgovoran pristup, kao i
+                  bezbednost svakog pacijenta.
                 </p>
-                <div className="social-btn style3">
-                  <Socials />
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3 col-xl-2 col-lg-3">
-              <div className="widget widget_nav_menu footer-widget">
-                <h3 className="widget_title">Links</h3>
-                <div className="menu-all-pages-container list-column2">
-                  <ul className="menu">
-                    <FooterLinks3 />
-                  </ul>
-                </div>
               </div>
             </div>
             <div className="col-md-6 col-xl-3 col-lg-4">
               <div className="widget widget_nav_menu footer-widget">
-                <h3 className="widget_title">Others</h3>
+                <h3 className="widget_title">Brzi linkovi</h3>
                 <div className="menu-all-pages-container list-column2">
                   <ul className="menu">
-                    <FooterLinks4 />
+                    <li>
+                      <a href="#tretmani">Tretmani</a>
+                    </li>
+                    <li>
+                      <a href="#rezultati">Rezultati</a>
+                    </li>
+                    <li>
+                      <a href="#aktuelnosti">Aktuelnosti</a>
+                    </li>
+                    <li>
+                      <Link scroll={false} href="/contact">
+                        Kontakt
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -73,17 +71,10 @@ export default function Footer5() {
         <div className="copyright-wrap">
           <div className="row gy-3 justify-content-between align-items-center">
             <div className="col-md-6">
-              <p>
-                27 Division St, New York, <br />
-                NY 10002, USA
-              </p>
+              <p>Dr Nikola Igić, estetska i anti-age medicina</p>
             </div>
             <div className="col-md-6 align-self-center text-md-end">
-              <p className="copyright-text">
-                <a href="tel:1800123654987"> +1 800 123 654 987 </a>
-                <br />
-                <a href="mailto:frisk.agency@mail.com">frisk.agency@mail.com</a>
-              </p>
+              <p className="copyright-text">Copyright © {new Date().getFullYear()} Dr Igić klinika</p>
             </div>
           </div>
         </div>
