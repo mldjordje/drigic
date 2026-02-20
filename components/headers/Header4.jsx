@@ -14,6 +14,7 @@ export default function Header4() {
     { href: "#osnivac", label: "Osnivač" },
     { href: "#rezultati", label: "Rezultati" },
     { href: "#aktuelnosti", label: "Aktuelnosti" },
+    { href: "/booking", label: "Booking" },
     { href: "#konsultacije", label: "Kontakt" },
   ];
 

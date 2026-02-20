@@ -10,8 +10,9 @@ function unauthorizedResponse(request) {
   }
 
   const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = "/";
-  redirectUrl.searchParams.set("adminAuth", "required");
+  redirectUrl.pathname = "/prijava";
+  redirectUrl.searchParams.set("reason", "admin-required");
+  redirectUrl.searchParams.set("next", request.nextUrl.pathname);
   return NextResponse.redirect(redirectUrl);
 }
 
@@ -24,8 +25,9 @@ function forbiddenResponse(request) {
   }
 
   const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = "/";
-  redirectUrl.searchParams.set("adminAuth", "forbidden");
+  redirectUrl.pathname = "/prijava";
+  redirectUrl.searchParams.set("reason", "admin-forbidden");
+  redirectUrl.searchParams.set("next", request.nextUrl.pathname);
   return NextResponse.redirect(redirectUrl);
 }
 
@@ -50,4 +52,3 @@ export async function middleware(request) {
 export const config = {
   matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
-
