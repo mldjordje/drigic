@@ -1,5 +1,6 @@
 ﻿"use client";
 import addGsap from "@/utils/addGsap";
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import Slider from "react-slick";
@@ -21,8 +22,6 @@ export default function Hero() {
     slidesToShow: 1,
     arrows: false,
     slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 6000,
   };
 
   return (
@@ -33,27 +32,28 @@ export default function Hero() {
             className="hero-slider background-image por"
             style={{ backgroundImage: "url(/assets/img/slika1.png)" }}
           >
-            <div className="hero-overlay"></div>
+            <div className="hero-overlay" data-overlay="title" data-opacity="5"></div>
             <div className="container">
               <div className="row">
-                <div className="col-lg-8">
-                  <div className="hero-style5 glass-panel">
+                <div className="col-lg-7">
+                  <div className="hero-style5 clinic-reveal">
                     <h1 className="hero-title" data-ani="slideindown" data-ani-delay="0.1s">
                       Dr Igić klinika estetske medicine
                     </h1>
                     <p className="hero-text" data-ani="slideindown" data-ani-delay="0.2s">
                       Prirodni rezultati, bez preterivanja.
                     </p>
-                    <div className="hero-year-tag" data-ani="slideindown" data-ani-delay="0.3s">
+                    <div className="hero-year-tag movingX" data-ani="slideindown" data-ani-delay="0.3s">
+                      <Image width={40} height={40} src="/assets/img/icon/worldwide.svg" alt="icon" />
                       <h6>Dr Nikola Igić</h6>
                     </div>
                   </div>
                 </div>
-                <div className="col-lg-4 align-self-end text-lg-end">
+                <div className="col-lg-5 align-self-end text-lg-end">
                   <div className="text-lg-end" data-ani="slideindown" data-ani-delay="0.3s">
                     <Link
                       scroll={false}
-                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic"
+                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse"
                       href="#konsultacije"
                     >
                       <span className="link-effect">
@@ -76,27 +76,28 @@ export default function Hero() {
             className="hero-slider background-image por"
             style={{ backgroundImage: "url(/assets/img/before-after1.png)" }}
           >
-            <div className="hero-overlay"></div>
+            <div className="hero-overlay" data-overlay="title" data-opacity="5"></div>
             <div className="container">
               <div className="row">
-                <div className="col-lg-8">
-                  <div className="hero-style5 glass-panel">
-                    <h2 className="hero-title" data-ani="slideindown" data-ani-delay="0.1s">
+                <div className="col-lg-7">
+                  <div className="hero-style5 clinic-reveal">
+                    <h1 className="hero-title" data-ani="slideindown" data-ani-delay="0.1s">
                       Botox, fileri i anti-age tretmani
-                    </h2>
+                    </h1>
                     <p className="hero-text" data-ani="slideindown" data-ani-delay="0.2s">
                       Personalizovan plan i siguran pristup za svaki termin.
                     </p>
-                    <div className="hero-year-tag" data-ani="slideindown" data-ani-delay="0.3s">
+                    <div className="hero-year-tag movingX" data-ani="slideindown" data-ani-delay="0.3s">
+                      <Image width={40} height={40} src="/assets/img/icon/worldwide.svg" alt="icon" />
                       <h6>Zakazivanje online</h6>
                     </div>
                   </div>
                 </div>
-                <div className="col-lg-4 align-self-end text-lg-end">
+                <div className="col-lg-5 align-self-end text-lg-end">
                   <div className="text-lg-end" data-ani="slideindown" data-ani-delay="0.3s">
                     <Link
                       scroll={false}
-                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic"
+                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse"
                       href="#tretmani"
                     >
                       <span className="link-effect">

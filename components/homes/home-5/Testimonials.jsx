@@ -29,6 +29,8 @@ export default function Testimonials() {
     centerPadding: "470px",
     arrows: false,
     autoplay: true,
+    speed: 700,
+    autoplaySpeed: 3600,
     responsive: [
       {
         breakpoint: 1400,
@@ -57,15 +59,15 @@ export default function Testimonials() {
   return (
     <div className="testimonial-area-2 space bg-gray overflow-hidden">
       <div className="container">
-        <div className="title-area text-center">
+        <div className="title-area text-center clinic-reveal">
           <h2 className="sec-title text-smoke">Utisci pacijenata</h2>
         </div>
       </div>
       <div className="container-fluid p-0">
         <Slider {...slickSettings} className="row global-carousel testi-slider2">
           {testimonials.map((elm, i) => (
-            <div key={i} className="col-lg-4">
-              <div className="testi-box style2 glass-panel">
+            <div key={i} className="col-lg-4 clinic-reveal">
+              <div className="testi-box style2 glass-panel clinic-hover-raise">
                 <div className="quote-icon">
                   <Image width={52} height={32} src="/assets/img/icon/quote.svg" alt="icon" />
                 </div>

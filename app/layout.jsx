@@ -10,6 +10,7 @@ import "rc-slider/assets/index.css";
 import { Unbounded, Poppins } from "next/font/google";
 import ScrollTopBehaviour from "@/components/common/ScrollTopBehavier";
 import Context from "@/context/Context";
+import PWARegister from "@/components/common/PWARegister";
 if (typeof window !== "undefined") {
   import("bootstrap/dist/js/bootstrap.esm").then((module) => {
     // Module is imported, you can access any exported functionality if
@@ -46,10 +47,11 @@ export default function RootLayout({ children }) {
   //wow?.sync();
   //}, [path]);
   return (
-    <html lang="en">
+    <html lang="sr">
       <body className={`body  ${poppins.variable} ${unbounded.variable}`}>
         <Context>
           <ParallaxProvider>{children}</ParallaxProvider>
+          <PWARegister />
           <ScrollTop />
           <ScrollTopBehaviour />
         </Context>

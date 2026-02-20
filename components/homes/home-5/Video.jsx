@@ -19,7 +19,7 @@ export default function Video() {
         <div className="container-fluid p-0">
           <div className="row">
             <div className="col-lg-12">
-              <div className="video-wrap">
+              <div className="video-wrap clinic-reveal">
                 <div
                   className="jarallax"
                   ref={parallax.ref}
@@ -29,7 +29,7 @@ export default function Video() {
                 ></div>
                 <div
                   onClick={() => setIsOpen(true)}
-                  className="play-btn circle-btn btn gsap-magnetic popup-video background-image"
+                  className="play-btn circle-btn btn gsap-magnetic popup-video background-image clinic-cta-pulse"
                 >
                   PLAY VIDEO
                 </div>

@@ -9,15 +9,15 @@ export default function Footer5() {
         <div className="container">
           <div className="row align-items-center justify-content-between">
             <div className="col-lg-6">
-              <h2 className="footer-top-title">Rezervišite konsultaciju kod Dr Igića</h2>
+              <h2 className="footer-top-title clinic-reveal">Rezervišite konsultaciju kod Dr Igića</h2>
             </div>
             <div className="col-lg-5">
-              <div className="footer-top-wrap glass-panel">
+              <div className="footer-top-wrap glass-panel clinic-reveal clinic-hover-raise">
                 <p className="mb-30">
                   Prvi korak ka prirodnoj i sigurnoj transformaciji je razgovor
                   sa stručnjakom i personalizovan plan tretmana.
                 </p>
-                <Link scroll={false} href="/contact" className="btn">
+                <Link scroll={false} href="/contact" className="btn clinic-cta-pulse">
                   <span className="link-effect">
                     <span className="effect-1">POŠALJITE UPIT</span>
                     <span className="effect-1">POŠALJITE UPIT</span>

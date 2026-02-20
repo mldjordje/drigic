@@ -32,16 +32,20 @@ export default function Blogs() {
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xxl-8 col-xl-8 col-lg-10">
-            <div className="title-area text-center">
+            <div className="title-area text-center clinic-reveal">
               <h2 className="sec-title text-smoke">Aktuelnosti i stručni saveti</h2>
             </div>
           </div>
         </div>
         <div className="row gy-40 justify-content-center">
-          {articles.map((elm) => (
-            <div key={elm.id} className="col-lg-4 col-md-6">
-              <div className="blog-card style3 glass-panel h-100">
-                <div className="blog-img">
+          {articles.map((elm, index) => (
+            <div
+              key={elm.id}
+              className="col-lg-4 col-md-6 clinic-reveal wow img-custom-anim-top animated"
+              data-wow-delay={`${0.1 + index * 0.1}s`}
+            >
+              <div className="blog-card style3 glass-panel h-100 clinic-hover-raise">
+                <div className="blog-img clinic-media-zoom">
                   <Image width={416} height={340} src={elm.image} alt={elm.title} />
                 </div>
                 <div className="blog-content">

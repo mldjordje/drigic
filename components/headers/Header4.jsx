@@ -1,11 +1,13 @@
 ﻿"use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Header4() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const lastScrollYRef = useRef(0);
   const navItems = [
     { href: "#hero", label: "Početna" },
     { href: "#tretmani", label: "Tretmani" },
@@ -38,8 +40,19 @@ export default function Header4() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 80);
+      const currentScrollY = window.scrollY;
+      const lastScrollY = lastScrollYRef.current;
+
+      if (currentScrollY <= 10) {
+        setIsScrolled(false);
+        setIsHeaderHidden(false);
+      } else {
+        setIsScrolled(true);
+        const isScrollingDown = currentScrollY > lastScrollY;
+        setIsHeaderHidden(isScrollingDown && currentScrollY > 120);
+      }
+
+      lastScrollYRef.current = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -91,8 +104,12 @@ export default function Header4() {
         </div>
       </div>
 
-      <header className="nav-header header-layout2">
-        <div className={`sticky-wrapper ${isScrolled ? "header-sticky" : ""} `}>
+      <header className="nav-header header-layout2 clinic-header">
+        <div
+          className={`sticky-wrapper ${isScrolled ? "header-sticky" : ""} ${
+            isHeaderHidden ? "header-hidden" : ""
+          } `}
+        >
           <div className="menu-area">
             <div className="container-fluid">
               <div className="row align-items-center justify-content-between">

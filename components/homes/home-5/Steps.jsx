@@ -27,7 +27,7 @@ export default function Steps() {
   return (
     <div className="feature-area-1 space" id="tretmani">
       <div className="container">
-        <div className="title-area text-center">
+        <div className="title-area text-center clinic-reveal">
           <h2 className="sec-title text-smoke">Oblasti tretmana</h2>
           <p className="sec-text text-smoke mt-20">
             Plan tretmana je uvek personalizovan nakon konsultacije i procene.
@@ -35,8 +35,15 @@ export default function Steps() {
         </div>
         <div className="row gx-0 gy-30">
           {categories.map((item, index) => (
-            <div key={index} className="col-lg-3 col-md-6">
-              <div className="process-card glass-panel h-100">
+            <div
+              key={index}
+              className={`col-lg-3 col-md-6 clinic-reveal wow ${
+                index % 2 === 0 ? "img-custom-anim-left" : "img-custom-anim-right"
+              } animated`}
+              data-wow-duration="1.2s"
+              data-wow-delay={`${0.15 + index * 0.1}s`}
+            >
+              <div className="process-card glass-panel h-100 clinic-float-card">
                 <div className="process-card-number">{item.number}</div>
                 <h4 className="process-card-title">{item.title}</h4>
                 <p className="process-card-text">{item.text}</p>
