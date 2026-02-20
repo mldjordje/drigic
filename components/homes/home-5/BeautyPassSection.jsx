@@ -127,14 +127,14 @@ export default function BeautyPassSection() {
         </div>
 
         {loading ? (
-          <div className="admin-card" style={{ maxWidth: 960, margin: "0 auto" }}>
-            <p style={{ margin: 0 }}>Ucitavanje...</p>
+          <div style={{ ...glassCardStyle, maxWidth: 960, margin: "0 auto" }}>
+            <p style={{ ...mutedTextStyle, margin: 0 }}>Ucitavanje...</p>
           </div>
         ) : null}
 
         {!loading && !user ? (
-          <div className="admin-card clinic-login-lock" style={{ maxWidth: 760, margin: "0 auto" }}>
-            <p style={{ marginTop: 0 }}>
+          <div className="clinic-login-lock" style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
+            <p style={{ ...mutedTextStyle, marginTop: 0 }}>
               Beauty Pass je dostupan nakon prijave.
             </p>
             <GooglePopupButton className="btn clinic-glow-btn" nextPath="/">
@@ -146,27 +146,27 @@ export default function BeautyPassSection() {
         {!loading && user ? (
           <div className="row g-4">
             <div className="col-lg-6">
-              <div className="admin-card">
-                <h3 style={{ marginTop: 0 }}>Prethodni termini</h3>
+              <div style={glassCardStyle}>
+                <h3 style={{ ...titleTextStyle, marginTop: 0 }}>Prethodni termini</h3>
                 {pastBookings.length ? (
-                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <ul style={{ margin: 0, paddingLeft: 18, color: "#edf3ff" }}>
                     {pastBookings.slice(0, 12).map((booking) => (
-                      <li key={booking.id} style={{ marginBottom: 8 }}>
+                      <li key={booking.id} style={{ marginBottom: 8, color: "#edf3ff" }}>
                         {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min - {booking.totalPriceRsd} RSD
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p style={{ marginBottom: 0 }}>Nemate prethodnih termina.</p>
+                  <p style={{ ...mutedTextStyle, marginBottom: 0 }}>Nemate prethodnih termina.</p>
                 )}
               </div>
             </div>
 
             <div className="col-lg-6">
-              <div className="admin-card">
-                <h3 style={{ marginTop: 0 }}>Dodaj sta je radjeno i kada</h3>
+              <div style={glassCardStyle}>
+                <h3 style={{ ...titleTextStyle, marginTop: 0 }}>Dodaj sta je radjeno i kada</h3>
                 <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
-                  <label>
+                  <label style={{ color: "#edf3ff" }}>
                     Datum
                     <input
                       type="date"
@@ -178,7 +178,7 @@ export default function BeautyPassSection() {
                       required
                     />
                   </label>
-                  <label>
+                  <label style={{ color: "#edf3ff" }}>
                     Sta je radjeno
                     <textarea
                       className="admin-inline-textarea"
@@ -197,17 +197,17 @@ export default function BeautyPassSection() {
                   </button>
                 </form>
 
-                <h4 style={{ marginTop: 18 }}>Istorija unosa</h4>
+                <h4 style={{ ...titleTextStyle, marginTop: 18 }}>Istorija unosa</h4>
                 {beautyPass?.treatmentHistory?.length ? (
-                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <ul style={{ margin: 0, paddingLeft: 18, color: "#edf3ff" }}>
                     {beautyPass.treatmentHistory.slice(0, 12).map((item) => (
-                      <li key={item.id} style={{ marginBottom: 8 }}>
+                      <li key={item.id} style={{ marginBottom: 8, color: "#edf3ff" }}>
                         {new Date(item.treatmentDate).toLocaleDateString("sr-RS")}: {item.notes || "Bez napomene"}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p style={{ marginBottom: 0 }}>Jos nema unosa.</p>
+                  <p style={{ ...mutedTextStyle, marginBottom: 0 }}>Jos nema unosa.</p>
                 )}
               </div>
             </div>
@@ -220,3 +220,21 @@ export default function BeautyPassSection() {
     </section>
   );
 }
+
+const glassCardStyle = {
+  background: "rgba(20, 29, 42, 0.58)",
+  border: "1px solid rgba(217, 232, 248, 0.32)",
+  borderRadius: 16,
+  padding: 18,
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+  color: "#edf3ff",
+};
+
+const titleTextStyle = {
+  color: "#f4f8ff",
+};
+
+const mutedTextStyle = {
+  color: "#dfe9f8",
+};

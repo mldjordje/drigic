@@ -44,14 +44,14 @@ export default function BookingSection() {
         </div>
 
         {loading ? (
-          <div className="admin-card" style={{ maxWidth: 760, margin: "0 auto" }}>
-            <p style={{ margin: 0 }}>Ucitavanje...</p>
+          <div style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
+            <p style={{ margin: 0, color: "#e8f1ff" }}>Ucitavanje...</p>
           </div>
         ) : null}
 
         {!loading && !user ? (
-          <div className="admin-card clinic-login-lock" style={{ maxWidth: 760, margin: "0 auto" }}>
-            <p style={{ marginTop: 0 }}>
+          <div className="clinic-login-lock" style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
+            <p style={{ marginTop: 0, color: "#e8f1ff" }}>
               Da biste zakazali termin, prvo se prijavite preko Google naloga.
             </p>
             <GooglePopupButton className="btn clinic-glow-btn" nextPath="/">
@@ -65,3 +65,13 @@ export default function BookingSection() {
     </section>
   );
 }
+
+const glassCardStyle = {
+  background: "rgba(20, 29, 42, 0.58)",
+  border: "1px solid rgba(217, 232, 248, 0.32)",
+  borderRadius: 16,
+  padding: 18,
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+  color: "#edf3ff",
+};

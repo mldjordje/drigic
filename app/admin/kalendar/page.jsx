@@ -102,6 +102,8 @@ export default function AdminKalendarPage() {
   const [blocks, setBlocks] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [activePanel, setActivePanel] = useState("details");
+  const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
+  const [slotSelection, setSlotSelection] = useState(null);
 
   const [statusDraft, setStatusDraft] = useState("pending");
   const [notesDraft, setNotesDraft] = useState("");
@@ -496,6 +498,24 @@ export default function AdminKalendarPage() {
   const pendingCount = bookings.filter((item) => item.status === "pending").length;
   const weekLabel = `${fmtDateLabel(weekDays[0])} - ${fmtDateLabel(weekDays[6])}`;
 
+  function handleSlotSelect(dateValue, timeValue, existingItem = null) {
+    setSlotSelection({ date: dateValue, time: timeValue });
+    setManualForm((prev) => ({ ...prev, date: dateValue, time: timeValue }));
+    setBlockForm((prev) => ({ ...prev, date: dateValue, time: timeValue }));
+    setMessage("");
+    setError("");
+
+    if (existingItem) {
+      setSelectedItem({ type: existingItem.type, id: existingItem.id });
+      setActivePanel("details");
+    } else {
+      setSelectedItem(null);
+      setActivePanel("new");
+    }
+
+    setIsSlotModalOpen(true);
+  }
+
   return (
     <section className="admin-calendar-page">
       <div className="admin-card admin-calendar-toolbar">
@@ -539,7 +559,7 @@ export default function AdminKalendarPage() {
       {message ? <p style={{ color: "#9be39f" }}>{message}</p> : null}
       {error ? <p style={{ color: "#ffabab" }}>{error}</p> : null}
 
-      <div className="admin-calendar-layout">
+      <div className="admin-calendar-layout admin-calendar-layout--single">
         <div className="admin-card admin-calendar-grid-wrap">
           <div
             className="admin-calendar-grid"
@@ -561,12 +581,27 @@ export default function AdminKalendarPage() {
             ))}
 
             {slotTimes.map((slot, rowIndex) =>
-              weekDays.map((day, dayIndex) => (
-                <div
-                  key={`cell-${rowIndex}-${dayIndex}`}
-                  className={`admin-calendar-cell ${dayIndex >= 5 ? "is-weekend" : ""}`}
-                />
-              ))
+              weekDays.map((day, dayIndex) => {
+                const dateValue = toDateInput(day);
+                const existingItem = calendarItems.find(
+                  (item) =>
+                    item.dayIndex === dayIndex &&
+                    rowIndex >= item.startRow &&
+                    rowIndex < item.startRow + item.span
+                );
+
+                return (
+                  <button
+                    type="button"
+                    key={`cell-${rowIndex}-${dayIndex}`}
+                    className={`admin-calendar-cell admin-calendar-cell-btn ${
+                      dayIndex >= 5 ? "is-weekend" : ""
+                    }`}
+                    onClick={() => handleSlotSelect(dateValue, slot, existingItem)}
+                    title={`${dateValue} ${slot}`}
+                  />
+                );
+              })
             )}
 
             {calendarItems.map((item) => (
@@ -587,6 +622,7 @@ export default function AdminKalendarPage() {
                 onClick={() => {
                   setSelectedItem({ type: item.type, id: item.id });
                   setActivePanel("details");
+                  setIsSlotModalOpen(true);
                 }}
                 title={`${item.title} | ${item.startLabel}-${item.endLabel}`}
               >
@@ -600,291 +636,315 @@ export default function AdminKalendarPage() {
           </div>
         </div>
 
-        <aside className="admin-card admin-calendar-side">
-          <div className="admin-calendar-tabs">
-            <button
-              type="button"
-              className={`admin-template-link-btn ${activePanel === "details" ? "is-active" : ""}`}
-              onClick={() => setActivePanel("details")}
-            >
-              Detalji
-            </button>
-            <button
-              type="button"
-              className={`admin-template-link-btn ${activePanel === "new" ? "is-active" : ""}`}
-              onClick={() => setActivePanel("new")}
-            >
-              Novi termin
-            </button>
-            <button
-              type="button"
-              className={`admin-template-link-btn ${activePanel === "block" ? "is-active" : ""}`}
-              onClick={() => setActivePanel("block")}
-            >
-              Blokiraj
-            </button>
-          </div>
-
-          {activePanel === "details" ? (
-            <>
-              <h3 style={{ marginTop: 12 }}>Detalji</h3>
-              {!selectedBooking && !selectedBlock ? (
-                <p style={{ color: "#bed0e8" }}>Izaberite termin ili blokadu u kalendaru.</p>
-              ) : null}
-
-              {selectedBooking ? (
-                <div className="admin-calendar-details">
-                  <div>
-                    <span>Klijent</span>
-                    <strong>{selectedBooking.clientName || "Nepoznato"}</strong>
-                  </div>
-                  <div>
-                    <span>Email</span>
-                    <strong>{selectedBooking.clientEmail || "-"}</strong>
-                  </div>
-                  <div>
-                    <span>Telefon</span>
-                    <strong>{selectedBooking.clientPhone || "-"}</strong>
-                  </div>
-                  <div>
-                    <span>Termin</span>
-                    <strong>{new Date(selectedBooking.startsAt).toLocaleString("sr-RS")}</strong>
-                  </div>
-                  <div>
-                    <span>Trajanje</span>
-                    <strong>{selectedBooking.totalDurationMin} min</strong>
-                  </div>
-                  <div>
-                    <span>Cena</span>
-                    <strong>{selectedBooking.totalPriceRsd} RSD</strong>
-                  </div>
-                  <div>
-                    <span>Usluge</span>
-                    <strong>{selectedBooking.serviceSummary || "-"}</strong>
-                  </div>
-
-                  <label>
-                    Status
-                    <select
-                      className="admin-inline-input"
-                      value={statusDraft}
-                      onChange={(event) => setStatusDraft(event.target.value)}
-                    >
-                      {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Napomena
-                    <textarea
-                      className="admin-inline-textarea"
-                      rows={4}
-                      value={notesDraft}
-                      onChange={(event) => setNotesDraft(event.target.value)}
-                    />
-                  </label>
-
-                  <div className="admin-calendar-detail-actions">
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      disabled={saving}
-                      onClick={saveBooking}
-                    >
-                      Sacuvaj izmenu
-                    </button>
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      disabled={saving}
-                      onClick={completeBooking}
-                    >
-                      Oznaci kao zavrsen
-                    </button>
-                  </div>
+        {isSlotModalOpen ? (
+          <div className="admin-calendar-modal" role="dialog" aria-modal="true">
+            <div className="admin-calendar-modal-backdrop" onClick={() => setIsSlotModalOpen(false)} />
+            <div className="admin-card admin-calendar-modal-card">
+              <div className="admin-calendar-modal-head">
+                <div>
+                  <h3 style={{ margin: 0 }}>Akcije termina</h3>
+                  {slotSelection ? (
+                    <p style={{ margin: "4px 0 0", color: "#bed0e8" }}>
+                      {slotSelection.date} {slotSelection.time}
+                    </p>
+                  ) : null}
                 </div>
-              ) : null}
-
-              {selectedBlock ? (
-                <div className="admin-calendar-details">
-                  <div>
-                    <span>Blokada</span>
-                    <strong>{new Date(selectedBlock.startsAt).toLocaleString("sr-RS")}</strong>
-                  </div>
-                  <div>
-                    <span>Trajanje</span>
-                    <strong>{selectedBlock.durationMin} min</strong>
-                  </div>
-                  <div>
-                    <span>Napomena</span>
-                    <strong>{selectedBlock.note || "-"}</strong>
-                  </div>
-                  <div className="admin-calendar-detail-actions">
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      disabled={saving}
-                      onClick={deleteBlock}
-                    >
-                      Obrisi blokadu
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </>
-          ) : null}
-
-          {activePanel === "new" ? (
-            <>
-              <h3 style={{ marginTop: 12 }}>Novi termin</h3>
-              <form onSubmit={createManualBooking} style={{ display: "grid", gap: 8 }}>
-                <input
-                  className="admin-inline-input"
-                  placeholder="Ime i prezime"
-                  value={manualForm.clientName}
-                  onChange={(event) =>
-                    setManualForm((prev) => ({ ...prev, clientName: event.target.value }))
-                  }
-                  required
-                />
-                <input
-                  className="admin-inline-input"
-                  placeholder="Email (opciono)"
-                  value={manualForm.email}
-                  onChange={(event) => setManualForm((prev) => ({ ...prev, email: event.target.value }))}
-                />
-                <input
-                  className="admin-inline-input"
-                  placeholder="Telefon (opciono)"
-                  value={manualForm.phone}
-                  onChange={(event) => setManualForm((prev) => ({ ...prev, phone: event.target.value }))}
-                />
-                <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-                  <input
-                    type="date"
-                    className="admin-inline-input"
-                    value={manualForm.date}
-                    onChange={(event) => setManualForm((prev) => ({ ...prev, date: event.target.value }))}
-                    required
-                  />
-                  <input
-                    type="time"
-                    className="admin-inline-input"
-                    value={manualForm.time}
-                    onChange={(event) => setManualForm((prev) => ({ ...prev, time: event.target.value }))}
-                    required
-                  />
-                </div>
-                <select
-                  className="admin-inline-input"
-                  value={manualForm.status}
-                  onChange={(event) => setManualForm((prev) => ({ ...prev, status: event.target.value }))}
+                <button
+                  type="button"
+                  className="admin-template-link-btn"
+                  onClick={() => setIsSlotModalOpen(false)}
                 >
-                  <option value="confirmed">Potvrdjen</option>
-                  <option value="pending">Na cekanju</option>
-                </select>
+                  Zatvori
+                </button>
+              </div>
 
-                <div className="admin-calendar-service-list">
-                  {services.map((category) => (
-                    <div key={category.id} className="admin-calendar-service-group">
-                      <strong>{category.name}</strong>
+              <div className="admin-calendar-tabs">
+                <button
+                  type="button"
+                  className={`admin-template-link-btn ${activePanel === "details" ? "is-active" : ""}`}
+                  onClick={() => setActivePanel("details")}
+                >
+                  Detalji
+                </button>
+                <button
+                  type="button"
+                  className={`admin-template-link-btn ${activePanel === "new" ? "is-active" : ""}`}
+                  onClick={() => setActivePanel("new")}
+                >
+                  Novi termin
+                </button>
+                <button
+                  type="button"
+                  className={`admin-template-link-btn ${activePanel === "block" ? "is-active" : ""}`}
+                  onClick={() => setActivePanel("block")}
+                >
+                  Blokiraj
+                </button>
+              </div>
+
+              {activePanel === "details" ? (
+                <>
+                  {!selectedBooking && !selectedBlock ? (
+                    <p style={{ color: "#bed0e8", marginTop: 12 }}>
+                      Izaberite postojeci termin/blokadu ili kreirajte novi.
+                    </p>
+                  ) : null}
+
+                  {selectedBooking ? (
+                    <div className="admin-calendar-details">
                       <div>
-                        {(category.services || []).map((service) => (
-                          <label key={service.id} className="admin-calendar-service-option">
-                            <input
-                              type="checkbox"
-                              checked={manualForm.serviceIds.includes(service.id)}
-                              onChange={(event) => {
-                                if (event.target.checked) {
-                                  setManualForm((prev) => ({
-                                    ...prev,
-                                    serviceIds: prev.serviceIds.includes(service.id)
-                                      ? prev.serviceIds
-                                      : [...prev.serviceIds, service.id],
-                                  }));
-                                } else {
-                                  setManualForm((prev) => ({
-                                    ...prev,
-                                    serviceIds: prev.serviceIds.filter((id) => id !== service.id),
-                                  }));
-                                }
-                              }}
-                            />
-                            <span>
-                              {service.name} ({service.durationMin}m)
-                            </span>
-                          </label>
-                        ))}
+                        <span>Klijent</span>
+                        <strong>{selectedBooking.clientName || "Nepoznato"}</strong>
+                      </div>
+                      <div>
+                        <span>Email</span>
+                        <strong>{selectedBooking.clientEmail || "-"}</strong>
+                      </div>
+                      <div>
+                        <span>Telefon</span>
+                        <strong>{selectedBooking.clientPhone || "-"}</strong>
+                      </div>
+                      <div>
+                        <span>Termin</span>
+                        <strong>{new Date(selectedBooking.startsAt).toLocaleString("sr-RS")}</strong>
+                      </div>
+                      <div>
+                        <span>Trajanje</span>
+                        <strong>{selectedBooking.totalDurationMin} min</strong>
+                      </div>
+                      <div>
+                        <span>Cena</span>
+                        <strong>{selectedBooking.totalPriceRsd} RSD</strong>
+                      </div>
+                      <div>
+                        <span>Usluge</span>
+                        <strong>{selectedBooking.serviceSummary || "-"}</strong>
+                      </div>
+
+                      <label>
+                        Status
+                        <select
+                          className="admin-inline-input"
+                          value={statusDraft}
+                          onChange={(event) => setStatusDraft(event.target.value)}
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label>
+                        Napomena
+                        <textarea
+                          className="admin-inline-textarea"
+                          rows={4}
+                          value={notesDraft}
+                          onChange={(event) => setNotesDraft(event.target.value)}
+                        />
+                      </label>
+
+                      <div className="admin-calendar-detail-actions">
+                        <button
+                          type="button"
+                          className="admin-template-link-btn"
+                          disabled={saving}
+                          onClick={saveBooking}
+                        >
+                          Sacuvaj izmenu
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-template-link-btn"
+                          disabled={saving}
+                          onClick={completeBooking}
+                        >
+                          Oznaci kao zavrsen
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  ) : null}
 
-                <textarea
-                  className="admin-inline-textarea"
-                  rows={3}
-                  placeholder="Napomena"
-                  value={manualForm.notes}
-                  onChange={(event) => setManualForm((prev) => ({ ...prev, notes: event.target.value }))}
-                />
+                  {selectedBlock ? (
+                    <div className="admin-calendar-details">
+                      <div>
+                        <span>Blokada</span>
+                        <strong>{new Date(selectedBlock.startsAt).toLocaleString("sr-RS")}</strong>
+                      </div>
+                      <div>
+                        <span>Trajanje</span>
+                        <strong>{selectedBlock.durationMin} min</strong>
+                      </div>
+                      <div>
+                        <span>Napomena</span>
+                        <strong>{selectedBlock.note || "-"}</strong>
+                      </div>
+                      <div className="admin-calendar-detail-actions">
+                        <button
+                          type="button"
+                          className="admin-template-link-btn"
+                          disabled={saving}
+                          onClick={deleteBlock}
+                        >
+                          Obrisi blokadu
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
 
-                <button type="submit" className="admin-template-link-btn" disabled={saving}>
-                  Kreiraj termin
-                </button>
-              </form>
-            </>
-          ) : null}
+              {activePanel === "new" ? (
+                <>
+                  <h3 style={{ marginTop: 12 }}>Novi termin</h3>
+                  <form onSubmit={createManualBooking} style={{ display: "grid", gap: 8 }}>
+                    <input
+                      className="admin-inline-input"
+                      placeholder="Ime i prezime"
+                      value={manualForm.clientName}
+                      onChange={(event) =>
+                        setManualForm((prev) => ({ ...prev, clientName: event.target.value }))
+                      }
+                      required
+                    />
+                    <input
+                      className="admin-inline-input"
+                      placeholder="Email (opciono)"
+                      value={manualForm.email}
+                      onChange={(event) => setManualForm((prev) => ({ ...prev, email: event.target.value }))}
+                    />
+                    <input
+                      className="admin-inline-input"
+                      placeholder="Telefon (opciono)"
+                      value={manualForm.phone}
+                      onChange={(event) => setManualForm((prev) => ({ ...prev, phone: event.target.value }))}
+                    />
+                    <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+                      <input
+                        type="date"
+                        className="admin-inline-input"
+                        value={manualForm.date}
+                        onChange={(event) => setManualForm((prev) => ({ ...prev, date: event.target.value }))}
+                        required
+                      />
+                      <input
+                        type="time"
+                        className="admin-inline-input"
+                        value={manualForm.time}
+                        onChange={(event) => setManualForm((prev) => ({ ...prev, time: event.target.value }))}
+                        required
+                      />
+                    </div>
+                    <select
+                      className="admin-inline-input"
+                      value={manualForm.status}
+                      onChange={(event) => setManualForm((prev) => ({ ...prev, status: event.target.value }))}
+                    >
+                      <option value="confirmed">Potvrdjen</option>
+                      <option value="pending">Na cekanju</option>
+                    </select>
 
-          {activePanel === "block" ? (
-            <>
-              <h3 style={{ marginTop: 12 }}>Blokiraj termin</h3>
-              <form onSubmit={createBlock} style={{ display: "grid", gap: 8 }}>
-                <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-                  <input
-                    type="date"
-                    className="admin-inline-input"
-                    value={blockForm.date}
-                    onChange={(event) => setBlockForm((prev) => ({ ...prev, date: event.target.value }))}
-                    required
-                  />
-                  <input
-                    type="time"
-                    className="admin-inline-input"
-                    value={blockForm.time}
-                    onChange={(event) => setBlockForm((prev) => ({ ...prev, time: event.target.value }))}
-                    required
-                  />
-                </div>
-                <input
-                  type="number"
-                  min={5}
-                  max={720}
-                  className="admin-inline-input"
-                  value={blockForm.durationMin}
-                  onChange={(event) =>
-                    setBlockForm((prev) => ({ ...prev, durationMin: event.target.value }))
-                  }
-                  placeholder="Trajanje (min)"
-                  required
-                />
-                <textarea
-                  className="admin-inline-textarea"
-                  rows={3}
-                  placeholder="Napomena"
-                  value={blockForm.note}
-                  onChange={(event) => setBlockForm((prev) => ({ ...prev, note: event.target.value }))}
-                />
-                <button type="submit" className="admin-template-link-btn" disabled={saving}>
-                  Sacuvaj blokadu
-                </button>
-              </form>
-            </>
-          ) : null}
-        </aside>
+                    <div className="admin-calendar-service-list">
+                      {services.map((category) => (
+                        <div key={category.id} className="admin-calendar-service-group">
+                          <strong>{category.name}</strong>
+                          <div>
+                            {(category.services || []).map((service) => (
+                              <label key={service.id} className="admin-calendar-service-option">
+                                <input
+                                  type="checkbox"
+                                  checked={manualForm.serviceIds.includes(service.id)}
+                                  onChange={(event) => {
+                                    if (event.target.checked) {
+                                      setManualForm((prev) => ({
+                                        ...prev,
+                                        serviceIds: prev.serviceIds.includes(service.id)
+                                          ? prev.serviceIds
+                                          : [...prev.serviceIds, service.id],
+                                      }));
+                                    } else {
+                                      setManualForm((prev) => ({
+                                        ...prev,
+                                        serviceIds: prev.serviceIds.filter((id) => id !== service.id),
+                                      }));
+                                    }
+                                  }}
+                                />
+                                <span>
+                                  {service.name} ({service.durationMin}m)
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <textarea
+                      className="admin-inline-textarea"
+                      rows={3}
+                      placeholder="Napomena"
+                      value={manualForm.notes}
+                      onChange={(event) => setManualForm((prev) => ({ ...prev, notes: event.target.value }))}
+                    />
+
+                    <button type="submit" className="admin-template-link-btn" disabled={saving}>
+                      Kreiraj termin
+                    </button>
+                  </form>
+                </>
+              ) : null}
+
+              {activePanel === "block" ? (
+                <>
+                  <h3 style={{ marginTop: 12 }}>Blokiraj termin</h3>
+                  <form onSubmit={createBlock} style={{ display: "grid", gap: 8 }}>
+                    <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+                      <input
+                        type="date"
+                        className="admin-inline-input"
+                        value={blockForm.date}
+                        onChange={(event) => setBlockForm((prev) => ({ ...prev, date: event.target.value }))}
+                        required
+                      />
+                      <input
+                        type="time"
+                        className="admin-inline-input"
+                        value={blockForm.time}
+                        onChange={(event) => setBlockForm((prev) => ({ ...prev, time: event.target.value }))}
+                        required
+                      />
+                    </div>
+                    <input
+                      type="number"
+                      min={5}
+                      max={720}
+                      className="admin-inline-input"
+                      value={blockForm.durationMin}
+                      onChange={(event) =>
+                        setBlockForm((prev) => ({ ...prev, durationMin: event.target.value }))
+                      }
+                      placeholder="Trajanje (min)"
+                      required
+                    />
+                    <textarea
+                      className="admin-inline-textarea"
+                      rows={3}
+                      placeholder="Napomena"
+                      value={blockForm.note}
+                      onChange={(event) => setBlockForm((prev) => ({ ...prev, note: event.target.value }))}
+                    />
+                    <button type="submit" className="admin-template-link-btn" disabled={saving}>
+                      Sacuvaj blokadu
+                    </button>
+                  </form>
+                </>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   );

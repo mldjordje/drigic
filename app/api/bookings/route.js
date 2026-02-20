@@ -96,6 +96,7 @@ export async function POST(request) {
       quote,
     });
   } catch (error) {
+    const errorCode = String(error?.code || error?.cause?.code || "");
     const message = error?.message || "Booking failed.";
     if (message.includes("Requested slot is no longer available")) {
       return fail(409, message);
@@ -103,13 +104,15 @@ export async function POST(request) {
     if (message.includes("invalid or inactive")) {
       return fail(400, message);
     }
-    if (String(error?.code || "") === "23503") {
+    if (errorCode === "23503") {
       return fail(400, "Session is outdated. Log out and log in again.");
     }
-    if (String(error?.code || "") === "42P01") {
+    if (errorCode === "42P01") {
       return fail(500, "Database schema mismatch. Run latest migrations.");
     }
     console.error("[bookings.create] unexpected error", error);
-    return fail(500, "Booking failed unexpectedly. Please retry.");
+    return fail(500, "Booking failed unexpectedly. Please retry.", {
+      code: errorCode || null,
+    });
   }
 }

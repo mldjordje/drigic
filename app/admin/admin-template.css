@@ -214,6 +214,10 @@
   gap: 12px;
 }
 
+.admin-calendar-layout--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .admin-calendar-grid-wrap {
   overflow: auto;
 }
@@ -267,6 +271,18 @@
 .admin-calendar-cell {
   border-right: 1px solid rgba(217, 232, 248, 0.12);
   border-bottom: 1px solid rgba(217, 232, 248, 0.12);
+}
+
+.admin-calendar-cell-btn {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.admin-calendar-cell-btn:hover {
+  background: rgba(217, 232, 248, 0.08);
 }
 
 .admin-calendar-cell.is-weekend {
@@ -387,6 +403,36 @@
 .admin-calendar-service-option span {
   font-size: 12px;
   color: #e8f1ff;
+}
+
+.admin-calendar-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.admin-calendar-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(1, 4, 9, 0.66);
+}
+
+.admin-calendar-modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(760px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+}
+
+.admin-calendar-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 @media (max-width: 960px) {
