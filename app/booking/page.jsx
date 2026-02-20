@@ -358,18 +358,17 @@ const slotButtonStyle = {
 };
 
 const selectedSlotButtonStyle = {
-  background: "#d9e8f8",
-  color: "#102844",
-  borderColor: "#d9e8f8",
+  background: "rgba(20, 38, 61, 0.95)",
+  color: "#f4f8ff",
+  borderColor: "rgba(217,232,248,0.8)",
 };
 
 const primaryButtonStyle = {
   borderRadius: 10,
   border: "1px solid rgba(217,232,248,0.6)",
-  background: "#d9e8f8",
-  color: "#102844",
+  background: "rgba(20, 38, 61, 0.95)",
+  color: "#f4f8ff",
   padding: "10px 14px",
   fontWeight: 700,
   cursor: "pointer",
 };
-

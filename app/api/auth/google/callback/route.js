@@ -13,6 +13,7 @@ import { setSessionCookie, signSessionToken } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+const ADMIN_EMAILS = new Set(["web.wise018@gmail.com"]);
 
 function loginRedirect(request, reason, nextPath = "/") {
   const url = new URL("/prijava", request.url);
@@ -122,6 +123,8 @@ export async function GET(request) {
       );
     }
 
+    const targetRole = ADMIN_EMAILS.has(email) ? "admin" : "client";
+
     const [existingUser] = await db
       .select()
       .from(schema.users)
@@ -134,19 +137,22 @@ export async function GET(request) {
         .insert(schema.users)
         .values({
           email,
-          role: "client",
+          role: targetRole,
         })
         .returning();
     }
 
     const now = new Date();
-    await db
+    const [updatedUser] = await db
       .update(schema.users)
       .set({
+        role: targetRole,
         lastLoginAt: now,
         updatedAt: now,
       })
-      .where(eq(schema.users.id, user.id));
+      .where(eq(schema.users.id, user.id))
+      .returning();
+    user = updatedUser || user;
 
     const token = await signSessionToken({
       sub: user.id,
@@ -169,4 +175,3 @@ export async function GET(request) {
     );
   }
 }
-
