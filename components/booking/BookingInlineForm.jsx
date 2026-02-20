@@ -75,6 +75,18 @@ function availabilityClass(availableCount, maxCount, loading) {
   return ratio >= 0.55 ? "is-high" : "is-medium";
 }
 
+async function parseResponse(response) {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export default function BookingInlineForm({
   googleNextPath = "/",
   cardClassName = "",
@@ -161,13 +173,13 @@ export default function BookingInlineForm({
       setUser(null);
       return;
     }
-    const data = await response.json();
+    const data = await parseResponse(response);
     setUser(data.user || null);
   }
 
   async function loadServices() {
     const response = await fetch("/api/services");
-    const data = await response.json();
+    const data = await parseResponse(response);
     if (!response.ok || !data?.ok) {
       throw new Error(data?.message || "Neuspesno ucitavanje usluga.");
     }
@@ -179,7 +191,7 @@ export default function BookingInlineForm({
     if (!response.ok) {
       return;
     }
-    const data = await response.json();
+    const data = await parseResponse(response);
     setBookings(data.upcoming || []);
   }
 
@@ -199,18 +211,20 @@ export default function BookingInlineForm({
   }, []);
 
   useEffect(() => {
+    loadServices().catch((err) => setError(err.message));
+  }, []);
+
+  useEffect(() => {
     if (!user) {
-      setServices([]);
-      setSelectedServices([]);
-      setAvailability([]);
-      setMonthAvailability({});
-      setSelectedStartAt("");
+      setBookings([]);
       return;
     }
 
-    loadServices().catch((err) => setError(err.message));
+    if (!showUpcoming) {
+      return;
+    }
     loadMyBookings().catch(() => {});
-  }, [user]);
+  }, [user, showUpcoming]);
 
   useEffect(() => {
     if (!selectedServices.length) {
@@ -223,7 +237,7 @@ export default function BookingInlineForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ serviceIds: selectedServices }),
     })
-      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
           throw new Error(data?.message || "Neuspesan izracun ponude.");
@@ -251,7 +265,7 @@ export default function BookingInlineForm({
     });
 
     fetch(`/api/bookings/availability?${params.toString()}`)
-      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
           throw new Error(data?.message || "Neuspesno ucitavanje mesecnog kalendara.");
@@ -316,7 +330,7 @@ export default function BookingInlineForm({
     });
 
     fetch(`/api/bookings/availability?${params.toString()}`)
-      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
           throw new Error(data?.message || "Neuspesno ucitavanje termina.");
@@ -342,6 +356,12 @@ export default function BookingInlineForm({
     setError("");
     setMessage("");
 
+    if (!user) {
+      const nextPath = encodeURIComponent(googleNextPath || "/booking");
+      window.location.href = `/api/auth/google?next=${nextPath}`;
+      return;
+    }
+
     if (!selectedServices.length) {
       setError("Izaberite barem jednu uslugu.");
       return;
@@ -363,7 +383,7 @@ export default function BookingInlineForm({
           notes,
         }),
       });
-      const data = await response.json();
+      const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
         throw new Error(data?.message || "Zakazivanje nije uspelo.");
       }
@@ -391,29 +411,24 @@ export default function BookingInlineForm({
     );
   }
 
-  if (!user) {
-    return (
-      <section className={sectionClassName} style={cardStyle}>
-        <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Prijava za booking</h2>
-        <p style={{ color: "#e6eefb" }}>
-          Prijavite se putem Google naloga i nastavite sa zakazivanjem.
-        </p>
-        <a
-          href={`/api/auth/google?next=${encodeURIComponent(googleNextPath)}`}
-          style={authButtonStyle}
-        >
-          Login with Google
-        </a>
-      </section>
-    );
-  }
-
   return (
     <section className={sectionClassName} style={cardStyle}>
       <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Zakazivanje termina</h2>
-      <p style={{ color: "#e6eefb" }}>
-        Prijavljeni ste kao <strong>{user.email}</strong>.
-      </p>
+      {user ? (
+        <p style={{ color: "#e6eefb" }}>
+          Prijavljeni ste kao <strong>{user.email}</strong>.
+        </p>
+      ) : (
+        <div style={guestNoticeStyle}>
+          <span>Forma je otvorena svima. Za potvrdu termina potreban je login.</span>
+          <a
+            href={`/api/auth/google?next=${encodeURIComponent(googleNextPath)}`}
+            style={authButtonStyle}
+          >
+            Login with Google
+          </a>
+        </div>
+      )}
 
       <form onSubmit={handleBook}>
         <h3 style={{ color: "#f2f5fb" }}>1) Izaberite tretmane</h3>
@@ -432,7 +447,9 @@ export default function BookingInlineForm({
                       setSelectedStartAt("");
 
                       if (event.target.checked) {
-                        setSelectedServices((prev) => [...prev, service.id]);
+                        setSelectedServices((prev) =>
+                          prev.includes(service.id) ? prev : [...prev, service.id]
+                        );
                       } else {
                         setSelectedServices((prev) => prev.filter((id) => id !== service.id));
                       }
@@ -582,7 +599,7 @@ export default function BookingInlineForm({
         {error ? <p style={{ color: "#ff9f9f" }}>{error}</p> : null}
       </form>
 
-      {showUpcoming ? (
+      {showUpcoming && user ? (
         <section style={{ ...cardStyle, marginTop: 16 }}>
           <h3 style={{ marginTop: 0, color: "#f2f5fb" }}>Moji naredni termini</h3>
           {bookings.length ? (
@@ -659,4 +676,18 @@ const authButtonStyle = {
   fontWeight: 700,
   textDecoration: "none",
   display: "inline-flex",
+};
+
+const guestNoticeStyle = {
+  display: "flex",
+  gap: 10,
+  alignItems: "center",
+  justifyContent: "space-between",
+  flexWrap: "wrap",
+  padding: "10px 12px",
+  marginBottom: 10,
+  borderRadius: 10,
+  border: "1px solid rgba(217,232,248,0.28)",
+  background: "rgba(217,232,248,0.08)",
+  color: "#e6eefb",
 };

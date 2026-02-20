@@ -251,9 +251,19 @@
     padding: 12px 16px;
     border: 1px solid rgba(217, 232, 248, 0.6);
     background: rgba(18, 29, 45, 0.8);
-    color: #eaf2ff;
+    color: #f4f8ff !important;
     text-transform: uppercase;
     justify-content: center;
+  }
+
+  .clinic-header-actions .search-btn.clinic-glow-btn .link-effect {
+    color: #f4f8ff !important;
+  }
+
+  .clinic-header-actions .search-btn.clinic-glow-btn .effect-1 {
+    color: #f4f8ff !important;
+    -webkit-text-fill-color: #f4f8ff !important;
+    opacity: 1 !important;
   }
 
   .hero-cta-group {
@@ -285,6 +295,16 @@
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
+    color: #f4f8ff !important;
+    -webkit-text-fill-color: #f4f8ff !important;
+    opacity: 1 !important;
+  }
+
+  .mobile-cta-link:visited,
+  .mobile-cta-link:hover,
+  .mobile-cta-link:focus {
+    color: #f4f8ff !important;
+    -webkit-text-fill-color: #f4f8ff !important;
   }
 
   .clinic-footer-cta-wrap {

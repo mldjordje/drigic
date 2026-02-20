@@ -19,79 +19,91 @@ const payloadSchema = z.object({
 });
 
 export async function POST(request) {
-  const auth = await requireUser(request);
-  if (auth.error) {
-    return auth.error;
-  }
-
-  const body = await readJson(request);
-  const parsed = payloadSchema.safeParse(body);
-  if (!parsed.success) {
-    return fail(400, "Invalid payload", parsed.error.flatten());
-  }
-
-  const db = getDb();
-  const startAt = new Date(parsed.data.startAt);
-  const settings = await getClinicSettings();
-
-  if (!isWithinBookingWindow(startAt, settings.bookingWindowDays)) {
-    return fail(400, `Booking must be within next ${settings.bookingWindowDays} days.`);
-  }
-
-  const quote = await resolveQuote(parsed.data.serviceIds);
-  const endsAt = addMinutes(startAt, quote.totalDurationMin);
-  const employee = await getDefaultEmployee();
-
-  const createdBooking = await db.transaction(async (tx) => {
-    const conflicts = await findConflicts({
-      employeeId: employee.id,
-      startsAt: startAt.toISOString(),
-      endsAt: endsAt.toISOString(),
-      tx,
-    });
-
-    if (conflicts.length) {
-      throw new Error("Requested slot is no longer available.");
+  try {
+    const auth = await requireUser(request);
+    if (auth.error) {
+      return auth.error;
     }
 
-    const [booking] = await tx
-      .insert(schema.bookings)
-      .values({
-        userId: auth.user.id,
+    const body = await readJson(request);
+    const parsed = payloadSchema.safeParse(body);
+    if (!parsed.success) {
+      return fail(400, "Invalid payload", parsed.error.flatten());
+    }
+
+    const db = getDb();
+    const startAt = new Date(parsed.data.startAt);
+    const settings = await getClinicSettings();
+
+    if (!isWithinBookingWindow(startAt, settings.bookingWindowDays)) {
+      return fail(400, `Booking must be within next ${settings.bookingWindowDays} days.`);
+    }
+
+    const quote = await resolveQuote(parsed.data.serviceIds);
+    const endsAt = addMinutes(startAt, quote.totalDurationMin);
+    const employee = await getDefaultEmployee();
+
+    const createdBooking = await db.transaction(async (tx) => {
+      const conflicts = await findConflicts({
         employeeId: employee.id,
-        startsAt,
-        endsAt,
-        status: "confirmed",
-        totalDurationMin: quote.totalDurationMin,
-        totalPriceRsd: quote.totalPriceRsd,
-        notes: parsed.data.notes || null,
-      })
-      .returning();
+        startsAt: startAt.toISOString(),
+        endsAt: endsAt.toISOString(),
+        tx,
+      });
 
-    await tx.insert(schema.bookingItems).values(
-      quote.items.map((item) => ({
+      if (conflicts.length) {
+        throw new Error("Requested slot is no longer available.");
+      }
+
+      const [booking] = await tx
+        .insert(schema.bookings)
+        .values({
+          userId: auth.user.id,
+          employeeId: employee.id,
+          startsAt,
+          endsAt,
+          status: "confirmed",
+          totalDurationMin: quote.totalDurationMin,
+          totalPriceRsd: quote.totalPriceRsd,
+          notes: parsed.data.notes || null,
+        })
+        .returning();
+
+      await tx.insert(schema.bookingItems).values(
+        quote.items.map((item) => ({
+          bookingId: booking.id,
+          serviceId: item.serviceId,
+          serviceNameSnapshot: item.name,
+          durationMinSnapshot: item.durationMin,
+          priceRsdSnapshot: item.finalPriceRsd,
+        }))
+      );
+
+      await tx.insert(schema.bookingStatusLog).values({
         bookingId: booking.id,
-        serviceId: item.serviceId,
-        serviceNameSnapshot: item.name,
-        durationMinSnapshot: item.durationMin,
-        priceRsdSnapshot: item.finalPriceRsd,
-      }))
-    );
+        previousStatus: null,
+        nextStatus: "confirmed",
+        changedByUserId: auth.user.id,
+        note: "Booking created online",
+      });
 
-    await tx.insert(schema.bookingStatusLog).values({
-      bookingId: booking.id,
-      previousStatus: null,
-      nextStatus: "confirmed",
-      changedByUserId: auth.user.id,
-      note: "Booking created online",
+      return booking;
     });
 
-    return booking;
-  });
-
-  return created({
-    ok: true,
-    booking: createdBooking,
-    quote,
-  });
+    return created({
+      ok: true,
+      booking: createdBooking,
+      quote,
+    });
+  } catch (error) {
+    const message = error?.message || "Booking failed.";
+    if (message.includes("Requested slot is no longer available")) {
+      return fail(409, message);
+    }
+    if (message.includes("invalid or inactive")) {
+      return fail(400, message);
+    }
+    console.error("[bookings.create] unexpected error", error);
+    return fail(500, "Booking failed unexpectedly. Please retry.");
+  }
 }
