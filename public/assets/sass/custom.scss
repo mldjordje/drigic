@@ -1,0 +1,124 @@
+.z-0 {
+  z-index: 0 !important;
+}
+.mw-100 {
+  max-width: 100vw !important;
+}
+.slick-track .sliderItem {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  padding-right: calc(var(--bs-gutter-x) / 2);
+  padding-left: calc(var(--bs-gutter-x) / 2);
+  margin-top: var(--bs-gutter-y);
+}
+.slick-track .sliderItem2 {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  padding-right: calc(1.5rem / 2);
+  padding-left: calc(1.5rem / 2);
+  margin-top: var(--bs-gutter-y);
+}
+.react-tooltip {
+  padding: 0px !important;
+  border-radius: 3px;
+  z-index: 200;
+  font-size: 90%;
+  width: max-content;
+  background: none !important;
+  opacity: 1 !important;
+  & > * {
+    padding: 0px !important;
+    background: none !important;
+  }
+}
+
+.por {
+  z-index: 990;
+  position: relative;
+}
+.overflow-hidden {
+  overflow: hidden !important;
+  transition: 0.5s;
+}
+.activeMenu {
+  color: var(--success-color) !important;
+}
+.activeMenu2 {
+  color: var(--success-color) !important;
+  font-weight: 600 !important;
+  font-size: larger !important;
+}
+.header-dark.header-layout2 {
+  .header-logo,
+  .search-btn {
+    img {
+      filter: invert(1);
+    }
+  }
+}
+.project-area-11 .slick-slide {
+  padding-left: 12px;
+  padding-right: 12px;
+  & > div {
+    height: 100%;
+    .col-lg-4 {
+      height: 100%;
+    }
+  }
+}
+
+.project-area-12 .slick-slide {
+  width: 100%;
+  height: 100%;
+  & > div {
+    height: 100%;
+    .col-lg-4 {
+      height: 100%;
+    }
+  }
+}
+.product-thumb-slider .slick-slide > div {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.related-products .slick-slide > div {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+// .product-thumb-slider {
+//   max-width: 100%;
+//   overflow: hidden !important;
+// }
+.wc_payment_method {
+  &.active {
+    .desc {
+      display: block !important;
+    }
+  }
+}
+.rc-slider .rc-slider-handle {
+  border: solid 2px var(--title-color);
+  opacity: 1 !important;
+  background-color: #fff !important;
+  width: 20px;
+  border-radius: 4px !important;
+  height: 20px;
+
+  margin-top: -9px;
+}
+
+.rc-slider .rc-slider-handle:hover {
+  border-color: var(--title-color);
+}
+
+.rc-slider .rc-slider-handle-dragging {
+  border-color: var(--title-color) !important;
+  box-shadow: none !important;
+}
+
+.rc-slider .rc-slider-track,
+.rc-slider .rc-slider-tracks {
+  background-color: var(--title-color);
+}
