@@ -6,6 +6,7 @@ import Projects from "@/components/homes/home-5/Projects";
 import Steps from "@/components/homes/home-5/Steps";
 import Testimonials from "@/components/homes/home-5/Testimonials";
 import Video from "@/components/homes/home-5/Video";
+import BookingSection from "@/components/homes/home-5/BookingSection";
 import LandingAnimator from "@/components/homes/home-5/LandingAnimator";
 import React from "react";
 import Footer5 from "@/components/footers/Footer5";
@@ -22,6 +23,7 @@ export default function HomePage5() {
       <Header4 />
       <AnnouncementBar />
       <Hero />
+      <BookingSection />
       <Steps />
       <About />
       <Projects />
