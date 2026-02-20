@@ -20,6 +20,11 @@ const lockedModules = [
   { label: "Napredna analitika", reason: "Nije odobreno" },
 ];
 
+const quickLinks = [
+  { href: "/booking", label: "Booking forma", icon: "[GO]" },
+  { href: "/api/auth/google?next=/admin", label: "Promeni nalog", icon: "[AU]" },
+];
+
 export default function AdminShell({ children }) {
   const pathname = usePathname();
 
@@ -53,6 +58,18 @@ export default function AdminShell({ children }) {
         </div>
 
         <div className="admin-template-group">
+          <p className="admin-template-group-title">Navigacija</p>
+          <nav className="admin-template-nav">
+            {quickLinks.map((item) => (
+              <Link key={item.href} href={item.href} className="admin-template-nav-item">
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="admin-template-group">
           <p className="admin-template-group-title">Zakljucano</p>
           <div className="admin-template-nav">
             {lockedModules.map((item) => (
@@ -72,22 +89,6 @@ export default function AdminShell({ children }) {
       </aside>
 
       <div className="admin-template-main">
-        <header className="admin-template-topbar">
-          <div>
-            <h2>Admin panel</h2>
-            <p>Google auth aktivan, neodobrene funkcije su zakljucane.</p>
-          </div>
-
-          <div className="admin-template-topbar-actions">
-            <Link href="/booking" className="admin-template-link-btn">
-              Booking forma
-            </Link>
-            <Link href="/api/auth/google?next=/admin" className="admin-template-link-btn">
-              Promeni nalog
-            </Link>
-          </div>
-        </header>
-
         <main className="admin-template-content">{children}</main>
       </div>
     </div>

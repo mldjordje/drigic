@@ -220,6 +220,8 @@
 
 .admin-calendar-grid-wrap {
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
 }
 
 .admin-calendar-grid {
@@ -279,10 +281,23 @@
   background: transparent;
   padding: 0;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
+  touch-action: manipulation;
 }
 
 .admin-calendar-cell-btn:hover {
   background: rgba(217, 232, 248, 0.08);
+}
+
+.admin-calendar-cell-btn.is-open {
+  background: rgba(217, 232, 248, 0.02);
+}
+
+.admin-calendar-cell-mark {
+  color: rgba(217, 232, 248, 0.7);
+  font-size: 12px;
+  line-height: 1;
 }
 
 .admin-calendar-cell.is-weekend {
@@ -301,6 +316,7 @@
   cursor: pointer;
   overflow: hidden;
   margin: 2px;
+  z-index: 2;
 }
 
 .admin-calendar-item strong {
@@ -450,6 +466,8 @@
   }
 
   .admin-calendar-grid {
-    min-width: 980px;
+    --time-col: 66px;
+    min-width: 720px;
+    grid-template-columns: var(--time-col) repeat(7, minmax(92px, 1fr));
   }
 }

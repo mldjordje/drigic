@@ -518,47 +518,6 @@ export default function AdminKalendarPage() {
 
   return (
     <section className="admin-calendar-page">
-      <div className="admin-card admin-calendar-toolbar">
-        <div>
-          <h2 style={{ marginTop: 0, marginBottom: 4 }}>Admin kalendar</h2>
-          <p style={{ margin: 0, color: "#bed0e8" }}>
-            {weekLabel} | termini: {bookingCount} | blokade: {blockCount} | potvrdjeni: {confirmedCount} | na cekanju: {pendingCount}
-          </p>
-        </div>
-        <div className="admin-calendar-toolbar-actions">
-          <button
-            type="button"
-            className="admin-template-link-btn"
-            onClick={() => setWeekStart((prev) => addDays(prev, -7))}
-          >
-            Prethodna nedelja
-          </button>
-          <button
-            type="button"
-            className="admin-template-link-btn"
-            onClick={() => setWeekStart(getMonday(new Date()))}
-          >
-            Tekuca nedelja
-          </button>
-          <button
-            type="button"
-            className="admin-template-link-btn"
-            onClick={() => setWeekStart((prev) => addDays(prev, 7))}
-          >
-            Sledeca nedelja
-          </button>
-          <input
-            type="date"
-            value={toDateInput(weekStart)}
-            onChange={(event) => setWeekStart(getMonday(new Date(`${event.target.value}T12:00:00`)))}
-            className="admin-inline-input"
-          />
-        </div>
-      </div>
-
-      {message ? <p style={{ color: "#9be39f" }}>{message}</p> : null}
-      {error ? <p style={{ color: "#ffabab" }}>{error}</p> : null}
-
       <div className="admin-calendar-layout admin-calendar-layout--single">
         <div className="admin-card admin-calendar-grid-wrap">
           <div
@@ -595,11 +554,16 @@ export default function AdminKalendarPage() {
                     type="button"
                     key={`cell-${rowIndex}-${dayIndex}`}
                     className={`admin-calendar-cell admin-calendar-cell-btn ${
+                      existingItem ? "is-filled" : "is-open"
+                    } ${
                       dayIndex >= 5 ? "is-weekend" : ""
                     }`}
                     onClick={() => handleSlotSelect(dateValue, slot, existingItem)}
                     title={`${dateValue} ${slot}`}
-                  />
+                    aria-label={`${dateValue} u ${slot}${existingItem ? ", zauzeto" : ", slobodno"}`}
+                  >
+                    {!existingItem ? <span className="admin-calendar-cell-mark">+</span> : null}
+                  </button>
                 );
               })
             )}
@@ -946,6 +910,47 @@ export default function AdminKalendarPage() {
           </div>
         ) : null}
       </div>
+
+      <div className="admin-card admin-calendar-toolbar">
+        <div>
+          <h2 style={{ marginTop: 0, marginBottom: 4 }}>Admin kalendar</h2>
+          <p style={{ margin: 0, color: "#bed0e8" }}>
+            {weekLabel} | termini: {bookingCount} | blokade: {blockCount} | potvrdjeni: {confirmedCount} | na cekanju: {pendingCount}
+          </p>
+        </div>
+        <div className="admin-calendar-toolbar-actions">
+          <button
+            type="button"
+            className="admin-template-link-btn"
+            onClick={() => setWeekStart((prev) => addDays(prev, -7))}
+          >
+            Prethodna nedelja
+          </button>
+          <button
+            type="button"
+            className="admin-template-link-btn"
+            onClick={() => setWeekStart(getMonday(new Date()))}
+          >
+            Tekuca nedelja
+          </button>
+          <button
+            type="button"
+            className="admin-template-link-btn"
+            onClick={() => setWeekStart((prev) => addDays(prev, 7))}
+          >
+            Sledeca nedelja
+          </button>
+          <input
+            type="date"
+            value={toDateInput(weekStart)}
+            onChange={(event) => setWeekStart(getMonday(new Date(`${event.target.value}T12:00:00`)))}
+            className="admin-inline-input"
+          />
+        </div>
+      </div>
+
+      {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
+      {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
     </section>
   );
 }
