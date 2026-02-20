@@ -13,7 +13,10 @@ import { setSessionCookie, signSessionToken } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const ADMIN_EMAILS = new Set(["web.wise018@gmail.com"]);
+const ADMIN_EMAILS = new Set([
+  "web.wise018@gmail.com",
+  "igic.nikola8397@gmail.com",
+]);
 
 function loginRedirect(request, reason, nextPath = "/") {
   const url = new URL("/prijava", request.url);
