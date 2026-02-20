@@ -1,22 +1,40 @@
 ﻿"use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
 export default function Header4() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const lastScrollYRef = useRef(0);
-  const navItems = [
-    { href: "#hero", label: "Početna" },
-    { href: "#tretmani", label: "Tretmani" },
-    { href: "#osnivac", label: "Osnivač" },
-    { href: "#rezultati", label: "Rezultati" },
-    { href: "#aktuelnosti", label: "Aktuelnosti" },
-    { href: "/booking", label: "Zakaži" },
-    { href: "#konsultacije", label: "Kontakt" },
-  ];
+
+  const navItems = useMemo(() => {
+    const items = [
+      { href: "#hero", label: "Pocetna" },
+      { href: "#tretmani", label: "Tretmani" },
+      { href: "#osnivac", label: "Osnivac" },
+      { href: "#rezultati", label: "Rezultati" },
+      { href: "#aktuelnosti", label: "Aktuelnosti" },
+      { href: "#booking", label: "Zakazi" },
+      { href: "#konsultacije", label: "Kontakt" },
+    ];
+
+    if (currentUser) {
+      items.splice(5, 0, { href: "#beauty-pass", label: "Beauty Pass" });
+    }
+
+    return items;
+  }, [currentUser]);
+
+  useEffect(() => {
+    fetch("/api/me/profile")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setCurrentUser(data?.user || null))
+      .catch(() => setCurrentUser(null));
+  }, []);
 
   useEffect(() => {
     const handleDocumentClick = (event) => {
@@ -64,26 +82,14 @@ export default function Header4() {
 
   return (
     <>
-      <div
-        className={`mobile-menu-wrapper ${
-          mobileMenuOpen ? "body-visible" : ""
-        } `}
-      >
+      <div className={`mobile-menu-wrapper ${mobileMenuOpen ? "body-visible" : ""} `}>
         <div className="mobile-menu-area">
-          <button
-            className="menu-toggle"
-            onClick={() => setMobileMenuOpen(false)}
-          >
+          <button className="menu-toggle" onClick={() => setMobileMenuOpen(false)}>
             <i className="fas fa-times"></i>
           </button>
           <div className="mobile-logo">
             <Link scroll={false} href="/">
-              <Image
-                width={150}
-                height={60}
-                src="/assets/img/logo.png"
-                alt="Dr Igić logo"
-              />
+              <Image width={150} height={60} src="/assets/img/logo.png" alt="Dr Igic logo" />
             </Link>
           </div>
           <div className="mobile-menu">
@@ -102,25 +108,27 @@ export default function Header4() {
             </ul>
           </div>
           <div className="mobile-cta-buttons">
-            <Link
-              scroll={false}
-              href="/prijava?next=/booking"
-              className="mobile-cta-link clinic-glow-btn"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Login
-            </Link>
-            <Link
-              scroll={false}
-              href="/booking"
-              className="mobile-cta-link clinic-glow-btn"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Zakaži
-            </Link>
+            {currentUser ? (
+              <>
+                <a href="#beauty-pass" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+                  Beauty Pass
+                </a>
+                <a href="#booking" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+                  Zakazi
+                </a>
+              </>
+            ) : (
+              <GooglePopupButton
+                className="mobile-cta-link clinic-glow-btn"
+                nextPath="/"
+                onBeforeOpen={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </GooglePopupButton>
+            )}
           </div>
           <div className="sidebar-wrap">
-            <h6>Dr Nikola Igić</h6>
+            <h6>Dr Nikola Igic</h6>
             <h6>Klinika estetske medicine</h6>
           </div>
           <div className="sidebar-wrap">
@@ -141,12 +149,7 @@ export default function Header4() {
                 <div className="col-auto">
                   <div className="header-logo">
                     <Link scroll={false} href="/">
-                      <Image
-                        width={150}
-                        height={60}
-                        src="/assets/img/logo.png"
-                        alt="Dr Igić logo"
-                      />
+                      <Image width={150} height={60} src="/assets/img/logo.png" alt="Dr Igic logo" />
                     </Link>
                   </div>
                 </div>
@@ -180,26 +183,40 @@ export default function Header4() {
                 </div>
                 <div className="col-auto d-none d-lg-block">
                   <div className="header-button ms-0 clinic-header-actions">
-                    <Link
-                      scroll={false}
-                      href="/prijava?next=/booking"
-                      className="search-btn clinic-glow-btn"
-                    >
-                      <span className="link-effect">
-                        <span className="effect-1">LOGIN</span>
-                        <span className="effect-1">LOGIN</span>
-                      </span>
-                    </Link>
-                    <Link
-                      scroll={false}
-                      href="/booking"
-                      className="search-btn clinic-glow-btn"
-                    >
-                      <span className="link-effect">
-                        <span className="effect-1">ZAKAŽI TERMIN</span>
-                        <span className="effect-1">ZAKAŽI TERMIN</span>
-                      </span>
-                    </Link>
+                    {currentUser ? (
+                      <>
+                        {currentUser.role === "admin" ? (
+                          <Link scroll={false} href="/admin" className="search-btn clinic-glow-btn">
+                            <span className="link-effect">
+                              <span className="effect-1">ADMIN</span>
+                              <span className="effect-1">ADMIN</span>
+                            </span>
+                          </Link>
+                        ) : null}
+                        <a href="#beauty-pass" className="search-btn clinic-glow-btn">
+                          <span className="link-effect">
+                            <span className="effect-1">BEAUTY PASS</span>
+                            <span className="effect-1">BEAUTY PASS</span>
+                          </span>
+                        </a>
+                      </>
+                    ) : (
+                      <GooglePopupButton className="search-btn clinic-glow-btn" nextPath="/">
+                        <span className="link-effect">
+                          <span className="effect-1">LOGIN</span>
+                          <span className="effect-1">LOGIN</span>
+                        </span>
+                      </GooglePopupButton>
+                    )}
+
+                    {currentUser ? (
+                      <a href="#booking" className="search-btn clinic-glow-btn">
+                        <span className="link-effect">
+                          <span className="effect-1">ZAKAZI TERMIN</span>
+                          <span className="effect-1">ZAKAZI TERMIN</span>
+                        </span>
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               </div>

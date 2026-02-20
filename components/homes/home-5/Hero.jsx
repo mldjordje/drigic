@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import Slider from "react-slick";
+import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
 export default function Hero() {
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function Hero() {
                     <Link
                       scroll={false}
                       className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse clinic-glow-btn"
-                      href="/booking"
+                      href="#booking"
                     >
                       <span className="link-effect">
                         <span className="effect-1">
@@ -69,16 +70,15 @@ export default function Hero() {
                         </span>
                       </span>
                     </Link>
-                    <Link
-                      scroll={false}
+                    <GooglePopupButton
                       className="btn bg-theme text-title clinic-login-hero-btn clinic-glow-btn"
-                      href="/prijava?next=/booking"
+                      nextPath="/"
                     >
                       <span className="link-effect">
                         <span className="effect-1">LOGIN</span>
                         <span className="effect-1">LOGIN</span>
                       </span>
-                    </Link>
+                    </GooglePopupButton>
                   </div>
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default function Hero() {
                     <Link
                       scroll={false}
                       className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse clinic-glow-btn"
-                      href="/booking"
+                      href="#booking"
                     >
                       <span className="link-effect">
                         <span className="effect-1">
@@ -127,16 +127,15 @@ export default function Hero() {
                         </span>
                       </span>
                     </Link>
-                    <Link
-                      scroll={false}
+                    <GooglePopupButton
                       className="btn bg-theme text-title clinic-login-hero-btn clinic-glow-btn"
-                      href="/prijava?next=/booking"
+                      nextPath="/"
                     >
                       <span className="link-effect">
                         <span className="effect-1">LOGIN</span>
                         <span className="effect-1">LOGIN</span>
                       </span>
-                    </Link>
+                    </GooglePopupButton>
                   </div>
                 </div>
               </div>

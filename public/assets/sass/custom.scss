@@ -202,6 +202,13 @@
     border-radius: 999px;
   }
 
+  button.clinic-glow-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    font-family: inherit;
+    line-height: inherit;
+  }
+
   .clinic-glow-btn > * {
     position: relative;
     z-index: 2;
@@ -298,6 +305,13 @@
     color: #f4f8ff !important;
     -webkit-text-fill-color: #f4f8ff !important;
     opacity: 1 !important;
+  }
+
+  .clinic-login-lock {
+    text-align: center;
+    display: grid;
+    gap: 12px;
+    justify-items: center;
   }
 
   .mobile-cta-link:visited,

@@ -182,116 +182,115 @@ export async function POST(request) {
   const endsAt = addMinutes(startAt, quote.totalDurationMin);
   const finalStatus = payload.status || "confirmed";
 
-  const createdBooking = await db.transaction(async (tx) => {
-    const conflicts = await findConflicts({
-      employeeId: employee.id,
-      startsAt: startAt.toISOString(),
-      endsAt: endsAt.toISOString(),
-      tx,
-    });
-    if (conflicts.length) {
-      throw new Error("Selected slot overlaps with existing booking/block.");
-    }
+  const conflicts = await findConflicts({
+    employeeId: employee.id,
+    startsAt: startAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  });
+  if (conflicts.length) {
+    return fail(409, "Selected slot overlaps with existing booking/block.");
+  }
 
-    const userFilter = [];
-    if (email) {
-      userFilter.push(eq(schema.users.email, email));
-    }
-    if (phone) {
-      userFilter.push(eq(schema.users.phone, phone));
-    }
+  const userFilter = [];
+  if (email) {
+    userFilter.push(eq(schema.users.email, email));
+  }
+  if (phone) {
+    userFilter.push(eq(schema.users.phone, phone));
+  }
 
-    let user = null;
-    if (userFilter.length === 1) {
-      [user] = await tx.select().from(schema.users).where(userFilter[0]).limit(1);
-    } else if (userFilter.length > 1) {
-      [user] = await tx
-        .select()
-        .from(schema.users)
-        .where(or(...userFilter))
-        .limit(1);
-    }
-
-    if (!user) {
-      const fallbackEmail =
-        email || `phone-${String(phone || Date.now()).replace(/\W+/g, "")}@drigic.local`;
-      [user] = await tx
-        .insert(schema.users)
-        .values({
-          email: fallbackEmail,
-          phone,
-          role: "client",
-        })
-        .returning();
-    } else {
-      const updates = { updatedAt: new Date() };
-      if (phone && !user.phone) {
-        updates.phone = phone;
-      }
-      if (Object.keys(updates).length > 1) {
-        const [updatedUser] = await tx
-          .update(schema.users)
-          .set(updates)
-          .where(eq(schema.users.id, user.id))
-          .returning();
-        user = updatedUser || user;
-      }
-    }
-
-    const [profile] = await tx
+  let user = null;
+  if (userFilter.length === 1) {
+    [user] = await db.select().from(schema.users).where(userFilter[0]).limit(1);
+  } else if (userFilter.length > 1) {
+    [user] = await db
       .select()
-      .from(schema.profiles)
-      .where(eq(schema.profiles.userId, user.id))
+      .from(schema.users)
+      .where(or(...userFilter))
       .limit(1);
-    if (!profile) {
-      await tx.insert(schema.profiles).values({
-        userId: user.id,
-        fullName: payload.clientName,
-      });
-    } else if (payload.clientName && profile.fullName !== payload.clientName) {
-      await tx
-        .update(schema.profiles)
-        .set({
-          fullName: payload.clientName,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.profiles.id, profile.id));
-    }
+  }
 
-    const [booking] = await tx
-      .insert(schema.bookings)
+  if (!user) {
+    const fallbackEmail =
+      email || `phone-${String(phone || Date.now()).replace(/\W+/g, "")}@drigic.local`;
+    [user] = await db
+      .insert(schema.users)
       .values({
-        userId: user.id,
-        employeeId: employee.id,
-        startsAt: startAt,
-        endsAt,
-        status: finalStatus,
-        totalDurationMin: quote.totalDurationMin,
-        totalPriceRsd: quote.totalPriceRsd,
-        notes: payload.notes || "Booked by admin",
+        email: fallbackEmail,
+        phone,
+        role: "client",
       })
       .returning();
+  } else {
+    const updates = { updatedAt: new Date() };
+    if (phone && !user.phone) {
+      updates.phone = phone;
+    }
+    if (Object.keys(updates).length > 1) {
+      const [updatedUser] = await db
+        .update(schema.users)
+        .set(updates)
+        .where(eq(schema.users.id, user.id))
+        .returning();
+      user = updatedUser || user;
+    }
+  }
 
-    await tx.insert(schema.bookingItems).values(
-      quote.items.map((item) => ({
-        bookingId: booking.id,
-        serviceId: item.serviceId,
-        serviceNameSnapshot: item.name,
-        durationMinSnapshot: item.durationMin,
-        priceRsdSnapshot: item.finalPriceRsd,
-      }))
-    );
+  const [profile] = await db
+    .select()
+    .from(schema.profiles)
+    .where(eq(schema.profiles.userId, user.id))
+    .limit(1);
+  if (!profile) {
+    await db.insert(schema.profiles).values({
+      userId: user.id,
+      fullName: payload.clientName,
+    });
+  } else if (payload.clientName && profile.fullName !== payload.clientName) {
+    await db
+      .update(schema.profiles)
+      .set({
+        fullName: payload.clientName,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.profiles.id, profile.id));
+  }
 
-    await tx.insert(schema.bookingStatusLog).values({
-      bookingId: booking.id,
+  const [createdBooking] = await db
+    .insert(schema.bookings)
+    .values({
+      userId: user.id,
+      employeeId: employee.id,
+      startsAt: startAt,
+      endsAt,
+      status: finalStatus,
+      totalDurationMin: quote.totalDurationMin,
+      totalPriceRsd: quote.totalPriceRsd,
+      notes: payload.notes || "Booked by admin",
+    })
+    .returning();
+
+  await db.insert(schema.bookingItems).values(
+    quote.items.map((item) => ({
+      bookingId: createdBooking.id,
+      serviceId: item.serviceId,
+      serviceNameSnapshot: item.name,
+      durationMinSnapshot: item.durationMin,
+      priceRsdSnapshot: item.finalPriceRsd,
+    }))
+  );
+
+  try {
+    await db.insert(schema.bookingStatusLog).values({
+      bookingId: createdBooking.id,
       previousStatus: null,
       nextStatus: finalStatus,
       changedByUserId: auth.user.id,
       note: "Booking created from admin calendar",
     });
-
-    return booking;
-  });
+  } catch (logError) {
+    console.error("[admin.bookings.create] status log insert failed", logError);
+  }
 
   return created({ ok: true, data: createdBooking, quote });
 }

@@ -6,6 +6,25 @@
   color: #f4f8ff;
 }
 
+.admin-template-root,
+.admin-template-root h1,
+.admin-template-root h2,
+.admin-template-root h3,
+.admin-template-root h4,
+.admin-template-root h5,
+.admin-template-root h6,
+.admin-template-root p,
+.admin-template-root span,
+.admin-template-root label,
+.admin-template-root li,
+.admin-template-root a,
+.admin-template-root strong,
+.admin-template-root small,
+.admin-template-root td,
+.admin-template-root th {
+  color: #f4f8ff;
+}
+
 .admin-template-sidebar {
   border-right: 1px solid rgba(217, 232, 248, 0.2);
   background: rgba(9, 15, 25, 0.86);
@@ -153,6 +172,18 @@
   color: #f4f8ff;
   padding: 9px 10px;
   margin-top: 6px;
+}
+
+.admin-template-root select,
+.admin-template-root option,
+.admin-template-root input,
+.admin-template-root textarea,
+.admin-template-root button {
+  color: #f4f8ff;
+}
+
+.admin-template-root option {
+  background: #101827;
 }
 
 .admin-inline-textarea {

@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
 export default function Footer5() {
   return (
@@ -9,35 +10,27 @@ export default function Footer5() {
         <div className="container">
           <div className="row align-items-center justify-content-between">
             <div className="col-lg-6">
-              <h2 className="footer-top-title clinic-reveal">Rezervišite konsultaciju kod Dr Igića</h2>
+              <h2 className="footer-top-title clinic-reveal">Rezervisite konsultaciju kod Dr Igica</h2>
             </div>
             <div className="col-lg-5">
               <div className="footer-top-wrap glass-panel clinic-reveal clinic-hover-raise">
                 <p className="mb-30">
                   Prvi korak ka prirodnoj i sigurnoj transformaciji je razgovor
-                  sa stručnjakom i personalizovan plan tretmana.
+                  sa strucnjakom i personalizovan plan tretmana.
                 </p>
                 <div className="clinic-footer-cta-wrap">
-                  <Link
-                    scroll={false}
-                    href="/booking"
-                    className="btn clinic-cta-pulse clinic-glow-btn"
-                  >
+                  <Link scroll={false} href="#booking" className="btn clinic-cta-pulse clinic-glow-btn">
                     <span className="link-effect">
-                      <span className="effect-1">ZAKAŽI ONLINE</span>
-                      <span className="effect-1">ZAKAŽI ONLINE</span>
+                      <span className="effect-1">ZAKAZI ONLINE</span>
+                      <span className="effect-1">ZAKAZI ONLINE</span>
                     </span>
                   </Link>
-                  <Link
-                    scroll={false}
-                    href="/prijava?next=/booking"
-                    className="btn clinic-glow-btn clinic-login-footer-btn"
-                  >
+                  <GooglePopupButton className="btn clinic-glow-btn clinic-login-footer-btn" nextPath="/">
                     <span className="link-effect">
                       <span className="effect-1">LOGIN</span>
                       <span className="effect-1">LOGIN</span>
                     </span>
-                  </Link>
+                  </GooglePopupButton>
                 </div>
               </div>
             </div>
@@ -49,10 +42,10 @@ export default function Footer5() {
           <div className="row justify-content-between">
             <div className="col-md-6 col-xl-5 col-lg-6">
               <div className="widget widget-about footer-widget">
-                <Image width={138} height={55} src="/assets/img/logo.png" alt="Dr Igić logo" />
-                <h3 className="widget_title mt-30">Dr Igić klinika estetske medicine</h3>
+                <Image width={138} height={55} src="/assets/img/logo.png" alt="Dr Igic logo" />
+                <h3 className="widget_title mt-30">Dr Igic klinika estetske medicine</h3>
                 <p className="about-text">
-                  Fokus na prirodan izgled, stručan i odgovoran pristup, kao i
+                  Fokus na prirodan izgled, strucan i odgovoran pristup, kao i
                   bezbednost svakog pacijenta.
                 </p>
               </div>
@@ -87,10 +80,10 @@ export default function Footer5() {
         <div className="copyright-wrap">
           <div className="row gy-3 justify-content-between align-items-center">
             <div className="col-md-6">
-              <p>Dr Nikola Igić, estetska i anti-age medicina</p>
+              <p>Dr Nikola Igic, estetska i anti-age medicina</p>
             </div>
             <div className="col-md-6 align-self-center text-md-end">
-              <p className="copyright-text">Copyright © {new Date().getFullYear()} Dr Igić klinika</p>
+              <p className="copyright-text">Copyright © {new Date().getFullYear()} Dr Igic klinika</p>
             </div>
           </div>
         </div>

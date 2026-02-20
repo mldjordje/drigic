@@ -39,56 +39,56 @@ export async function POST(request) {
       return fail(400, `Booking must be within next ${settings.bookingWindowDays} days.`);
     }
 
-    const quote = await resolveQuote(parsed.data.serviceIds);
+    const uniqueServiceIds = Array.from(new Set(parsed.data.serviceIds));
+    const quote = await resolveQuote(uniqueServiceIds);
     const endsAt = addMinutes(startAt, quote.totalDurationMin);
     const employee = await getDefaultEmployee();
 
-    const createdBooking = await db.transaction(async (tx) => {
-      const conflicts = await findConflicts({
+    const conflicts = await findConflicts({
+      employeeId: employee.id,
+      startsAt: startAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+    });
+
+    if (conflicts.length) {
+      throw new Error("Requested slot is no longer available.");
+    }
+
+    const [createdBooking] = await db
+      .insert(schema.bookings)
+      .values({
+        userId: auth.user.id,
         employeeId: employee.id,
-        startsAt: startAt.toISOString(),
-        endsAt: endsAt.toISOString(),
-        tx,
-      });
+        startsAt,
+        endsAt,
+        status: "confirmed",
+        totalDurationMin: quote.totalDurationMin,
+        totalPriceRsd: quote.totalPriceRsd,
+        notes: parsed.data.notes || null,
+      })
+      .returning();
 
-      if (conflicts.length) {
-        throw new Error("Requested slot is no longer available.");
-      }
+    await db.insert(schema.bookingItems).values(
+      quote.items.map((item) => ({
+        bookingId: createdBooking.id,
+        serviceId: item.serviceId,
+        serviceNameSnapshot: item.name,
+        durationMinSnapshot: item.durationMin,
+        priceRsdSnapshot: item.finalPriceRsd,
+      }))
+    );
 
-      const [booking] = await tx
-        .insert(schema.bookings)
-        .values({
-          userId: auth.user.id,
-          employeeId: employee.id,
-          startsAt,
-          endsAt,
-          status: "confirmed",
-          totalDurationMin: quote.totalDurationMin,
-          totalPriceRsd: quote.totalPriceRsd,
-          notes: parsed.data.notes || null,
-        })
-        .returning();
-
-      await tx.insert(schema.bookingItems).values(
-        quote.items.map((item) => ({
-          bookingId: booking.id,
-          serviceId: item.serviceId,
-          serviceNameSnapshot: item.name,
-          durationMinSnapshot: item.durationMin,
-          priceRsdSnapshot: item.finalPriceRsd,
-        }))
-      );
-
-      await tx.insert(schema.bookingStatusLog).values({
-        bookingId: booking.id,
+    try {
+      await db.insert(schema.bookingStatusLog).values({
+        bookingId: createdBooking.id,
         previousStatus: null,
         nextStatus: "confirmed",
         changedByUserId: auth.user.id,
         note: "Booking created online",
       });
-
-      return booking;
-    });
+    } catch (logError) {
+      console.error("[bookings.create] status log insert failed", logError);
+    }
 
     return created({
       ok: true,
@@ -102,6 +102,12 @@ export async function POST(request) {
     }
     if (message.includes("invalid or inactive")) {
       return fail(400, message);
+    }
+    if (String(error?.code || "") === "23503") {
+      return fail(400, "Session is outdated. Log out and log in again.");
+    }
+    if (String(error?.code || "") === "42P01") {
+      return fail(500, "Database schema mismatch. Run latest migrations.");
     }
     console.error("[bookings.create] unexpected error", error);
     return fail(500, "Booking failed unexpectedly. Please retry.");
