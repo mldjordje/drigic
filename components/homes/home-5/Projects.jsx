@@ -65,7 +65,11 @@ export default function Projects() {
           ))}
         </div>
         <div className="btn-wrap mt-50 justify-content-center">
-          <Link scroll={false} href="#konsultacije" className="btn bg-theme text-title">
+          <Link
+            scroll={false}
+            href="/booking"
+            className="btn bg-theme text-title clinic-glow-btn"
+          >
             <span className="link-effect">
               <span className="effect-1">ZAKAŽI PRVI PREGLED</span>
               <span className="effect-1">ZAKAŽI PRVI PREGLED</span>

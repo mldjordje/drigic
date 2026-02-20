@@ -17,12 +17,28 @@ export default function Footer5() {
                   Prvi korak ka prirodnoj i sigurnoj transformaciji je razgovor
                   sa stručnjakom i personalizovan plan tretmana.
                 </p>
-                <Link scroll={false} href="/contact" className="btn clinic-cta-pulse">
-                  <span className="link-effect">
-                    <span className="effect-1">POŠALJITE UPIT</span>
-                    <span className="effect-1">POŠALJITE UPIT</span>
-                  </span>
-                </Link>
+                <div className="clinic-footer-cta-wrap">
+                  <Link
+                    scroll={false}
+                    href="/booking"
+                    className="btn clinic-cta-pulse clinic-glow-btn"
+                  >
+                    <span className="link-effect">
+                      <span className="effect-1">ZAKAŽI ONLINE</span>
+                      <span className="effect-1">ZAKAŽI ONLINE</span>
+                    </span>
+                  </Link>
+                  <Link
+                    scroll={false}
+                    href="/prijava?next=/booking"
+                    className="btn clinic-glow-btn clinic-login-footer-btn"
+                  >
+                    <span className="link-effect">
+                      <span className="effect-1">LOGIN</span>
+                      <span className="effect-1">LOGIN</span>
+                    </span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

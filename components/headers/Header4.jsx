@@ -14,7 +14,7 @@ export default function Header4() {
     { href: "#osnivac", label: "Osnivač" },
     { href: "#rezultati", label: "Rezultati" },
     { href: "#aktuelnosti", label: "Aktuelnosti" },
-    { href: "/booking", label: "Booking" },
+    { href: "/booking", label: "Zakaži" },
     { href: "#konsultacije", label: "Kontakt" },
   ];
 
@@ -90,10 +90,34 @@ export default function Header4() {
             <ul>
               {navItems.map((item) => (
                 <li key={item.href} onClick={() => setMobileMenuOpen(false)}>
-                  <a href={item.href}>{item.label}</a>
+                  {item.href.startsWith("#") ? (
+                    <a href={item.href}>{item.label}</a>
+                  ) : (
+                    <Link scroll={false} href={item.href}>
+                      {item.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="mobile-cta-buttons">
+            <Link
+              scroll={false}
+              href="/prijava?next=/booking"
+              className="mobile-cta-link clinic-glow-btn"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Login
+            </Link>
+            <Link
+              scroll={false}
+              href="/booking"
+              className="mobile-cta-link clinic-glow-btn"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Zakaži
+            </Link>
           </div>
           <div className="sidebar-wrap">
             <h6>Dr Nikola Igić</h6>
@@ -131,7 +155,13 @@ export default function Header4() {
                     <ul>
                       {navItems.map((item) => (
                         <li key={item.href}>
-                          <a href={item.href}>{item.label}</a>
+                          {item.href.startsWith("#") ? (
+                            <a href={item.href}>{item.label}</a>
+                          ) : (
+                            <Link scroll={false} href={item.href}>
+                              {item.label}
+                            </Link>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -149,13 +179,27 @@ export default function Header4() {
                   </div>
                 </div>
                 <div className="col-auto d-none d-lg-block">
-                  <div className="header-button ms-0">
-                    <a href="#konsultacije" className="search-btn">
+                  <div className="header-button ms-0 clinic-header-actions">
+                    <Link
+                      scroll={false}
+                      href="/prijava?next=/booking"
+                      className="search-btn clinic-glow-btn"
+                    >
                       <span className="link-effect">
-                        <span className="effect-1">ZAKAŽI KONSULTACIJU</span>
-                        <span className="effect-1">ZAKAŽI KONSULTACIJU</span>
+                        <span className="effect-1">LOGIN</span>
+                        <span className="effect-1">LOGIN</span>
                       </span>
-                    </a>
+                    </Link>
+                    <Link
+                      scroll={false}
+                      href="/booking"
+                      className="search-btn clinic-glow-btn"
+                    >
+                      <span className="link-effect">
+                        <span className="effect-1">ZAKAŽI TERMIN</span>
+                        <span className="effect-1">ZAKAŽI TERMIN</span>
+                      </span>
+                    </Link>
                   </div>
                 </div>
               </div>

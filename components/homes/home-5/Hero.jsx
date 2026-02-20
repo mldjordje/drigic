@@ -50,19 +50,33 @@ export default function Hero() {
                   </div>
                 </div>
                 <div className="col-lg-5 align-self-end text-lg-end">
-                  <div className="text-lg-end" data-ani="slideindown" data-ani-delay="0.3s">
+                  <div
+                    className="text-lg-end hero-cta-group"
+                    data-ani="slideindown"
+                    data-ani-delay="0.3s"
+                  >
                     <Link
                       scroll={false}
-                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse"
-                      href="#konsultacije"
+                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse clinic-glow-btn"
+                      href="/booking"
                     >
                       <span className="link-effect">
                         <span className="effect-1">
-                          REZERVIŠI <br /> TERMIN
+                          ZAKAŽI <br /> TERMIN
                         </span>
                         <span className="effect-1">
-                          REZERVIŠI <br /> TERMIN
+                          ZAKAŽI <br /> TERMIN
                         </span>
+                      </span>
+                    </Link>
+                    <Link
+                      scroll={false}
+                      className="btn bg-theme text-title clinic-login-hero-btn clinic-glow-btn"
+                      href="/prijava?next=/booking"
+                    >
+                      <span className="link-effect">
+                        <span className="effect-1">LOGIN</span>
+                        <span className="effect-1">LOGIN</span>
                       </span>
                     </Link>
                   </div>
@@ -94,19 +108,33 @@ export default function Hero() {
                   </div>
                 </div>
                 <div className="col-lg-5 align-self-end text-lg-end">
-                  <div className="text-lg-end" data-ani="slideindown" data-ani-delay="0.3s">
+                  <div
+                    className="text-lg-end hero-cta-group"
+                    data-ani="slideindown"
+                    data-ani-delay="0.3s"
+                  >
                     <Link
                       scroll={false}
-                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse"
-                      href="#tretmani"
+                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse clinic-glow-btn"
+                      href="/booking"
                     >
                       <span className="link-effect">
                         <span className="effect-1">
-                          POGLEDAJ <br /> TRETMANE
+                          ZAKAŽI <br /> ONLINE
                         </span>
                         <span className="effect-1">
-                          POGLEDAJ <br /> TRETMANE
+                          ZAKAŽI <br /> ONLINE
                         </span>
+                      </span>
+                    </Link>
+                    <Link
+                      scroll={false}
+                      className="btn bg-theme text-title clinic-login-hero-btn clinic-glow-btn"
+                      href="/prijava?next=/booking"
+                    >
+                      <span className="link-effect">
+                        <span className="effect-1">LOGIN</span>
+                        <span className="effect-1">LOGIN</span>
                       </span>
                     </Link>
                   </div>

@@ -29,7 +29,7 @@ export default function Video() {
                 ></div>
                 <div
                   onClick={() => setIsOpen(true)}
-                  className="play-btn circle-btn btn gsap-magnetic popup-video background-image clinic-cta-pulse"
+                  className="play-btn circle-btn btn gsap-magnetic popup-video background-image clinic-cta-pulse clinic-glow-btn"
                 >
                   PLAY VIDEO
                 </div>
