@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -26,24 +26,68 @@ export async function GET(request) {
   let rows = [];
   if (from && to) {
     rows = await db
-      .select()
+      .select({
+        booking: schema.bookings,
+        userEmail: schema.users.email,
+        userPhone: schema.users.phone,
+        profileName: schema.profiles.fullName,
+        serviceName: schema.bookingItems.serviceNameSnapshot,
+      })
       .from(schema.bookings)
+      .leftJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
+      .leftJoin(schema.profiles, eq(schema.profiles.userId, schema.bookings.userId))
+      .leftJoin(schema.bookingItems, eq(schema.bookingItems.bookingId, schema.bookings.id))
       .where(
         and(
           gte(schema.bookings.startsAt, new Date(from)),
           lte(schema.bookings.startsAt, new Date(to))
         )
       )
-      .orderBy(desc(schema.bookings.startsAt));
+      .orderBy(asc(schema.bookings.startsAt));
   } else {
     rows = await db
-      .select()
+      .select({
+        booking: schema.bookings,
+        userEmail: schema.users.email,
+        userPhone: schema.users.phone,
+        profileName: schema.profiles.fullName,
+        serviceName: schema.bookingItems.serviceNameSnapshot,
+      })
       .from(schema.bookings)
+      .leftJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
+      .leftJoin(schema.profiles, eq(schema.profiles.userId, schema.bookings.userId))
+      .leftJoin(schema.bookingItems, eq(schema.bookingItems.bookingId, schema.bookings.id))
       .orderBy(desc(schema.bookings.startsAt))
       .limit(300);
   }
 
-  return ok({ ok: true, data: rows });
+  const byId = new Map();
+  for (const row of rows) {
+    const id = row.booking.id;
+    if (!byId.has(id)) {
+      byId.set(id, {
+        ...row.booking,
+        clientName: row.profileName || row.userEmail || "Klijent",
+        clientEmail: row.userEmail || "",
+        clientPhone: row.userPhone || "",
+        services: [],
+      });
+    }
+
+    if (row.serviceName) {
+      const current = byId.get(id);
+      if (!current.services.includes(row.serviceName)) {
+        current.services.push(row.serviceName);
+      }
+    }
+  }
+
+  const data = Array.from(byId.values()).map((item) => ({
+    ...item,
+    serviceSummary: item.services.join(", "),
+  }));
+
+  return ok({ ok: true, data });
 }
 
 export async function PATCH(request) {
@@ -99,4 +143,3 @@ export async function PATCH(request) {
 
   return ok({ ok: true, data: updated });
 }
-

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const approvedModules = [
-  { href: "/admin", label: "Dashboard", icon: "[DB]" },
+  { href: "/admin/kalendar", label: "Kalendar", icon: "[CAL]" },
+  { href: "/admin/dashboard", label: "Dashboard", icon: "[DB]" },
   { href: "/admin/bookings", label: "Termini", icon: "[BK]" },
   { href: "/admin/services", label: "Usluge", icon: "[SV]" },
   { href: "/admin/announcements", label: "Obavestenja", icon: "[AN]" },
@@ -34,7 +35,9 @@ export default function AdminShell({ children }) {
           <p className="admin-template-group-title">Odobrene funkcije</p>
           <nav className="admin-template-nav">
             {approvedModules.map((item) => {
-              const active = pathname === item.href;
+              const active =
+                pathname === item.href ||
+                (item.href === "/admin/kalendar" && pathname === "/admin");
               return (
                 <Link
                   key={item.href}
