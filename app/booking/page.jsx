@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import OtpLoginPanel from "@/components/forms/OtpLoginPanel";
+import { useEffect, useState } from "react";
+import GoogleSignInButton from "@/components/forms/GoogleSignInButton";
 
 function todayIsoDate() {
   const now = new Date();
@@ -25,11 +25,6 @@ export default function BookingPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const flatServices = useMemo(
-    () => services.flatMap((category) => category.services || []),
-    [services]
-  );
-
   async function loadSession() {
     const response = await fetch("/api/me/profile");
     if (!response.ok) {
@@ -44,7 +39,7 @@ export default function BookingPage() {
     const response = await fetch("/api/services");
     const data = await response.json();
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspešno učitavanje usluga.");
+      throw new Error(data?.message || "Neuspesno ucitavanje usluga.");
     }
     setServices(data.categories || []);
   }
@@ -84,7 +79,7 @@ export default function BookingPage() {
       .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspešan izračun ponude.");
+          throw new Error(data?.message || "Neuspesan izracun ponude.");
         }
         setQuote(data);
       })
@@ -106,7 +101,7 @@ export default function BookingPage() {
       .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspešno učitavanje termina.");
+          throw new Error(data?.message || "Neuspesno ucitavanje termina.");
         }
         setAvailability(data.slots || []);
       })
@@ -144,12 +139,12 @@ export default function BookingPage() {
         throw new Error(data?.message || "Zakazivanje nije uspelo.");
       }
 
-      setMessage("Termin je uspešno zakazan.");
+      setMessage("Termin je uspesno zakazan.");
       setSelectedStartAt("");
       setNotes("");
       await loadMyBookings();
     } catch (err) {
-      setError(err.message || "Greška pri zakazivanju.");
+      setError(err.message || "Greska pri zakazivanju.");
     } finally {
       setLoading(false);
     }
@@ -160,10 +155,13 @@ export default function BookingPage() {
       <main style={pageStyle}>
         <div style={containerStyle}>
           <h1 style={{ marginTop: 0 }}>Online booking</h1>
-          <OtpLoginPanel
-            title="Prijavite se da zakažete termin"
-            onAuthenticated={(loggedUser) => setUser(loggedUser)}
-          />
+          <section style={cardStyle}>
+            <h2 style={{ marginTop: 0 }}>Prijava za booking</h2>
+            <p style={{ color: "#d2dced" }}>
+              Prijavite se putem Google naloga i nastavite sa zakazivanjem.
+            </p>
+            <GoogleSignInButton nextPath="/booking" label="Nastavi sa Google" />
+          </section>
         </div>
       </main>
     );
@@ -288,7 +286,9 @@ export default function BookingPage() {
               ))}
             </ul>
           ) : (
-            <p style={{ marginBottom: 0, color: "#d2dced" }}>Nema zakazanih termina.</p>
+            <p style={{ marginBottom: 0, color: "#d2dced" }}>
+              Nema zakazanih termina.
+            </p>
           )}
         </section>
       </div>

@@ -1,13 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import OtpLoginPanel from "@/components/forms/OtpLoginPanel";
+import GoogleSignInButton from "@/components/forms/GoogleSignInButton";
+
+const reasonMessages = {
+  "admin-required": "Za pristup admin panelu potrebno je da se prijavite admin nalogom.",
+  "admin-forbidden": "Nalog je prijavljen, ali nema admin privilegije.",
+  "google-config-missing":
+    "Google prijava nije konfigurisana. Dodajte GOOGLE_CLIENT_ID i GOOGLE_CLIENT_SECRET u .env.local i na Vercel.",
+  "google-denied": "Google prijava je otkazana.",
+  "google-state-invalid": "Bezbednosna provera nije prošla. Pokušajte ponovo.",
+  "google-token-failed": "Google token nije dobijen. Pokušajte ponovo.",
+  "google-userinfo-failed": "Ne mogu da preuzmem Google profil. Pokušajte ponovo.",
+  "google-email-missing": "Google nalog nema email adresu.",
+  "google-auth-failed": "Google prijava nije uspela. Pokušajte ponovo.",
+};
 
 export default function PrijavaClient({ nextPath = "/", reason = "" }) {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
+  const message = reasonMessages[reason] || "";
+  const isError =
+    reason &&
+    reason !== "admin-required" &&
+    !["", "admin-required"].includes(reason);
 
   return (
     <main
@@ -20,42 +34,38 @@ export default function PrijavaClient({ nextPath = "/", reason = "" }) {
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <h1 style={{ marginTop: 0 }}>Prijava</h1>
-        {reason === "admin-required" ? (
-          <p style={{ color: "#e4efff" }}>
-            Za pristup admin panelu potrebno je da se prijavite admin nalogom.
-          </p>
-        ) : null}
-        {reason === "admin-forbidden" ? (
-          <p style={{ color: "#ffb6b6" }}>
-            Nalog je prijavljen, ali nema admin privilegije.
-          </p>
+
+        {message ? (
+          <p style={{ color: isError ? "#ffb6b6" : "#e4efff" }}>{message}</p>
         ) : null}
 
-        <OtpLoginPanel
-          title="Prijava OTP kodom"
-          onAuthenticated={(loggedUser) => {
-            setUser(loggedUser);
-            if (loggedUser?.role === "admin" && nextPath.startsWith("/admin")) {
-              router.push(nextPath);
-            }
+        <section
+          style={{
+            maxWidth: 520,
+            margin: "20px auto",
+            background: "rgba(217,232,248,0.14)",
+            border: "1px solid rgba(217,232,248,0.28)",
+            borderRadius: 16,
+            padding: 20,
           }}
-        />
+        >
+          <h2 style={{ marginTop: 0 }}>Sign in with Google</h2>
+          <p style={{ marginTop: 0, color: "#c7d8ef" }}>
+            Prijava je sada preko Google naloga.
+          </p>
+          <GoogleSignInButton nextPath={nextPath} label="Nastavi sa Google" fullWidth />
+        </section>
 
-        {user ? (
-          <section style={{ maxWidth: 520, margin: "0 auto", padding: "0 4px" }}>
-            <p>
-              Prijavljeni ste kao <strong>{user.email}</strong> ({user.role}).
-            </p>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Link href="/booking" style={linkButtonStyle}>
-                Otvori booking formu
-              </Link>
-              <Link href="/admin" style={linkButtonStyle}>
-                Otvori admin panel
-              </Link>
-            </div>
-          </section>
-        ) : null}
+        <section style={{ maxWidth: 520, margin: "0 auto", padding: "0 4px" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <Link href="/booking" style={linkButtonStyle}>
+              Otvori booking formu
+            </Link>
+            <Link href="/admin" style={linkButtonStyle}>
+              Otvori admin panel
+            </Link>
+          </div>
+        </section>
       </div>
     </main>
   );
@@ -64,8 +74,8 @@ export default function PrijavaClient({ nextPath = "/", reason = "" }) {
 const linkButtonStyle = {
   borderRadius: 10,
   border: "1px solid rgba(217,232,248,0.6)",
-  background: "#d9e8f8",
-  color: "#102844",
+  background: "transparent",
+  color: "#d9e8f8",
   padding: "10px 14px",
   fontWeight: 700,
   textDecoration: "none",
