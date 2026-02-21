@@ -551,6 +551,28 @@
       0 8px 22px rgba(7, 14, 22, 0.44);
   }
 
+  .clinic-ml-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .clinic-ml-btn {
+    border-radius: 999px;
+    border: 1px solid rgba(217, 232, 248, 0.45);
+    background: rgba(8, 16, 27, 0.76);
+    color: #e8f1ff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 9px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .clinic-ml-btn.is-active {
+    border-color: rgba(217, 232, 248, 0.86);
+    background: rgba(52, 82, 119, 0.92);
+  }
+
   .clinic-selected-services {
     display: flex;
     flex-wrap: wrap;
@@ -873,6 +895,11 @@
       padding: 8px 10px;
       min-width: 72px;
       font-size: 13px;
+    }
+
+    .clinic-ml-btn {
+      font-size: 11px;
+      padding: 4px 8px;
     }
   }
 

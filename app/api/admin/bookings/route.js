@@ -7,15 +7,19 @@ import {
   addMinutes,
   findConflicts,
   isWithinWorkHours,
+  normalizeServiceSelections,
   resolveQuote,
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
+import { deliverBookingNotification } from "@/lib/notifications/delivery";
 
 export const runtime = "nodejs";
 
+const STATUS_VALUES = ["pending", "confirmed", "completed", "cancelled", "no_show"];
+
 const updateSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["pending", "confirmed", "completed", "cancelled", "no_show"]).optional(),
+  status: z.enum(STATUS_VALUES).optional(),
   notes: z.string().max(1000).optional(),
 });
 
@@ -23,11 +27,69 @@ const createSchema = z.object({
   clientName: z.string().min(2).max(255),
   phone: z.string().max(32).optional(),
   email: z.string().email().optional(),
-  serviceIds: z.array(z.string().uuid()).min(1),
+  serviceIds: z.array(z.string().uuid()).optional(),
+  serviceSelections: z
+    .array(
+      z.object({
+        serviceId: z.string().uuid(),
+        quantity: z.number().int().min(1).optional(),
+      })
+    )
+    .optional(),
   startAt: z.string().datetime(),
   notes: z.string().max(1000).optional(),
   status: z.enum(["pending", "confirmed"]).optional(),
 });
+
+const ALLOWED_STATUS_TRANSITIONS = {
+  pending: new Set(["pending", "confirmed", "cancelled", "no_show"]),
+  confirmed: new Set(["confirmed", "completed", "cancelled", "no_show"]),
+  completed: new Set(["completed"]),
+  cancelled: new Set(["cancelled"]),
+  no_show: new Set(["no_show"]),
+};
+
+function isValidStatusTransition(fromStatus, toStatus) {
+  const allowed = ALLOWED_STATUS_TRANSITIONS[fromStatus];
+  if (!allowed) {
+    return false;
+  }
+  return allowed.has(toStatus);
+}
+
+function formatServiceSummaryItem(row) {
+  const quantity = Number(row.quantity || 1);
+  const label = row.serviceName || "Usluga";
+  if (quantity <= 1) {
+    return label;
+  }
+  const unit = row.unitLabel || "kom";
+  return `${label} (${quantity} ${unit})`;
+}
+
+function getStatusNotificationPayload(status, startsAt) {
+  const startsAtLabel = new Date(startsAt).toLocaleString("sr-RS", {
+    timeZone: "Europe/Belgrade",
+  });
+
+  if (status === "confirmed") {
+    return {
+      type: "booking_confirmed",
+      title: "Termin je potvrden",
+      message: `Vas termin za ${startsAtLabel} je potvrdjen.`,
+    };
+  }
+
+  if (status === "cancelled") {
+    return {
+      type: "booking_cancelled",
+      title: "Termin je otkazan",
+      message: `Vas termin za ${startsAtLabel} je otkazan. Kontaktirajte kliniku za novi termin.`,
+    };
+  }
+
+  return null;
+}
 
 export async function GET(request) {
   const auth = await requireAdmin(request);
@@ -49,6 +111,8 @@ export async function GET(request) {
         userPhone: schema.users.phone,
         profileName: schema.profiles.fullName,
         serviceName: schema.bookingItems.serviceNameSnapshot,
+        quantity: schema.bookingItems.quantity,
+        unitLabel: schema.bookingItems.unitLabel,
       })
       .from(schema.bookings)
       .leftJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
@@ -69,6 +133,8 @@ export async function GET(request) {
         userPhone: schema.users.phone,
         profileName: schema.profiles.fullName,
         serviceName: schema.bookingItems.serviceNameSnapshot,
+        quantity: schema.bookingItems.quantity,
+        unitLabel: schema.bookingItems.unitLabel,
       })
       .from(schema.bookings)
       .leftJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
@@ -93,8 +159,9 @@ export async function GET(request) {
 
     if (row.serviceName) {
       const current = byId.get(id);
-      if (!current.services.includes(row.serviceName)) {
-        current.services.push(row.serviceName);
+      const item = formatServiceSummaryItem(row);
+      if (!current.services.includes(item)) {
+        current.services.push(item);
       }
     }
   }
@@ -130,16 +197,33 @@ export async function PATCH(request) {
     return fail(404, "Booking not found.");
   }
 
+  const nextStatus = parsed.data.status || current.status;
+  if (!isValidStatusTransition(current.status, nextStatus)) {
+    return fail(
+      409,
+      `Invalid status transition: ${current.status} -> ${nextStatus}.`
+    );
+  }
+
   const updates = {
     updatedAt: new Date(),
   };
 
   if (parsed.data.status) {
     updates.status = parsed.data.status;
+    if (parsed.data.status === "cancelled") {
+      updates.cancelledAt = new Date();
+    }
+    if (parsed.data.status === "no_show") {
+      updates.noShowMarkedAt = new Date();
+    }
   }
 
   if (typeof parsed.data.notes === "string") {
     updates.notes = parsed.data.notes;
+    if (nextStatus === "cancelled") {
+      updates.cancellationReason = parsed.data.notes || null;
+    }
   }
 
   const [updated] = await db
@@ -148,14 +232,40 @@ export async function PATCH(request) {
     .where(eq(schema.bookings.id, parsed.data.id))
     .returning();
 
-  if (parsed.data.status && parsed.data.status !== current.status) {
+  if (nextStatus !== current.status) {
     await db.insert(schema.bookingStatusLog).values({
       bookingId: current.id,
       previousStatus: current.status,
-      nextStatus: parsed.data.status,
+      nextStatus,
       changedByUserId: auth.user.id,
       note: "Updated from admin panel",
     });
+
+    const statusNotification = getStatusNotificationPayload(nextStatus, current.startsAt);
+    if (statusNotification) {
+      const [user] = await db
+        .select({
+          id: schema.users.id,
+          email: schema.users.email,
+        })
+        .from(schema.users)
+        .where(eq(schema.users.id, current.userId))
+        .limit(1);
+
+      if (user) {
+        await deliverBookingNotification({
+          db,
+          userId: user.id,
+          email: user.email,
+          type: statusNotification.type,
+          title: statusNotification.title,
+          message: statusNotification.message,
+          bookingId: current.id,
+          scheduledFor: current.startsAt,
+          dedupe: false,
+        });
+      }
+    }
   }
 
   return ok({ ok: true, data: updated });
@@ -180,8 +290,16 @@ export async function POST(request) {
     return fail(400, "Provide at least phone or email for the client.");
   }
 
+  const normalizedSelections = normalizeServiceSelections(
+    payload.serviceSelections || [],
+    payload.serviceIds || []
+  );
+  if (!normalizedSelections.length) {
+    return fail(400, "At least one service is required.");
+  }
+
   const db = getDb();
-  const quote = await resolveQuote(payload.serviceIds);
+  const quote = await resolveQuote(normalizedSelections);
   const employee = await getDefaultEmployee();
   const settings = await getClinicSettings();
   const startAt = new Date(payload.startAt);
@@ -198,7 +316,7 @@ export async function POST(request) {
   const conflicts = await findConflicts({
     employeeId: employee.id,
     startsAt: startAt,
-    endsAt: endsAt,
+    endsAt,
   });
   if (conflicts.length) {
     return fail(409, "Selected slot overlaps with existing booking/block.");
@@ -279,6 +397,7 @@ export async function POST(request) {
       status: finalStatus,
       totalDurationMin: quote.totalDurationMin,
       totalPriceRsd: quote.totalPriceRsd,
+      primaryServiceColor: quote.primaryServiceColor,
       notes: payload.notes || "Booked by admin",
     })
     .returning();
@@ -287,9 +406,13 @@ export async function POST(request) {
     quote.items.map((item) => ({
       bookingId: createdBooking.id,
       serviceId: item.serviceId,
+      quantity: item.quantity,
+      unitLabel: item.unitLabel,
       serviceNameSnapshot: item.name,
       durationMinSnapshot: item.durationMin,
       priceRsdSnapshot: item.finalPriceRsd,
+      serviceColorSnapshot: item.serviceColor,
+      sourcePackageServiceId: item.sourcePackageServiceId || null,
     }))
   );
 

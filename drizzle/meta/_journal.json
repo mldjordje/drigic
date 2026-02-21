@@ -15,6 +15,13 @@
       "when": 1771605776252,
       "tag": "0001_tiresome_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771678800039,
+      "tag": "0002_huge_abomination",
+      "breakpoints": true
     }
   ]
 }

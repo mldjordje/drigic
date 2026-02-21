@@ -371,11 +371,11 @@
 }
 
 .admin-calendar-item.is-pending {
-  background: rgba(123, 99, 45, 0.82);
+  background: rgba(114, 122, 133, 0.92);
 }
 
 .admin-calendar-item.is-confirmed {
-  background: rgba(43, 91, 58, 0.85);
+  background: rgba(53, 123, 79, 0.92);
 }
 
 .admin-calendar-item.is-completed {
@@ -513,6 +513,11 @@
 
 .clinic-fc-wrap {
   overflow: hidden;
+  max-width: 100%;
+}
+
+.clinic-fc-wrap.is-mobile-stage {
+  padding: 0;
 }
 
 .clinic-fc-wrap .fc {
@@ -567,10 +572,20 @@
 .clinic-fc-wrap .fc .fc-col-header-cell-cushion,
 .clinic-fc-wrap .fc .fc-timegrid-axis-cushion {
   color: #c8daef;
+  font-size: 12px;
 }
 
 .clinic-fc-wrap .fc .fc-col-header-cell-cushion {
   font-weight: 700;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1.2;
+  padding: 6px 4px;
+  white-space: normal;
+  text-align: center;
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-now-indicator-line {
@@ -596,14 +611,15 @@
 .clinic-fc-event {
   background: rgba(75, 102, 136, 0.92);
   color: #f4f8ff;
+  border-left: 4px solid var(--clinic-event-service-edge, rgba(217, 232, 248, 0.35));
 }
 
 .clinic-fc-event.is-pending {
-  background: rgba(123, 99, 45, 0.92);
+  background: rgba(114, 122, 133, 0.95);
 }
 
 .clinic-fc-event.is-confirmed {
-  background: rgba(43, 91, 58, 0.94);
+  background: rgba(53, 123, 79, 0.95);
 }
 
 .clinic-fc-event.is-completed {
@@ -666,6 +682,31 @@
     grid-template-columns: 1fr;
   }
 
+  .admin-template-content {
+    padding: 10px;
+  }
+
+  .admin-calendar-page.is-mobile-full {
+    min-height: calc(100dvh - 76px);
+    grid-template-rows: auto auto 1fr;
+    gap: 8px;
+  }
+
+  .admin-calendar-page.is-mobile-full .admin-calendar-toolbar {
+    gap: 8px;
+  }
+
+  .admin-calendar-page.is-mobile-full .admin-calendar-toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-calendar-page.is-mobile-full .clinic-fc-wrap.is-mobile-stage {
+    min-height: calc(100dvh - 200px);
+    height: calc(100dvh - 200px);
+    border-radius: 12px;
+  }
+
   .admin-calendar-grid {
     --time-col: 66px;
     min-width: 720px;
@@ -676,14 +717,45 @@
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    justify-content: center;
   }
 
   .clinic-fc-wrap .fc .fc-toolbar-title {
-    font-size: 16px;
+    font-size: 15px;
+    text-align: center;
+    width: 100%;
+  }
+
+  .admin-calendar-page.is-mobile-full .clinic-fc-wrap .fc,
+  .admin-calendar-page.is-mobile-full .clinic-fc-wrap .fc .fc-view-harness,
+  .admin-calendar-page.is-mobile-full .clinic-fc-wrap .fc .fc-scroller-harness,
+  .admin-calendar-page.is-mobile-full .clinic-fc-wrap .fc .fc-scroller {
+    height: 100% !important;
+    max-height: 100% !important;
   }
 
   .clinic-fc-wrap .fc .fc-button {
-    padding: 6px 8px;
-    font-size: 12px;
+    padding: 6px 7px;
+    font-size: 11px;
+  }
+
+  .clinic-fc-wrap .fc .fc-timegrid-slot-label,
+  .clinic-fc-wrap .fc .fc-timegrid-axis-cushion {
+    font-size: 10px;
+    padding: 0 2px;
+  }
+
+  .clinic-fc-wrap .fc .fc-col-header-cell-cushion {
+    font-size: 11px;
+    padding: 4px 2px;
+  }
+
+  .clinic-fc-wrap .fc .fc-view-harness,
+  .clinic-fc-wrap .fc .fc-scroller {
+    overflow-x: hidden !important;
+  }
+
+  .clinic-fc-wrap .fc .fc-timegrid-axis-frame {
+    justify-content: center;
   }
 }

@@ -2,7 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const statuses = ["pending", "confirmed", "completed", "cancelled", "no_show"];
+const STATUSES = ["pending", "confirmed", "completed", "cancelled", "no_show"];
+
+async function parseResponse(response) {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function formatDateTime(value) {
+  try {
+    return new Date(value).toLocaleString("sr-RS");
+  } catch {
+    return value;
+  }
+}
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState([]);
@@ -26,15 +46,16 @@ export default function AdminBookingsPage() {
     const response = await fetch(
       `/api/admin/bookings${query.toString() ? `?${query.toString()}` : ""}`
     );
-    const data = await response.json();
+    const data = await parseResponse(response);
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspešno učitavanje termina.");
+      throw new Error(data?.message || "Neuspesno ucitavanje termina.");
     }
 
-    setBookings(data.data || []);
+    const rows = data.data || [];
+    setBookings(rows);
     const nextStatus = {};
     const nextNotes = {};
-    (data.data || []).forEach((item) => {
+    rows.forEach((item) => {
       nextStatus[item.id] = item.status;
       nextNotes[item.id] = item.notes || "";
     });
@@ -60,14 +81,14 @@ export default function AdminBookingsPage() {
           notes: notesById[bookingId],
         }),
       });
-      const data = await response.json();
+      const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno ažuriranje termina.");
+        throw new Error(data?.message || "Neuspesno azuriranje termina.");
       }
-      setMessage("Termin je ažuriran.");
+      setMessage("Termin je azuriran.");
       await loadBookings();
     } catch (err) {
-      setError(err.message || "Greška pri ažuriranju.");
+      setError(err.message || "Greska pri azuriranju.");
     } finally {
       setLoading(false);
     }
@@ -85,14 +106,14 @@ export default function AdminBookingsPage() {
           notes: notesById[bookingId] || "",
         }),
       });
-      const data = await response.json();
+      const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno završavanje termina.");
+        throw new Error(data?.message || "Neuspesno zavrsavanje termina.");
       }
-      setMessage("Termin je označen kao završen i kreiran je treatment record.");
+      setMessage("Termin je oznacen kao zavrsen i kreiran je treatment record.");
       await loadBookings();
     } catch (err) {
-      setError(err.message || "Greška pri završavanju termina.");
+      setError(err.message || "Greska pri zavrsavanju termina.");
     } finally {
       setLoading(false);
     }
@@ -107,14 +128,16 @@ export default function AdminBookingsPage() {
   }, [bookings]);
 
   return (
-    <section>
-      <h2>Admin - Termini</h2>
-      <p style={{ color: "#c6d7ef" }}>
-        Menjaj status termina, beleške i završavanje tretmana.
-      </p>
+    <section style={{ display: "grid", gap: 12 }}>
+      <div className="admin-card">
+        <h2 style={{ marginTop: 0 }}>Admin - Termini</h2>
+        <p style={{ color: "#c6d7ef", marginBottom: 0 }}>
+          Mobile-first pregled termina bez horizontalnog skrola.
+        </p>
+      </div>
 
       <div style={statsWrapStyle}>
-        {statuses.map((status) => (
+        {STATUSES.map((status) => (
           <div key={status} style={statCardStyle}>
             <strong>{status}</strong>
             <div style={{ fontSize: 24 }}>{totals[status]}</div>
@@ -122,9 +145,9 @@ export default function AdminBookingsPage() {
         ))}
       </div>
 
-      <div style={{ ...cardStyle, marginTop: 14 }}>
+      <div className="admin-card">
         <h3 style={{ marginTop: 0 }}>Filter perioda</h3>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={filterWrapStyle}>
           <div>
             <label style={labelStyle}>Od</label>
             <input
@@ -145,7 +168,8 @@ export default function AdminBookingsPage() {
           </div>
           <button
             type="button"
-            style={{ ...buttonStyle, alignSelf: "end", marginBottom: 10 }}
+            className="admin-template-link-btn"
+            style={{ alignSelf: "end" }}
             onClick={() => loadBookings().catch((err) => setError(err.message))}
           >
             Primeni filter
@@ -153,99 +177,104 @@ export default function AdminBookingsPage() {
         </div>
       </div>
 
-      {message ? <p style={{ color: "#9be39f" }}>{message}</p> : null}
-      {error ? <p style={{ color: "#ff9f9f" }}>{error}</p> : null}
+      {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
+      {error ? <p style={{ color: "#ff9f9f", margin: 0 }}>{error}</p> : null}
 
-      <div style={{ ...cardStyle, overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 950 }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Početak</th>
-              <th style={thStyle}>Kraj</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Napomena</th>
-              <th style={thStyle}>Cena</th>
-              <th style={thStyle}>Trajanje</th>
-              <th style={thStyle}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {bookings.map((booking) => (
-              <tr key={booking.id}>
-                <td style={tdStyle}>
-                  {new Date(booking.startsAt).toLocaleString("sr-RS")}
-                </td>
-                <td style={tdStyle}>
-                  {new Date(booking.endsAt).toLocaleString("sr-RS")}
-                </td>
-                <td style={tdStyle}>
-                  <select
-                    value={statusById[booking.id] || booking.status}
-                    onChange={(event) =>
-                      setStatusById((prev) => ({
-                        ...prev,
-                        [booking.id]: event.target.value,
-                      }))
-                    }
-                    style={inputStyle}
-                  >
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td style={tdStyle}>
-                  <input
-                    value={notesById[booking.id] || ""}
-                    onChange={(event) =>
-                      setNotesById((prev) => ({
-                        ...prev,
-                        [booking.id]: event.target.value,
-                      }))
-                    }
-                    style={inputStyle}
-                  />
-                </td>
-                <td style={tdStyle}>{booking.totalPriceRsd} RSD</td>
-                <td style={tdStyle}>{booking.totalDurationMin} min</td>
-                <td style={tdStyle}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      style={miniButtonStyle}
-                      disabled={loading}
-                      onClick={() => updateBooking(booking.id)}
-                    >
-                      Sačuvaj
-                    </button>
-                    <button
-                      type="button"
-                      style={buttonStyle}
-                      disabled={loading}
-                      onClick={() => completeBooking(booking.id)}
-                    >
-                      Završi
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={cardsWrapStyle}>
+        {bookings.map((booking) => (
+          <article key={booking.id} className="admin-card" style={{ display: "grid", gap: 10 }}>
+            <div style={metaGridStyle}>
+              <div>
+                <small style={smallStyle}>Klijent</small>
+                <div>{booking.clientName || "-"}</div>
+              </div>
+              <div>
+                <small style={smallStyle}>Pocetak</small>
+                <div>{formatDateTime(booking.startsAt)}</div>
+              </div>
+              <div>
+                <small style={smallStyle}>Kraj</small>
+                <div>{formatDateTime(booking.endsAt)}</div>
+              </div>
+              <div>
+                <small style={smallStyle}>Cena / trajanje</small>
+                <div>
+                  {booking.totalPriceRsd} RSD / {booking.totalDurationMin} min
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <small style={smallStyle}>Usluge</small>
+              <div>{booking.serviceSummary || "-"}</div>
+            </div>
+
+            <div style={controlGridStyle}>
+              <label>
+                <small style={smallStyle}>Status</small>
+                <select
+                  value={statusById[booking.id] || booking.status}
+                  onChange={(event) =>
+                    setStatusById((prev) => ({
+                      ...prev,
+                      [booking.id]: event.target.value,
+                    }))
+                  }
+                  style={{ ...inputStyle, marginTop: 4 }}
+                >
+                  {STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <small style={smallStyle}>Napomena</small>
+                <input
+                  value={notesById[booking.id] || ""}
+                  onChange={(event) =>
+                    setNotesById((prev) => ({
+                      ...prev,
+                      [booking.id]: event.target.value,
+                    }))
+                  }
+                  style={{ ...inputStyle, marginTop: 4 }}
+                />
+              </label>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                disabled={loading}
+                onClick={() => updateBooking(booking.id)}
+              >
+                Sacuvaj
+              </button>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                disabled={loading}
+                onClick={() => completeBooking(booking.id)}
+              >
+                Zavrsi
+              </button>
+            </div>
+          </article>
+        ))}
       </div>
+
+      {!bookings.length ? (
+        <div className="admin-card">
+          <p style={{ margin: 0, color: "#d5e2f4" }}>Nema termina za prikaz.</p>
+        </div>
+      ) : null}
     </section>
   );
 }
-
-const cardStyle = {
-  background: "rgba(217,232,248,0.16)",
-  border: "1px solid rgba(217,232,248,0.3)",
-  borderRadius: 12,
-  padding: 16,
-  marginTop: 14,
-};
 
 const statsWrapStyle = {
   display: "grid",
@@ -260,10 +289,39 @@ const statCardStyle = {
   background: "rgba(217,232,248,0.08)",
 };
 
+const filterWrapStyle = {
+  display: "flex",
+  gap: 10,
+  flexWrap: "wrap",
+  alignItems: "flex-end",
+};
+
+const cardsWrapStyle = {
+  display: "grid",
+  gap: 10,
+};
+
+const metaGridStyle = {
+  display: "grid",
+  gap: 8,
+  gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+};
+
+const controlGridStyle = {
+  display: "grid",
+  gap: 8,
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+};
+
 const labelStyle = {
   display: "block",
   marginBottom: 6,
   fontWeight: 600,
+};
+
+const smallStyle = {
+  color: "#abc2dd",
+  fontSize: 12,
 };
 
 const inputStyle = {
@@ -272,36 +330,5 @@ const inputStyle = {
   padding: "7px 9px",
   background: "rgba(10,12,0,0.5)",
   color: "#f2f5fb",
+  width: "100%",
 };
-
-const buttonStyle = {
-  borderRadius: 8,
-  border: "1px solid rgba(217,232,248,0.6)",
-  background: "#d9e8f8",
-  color: "#102844",
-  padding: "7px 9px",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const miniButtonStyle = {
-  borderRadius: 8,
-  border: "1px solid rgba(217,232,248,0.6)",
-  background: "transparent",
-  color: "#d9e8f8",
-  padding: "7px 9px",
-  cursor: "pointer",
-};
-
-const thStyle = {
-  textAlign: "left",
-  borderBottom: "1px solid rgba(217,232,248,0.2)",
-  padding: "8px 6px",
-};
-
-const tdStyle = {
-  borderBottom: "1px solid rgba(217,232,248,0.12)",
-  padding: "8px 6px",
-  verticalAlign: "top",
-};
-

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ParallaxProvider } from "react-scroll-parallax";
 import Context from "@/context/Context";
 import PWARegister from "@/components/common/PWARegister";
+import PWAInstallButton from "@/components/common/PWAInstallButton";
 import ScrollTop from "@/components/common/ScrollTop";
 import ScrollTopBehaviour from "@/components/common/ScrollTopBehavier";
 
@@ -28,6 +29,7 @@ export default function AppProviders({ children }) {
     <Context>
       <ParallaxProvider>{children}</ParallaxProvider>
       <PWARegister />
+      <PWAInstallButton />
       <ScrollTop />
       <ScrollTopBehaviour />
     </Context>

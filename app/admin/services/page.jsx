@@ -45,12 +45,18 @@ const emptyServiceForm = {
   id: "",
   categoryId: "",
   bodyAreaId: "",
+  kind: "single",
   name: "",
   description: "",
+  colorHex: "#8e939b",
   priceRsd: 0,
   durationMin: 30,
   isActive: true,
   isVip: false,
+  supportsMl: false,
+  maxMl: 1,
+  extraMlDiscountPercent: 0,
+  packageItems: [],
 };
 
 const emptyPromotionForm = {
@@ -62,6 +68,14 @@ const emptyPromotionForm = {
   endsAt: "",
   isActive: true,
 };
+
+function toPositiveInt(value, fallback = 1) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.max(1, Math.floor(parsed));
+}
 
 export default function AdminServicesPage() {
   const [services, setServices] = useState([]);
@@ -122,6 +136,62 @@ export default function AdminServicesPage() {
     }
   }, [categories, serviceForm.categoryId]);
 
+  const categoriesById = useMemo(
+    () => Object.fromEntries(categories.map((item) => [item.id, item.name])),
+    [categories]
+  );
+
+  const bodyAreasById = useMemo(
+    () => Object.fromEntries(bodyAreas.map((item) => [item.id, item.name])),
+    [bodyAreas]
+  );
+
+  const serviceNameById = useMemo(
+    () => Object.fromEntries(services.map((item) => [item.id, item.name])),
+    [services]
+  );
+
+  const singleServices = useMemo(
+    () => services.filter((item) => item.kind === "single"),
+    [services]
+  );
+
+  const singleServiceById = useMemo(
+    () => Object.fromEntries(singleServices.map((item) => [item.id, item])),
+    [singleServices]
+  );
+
+  const packageSummary = useMemo(() => {
+    if (serviceForm.kind !== "package") {
+      return {
+        priceRsd: Number(serviceForm.priceRsd || 0),
+        durationMin: Number(serviceForm.durationMin || 0),
+      };
+    }
+
+    return (serviceForm.packageItems || []).reduce(
+      (acc, item) => {
+        const ref = singleServiceById[item.serviceId];
+        if (!ref) {
+          return acc;
+        }
+        const quantity = toPositiveInt(item.quantity || 1, 1);
+        acc.priceRsd += Number(ref.priceRsd || 0) * quantity;
+        acc.durationMin += Number(ref.durationMin || 0) * quantity;
+        return acc;
+      },
+      { priceRsd: 0, durationMin: 0 }
+    );
+  }, [
+    serviceForm.kind,
+    serviceForm.packageItems,
+    serviceForm.priceRsd,
+    serviceForm.durationMin,
+    singleServiceById,
+  ]);
+
+  const packageOverLimit = serviceForm.kind === "package" && packageSummary.durationMin > 60;
+
   async function submitService(event) {
     event.preventDefault();
     setError("");
@@ -129,15 +199,41 @@ export default function AdminServicesPage() {
     setLoading(true);
 
     try {
+      const normalizedPackageItems = (serviceForm.packageItems || [])
+        .filter((item) => item.serviceId)
+        .map((item, index) => ({
+          serviceId: item.serviceId,
+          quantity: toPositiveInt(item.quantity || 1, 1),
+          sortOrder: index,
+        }));
+
+      const isPackage = serviceForm.kind === "package";
+      const computedDuration = isPackage
+        ? packageSummary.durationMin
+        : Number(serviceForm.durationMin);
+      const computedPrice = isPackage ? packageSummary.priceRsd : Number(serviceForm.priceRsd);
+
+      if (computedDuration > 60) {
+        throw new Error("Ukupno trajanje ne sme biti duze od 60 minuta.");
+      }
+
       const payload = {
         categoryId: serviceForm.categoryId,
         bodyAreaId: serviceForm.bodyAreaId || null,
+        kind: serviceForm.kind,
         name: serviceForm.name,
         description: serviceForm.description || "",
-        priceRsd: Number(serviceForm.priceRsd),
-        durationMin: Number(serviceForm.durationMin),
+        colorHex: serviceForm.colorHex || "#8e939b",
+        priceRsd: computedPrice,
+        durationMin: computedDuration,
         isActive: Boolean(serviceForm.isActive),
         isVip: Boolean(serviceForm.isVip),
+        supportsMl: isPackage ? false : Boolean(serviceForm.supportsMl),
+        maxMl: isPackage ? 1 : toPositiveInt(serviceForm.maxMl || 1, 1),
+        extraMlDiscountPercent: isPackage
+          ? 0
+          : Math.max(0, Math.min(40, Number(serviceForm.extraMlDiscountPercent || 0))),
+        packageItems: isPackage ? normalizedPackageItems : [],
       };
 
       const isEdit = Boolean(serviceForm.id);
@@ -250,27 +346,42 @@ export default function AdminServicesPage() {
     }
   }
 
-  const categoriesById = useMemo(
-    () => Object.fromEntries(categories.map((item) => [item.id, item.name])),
-    [categories]
-  );
+  function addPackageItem() {
+    setServiceForm((prev) => ({
+      ...prev,
+      packageItems: [
+        ...(prev.packageItems || []),
+        {
+          serviceId: singleServices[0]?.id || "",
+          quantity: 1,
+          sortOrder: (prev.packageItems || []).length,
+        },
+      ],
+    }));
+  }
 
-  const bodyAreasById = useMemo(
-    () => Object.fromEntries(bodyAreas.map((item) => [item.id, item.name])),
-    [bodyAreas]
-  );
+  function updatePackageItem(index, patch) {
+    setServiceForm((prev) => ({
+      ...prev,
+      packageItems: (prev.packageItems || []).map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...patch } : item
+      ),
+    }));
+  }
 
-  const serviceNameById = useMemo(
-    () => Object.fromEntries(services.map((item) => [item.id, item.name])),
-    [services]
-  );
+  function removePackageItem(index) {
+    setServiceForm((prev) => ({
+      ...prev,
+      packageItems: (prev.packageItems || []).filter((_, itemIndex) => itemIndex !== index),
+    }));
+  }
 
   return (
     <section style={{ display: "grid", gap: 12 }}>
       <div className="admin-card">
         <h2 style={{ marginTop: 0 }}>Usluge i promocije</h2>
         <p style={{ color: "#bed0e8" }}>
-          Detaljno dodavanje i edit usluga, VIP flag i fixed-price promocije.
+          Single/package model, boja usluge, ml opcije i paket builder.
         </p>
         {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
         {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
@@ -281,6 +392,26 @@ export default function AdminServicesPage() {
           <h3 style={{ marginTop: 0 }}>
             {serviceForm.id ? "Izmena usluge" : "Nova usluga"}
           </h3>
+
+          <label>
+            Tip usluge
+            <select
+              className="admin-inline-input"
+              value={serviceForm.kind}
+              onChange={(event) =>
+                setServiceForm((prev) => ({
+                  ...prev,
+                  kind: event.target.value,
+                  supportsMl: event.target.value === "single" ? prev.supportsMl : false,
+                  packageItems: event.target.value === "package" ? prev.packageItems : [],
+                }))
+              }
+            >
+              <option value="single">single</option>
+              <option value="package">package</option>
+            </select>
+          </label>
+
           <label>
             Naziv
             <input
@@ -292,6 +423,7 @@ export default function AdminServicesPage() {
               required
             />
           </label>
+
           <label>
             Kategorija
             <select
@@ -310,6 +442,7 @@ export default function AdminServicesPage() {
               ))}
             </select>
           </label>
+
           <label>
             Deo tela (opciono)
             <select
@@ -327,6 +460,7 @@ export default function AdminServicesPage() {
               ))}
             </select>
           </label>
+
           <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
             <label>
               Cena (RSD)
@@ -334,10 +468,11 @@ export default function AdminServicesPage() {
                 type="number"
                 min={0}
                 className="admin-inline-input"
-                value={serviceForm.priceRsd}
+                value={serviceForm.kind === "package" ? packageSummary.priceRsd : serviceForm.priceRsd}
                 onChange={(event) =>
                   setServiceForm((prev) => ({ ...prev, priceRsd: event.target.value }))
                 }
+                disabled={serviceForm.kind === "package"}
               />
             </label>
             <label>
@@ -345,14 +480,148 @@ export default function AdminServicesPage() {
               <input
                 type="number"
                 min={5}
+                max={60}
                 className="admin-inline-input"
-                value={serviceForm.durationMin}
+                value={
+                  serviceForm.kind === "package" ? packageSummary.durationMin : serviceForm.durationMin
+                }
                 onChange={(event) =>
                   setServiceForm((prev) => ({ ...prev, durationMin: event.target.value }))
                 }
+                disabled={serviceForm.kind === "package"}
               />
             </label>
           </div>
+
+          <label>
+            Boja usluge (hex)
+            <div style={{ display: "grid", gap: 8, gridTemplateColumns: "96px 1fr" }}>
+              <input
+                type="color"
+                className="admin-inline-input"
+                value={serviceForm.colorHex || "#8e939b"}
+                onChange={(event) =>
+                  setServiceForm((prev) => ({ ...prev, colorHex: event.target.value }))
+                }
+              />
+              <input
+                className="admin-inline-input"
+                value={serviceForm.colorHex}
+                onChange={(event) =>
+                  setServiceForm((prev) => ({ ...prev, colorHex: event.target.value }))
+                }
+              />
+            </div>
+          </label>
+
+          {serviceForm.kind === "single" ? (
+            <>
+              <label style={checkboxStyle}>
+                <input
+                  type="checkbox"
+                  checked={serviceForm.supportsMl}
+                  onChange={(event) =>
+                    setServiceForm((prev) => ({ ...prev, supportsMl: event.target.checked }))
+                  }
+                />
+                Podrzava ml booking (preset dugmici)
+              </label>
+
+              {serviceForm.supportsMl ? (
+                <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+                  <label>
+                    Max ml
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      className="admin-inline-input"
+                      value={serviceForm.maxMl}
+                      onChange={(event) =>
+                        setServiceForm((prev) => ({ ...prev, maxMl: event.target.value }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Popust po dodatnom ml (%)
+                    <input
+                      type="number"
+                      min={0}
+                      max={40}
+                      className="admin-inline-input"
+                      value={serviceForm.extraMlDiscountPercent}
+                      onChange={(event) =>
+                        setServiceForm((prev) => ({
+                          ...prev,
+                          extraMlDiscountPercent: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="admin-card" style={{ display: "grid", gap: 8 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <strong>Paket stavke</strong>
+                <button
+                  type="button"
+                  className="admin-template-link-btn"
+                  onClick={addPackageItem}
+                  disabled={!singleServices.length}
+                >
+                  Dodaj stavku
+                </button>
+              </div>
+
+              {(serviceForm.packageItems || []).map((item, index) => (
+                <div key={`${item.serviceId}-${index}`} style={packageItemRowStyle}>
+                  <select
+                    className="admin-inline-input"
+                    value={item.serviceId}
+                    onChange={(event) => updatePackageItem(index, { serviceId: event.target.value })}
+                  >
+                    <option value="">Izaberi single uslugu</option>
+                    {singleServices.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    className="admin-inline-input"
+                    value={item.quantity || 1}
+                    onChange={(event) =>
+                      updatePackageItem(index, { quantity: toPositiveInt(event.target.value, 1) })
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="admin-template-link-btn"
+                    onClick={() => removePackageItem(index)}
+                  >
+                    Obrisi
+                  </button>
+                </div>
+              ))}
+
+              <div style={{ color: packageOverLimit ? "#ffabab" : "#bed0e8", fontSize: 13 }}>
+                Auto zbir paketa: {packageSummary.durationMin} min / {packageSummary.priceRsd} RSD
+              </div>
+            </div>
+          )}
+
           <label>
             Opis
             <textarea
@@ -364,6 +633,7 @@ export default function AdminServicesPage() {
               }
             />
           </label>
+
           <label style={checkboxStyle}>
             <input
               type="checkbox"
@@ -384,8 +654,9 @@ export default function AdminServicesPage() {
             />
             VIP usluga
           </label>
+
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="submit" className="admin-template-link-btn" disabled={loading}>
+            <button type="submit" className="admin-template-link-btn" disabled={loading || packageOverLimit}>
               {serviceForm.id ? "Sacuvaj izmene" : "Dodaj uslugu"}
             </button>
             {serviceForm.id ? (
@@ -503,145 +774,153 @@ export default function AdminServicesPage() {
         </form>
       </div>
 
-      <div className="admin-card" style={{ overflowX: "auto" }}>
+      <div className="admin-card" style={{ display: "grid", gap: 10 }}>
         <h3 style={{ marginTop: 0 }}>Lista usluga</h3>
-        <table style={{ width: "100%", minWidth: 1080, borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Naziv</th>
-              <th style={thStyle}>Kategorija</th>
-              <th style={thStyle}>Deo tela</th>
-              <th style={thStyle}>Cena</th>
-              <th style={thStyle}>Trajanje</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {services.map((service) => (
-              <tr key={service.id}>
-                <td style={tdStyle}>
-                  <strong>{service.name}</strong>
-                  {service.description ? (
-                    <div style={{ color: "#adc2db", fontSize: 12 }}>{service.description}</div>
-                  ) : null}
-                </td>
-                <td style={tdStyle}>{categoriesById[service.categoryId] || service.categoryId}</td>
-                <td style={tdStyle}>
-                  {service.bodyAreaId ? bodyAreasById[service.bodyAreaId] || service.bodyAreaId : "-"}
-                </td>
-                <td style={tdStyle}>{service.priceRsd} RSD</td>
-                <td style={tdStyle}>{service.durationMin} min</td>
-                <td style={tdStyle}>
-                  <div>{service.isActive ? "aktivna" : "neaktivna"}</div>
-                  <div style={{ color: "#adc2db", fontSize: 12 }}>
-                    {service.isVip ? "VIP" : "regularna"}
-                  </div>
-                </td>
-                <td style={tdStyle}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      onClick={() =>
-                        setServiceForm({
-                          id: service.id,
-                          categoryId: service.categoryId || "",
-                          bodyAreaId: service.bodyAreaId || "",
-                          name: service.name || "",
-                          description: service.description || "",
-                          priceRsd: service.priceRsd || 0,
-                          durationMin: service.durationMin || 30,
-                          isActive: Boolean(service.isActive),
-                          isVip: Boolean(service.isVip),
-                        })
-                      }
-                    >
-                      Izmeni
-                    </button>
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      onClick={() => toggleServiceActive(service)}
-                      disabled={loading}
-                    >
-                      {service.isActive ? "Deaktiviraj" : "Aktiviraj"}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {services.map((service) => (
+          <article key={service.id} className="admin-card" style={{ display: "grid", gap: 8 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <strong>{service.name}</strong>
+                <div style={{ color: "#adc2db", fontSize: 12 }}>
+                  {categoriesById[service.categoryId] || service.categoryId}
+                  {service.bodyAreaId
+                    ? ` / ${bodyAreasById[service.bodyAreaId] || service.bodyAreaId}`
+                    : ""}
+                </div>
+              </div>
+              <span style={{ ...badgeStyle, background: service.colorHex || "#8e939b" }}>
+                {service.kind}
+              </span>
+            </div>
+
+            {service.description ? (
+              <div style={{ color: "#d2e0f1", fontSize: 13 }}>{service.description}</div>
+            ) : null}
+
+            <div style={metaWrapStyle}>
+              <span>{service.priceRsd} RSD</span>
+              <span>{service.durationMin} min</span>
+              <span>{service.isActive ? "aktivna" : "neaktivna"}</span>
+              <span>{service.isVip ? "VIP" : "regularna"}</span>
+            </div>
+
+            {service.kind === "single" && service.supportsMl ? (
+              <div style={{ color: "#bed0e8", fontSize: 12 }}>
+                ML: do {service.maxMl} ml, popust po dodatnom ml {service.extraMlDiscountPercent}%.
+              </div>
+            ) : null}
+
+            {service.kind === "package" ? (
+              <div style={{ color: "#bed0e8", fontSize: 12 }}>
+                Paket: {(service.packageItems || [])
+                  .map((item) => `${item.serviceName} x${item.quantity}`)
+                  .join(", ") || "bez stavki"}
+              </div>
+            ) : null}
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() =>
+                  setServiceForm({
+                    id: service.id,
+                    categoryId: service.categoryId || "",
+                    bodyAreaId: service.bodyAreaId || "",
+                    kind: service.kind || "single",
+                    name: service.name || "",
+                    description: service.description || "",
+                    colorHex: service.colorHex || "#8e939b",
+                    priceRsd: service.priceRsd || 0,
+                    durationMin: service.durationMin || 30,
+                    isActive: Boolean(service.isActive),
+                    isVip: Boolean(service.isVip),
+                    supportsMl: Boolean(service.supportsMl),
+                    maxMl: Number(service.maxMl || 1),
+                    extraMlDiscountPercent: Number(service.extraMlDiscountPercent || 0),
+                    packageItems: (service.packageItems || []).map((item, index) => ({
+                      serviceId: item.serviceId,
+                      quantity: Number(item.quantity || 1),
+                      sortOrder: Number(item.sortOrder || index),
+                    })),
+                  })
+                }
+              >
+                Izmeni
+              </button>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() => toggleServiceActive(service)}
+                disabled={loading}
+              >
+                {service.isActive ? "Deaktiviraj" : "Aktiviraj"}
+              </button>
+            </div>
+          </article>
+        ))}
       </div>
 
-      <div className="admin-card" style={{ overflowX: "auto" }}>
+      <div className="admin-card" style={{ display: "grid", gap: 10 }}>
         <h3 style={{ marginTop: 0 }}>Promocije</h3>
-        <table style={{ width: "100%", minWidth: 980, borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Naziv</th>
-              <th style={thStyle}>Usluga</th>
-              <th style={thStyle}>Cena</th>
-              <th style={thStyle}>Period</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {promotions.map((promotion) => (
-              <tr key={promotion.id}>
-                <td style={tdStyle}>{promotion.title}</td>
-                <td style={tdStyle}>
-                  {serviceNameById[promotion.serviceId] || promotion.serviceId}
-                </td>
-                <td style={tdStyle}>{promotion.promoPriceRsd} RSD</td>
-                <td style={tdStyle}>
-                  {promotion.startsAt ? new Date(promotion.startsAt).toLocaleString("sr-RS") : "-"}
-                  {" - "}
-                  {promotion.endsAt ? new Date(promotion.endsAt).toLocaleString("sr-RS") : "-"}
-                </td>
-                <td style={tdStyle}>{promotion.isActive ? "aktivna" : "neaktivna"}</td>
-                <td style={tdStyle}>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      onClick={() =>
-                        setPromotionForm({
-                          id: promotion.id,
-                          serviceId: promotion.serviceId,
-                          title: promotion.title,
-                          promoPriceRsd: promotion.promoPriceRsd,
-                          startsAt: toLocalDateTime(promotion.startsAt),
-                          endsAt: toLocalDateTime(promotion.endsAt),
-                          isActive: Boolean(promotion.isActive),
-                        })
-                      }
-                    >
-                      Izmeni
-                    </button>
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      onClick={() => togglePromotionActive(promotion)}
-                      disabled={loading}
-                    >
-                      {promotion.isActive ? "Deaktiviraj" : "Aktiviraj"}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {!promotions.length ? (
-              <tr>
-                <td style={tdStyle} colSpan={6}>
-                  Nema promocija.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+        {promotions.map((promotion) => (
+          <article key={promotion.id} className="admin-card" style={{ display: "grid", gap: 8 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
+            >
+              <strong>{promotion.title}</strong>
+              <span>{promotion.isActive ? "aktivna" : "neaktivna"}</span>
+            </div>
+            <div style={{ color: "#d2e0f1", fontSize: 13 }}>
+              {serviceNameById[promotion.serviceId] || promotion.serviceId}
+            </div>
+            <div style={metaWrapStyle}>
+              <span>{promotion.promoPriceRsd} RSD</span>
+              <span>{promotion.startsAt ? new Date(promotion.startsAt).toLocaleString("sr-RS") : "-"}</span>
+              <span>{promotion.endsAt ? new Date(promotion.endsAt).toLocaleString("sr-RS") : "-"}</span>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() =>
+                  setPromotionForm({
+                    id: promotion.id,
+                    serviceId: promotion.serviceId,
+                    title: promotion.title,
+                    promoPriceRsd: promotion.promoPriceRsd,
+                    startsAt: toLocalDateTime(promotion.startsAt),
+                    endsAt: toLocalDateTime(promotion.endsAt),
+                    isActive: Boolean(promotion.isActive),
+                  })
+                }
+              >
+                Izmeni
+              </button>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() => togglePromotionActive(promotion)}
+                disabled={loading}
+              >
+                {promotion.isActive ? "Deaktiviraj" : "Aktiviraj"}
+              </button>
+            </div>
+          </article>
+        ))}
+        {!promotions.length ? <p style={{ margin: 0 }}>Nema promocija.</p> : null}
       </div>
     </section>
   );
@@ -653,14 +932,25 @@ const checkboxStyle = {
   alignItems: "center",
 };
 
-const thStyle = {
-  textAlign: "left",
-  borderBottom: "1px solid rgba(217,232,248,0.2)",
-  padding: "8px 6px",
+const packageItemRowStyle = {
+  display: "grid",
+  gap: 8,
+  gridTemplateColumns: "minmax(120px,1fr) 90px auto",
 };
 
-const tdStyle = {
-  borderBottom: "1px solid rgba(217,232,248,0.12)",
-  padding: "8px 6px",
-  verticalAlign: "top",
+const metaWrapStyle = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+  color: "#d7e4f3",
+  fontSize: 12,
+};
+
+const badgeStyle = {
+  borderRadius: 999,
+  padding: "4px 10px",
+  color: "#f4f8ff",
+  fontSize: 12,
+  textTransform: "uppercase",
+  alignSelf: "flex-start",
 };

@@ -7,6 +7,7 @@ import {
   findConflicts,
   isWithinBookingWindow,
   isWithinWorkHours,
+  normalizeServiceSelections,
   resolveQuote,
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
@@ -14,7 +15,15 @@ import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
 export const runtime = "nodejs";
 
 const payloadSchema = z.object({
-  serviceIds: z.array(z.string().uuid()).min(1),
+  serviceIds: z.array(z.string().uuid()).optional(),
+  serviceSelections: z
+    .array(
+      z.object({
+        serviceId: z.string().uuid(),
+        quantity: z.number().int().min(1).optional(),
+      })
+    )
+    .optional(),
   startAt: z.string().datetime(),
   notes: z.string().max(1000).optional(),
 });
@@ -35,13 +44,20 @@ export async function POST(request) {
     const db = getDb();
     const startAt = new Date(parsed.data.startAt);
     const settings = await getClinicSettings();
+    const normalizedSelections = normalizeServiceSelections(
+      parsed.data.serviceSelections || [],
+      parsed.data.serviceIds || []
+    );
+
+    if (!normalizedSelections.length) {
+      return fail(400, "At least one service is required.");
+    }
 
     if (!isWithinBookingWindow(startAt, settings.bookingWindowDays)) {
       return fail(400, `Booking must be within next ${settings.bookingWindowDays} days.`);
     }
 
-    const uniqueServiceIds = Array.from(new Set(parsed.data.serviceIds));
-    const quote = await resolveQuote(uniqueServiceIds);
+    const quote = await resolveQuote(normalizedSelections);
     const endsAt = addMinutes(startAt, quote.totalDurationMin);
     const employee = await getDefaultEmployee();
 
@@ -69,9 +85,10 @@ export async function POST(request) {
         employeeId: employee.id,
         startsAt: startAt,
         endsAt,
-        status: "confirmed",
+        status: "pending",
         totalDurationMin: quote.totalDurationMin,
         totalPriceRsd: quote.totalPriceRsd,
+        primaryServiceColor: quote.primaryServiceColor,
         notes: parsed.data.notes || null,
       })
       .returning();
@@ -80,9 +97,13 @@ export async function POST(request) {
       quote.items.map((item) => ({
         bookingId: createdBooking.id,
         serviceId: item.serviceId,
+        quantity: item.quantity,
+        unitLabel: item.unitLabel,
         serviceNameSnapshot: item.name,
         durationMinSnapshot: item.durationMin,
         priceRsdSnapshot: item.finalPriceRsd,
+        serviceColorSnapshot: item.serviceColor,
+        sourcePackageServiceId: item.sourcePackageServiceId || null,
       }))
     );
 
@@ -90,9 +111,9 @@ export async function POST(request) {
       await db.insert(schema.bookingStatusLog).values({
         bookingId: createdBooking.id,
         previousStatus: null,
-        nextStatus: "confirmed",
+        nextStatus: "pending",
         changedByUserId: auth.user.id,
-        note: "Booking created online",
+        note: "Booking created online (awaiting admin confirmation)",
       });
     } catch (logError) {
       console.error("[bookings.create] status log insert failed", logError);
@@ -110,6 +131,9 @@ export async function POST(request) {
       return fail(409, message);
     }
     if (message.includes("invalid or inactive")) {
+      return fail(400, message);
+    }
+    if (message.includes("cannot exceed 60 minutes")) {
       return fail(400, message);
     }
     if (errorCode === "23503") {

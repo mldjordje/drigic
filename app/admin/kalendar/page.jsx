@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -67,6 +67,9 @@ function normalizeSlotStart(value) {
 }
 
 export default function AdminKalendarPage() {
+  const calendarRef = useRef(null);
+  const touchStartRef = useRef(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [range, setRange] = useState({ from: "", to: "" });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -98,6 +101,24 @@ export default function AdminKalendarPage() {
   const [activeEvent, setActiveEvent] = useState(null);
   const [statusDraft, setStatusDraft] = useState("pending");
   const [notesDraft, setNotesDraft] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const media = window.matchMedia("(max-width: 960px)");
+    const update = () => setIsMobileViewport(media.matches);
+    update();
+
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
 
   const bookingById = useMemo(() => {
     const map = new Map();
@@ -167,6 +188,7 @@ export default function AdminKalendarPage() {
           refId: item.id,
           subtitle: item.serviceSummary || "",
           status: item.status || "pending",
+          serviceColor: item.primaryServiceColor || null,
         },
       }));
 
@@ -352,6 +374,39 @@ export default function AdminKalendarPage() {
     }
   }
 
+  async function changeActiveBookingStatus(nextStatus) {
+    if (!activeEvent || activeEvent.kind !== "booking") {
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/admin/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: activeEvent.refId,
+          status: nextStatus,
+          notes: notesDraft,
+        }),
+      });
+      const data = await parseResponse(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Neuspesna izmena statusa.");
+      }
+      setStatusDraft(nextStatus);
+      setMessage("Status termina je azuriran.");
+      await refreshData();
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri izmeni statusa.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function completeBooking() {
     if (!activeEvent || activeEvent.kind !== "booking") {
       return;
@@ -419,8 +474,69 @@ export default function AdminKalendarPage() {
     };
   }, [bookings, blocks]);
 
+  const toolbarRight = isMobileViewport
+    ? "dayGridMonth,timeGridWeek,timeGridDay"
+    : "dayGridMonth,timeGridWeek,timeGridDay";
+
+  function navigateCalendar(direction) {
+    const api = calendarRef.current?.getApi?.();
+    if (!api) {
+      return;
+    }
+    if (direction === "next") {
+      api.next();
+      return;
+    }
+    api.prev();
+  }
+
+  function handleTouchStart(event) {
+    if (!isMobileViewport) {
+      return;
+    }
+    const touch = event.changedTouches?.[0];
+    if (!touch) {
+      return;
+    }
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now(),
+    };
+  }
+
+  function handleTouchEnd(event) {
+    if (!isMobileViewport) {
+      return;
+    }
+
+    const start = touchStartRef.current;
+    const touch = event.changedTouches?.[0];
+    touchStartRef.current = null;
+    if (!start || !touch) {
+      return;
+    }
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const elapsed = Date.now() - start.time;
+    const horizontalDistance = Math.abs(deltaX);
+    const verticalDistance = Math.abs(deltaY);
+
+    if (elapsed > 650 || horizontalDistance < 44 || horizontalDistance < verticalDistance) {
+      return;
+    }
+
+    if (deltaX < 0) {
+      navigateCalendar("next");
+      return;
+    }
+
+    navigateCalendar("prev");
+  }
+
   return (
-    <section className="admin-calendar-page">
+    <section className={`admin-calendar-page ${isMobileViewport ? "is-mobile-full" : ""}`}>
       <div className="admin-card admin-calendar-toolbar">
         <div>
           <h2 style={{ margin: 0 }}>Admin kalendar</h2>
@@ -451,14 +567,31 @@ export default function AdminKalendarPage() {
       {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
       {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
 
-      <div className="admin-card clinic-fc-wrap">
+      <div
+        className={`admin-card clinic-fc-wrap ${isMobileViewport ? "is-mobile-stage" : ""}`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <FullCalendar
+          ref={calendarRef}
+          key={isMobileViewport ? "mobile" : "desktop"}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           locale="sr"
           firstDay={1}
           allDaySlot={false}
           slotDuration="00:15:00"
+          slotLabelInterval="00:15:00"
+          slotLabelFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }}
+          dayHeaderFormat={{
+            weekday: "short",
+            day: "2-digit",
+            month: "2-digit",
+          }}
           slotMinTime="16:00:00"
           slotMaxTime="21:00:00"
           nowIndicator
@@ -475,17 +608,26 @@ export default function AdminKalendarPage() {
             })
           }
           events={events}
-          height="auto"
+          height={isMobileViewport ? "100%" : "auto"}
+          expandRows={isMobileViewport}
           headerToolbar={{
-            left: "prev,next today",
+            left: isMobileViewport ? "prev,next" : "prev,next today",
             center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay",
+            right: toolbarRight,
           }}
           buttonText={{
             today: "Danas",
             month: "Mesec",
             week: "Nedelja",
             day: "Dan",
+          }}
+          eventDidMount={(arg) => {
+            const serviceColor = arg.event.extendedProps?.serviceColor;
+            if (serviceColor) {
+              arg.el.style.setProperty("--clinic-event-service-edge", serviceColor);
+            } else {
+              arg.el.style.removeProperty("--clinic-event-service-edge");
+            }
           }}
           eventContent={(arg) => (
             <div className="clinic-fc-event-inner">
@@ -760,6 +902,26 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <div className="admin-calendar-detail-actions">
+                  {activeBooking.status === "pending" ? (
+                    <>
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        disabled={saving}
+                        onClick={() => changeActiveBookingStatus("confirmed")}
+                      >
+                        Potvrdi
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        disabled={saving}
+                        onClick={() => changeActiveBookingStatus("cancelled")}
+                      >
+                        Otkazi
+                      </button>
+                    </>
+                  ) : null}
                   <button
                     type="button"
                     className="admin-template-link-btn"

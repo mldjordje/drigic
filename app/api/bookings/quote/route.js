@@ -5,7 +5,15 @@ import { resolveQuote } from "@/lib/booking/engine";
 export const runtime = "nodejs";
 
 const payloadSchema = z.object({
-  serviceIds: z.array(z.string().uuid()).min(1),
+  serviceIds: z.array(z.string().uuid()).optional(),
+  serviceSelections: z
+    .array(
+      z.object({
+        serviceId: z.string().uuid(),
+        quantity: z.number().int().min(1).optional(),
+      })
+    )
+    .optional(),
 });
 
 export async function POST(request) {
@@ -16,10 +24,13 @@ export async function POST(request) {
   }
 
   try {
-    const quote = await resolveQuote(parsed.data.serviceIds);
+    const input =
+      parsed.data.serviceSelections?.length
+        ? parsed.data.serviceSelections
+        : parsed.data.serviceIds || [];
+    const quote = await resolveQuote(input);
     return ok({ ok: true, ...quote, currency: "RSD" });
   } catch (error) {
     return fail(400, error.message);
   }
 }
-

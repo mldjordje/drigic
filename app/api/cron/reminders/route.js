@@ -2,7 +2,7 @@ import { and, eq, gte, inArray, lte, like } from "drizzle-orm";
 import { fail, ok } from "@/lib/api/http";
 import { isCronAuthorized } from "@/lib/cron/auth";
 import { getDb, schema } from "@/lib/db/client";
-import { sendReminderEmail } from "@/lib/auth/email";
+import { deliverBookingNotification } from "@/lib/notifications/delivery";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ async function processReminderType({ db, type, title, targetHours }) {
     .innerJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
     .where(
       and(
-        inArray(schema.bookings.status, ["pending", "confirmed"]),
+        inArray(schema.bookings.status, ["confirmed"]),
         gte(schema.bookings.startsAt, start),
         lte(schema.bookings.startsAt, end)
       )
@@ -55,26 +55,19 @@ async function processReminderType({ db, type, title, targetHours }) {
 
     const message = `Podsetnik za termin (${new Date(
       booking.startsAt
-    ).toLocaleString("sr-RS", { timeZone: "Europe/Belgrade" })}) - ${marker}`;
+    ).toLocaleString("sr-RS", { timeZone: "Europe/Belgrade" })})`;
 
-    await db.insert(schema.notifications).values({
+    await deliverBookingNotification({
+      db,
       userId: booking.userId,
-      channel: "in_app",
+      email: booking.email,
       type,
       title,
       message,
+      bookingId: booking.bookingId,
       scheduledFor: booking.startsAt,
-      sentAt: new Date(),
-      status: "sent",
+      dedupe: true,
     });
-
-    if (booking.email) {
-      await sendReminderEmail({
-        to: booking.email,
-        title,
-        message,
-      });
-    }
 
     sentCount += 1;
   }
@@ -107,4 +100,3 @@ export async function GET(request) {
     sent2,
   });
 }
-

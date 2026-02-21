@@ -87,6 +87,16 @@ async function parseResponse(response) {
   }
 }
 
+function toMlPresets(maxMl) {
+  const count = Math.max(1, Number(maxMl || 1));
+  return Array.from({ length: count }, (_, index) => index + 1);
+}
+
+function getServicePriceLabel(service) {
+  const value = service?.promotion?.promoPriceRsd || service?.priceRsd || 0;
+  return `${value} RSD`;
+}
+
 export default function BookingInlineForm({
   googleNextPath = "/",
   cardClassName = "",
@@ -94,7 +104,7 @@ export default function BookingInlineForm({
 }) {
   const [user, setUser] = useState(null);
   const [services, setServices] = useState([]);
-  const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedMap, setSelectedMap] = useState({});
   const [date, setDate] = useState(todayIsoDate());
   const [availability, setAvailability] = useState([]);
   const [monthAvailability, setMonthAvailability] = useState({});
@@ -130,6 +140,55 @@ export default function BookingInlineForm({
       return formatter.format(item);
     });
   }, []);
+
+  const serviceLookup = useMemo(() => {
+    const map = new Map();
+    services.forEach((category) => {
+      (category.services || []).forEach((service) => {
+        map.set(service.id, {
+          ...service,
+          categoryId: category.id,
+          categoryName: category.name,
+        });
+      });
+    });
+    return map;
+  }, [services]);
+
+  const packageServices = useMemo(() => {
+    const list = [];
+    services.forEach((category) => {
+      (category.services || [])
+        .filter((service) => service.kind === "package")
+        .forEach((service) => {
+          list.push({
+            ...service,
+            categoryName: category.name,
+          });
+        });
+    });
+    return list.sort((a, b) => a.name.localeCompare(b.name, "sr"));
+  }, [services]);
+
+  const singleCategoryGroups = useMemo(() => {
+    return services
+      .map((category) => ({
+        ...category,
+        services: (category.services || []).filter((service) => service.kind !== "package"),
+      }))
+      .filter((category) => category.services.length);
+  }, [services]);
+
+  const serviceSelections = useMemo(
+    () =>
+      Object.entries(selectedMap)
+        .map(([serviceId, quantity]) => ({
+          serviceId,
+          quantity: Math.max(1, Number(quantity || 1)),
+        }))
+        .filter((item) => item.serviceId),
+    [selectedMap]
+  );
 
   const maxSlotsInMonth = useMemo(() => {
     const monthEntries = Object.entries(monthAvailability)
@@ -168,20 +227,24 @@ export default function BookingInlineForm({
   );
 
   const selectedServiceLabels = useMemo(() => {
-    if (!selectedServices.length) {
+    if (!serviceSelections.length) {
       return [];
     }
-    const map = new Map();
-    services.forEach((category) => {
-      (category.services || []).forEach((service) => {
-        map.set(service.id, service);
-      });
-    });
-    return selectedServices
-      .map((id) => map.get(id))
-      .filter(Boolean)
-      .map((service) => `${service.name} (${service.durationMin} min)`);
-  }, [services, selectedServices]);
+
+    return serviceSelections
+      .map((selection) => {
+        const service = serviceLookup.get(selection.serviceId);
+        if (!service) {
+          return null;
+        }
+        const quantityLabel =
+          service.supportsMl || selection.quantity > 1
+            ? ` (${selection.quantity} ${service.supportsMl ? "ml" : "kom"})`
+            : "";
+        return `${service.name}${quantityLabel} - ${service.durationMin} min`;
+      })
+      .filter(Boolean);
+  }, [serviceSelections, serviceLookup]);
 
   async function loadSession() {
     const response = await fetch("/api/me/profile");
@@ -209,6 +272,31 @@ export default function BookingInlineForm({
     }
     const data = await parseResponse(response);
     setBookings(data.upcoming || []);
+  }
+
+  function updateSelectedService(service, checked) {
+    setSelectedMap((prev) => {
+      const next = { ...prev };
+      if (!checked) {
+        delete next[service.id];
+        return next;
+      }
+      next[service.id] = Math.max(1, Number(next[service.id] || 1));
+      return next;
+    });
+    setError("");
+    setMessage("");
+    setSelectedStartAt("");
+  }
+
+  function updateSelectedQuantity(serviceId, quantity) {
+    setSelectedMap((prev) => ({
+      ...prev,
+      [serviceId]: Math.max(1, Number(quantity || 1)),
+    }));
+    setError("");
+    setMessage("");
+    setSelectedStartAt("");
   }
 
   useEffect(() => {
@@ -243,7 +331,7 @@ export default function BookingInlineForm({
   }, [user, showUpcoming]);
 
   useEffect(() => {
-    if (!selectedServices.length) {
+    if (!serviceSelections.length) {
       setQuote(null);
       return;
     }
@@ -251,7 +339,7 @@ export default function BookingInlineForm({
     fetch("/api/bookings/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ serviceIds: selectedServices }),
+      body: JSON.stringify({ serviceSelections }),
     })
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
@@ -262,10 +350,10 @@ export default function BookingInlineForm({
         setQuote(data);
       })
       .catch((err) => setError(err.message));
-  }, [selectedServices]);
+  }, [serviceSelections]);
 
   useEffect(() => {
-    if (!selectedServices.length) {
+    if (!serviceSelections.length) {
       setMonthAvailability({});
       setCalendarError("");
       return;
@@ -277,7 +365,7 @@ export default function BookingInlineForm({
 
     const params = new URLSearchParams({
       month: monthKey,
-      serviceIds: selectedServices.join(","),
+      serviceSelections: JSON.stringify(serviceSelections),
     });
 
     fetch(`/api/bookings/availability?${params.toString()}`)
@@ -310,10 +398,10 @@ export default function BookingInlineForm({
     return () => {
       cancelled = true;
     };
-  }, [selectedServices, monthKey]);
+  }, [serviceSelections, monthKey]);
 
   useEffect(() => {
-    if (!selectedServices.length || monthLoading) {
+    if (!serviceSelections.length || monthLoading) {
       return;
     }
 
@@ -331,10 +419,10 @@ export default function BookingInlineForm({
       setDate(availableDates[0]);
       setSelectedStartAt("");
     }
-  }, [selectedServices, monthAvailability, monthKey, date, monthLoading, today]);
+  }, [serviceSelections, monthAvailability, monthKey, date, monthLoading, today]);
 
   useEffect(() => {
-    if (!selectedServices.length || !date) {
+    if (!serviceSelections.length || !date) {
       setAvailability([]);
       return;
     }
@@ -342,7 +430,7 @@ export default function BookingInlineForm({
     let cancelled = false;
     const params = new URLSearchParams({
       date,
-      serviceIds: selectedServices.join(","),
+      serviceSelections: JSON.stringify(serviceSelections),
     });
 
     fetch(`/api/bookings/availability?${params.toString()}`)
@@ -365,7 +453,7 @@ export default function BookingInlineForm({
     return () => {
       cancelled = true;
     };
-  }, [selectedServices, date]);
+  }, [serviceSelections, date]);
 
   async function handleBook(event) {
     event.preventDefault();
@@ -378,7 +466,7 @@ export default function BookingInlineForm({
       return;
     }
 
-    if (!selectedServices.length) {
+    if (!serviceSelections.length) {
       setError("Izaberite barem jednu uslugu.");
       return;
     }
@@ -394,7 +482,7 @@ export default function BookingInlineForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          serviceIds: selectedServices,
+          serviceSelections,
           startAt: selectedStartAt,
           notes,
         }),
@@ -405,7 +493,7 @@ export default function BookingInlineForm({
       }
 
       setError("");
-      setMessage("Termin je uspesno zakazan.");
+      setMessage("Termin je poslat i ceka potvrdu admina.");
       setSelectedStartAt("");
       setNotes("");
       await loadMyBookings();
@@ -457,48 +545,103 @@ export default function BookingInlineForm({
             ))}
           </div>
         ) : null}
-        {services.map((category) => (
+
+        {packageServices.length ? (
+          <div className="clinic-service-category">
+            <h4 style={{ marginBottom: 8, color: "#f2f5fb" }}>Paketi usluga</h4>
+            <div style={{ display: "grid", gap: 8 }}>
+              {packageServices.map((service) => {
+                const selected = Boolean(selectedMap[service.id]);
+                return (
+                  <div
+                    key={service.id}
+                    style={checkboxRowStyle}
+                    className={`clinic-service-option ${selected ? "is-selected" : ""}`}
+                  >
+                    <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={(event) => updateSelectedService(service, event.target.checked)}
+                      />
+                      <span style={{ color: "#f2f5fb", display: "grid", gap: 4 }}>
+                        <strong>{service.name}</strong>
+                        <small>
+                          {service.durationMin} min - {getServicePriceLabel(service)}
+                        </small>
+                        {service.packageItems?.length ? (
+                          <small style={{ color: "#cbd9ee" }}>
+                            Paket:{" "}
+                            {service.packageItems
+                              .map(
+                                (item) =>
+                                  `${item.serviceName} x${Math.max(1, Number(item.quantity || 1))}`
+                              )
+                              .join(", ")}
+                          </small>
+                        ) : null}
+                      </span>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        {singleCategoryGroups.map((category) => (
           <div key={category.id} className="clinic-service-category">
             <h4 style={{ marginBottom: 8, color: "#f2f5fb" }}>{category.name}</h4>
             <div style={{ display: "grid", gap: 8 }}>
-              {(category.services || []).map((service) => (
-                <label
-                  key={service.id}
-                  style={checkboxRowStyle}
-                  className={`clinic-service-option ${
-                    selectedServices.includes(service.id) ? "is-selected" : ""
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedServices.includes(service.id)}
-                    onChange={(event) => {
-                      setError("");
-                      setMessage("");
-                      setSelectedStartAt("");
+              {(category.services || []).map((service) => {
+                const selected = Boolean(selectedMap[service.id]);
+                const selectedQuantity = Math.max(1, Number(selectedMap[service.id] || 1));
+                return (
+                  <div
+                    key={service.id}
+                    style={checkboxRowStyle}
+                    className={`clinic-service-option ${selected ? "is-selected" : ""}`}
+                  >
+                    <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={(event) => updateSelectedService(service, event.target.checked)}
+                      />
+                      <span style={{ color: "#f2f5fb", display: "grid", gap: 4 }}>
+                        <strong>{service.name}</strong>
+                        <small>
+                          {service.durationMin} min - {getServicePriceLabel(service)}
+                        </small>
+                      </span>
+                    </label>
 
-                      if (event.target.checked) {
-                        setSelectedServices((prev) =>
-                          prev.includes(service.id) ? prev : [...prev, service.id]
-                        );
-                      } else {
-                        setSelectedServices((prev) => prev.filter((id) => id !== service.id));
-                      }
-                    }}
-                  />
-                  <span style={{ color: "#f2f5fb" }}>
-                    {service.name} - {service.durationMin} min -{" "}
-                    {service.promotion?.promoPriceRsd || service.priceRsd} RSD
-                  </span>
-                </label>
-              ))}
+                    {service.supportsMl && selected ? (
+                      <div className="clinic-ml-presets">
+                        {toMlPresets(service.maxMl).map((mlValue) => (
+                          <button
+                            key={mlValue}
+                            type="button"
+                            className={`clinic-ml-btn ${
+                              selectedQuantity === mlValue ? "is-active" : ""
+                            }`}
+                            onClick={() => updateSelectedQuantity(service.id, mlValue)}
+                          >
+                            {mlValue} ml
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
 
         <h3 style={{ color: "#f2f5fb" }}>2) Datum i vreme</h3>
 
-        {!selectedServices.length ? (
+        {!serviceSelections.length ? (
           <p style={{ color: "#e6eefb" }}>Prvo izaberite uslugu da biste videli slobodne datume.</p>
         ) : (
           <>
@@ -619,6 +762,15 @@ export default function BookingInlineForm({
         {quote ? (
           <div style={summaryStyle}>
             <strong>Ukupno:</strong> {quote.totalDurationMin} min / {quote.totalPriceRsd} RSD
+            {quote.items?.length ? (
+              <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                {quote.items.map((item) => (
+                  <li key={item.serviceId} style={{ color: "#dfe9f8" }}>
+                    {item.name} - {item.quantity} {item.unitLabel} - {item.finalPriceRsd} RSD
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         ) : null}
 
@@ -670,7 +822,7 @@ const inputStyle = {
 };
 
 const checkboxRowStyle = {
-  display: "flex",
+  display: "grid",
   gap: 8,
   alignItems: "center",
   padding: "8px 10px",
