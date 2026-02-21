@@ -9,6 +9,7 @@ export default function Header4() {
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [useDarkMobileLogo, setUseDarkMobileLogo] = useState(false);
   const lastScrollYRef = useRef(0);
 
   const navItems = useMemo(() => {
@@ -61,6 +62,11 @@ export default function Header4() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
+      const isMobileViewport = window.innerWidth < 992;
+      const hero = document.getElementById("hero");
+      const heroSwitchPoint = hero
+        ? Math.max(140, hero.offsetHeight - 160)
+        : 240;
 
       if (currentScrollY <= 10) {
         setIsScrolled(false);
@@ -71,14 +77,24 @@ export default function Header4() {
         setIsHeaderHidden(isScrollingDown && currentScrollY > 120);
       }
 
+      setUseDarkMobileLogo(isMobileViewport && currentScrollY > heroSwitchPoint);
       lastScrollYRef.current = currentScrollY;
     };
 
+    const handleResize = () => {
+      handleScroll();
+    };
+
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  const headerLogoSrc = useDarkMobileLogo ? "/assets/img/logo-dark.png" : "/assets/img/logo.png";
 
   return (
     <>
@@ -89,7 +105,13 @@ export default function Header4() {
           </button>
           <div className="mobile-logo">
             <Link scroll={false} href="/">
-              <Image width={150} height={60} src="/assets/img/logo.png" alt="Dr Igic logo" />
+              <Image
+                width={170}
+                height={48}
+                src="/assets/img/logo.png"
+                alt="Dr Igic logo"
+                className="clinic-nav-logo"
+              />
             </Link>
           </div>
           <div className="mobile-menu">
@@ -108,24 +130,21 @@ export default function Header4() {
             </ul>
           </div>
           <div className="mobile-cta-buttons">
+            <GooglePopupButton
+              className="mobile-cta-link clinic-glow-btn"
+              nextPath="/"
+              onBeforeOpen={() => setMobileMenuOpen(false)}
+            >
+              Login
+            </GooglePopupButton>
+            <a href="#booking" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+              Zakazi
+            </a>
             {currentUser ? (
-              <>
-                <a href="#beauty-pass" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
-                  Beauty Pass
-                </a>
-                <a href="#booking" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
-                  Zakazi
-                </a>
-              </>
-            ) : (
-              <GooglePopupButton
-                className="mobile-cta-link clinic-glow-btn"
-                nextPath="/"
-                onBeforeOpen={() => setMobileMenuOpen(false)}
-              >
-                Login
-              </GooglePopupButton>
-            )}
+              <a href="#beauty-pass" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+                Beauty Pass
+              </a>
+            ) : null}
           </div>
           <div className="sidebar-wrap">
             <h6>Dr Nikola Igic</h6>
@@ -149,7 +168,13 @@ export default function Header4() {
                 <div className="col-auto">
                   <div className="header-logo">
                     <Link scroll={false} href="/">
-                      <Image width={150} height={60} src="/assets/img/logo.png" alt="Dr Igic logo" />
+                      <Image
+                        width={170}
+                        height={48}
+                        src={headerLogoSrc}
+                        alt="Dr Igic logo"
+                        className="clinic-nav-logo"
+                      />
                     </Link>
                   </div>
                 </div>
@@ -200,23 +225,21 @@ export default function Header4() {
                           </span>
                         </a>
                       </>
-                    ) : (
-                      <GooglePopupButton className="search-btn clinic-glow-btn" nextPath="/">
-                        <span className="link-effect">
-                          <span className="effect-1">LOGIN</span>
-                          <span className="effect-1">LOGIN</span>
-                        </span>
-                      </GooglePopupButton>
-                    )}
-
-                    {currentUser ? (
-                      <a href="#booking" className="search-btn clinic-glow-btn">
-                        <span className="link-effect">
-                          <span className="effect-1">ZAKAZI TERMIN</span>
-                          <span className="effect-1">ZAKAZI TERMIN</span>
-                        </span>
-                      </a>
                     ) : null}
+
+                    <GooglePopupButton className="search-btn clinic-glow-btn" nextPath="/">
+                      <span className="link-effect">
+                        <span className="effect-1">LOGIN</span>
+                        <span className="effect-1">LOGIN</span>
+                      </span>
+                    </GooglePopupButton>
+
+                    <a href="#booking" className="search-btn clinic-glow-btn">
+                      <span className="link-effect">
+                        <span className="effect-1">ZAKAZI TERMIN</span>
+                        <span className="effect-1">ZAKAZI TERMIN</span>
+                      </span>
+                    </a>
                   </div>
                 </div>
               </div>

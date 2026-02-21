@@ -1,6 +1,5 @@
 ﻿"use client";
 import addGsap from "@/utils/addGsap";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import Slider from "react-slick";
@@ -33,6 +32,14 @@ export default function Hero() {
             className="hero-slider background-image por"
             style={{ backgroundImage: "url(/assets/img/slika1.png)" }}
           >
+            <div className="clinic-hero-mobile-video" aria-hidden="true">
+              <iframe
+                src="https://www.youtube.com/embed/T2w-sqZ2_BY?autoplay=1&mute=1&controls=0&loop=1&playlist=T2w-sqZ2_BY&playsinline=1&modestbranding=1&rel=0"
+                title="Dr Igic hero background video"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
             <div className="hero-overlay" data-overlay="title" data-opacity="5"></div>
             <div className="container">
               <div className="row">
@@ -45,8 +52,9 @@ export default function Hero() {
                       Prirodni rezultati, bez preterivanja.
                     </p>
                     <div className="hero-year-tag movingX" data-ani="slideindown" data-ani-delay="0.3s">
-                      <Image width={40} height={40} src="/assets/img/icon/worldwide.svg" alt="icon" />
-                      <h6>Dr Nikola Igić</h6>
+                      <Link scroll={false} href="/nikola-igic" className="clinic-founder-link">
+                        Dr Nikola Igić
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -56,86 +64,22 @@ export default function Hero() {
                     data-ani="slideindown"
                     data-ani-delay="0.3s"
                   >
-                    <Link
-                      scroll={false}
-                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse clinic-glow-btn"
-                      href="#booking"
-                    >
-                      <span className="link-effect">
-                        <span className="effect-1">
-                          ZAKAŽI <br /> TERMIN
-                        </span>
-                        <span className="effect-1">
-                          ZAKAŽI <br /> TERMIN
-                        </span>
-                      </span>
-                    </Link>
-                    <GooglePopupButton
-                      className="btn bg-theme text-title clinic-login-hero-btn clinic-glow-btn"
-                      nextPath="/"
-                    >
+                    <GooglePopupButton className="btn clinic-hero-cta-btn clinic-glow-btn" nextPath="/">
                       <span className="link-effect">
                         <span className="effect-1">LOGIN</span>
                         <span className="effect-1">LOGIN</span>
                       </span>
                     </GooglePopupButton>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div
-            className="hero-slider background-image por"
-            style={{ backgroundImage: "url(/assets/img/before-after1.png)" }}
-          >
-            <div className="hero-overlay" data-overlay="title" data-opacity="5"></div>
-            <div className="container">
-              <div className="row">
-                <div className="col-lg-7">
-                  <div className="hero-style5 clinic-reveal">
-                    <h1 className="hero-title" data-ani="slideindown" data-ani-delay="0.1s">
-                      Botox, fileri i anti-age tretmani
-                    </h1>
-                    <p className="hero-text" data-ani="slideindown" data-ani-delay="0.2s">
-                      Personalizovan plan i siguran pristup za svaki termin.
-                    </p>
-                    <div className="hero-year-tag movingX" data-ani="slideindown" data-ani-delay="0.3s">
-                      <Image width={40} height={40} src="/assets/img/icon/worldwide.svg" alt="icon" />
-                      <h6>Zakazivanje online</h6>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-lg-5 align-self-end text-lg-end">
-                  <div
-                    className="text-lg-end hero-cta-group"
-                    data-ani="slideindown"
-                    data-ani-delay="0.3s"
-                  >
                     <Link
                       scroll={false}
-                      className="circle-btn style2 btn bg-theme text-title gsap-magnetic clinic-cta-pulse clinic-glow-btn"
+                      className="btn clinic-hero-cta-btn clinic-glow-btn"
                       href="#booking"
                     >
                       <span className="link-effect">
-                        <span className="effect-1">
-                          ZAKAŽI <br /> ONLINE
-                        </span>
-                        <span className="effect-1">
-                          ZAKAŽI <br /> ONLINE
-                        </span>
+                        <span className="effect-1">ZAKAŽI TERMIN</span>
+                        <span className="effect-1">ZAKAŽI TERMIN</span>
                       </span>
                     </Link>
-                    <GooglePopupButton
-                      className="btn bg-theme text-title clinic-login-hero-btn clinic-glow-btn"
-                      nextPath="/"
-                    >
-                      <span className="link-effect">
-                        <span className="effect-1">LOGIN</span>
-                        <span className="effect-1">LOGIN</span>
-                      </span>
-                    </GooglePopupButton>
                   </div>
                 </div>
               </div>
