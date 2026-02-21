@@ -580,7 +580,7 @@ export default function AdminKalendarPage() {
           }}
           slotMinTime="16:00:00"
           slotMaxTime="21:00:00"
-          nowIndicator={false}
+          nowIndicator
           editable={false}
           selectable
           selectMirror

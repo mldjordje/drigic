@@ -639,12 +639,12 @@
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-now-indicator-line {
-  border-color: transparent;
+  border-color: rgba(255, 129, 129, 0.8);
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-now-indicator-arrow {
-  border-top-color: transparent;
-  border-bottom-color: transparent;
+  border-top-color: rgba(255, 129, 129, 0.8);
+  border-bottom-color: rgba(255, 129, 129, 0.8);
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-col.fc-day-today,
