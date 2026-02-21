@@ -6,13 +6,13 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
-const STATUS_OPTIONS = [
-  { value: "pending", label: "Na cekanju" },
-  { value: "confirmed", label: "Potvrdjen" },
-  { value: "completed", label: "Zavrsen" },
-  { value: "cancelled", label: "Otkazan" },
-  { value: "no_show", label: "No-show" },
-];
+const STATUS_LABEL = {
+  pending: "Na cekanju",
+  confirmed: "Potvrdjen",
+  cancelled: "Otkazan",
+  no_show: "No-show",
+  completed: "Zavrsen",
+};
 
 function parseResponse(response) {
   return response
@@ -357,7 +357,6 @@ export default function AdminKalendarPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: activeEvent.refId,
-          status: statusDraft,
           notes: notesDraft,
         }),
       });
@@ -407,33 +406,6 @@ export default function AdminKalendarPage() {
     }
   }
 
-  async function completeBooking() {
-    if (!activeEvent || activeEvent.kind !== "booking") {
-      return;
-    }
-    setSaving(true);
-    setError("");
-    setMessage("");
-    try {
-      const response = await fetch(`/api/admin/bookings/${activeEvent.refId}/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes: notesDraft || undefined }),
-      });
-      const data = await parseResponse(response);
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno zavrsavanje termina.");
-      }
-      setMessage("Termin je oznacen kao zavrsen.");
-      setActiveEvent(null);
-      await refreshData();
-    } catch (saveError) {
-      setError(saveError.message || "Greska pri zavrsavanju termina.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function deleteBlock() {
     if (!activeEvent || activeEvent.kind !== "block") {
       return;
@@ -477,6 +449,20 @@ export default function AdminKalendarPage() {
   const toolbarRight = isMobileViewport
     ? "dayGridMonth,timeGridWeek,timeGridDay"
     : "dayGridMonth,timeGridWeek,timeGridDay";
+  const quickStatusActionsByStatus = {
+    pending: [
+      { value: "confirmed", label: "Potvrdi" },
+      { value: "cancelled", label: "Otkazi" },
+      { value: "no_show", label: "No-show" },
+    ],
+    confirmed: [
+      { value: "cancelled", label: "Otkazi" },
+      { value: "no_show", label: "No-show" },
+    ],
+    cancelled: [],
+    no_show: [],
+    completed: [],
+  };
 
   function navigateCalendar(direction) {
     const api = calendarRef.current?.getApi?.();
@@ -594,7 +580,7 @@ export default function AdminKalendarPage() {
           }}
           slotMinTime="16:00:00"
           slotMaxTime="21:00:00"
-          nowIndicator
+          nowIndicator={false}
           editable={false}
           selectable
           selectMirror
@@ -878,20 +864,10 @@ export default function AdminKalendarPage() {
                   <span>Cena</span>
                   <strong>{activeBooking.totalPriceRsd} RSD</strong>
                 </div>
-                <label>
-                  Status
-                  <select
-                    className="admin-inline-input"
-                    value={statusDraft}
-                    onChange={(event) => setStatusDraft(event.target.value)}
-                  >
-                    {STATUS_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div>
+                  <span>Status</span>
+                  <strong>{STATUS_LABEL[statusDraft] || statusDraft || "-"}</strong>
+                </div>
                 <label>
                   Napomena
                   <textarea
@@ -902,42 +878,39 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <div className="admin-calendar-detail-actions">
-                  {activeBooking.status === "pending" ? (
-                    <>
-                      <button
-                        type="button"
-                        className="admin-template-link-btn"
-                        disabled={saving}
-                        onClick={() => changeActiveBookingStatus("confirmed")}
-                      >
-                        Potvrdi
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-template-link-btn"
-                        disabled={saving}
-                        onClick={() => changeActiveBookingStatus("cancelled")}
-                      >
-                        Otkazi
-                      </button>
-                    </>
+                  {(quickStatusActionsByStatus[statusDraft] || []).length ? (
+                    <div className="admin-calendar-quick-actions">
+                      {(quickStatusActionsByStatus[statusDraft] || []).map((action) => (
+                        <button
+                          key={action.value}
+                          type="button"
+                          className="admin-template-link-btn"
+                          disabled={saving}
+                          onClick={() => changeActiveBookingStatus(action.value)}
+                        >
+                          {action.label}
+                        </button>
+                      ))}
+                    </div>
                   ) : null}
-                  <button
-                    type="button"
-                    className="admin-template-link-btn"
-                    disabled={saving}
-                    onClick={saveBookingDetails}
-                  >
-                    Sacuvaj izmene
-                  </button>
-                  <button
-                    type="button"
-                    className="admin-template-link-btn"
-                    disabled={saving}
-                    onClick={completeBooking}
-                  >
-                    Oznaci kao zavrsen
-                  </button>
+                  <div className="admin-calendar-quick-actions">
+                    <button
+                      type="button"
+                      className="admin-template-link-btn"
+                      disabled={saving}
+                      onClick={saveBookingDetails}
+                    >
+                      Sacuvaj napomenu
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-template-link-btn"
+                      disabled={saving}
+                      onClick={() => setActiveEvent(null)}
+                    >
+                      Zatvori
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : null}

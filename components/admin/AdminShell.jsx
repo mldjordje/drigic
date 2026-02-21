@@ -10,6 +10,7 @@ const approvedModules = [
   { href: "/admin/bookings", label: "Termini", icon: "[BK]" },
   { href: "/admin/klijenti", label: "Klijenti", icon: "[CL]" },
   { href: "/admin/services", label: "Usluge", icon: "[SV]" },
+  { href: "/admin/preparati", label: "Preparati", icon: "[PR]" },
   { href: "/admin/announcements", label: "Obavestenja", icon: "[AN]" },
   { href: "/admin/media", label: "Media", icon: "[MD]" },
   { href: "/admin/vip", label: "VIP", icon: "[VIP]" },

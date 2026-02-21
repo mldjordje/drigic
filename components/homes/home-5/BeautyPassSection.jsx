@@ -73,6 +73,7 @@ export default function BeautyPassSection() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState({
     treatmentDate: todayDateInput(),
+    productId: "",
     notes: "",
   });
   const [calendarMonth, setCalendarMonth] = useState(() => {
@@ -154,7 +155,11 @@ export default function BeautyPassSection() {
       const response = await fetch("/api/me/beauty-pass/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          treatmentDate: form.treatmentDate,
+          notes: form.notes,
+          productId: form.productId || null,
+        }),
       });
       const data = await parseResponse(response);
 
@@ -266,6 +271,34 @@ export default function BeautyPassSection() {
                       ))}
                     </div>
                   </div>
+                  <label style={{ color: "#edf3ff", marginTop: 2 }}>
+                    Brend preparata
+                  </label>
+                  <div className="clinic-product-grid">
+                    {(beautyPass?.products || []).map((product) => (
+                      <button
+                        key={product.id}
+                        type="button"
+                        className={`clinic-product-btn ${
+                          form.productId === product.id ? "is-active" : ""
+                        }`}
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            productId: prev.productId === product.id ? "" : product.id,
+                          }))
+                        }
+                      >
+                        <img src={product.logoUrl} alt={product.name} />
+                        <span>{product.name}</span>
+                      </button>
+                    ))}
+                    {!beautyPass?.products?.length ? (
+                      <p style={{ ...mutedTextStyle, margin: 0 }}>
+                        Trenutno nema dodatih preparata.
+                      </p>
+                    ) : null}
+                  </div>
                   <label style={{ color: "#edf3ff" }}>
                     Sta je radjeno
                     <textarea
@@ -290,7 +323,9 @@ export default function BeautyPassSection() {
                   <ul style={{ margin: 0, paddingLeft: 18, color: "#edf3ff" }}>
                     {beautyPass.treatmentHistory.slice(0, 12).map((item) => (
                       <li key={item.id} style={{ marginBottom: 8, color: "#edf3ff" }}>
-                        {new Date(item.treatmentDate).toLocaleDateString("sr-RS")}: {item.notes || "Bez napomene"}
+                        {new Date(item.treatmentDate).toLocaleDateString("sr-RS")}:{" "}
+                        {item.notes || "Bez napomene"}
+                        {item.product?.name ? ` (${item.product.name})` : ""}
                       </li>
                     ))}
                   </ul>

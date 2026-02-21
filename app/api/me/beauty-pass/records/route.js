@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { created, fail, readJson } from "@/lib/api/http";
 import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
@@ -9,6 +10,7 @@ export const runtime = "nodejs";
 const payloadSchema = z.object({
   treatmentDate: z.string().min(10).max(10),
   notes: z.string().min(3).max(2000),
+  productId: z.string().uuid().nullable().optional(),
 });
 
 export async function POST(request) {
@@ -31,11 +33,24 @@ export async function POST(request) {
     return fail(400, "Invalid date.");
   }
 
+  if (parsed.data.productId) {
+    const [product] = await db
+      .select({ id: schema.treatmentProducts.id, isActive: schema.treatmentProducts.isActive })
+      .from(schema.treatmentProducts)
+      .where(eq(schema.treatmentProducts.id, parsed.data.productId))
+      .limit(1);
+
+    if (!product || !product.isActive) {
+      return fail(400, "Izabrani preparat nije dostupan.");
+    }
+  }
+
   const [record] = await db
     .insert(schema.treatmentRecords)
     .values({
       userId: auth.user.id,
       bookingId: null,
+      productId: parsed.data.productId || null,
       employeeId: employee.id,
       treatmentDate: recordDate,
       notes: parsed.data.notes,
@@ -44,4 +59,3 @@ export async function POST(request) {
 
   return created({ ok: true, data: record });
 }
-

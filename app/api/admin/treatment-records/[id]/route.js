@@ -10,6 +10,7 @@ const updateSchema = z.object({
   treatmentDate: z.string().datetime().optional(),
   notes: z.string().max(3000).optional().nullable(),
   correctionDueDate: z.string().optional().nullable(),
+  productId: z.string().uuid().optional().nullable(),
 });
 
 export async function PATCH(request, { params }) {
@@ -29,11 +30,12 @@ export async function PATCH(request, { params }) {
     return fail(400, "Invalid payload", parsed.error.flatten());
   }
 
-  const { treatmentDate, notes, correctionDueDate } = parsed.data;
+  const { treatmentDate, notes, correctionDueDate, productId } = parsed.data;
   if (
     treatmentDate === undefined &&
     notes === undefined &&
-    correctionDueDate === undefined
+    correctionDueDate === undefined &&
+    productId === undefined
   ) {
     return fail(400, "No update fields provided.");
   }
@@ -48,6 +50,17 @@ export async function PATCH(request, { params }) {
     return fail(404, "Treatment record not found.");
   }
 
+  if (productId) {
+    const [product] = await db
+      .select({ id: schema.treatmentProducts.id })
+      .from(schema.treatmentProducts)
+      .where(eq(schema.treatmentProducts.id, productId))
+      .limit(1);
+    if (!product) {
+      return fail(400, "Preparat nije pronadjen.");
+    }
+  }
+
   const [updated] = await db
     .update(schema.treatmentRecords)
     .set({
@@ -56,6 +69,7 @@ export async function PATCH(request, { params }) {
       ...(correctionDueDate !== undefined
         ? { correctionDueDate: correctionDueDate || null }
         : {}),
+      ...(productId !== undefined ? { productId: productId || null } : {}),
       updatedAt: new Date(),
     })
     .where(eq(schema.treatmentRecords.id, id))

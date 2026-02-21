@@ -226,6 +226,50 @@
   resize: vertical;
 }
 
+.admin-services-split-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.admin-toggle-card {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(217, 232, 248, 0.24);
+  border-radius: 12px;
+  background: rgba(10, 16, 26, 0.58);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.admin-toggle-card:hover {
+  border-color: rgba(217, 232, 248, 0.58);
+}
+
+.admin-toggle-card.is-active {
+  border-color: rgba(217, 232, 248, 0.82);
+  box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.25), 0 10px 20px rgba(5, 13, 22, 0.34);
+}
+
+.admin-toggle-card-input {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #d9e8f8;
+}
+
+.admin-toggle-card-title {
+  font-weight: 700;
+  color: #eef5ff;
+}
+
+.admin-toggle-card-subtitle {
+  color: #9fb8d8;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
 .admin-calendar-page {
   display: grid;
   gap: 12px;
@@ -425,6 +469,12 @@
   gap: 8px;
 }
 
+.admin-calendar-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .admin-calendar-service-list {
   max-height: 240px;
   overflow: auto;
@@ -589,12 +639,12 @@
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-now-indicator-line {
-  border-color: rgba(255, 129, 129, 0.8);
+  border-color: transparent;
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-now-indicator-arrow {
-  border-top-color: rgba(255, 129, 129, 0.8);
-  border-bottom-color: rgba(255, 129, 129, 0.8);
+  border-top-color: transparent;
+  border-bottom-color: transparent;
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-col.fc-day-today,
@@ -654,6 +704,46 @@
   opacity: 0.9;
 }
 
+.admin-clients-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.admin-client-card {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-client-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-client-role {
+  border-radius: 999px;
+  border: 1px solid rgba(217, 232, 248, 0.45);
+  background: rgba(217, 232, 248, 0.13);
+  padding: 3px 9px;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.admin-client-role.is-admin {
+  border-color: rgba(255, 198, 126, 0.62);
+  background: rgba(120, 82, 39, 0.45);
+}
+
+.admin-client-metrics {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  font-size: 12px;
+  color: #d4e2f3;
+}
+
 @media (max-width: 960px) {
   .admin-template-root {
     grid-template-columns: 1fr;
@@ -702,9 +792,11 @@
   }
 
   .admin-calendar-page.is-mobile-full .clinic-fc-wrap.is-mobile-stage {
-    min-height: calc(100dvh - 200px);
-    height: calc(100dvh - 200px);
+    min-height: calc(100dvh - 162px);
+    height: calc(100dvh - 162px);
     border-radius: 12px;
+    padding: 0;
+    width: 100%;
   }
 
   .admin-calendar-grid {
@@ -757,5 +849,13 @@
 
   .clinic-fc-wrap .fc .fc-timegrid-axis-frame {
     justify-content: center;
+  }
+
+  .admin-services-split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-client-metrics {
+    grid-template-columns: 1fr 1fr;
   }
 }

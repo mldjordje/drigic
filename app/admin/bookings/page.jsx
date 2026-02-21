@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const STATUSES = ["pending", "confirmed", "completed", "cancelled", "no_show"];
+const STATUSES = ["pending", "confirmed", "cancelled", "no_show"];
+const STATUS_LABELS = {
+  pending: "Na cekanju",
+  confirmed: "Potvrdjen",
+  cancelled: "Otkazan",
+  no_show: "No-show",
+  completed: "Zavrsen",
+};
 
 async function parseResponse(response) {
   const text = await response.text();
@@ -67,17 +74,18 @@ export default function AdminBookingsPage() {
     loadBookings().catch((err) => setError(err.message));
   }, []);
 
-  async function updateBooking(bookingId) {
+  async function updateBooking(bookingId, nextStatus) {
     setLoading(true);
     setError("");
     setMessage("");
     try {
+      const statusToPersist = nextStatus || statusById[bookingId];
       const response = await fetch("/api/admin/bookings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: bookingId,
-          status: statusById[bookingId],
+          status: statusToPersist,
           notes: notesById[bookingId],
         }),
       });
@@ -86,6 +94,10 @@ export default function AdminBookingsPage() {
         throw new Error(data?.message || "Neuspesno azuriranje termina.");
       }
       setMessage("Termin je azuriran.");
+      setStatusById((prev) => ({
+        ...prev,
+        [bookingId]: data.data?.status || statusToPersist,
+      }));
       await loadBookings();
     } catch (err) {
       setError(err.message || "Greska pri azuriranju.");
@@ -94,38 +106,30 @@ export default function AdminBookingsPage() {
     }
   }
 
-  async function completeBooking(bookingId) {
-    setLoading(true);
-    setError("");
-    setMessage("");
-    try {
-      const response = await fetch(`/api/admin/bookings/${bookingId}/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          notes: notesById[bookingId] || "",
-        }),
-      });
-      const data = await parseResponse(response);
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno zavrsavanje termina.");
-      }
-      setMessage("Termin je oznacen kao zavrsen i kreiran je treatment record.");
-      await loadBookings();
-    } catch (err) {
-      setError(err.message || "Greska pri zavrsavanju termina.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const totals = useMemo(() => {
     const map = { pending: 0, confirmed: 0, completed: 0, cancelled: 0, no_show: 0 };
     bookings.forEach((booking) => {
-      map[booking.status] += 1;
+      map[booking.status] = (map[booking.status] || 0) + 1;
     });
     return map;
   }, [bookings]);
+
+  function getQuickActions(status) {
+    if (status === "pending") {
+      return [
+        { value: "confirmed", label: "Potvrdi" },
+        { value: "cancelled", label: "Otkazi" },
+        { value: "no_show", label: "No-show" },
+      ];
+    }
+    if (status === "confirmed") {
+      return [
+        { value: "cancelled", label: "Otkazi" },
+        { value: "no_show", label: "No-show" },
+      ];
+    }
+    return [];
+  }
 
   return (
     <section style={{ display: "grid", gap: 12 }}>
@@ -139,7 +143,7 @@ export default function AdminBookingsPage() {
       <div style={statsWrapStyle}>
         {STATUSES.map((status) => (
           <div key={status} style={statCardStyle}>
-            <strong>{status}</strong>
+            <strong>{STATUS_LABELS[status] || status}</strong>
             <div style={{ fontSize: 24 }}>{totals[status]}</div>
           </div>
         ))}
@@ -210,25 +214,14 @@ export default function AdminBookingsPage() {
             </div>
 
             <div style={controlGridStyle}>
-              <label>
+              <div>
                 <small style={smallStyle}>Status</small>
-                <select
-                  value={statusById[booking.id] || booking.status}
-                  onChange={(event) =>
-                    setStatusById((prev) => ({
-                      ...prev,
-                      [booking.id]: event.target.value,
-                    }))
-                  }
-                  style={{ ...inputStyle, marginTop: 4 }}
-                >
-                  {STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <div style={{ marginTop: 4 }}>
+                  {STATUS_LABELS[statusById[booking.id] || booking.status] ||
+                    statusById[booking.id] ||
+                    booking.status}
+                </div>
+              </div>
 
               <label>
                 <small style={smallStyle}>Napomena</small>
@@ -246,21 +239,27 @@ export default function AdminBookingsPage() {
             </div>
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {getQuickActions(statusById[booking.id] || booking.status).map((action) => (
+                <button
+                  key={`${booking.id}-${action.value}`}
+                  type="button"
+                  className="admin-template-link-btn"
+                  disabled={loading}
+                  onClick={() => {
+                    setStatusById((prev) => ({ ...prev, [booking.id]: action.value }));
+                    updateBooking(booking.id, action.value);
+                  }}
+                >
+                  {action.label}
+                </button>
+              ))}
               <button
                 type="button"
                 className="admin-template-link-btn"
                 disabled={loading}
                 onClick={() => updateBooking(booking.id)}
               >
-                Sacuvaj
-              </button>
-              <button
-                type="button"
-                className="admin-template-link-btn"
-                disabled={loading}
-                onClick={() => completeBooking(booking.id)}
-              >
-                Zavrsi
+                Sacuvaj napomenu
               </button>
             </div>
           </article>

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { created, fail, readJson } from "@/lib/api/http";
 import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
+import { sendReminderEmail } from "@/lib/auth/email";
 import {
   addMinutes,
   findConflicts,
@@ -11,6 +12,7 @@ import {
   resolveQuote,
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -117,6 +119,29 @@ export async function POST(request) {
       });
     } catch (logError) {
       console.error("[bookings.create] status log insert failed", logError);
+    }
+
+    try {
+      const startsAtLabel = new Date(createdBooking.startsAt).toLocaleString("sr-RS", {
+        timeZone: "Europe/Belgrade",
+      });
+      const serviceSummary = quote.items
+        .map((item) => `${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`)
+        .join(", ");
+      await sendReminderEmail({
+        to: env.ADMIN_BOOKING_NOTIFY_EMAIL,
+        title: "Novi booking na cekanju",
+        message: [
+          `Stigao je novi booking koji ceka potvrdu admina.`,
+          `Termin: ${startsAtLabel}`,
+          `Klijent: ${auth.user.email || auth.user.id}`,
+          `Usluge: ${serviceSummary || "-"}`,
+          `Trajanje: ${quote.totalDurationMin} min`,
+          `Cena: ${quote.totalPriceRsd} RSD`,
+        ].join("\n"),
+      });
+    } catch (notifyError) {
+      console.error("[bookings.create] admin notify email failed", notifyError);
     }
 
     return created({

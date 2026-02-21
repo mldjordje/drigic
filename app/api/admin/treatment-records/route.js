@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -9,6 +10,7 @@ export const runtime = "nodejs";
 const payloadSchema = z.object({
   userId: z.string().uuid(),
   bookingId: z.string().uuid().optional().nullable(),
+  productId: z.string().uuid().optional().nullable(),
   treatmentDate: z.string().datetime().optional(),
   notes: z.string().max(3000).optional(),
   correctionDueDate: z.string().optional(),
@@ -37,12 +39,23 @@ export async function POST(request) {
   const db = getDb();
   const employee = await getDefaultEmployee();
   const now = new Date();
+  if (parsed.data.productId) {
+    const [product] = await db
+      .select({ id: schema.treatmentProducts.id })
+      .from(schema.treatmentProducts)
+      .where(eq(schema.treatmentProducts.id, parsed.data.productId))
+      .limit(1);
+    if (!product) {
+      return fail(400, "Preparat nije pronadjen.");
+    }
+  }
 
   const [record] = await db
     .insert(schema.treatmentRecords)
     .values({
       userId: parsed.data.userId,
       bookingId: parsed.data.bookingId || null,
+      productId: parsed.data.productId || null,
       employeeId: employee.id,
       treatmentDate: parsed.data.treatmentDate ? new Date(parsed.data.treatmentDate) : now,
       notes: parsed.data.notes || null,
@@ -62,4 +75,3 @@ export async function POST(request) {
 
   return created({ ok: true, data: record });
 }
-

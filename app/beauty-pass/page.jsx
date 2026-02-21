@@ -93,7 +93,9 @@ export default function BeautyPassPage() {
                 <ul style={{ margin: 0, paddingLeft: 18 }}>
                   {data.treatmentHistory.map((record) => (
                     <li key={record.id} style={{ marginBottom: 8 }}>
-                      {new Date(record.treatmentDate).toLocaleDateString("sr-RS")} - {record.notes || "Bez napomene"}
+                      {new Date(record.treatmentDate).toLocaleDateString("sr-RS")} -{" "}
+                      {record.notes || "Bez napomene"}
+                      {record.product?.name ? ` (${record.product.name})` : ""}
                     </li>
                   ))}
                 </ul>

@@ -123,6 +123,19 @@
   background-color: var(--title-color);
 }
 
+.clinic-glow-btn,
+button.clinic-glow-btn,
+a.clinic-glow-btn {
+  color: #f4f8ff !important;
+  -webkit-text-fill-color: #f4f8ff !important;
+}
+
+.clinic-glow-btn .effect-1,
+.clinic-glow-btn .link-effect {
+  color: #f4f8ff !important;
+  -webkit-text-fill-color: #f4f8ff !important;
+}
+
 /* Clinic dark + glass accent theme */
 .clinic-home5 {
   --theme-color: #d9e8f8;
@@ -802,6 +815,49 @@
     min-height: 132px;
   }
 
+  .clinic-product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .clinic-product-btn {
+    display: grid;
+    gap: 6px;
+    justify-items: center;
+    align-content: center;
+    border-radius: 12px;
+    border: 1px solid rgba(217, 232, 248, 0.3);
+    background: rgba(9, 14, 22, 0.76);
+    color: #f3f8ff;
+    padding: 10px 8px;
+    transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+  }
+
+  .clinic-product-btn img {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    border-radius: 8px;
+  }
+
+  .clinic-product-btn span {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .clinic-product-btn:hover {
+    border-color: rgba(217, 232, 248, 0.62);
+    transform: translateY(-1px);
+  }
+
+  .clinic-product-btn.is-active {
+    border-color: rgba(217, 232, 248, 0.84);
+    background: rgba(35, 56, 83, 0.84);
+    box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.3), 0 8px 18px rgba(8, 15, 25, 0.42);
+  }
+
   @media (max-width: 767px) {
     .hero-style5 .hero-title {
       max-width: 96%;
@@ -900,6 +956,10 @@
     .clinic-ml-btn {
       font-size: 11px;
       padding: 4px 8px;
+    }
+
+    .clinic-product-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 

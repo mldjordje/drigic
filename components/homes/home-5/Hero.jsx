@@ -1,11 +1,13 @@
 ﻿"use client";
 import addGsap from "@/utils/addGsap";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import Slider from "react-slick";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
 export default function Hero() {
+  const mobileVideoRef = useRef(null);
+
   useEffect(() => {
     document.body.classList.add("bg-title");
     return () => {
@@ -16,6 +18,45 @@ export default function Hero() {
   useEffect(() => {
     addGsap();
   }, []);
+
+  const heroVideoSrc = useMemo(
+    () =>
+      "https://www.youtube.com/embed/T2w-sqZ2_BY?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=T2w-sqZ2_BY&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&fs=0&enablejsapi=1",
+    []
+  );
+
+  const forcePlayMuted = useCallback(() => {
+    const iframe = mobileVideoRef.current;
+    const frameWindow = iframe?.contentWindow;
+    if (!frameWindow) {
+      return;
+    }
+
+    frameWindow.postMessage(
+      JSON.stringify({
+        event: "command",
+        func: "mute",
+        args: [],
+      }),
+      "*"
+    );
+    frameWindow.postMessage(
+      JSON.stringify({
+        event: "command",
+        func: "playVideo",
+        args: [],
+      }),
+      "*"
+    );
+  }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      forcePlayMuted();
+    }, 2200);
+
+    return () => window.clearInterval(intervalId);
+  }, [forcePlayMuted]);
 
   const sliderOptions = {
     fade: true,
@@ -34,10 +75,12 @@ export default function Hero() {
           >
             <div className="clinic-hero-mobile-video" aria-hidden="true">
               <iframe
-                src="https://www.youtube.com/embed/T2w-sqZ2_BY?autoplay=1&mute=1&controls=0&loop=1&playlist=T2w-sqZ2_BY&playsinline=1&modestbranding=1&rel=0"
+                ref={mobileVideoRef}
+                src={heroVideoSrc}
                 title="Dr Igic hero background video"
                 allow="autoplay; encrypted-media; picture-in-picture"
                 allowFullScreen
+                onLoad={forcePlayMuted}
               />
             </div>
             <div className="hero-overlay" data-overlay="title" data-opacity="5"></div>

@@ -35,7 +35,7 @@ async function getClientById(db, id) {
     .where(eq(schema.users.id, id))
     .limit(1);
 
-  if (!client || client.role !== "client") {
+  if (!client || !["client", "admin"].includes(client.role)) {
     return null;
   }
 

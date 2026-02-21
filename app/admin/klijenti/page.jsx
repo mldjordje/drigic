@@ -19,6 +19,13 @@ function parseResponse(response) {
     .catch(() => null);
 }
 
+function fmtDateTime(value) {
+  if (!value) {
+    return "-";
+  }
+  return new Date(value).toLocaleString("sr-RS");
+}
+
 export default function AdminClientsPage() {
   const [clients, setClients] = useState([]);
   const [search, setSearch] = useState("");
@@ -28,7 +35,14 @@ export default function AdminClientsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [activeClientId, setActiveClientId] = useState("");
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
+  const [detailPayload, setDetailPayload] = useState(null);
+
   const hasMore = useMemo(() => page * limit < total, [limit, page, total]);
+  const activeClientProfile = detailPayload?.client?.profile || null;
+  const activeBeautyPass = detailPayload?.beautyPass || null;
 
   async function loadClients({ searchValue = search, pageValue = page } = {}) {
     setLoading(true);
@@ -55,6 +69,40 @@ export default function AdminClientsPage() {
     }
   }
 
+  async function openClientDetails(clientId) {
+    setActiveClientId(clientId);
+    setDetailLoading(true);
+    setDetailError("");
+    setDetailPayload(null);
+
+    try {
+      const [clientRes, passRes] = await Promise.all([
+        fetch(`/api/admin/clients/${clientId}`),
+        fetch(`/api/admin/clients/${clientId}/beauty-pass`),
+      ]);
+      const [clientData, passData] = await Promise.all([
+        parseResponse(clientRes),
+        parseResponse(passRes),
+      ]);
+
+      if (!clientRes.ok || !clientData?.ok) {
+        throw new Error(clientData?.message || "Neuspesno ucitavanje klijenta.");
+      }
+      if (!passRes.ok || !passData?.ok) {
+        throw new Error(passData?.message || "Neuspesno ucitavanje beauty pass podataka.");
+      }
+
+      setDetailPayload({
+        client: clientData.data || null,
+        beautyPass: passData,
+      });
+    } catch (detailLoadError) {
+      setDetailError(detailLoadError.message || "Greska pri ucitavanju detalja klijenta.");
+    } finally {
+      setDetailLoading(false);
+    }
+  }
+
   useEffect(() => {
     loadClients();
   }, [page]);
@@ -70,7 +118,7 @@ export default function AdminClientsPage() {
       <div className="admin-card">
         <h2 style={{ marginTop: 0 }}>Klijenti</h2>
         <p style={{ color: "#bfd2e9" }}>
-          Pregled klijenata, dugovanja, istorija tretmana i detalji beauty pass-a.
+          Mobile-first kartice klijenata i popup sa kompletnim detaljima + Beauty Pass istorijom.
         </p>
 
         <form onSubmit={onSearchSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -101,60 +149,57 @@ export default function AdminClientsPage() {
 
       {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
 
-      <div className="admin-card" style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", minWidth: 980, borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Klijent</th>
-              <th style={thStyle}>Kontakt</th>
-              <th style={thStyle}>Termini</th>
-              <th style={thStyle}>Beauty Pass</th>
-              <th style={thStyle}>Dug</th>
-              <th style={thStyle}>Poslednji login</th>
-              <th style={thStyle}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id}>
-                <td style={tdStyle}>
-                  <strong>{client.profile?.fullName || "Bez imena"}</strong>
-                  <div style={mutedTextStyle}>{client.id}</div>
-                </td>
-                <td style={tdStyle}>
-                  <div>{client.email}</div>
-                  <div style={mutedTextStyle}>{client.phone || "bez telefona"}</div>
-                </td>
-                <td style={tdStyle}>
-                  <div>Ukupno: {client.stats?.totalBookings || 0}</div>
-                  <div style={mutedTextStyle}>Sledeci: {client.stats?.upcomingBookings || 0}</div>
-                </td>
-                <td style={tdStyle}>{client.stats?.treatmentRecords || 0} zapisa</td>
-                <td style={tdStyle}>{client.stats?.debtRsd || 0} RSD</td>
-                <td style={tdStyle}>
-                  {client.lastLoginAt
-                    ? new Date(client.lastLoginAt).toLocaleString("sr-RS")
-                    : "Nikad"}
-                </td>
-                <td style={tdStyle}>
-                  <Link href={`/admin/klijenti/${client.id}`} className="admin-template-link-btn">
-                    Otvori profil
-                  </Link>
-                </td>
-              </tr>
-            ))}
-            {!clients.length && !loading ? (
-              <tr>
-                <td style={tdStyle} colSpan={7}>
-                  Nema rezultata.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+      <div className="admin-clients-grid">
+        {clients.map((client) => (
+          <article key={client.id} className="admin-card admin-client-card">
+            <div className="admin-client-card-head">
+              <div>
+                <strong>{client.profile?.fullName || "Bez imena"}</strong>
+                <div style={mutedTextStyle}>{client.role === "admin" ? "admin nalog" : "klijent"}</div>
+              </div>
+              <span className={`admin-client-role ${client.role === "admin" ? "is-admin" : ""}`}>
+                {client.role}
+              </span>
+            </div>
+
+            <div style={mutedTextStyle}>{client.email}</div>
+            <div style={mutedTextStyle}>{client.phone || "bez telefona"}</div>
+
+            <div className="admin-client-metrics">
+              <span>Termini: {client.stats?.totalBookings || 0}</span>
+              <span>Sledeci: {client.stats?.upcomingBookings || 0}</span>
+              <span>Beauty pass: {client.stats?.treatmentRecords || 0}</span>
+              <span>Dug: {client.stats?.debtRsd || 0} RSD</span>
+            </div>
+
+            <div style={mutedTextStyle}>
+              Poslednji login:{" "}
+              {client.lastLoginAt ? new Date(client.lastLoginAt).toLocaleString("sr-RS") : "Nikad"}
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() => openClientDetails(client.id)}
+              >
+                Pregled klijenta
+              </button>
+              <Link href={`/admin/klijenti/${client.id}`} className="admin-template-link-btn">
+                Puni profil
+              </Link>
+            </div>
+          </article>
+        ))}
       </div>
 
-      <div className="admin-card" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      {!clients.length && !loading ? (
+        <div className="admin-card">
+          <p style={{ margin: 0, color: "#d8e4f2" }}>Nema rezultata.</p>
+        </div>
+      ) : null}
+
+      <div className="admin-card" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <button
           type="button"
           className="admin-template-link-btn"
@@ -175,23 +220,125 @@ export default function AdminClientsPage() {
           Sledeca
         </button>
       </div>
+
+      {activeClientId ? (
+        <div className="admin-calendar-modal" role="dialog" aria-modal="true">
+          <div
+            className="admin-calendar-modal-backdrop"
+            onClick={() => {
+              setActiveClientId("");
+              setDetailPayload(null);
+              setDetailError("");
+            }}
+          />
+          <div className="admin-card admin-calendar-modal-card">
+            <div className="admin-calendar-modal-head">
+              <h3 style={{ margin: 0 }}>Detalji klijenta</h3>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() => {
+                  setActiveClientId("");
+                  setDetailPayload(null);
+                  setDetailError("");
+                }}
+              >
+                Zatvori
+              </button>
+            </div>
+
+            {detailLoading ? <p style={{ marginTop: 10 }}>Ucitavanje...</p> : null}
+            {detailError ? <p style={{ marginTop: 10, color: "#ffabab" }}>{detailError}</p> : null}
+
+            {!detailLoading && !detailError && detailPayload ? (
+              <div className="admin-calendar-details" style={{ marginTop: 12 }}>
+                <div>
+                  <span>Ime i prezime</span>
+                  <strong>{activeClientProfile?.fullName || "Bez imena"}</strong>
+                </div>
+                <div>
+                  <span>Email / telefon</span>
+                  <strong>
+                    {detailPayload.client?.email || "-"} / {detailPayload.client?.phone || "-"}
+                  </strong>
+                </div>
+                <div>
+                  <span>Sledeci termini</span>
+                  <strong>{activeBeautyPass?.upcomingBookings?.length || 0}</strong>
+                </div>
+                <div>
+                  <span>Beauty Pass zapisi</span>
+                  <strong>{activeBeautyPass?.treatmentHistory?.length || 0}</strong>
+                </div>
+
+                <div>
+                  <span>Zakazani termini</span>
+                  <div style={listWrapStyle}>
+                    {(activeBeautyPass?.upcomingBookings || []).slice(0, 6).map((item) => (
+                      <div key={item.id} style={listItemStyle}>
+                        <strong>{fmtDateTime(item.startsAt)}</strong>
+                        <span>{item.serviceSummary || "-"}</span>
+                        <span>Status: {item.status}</span>
+                      </div>
+                    ))}
+                    {!activeBeautyPass?.upcomingBookings?.length ? (
+                      <span style={mutedTextStyle}>Nema zakazanih termina.</span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div>
+                  <span>Beauty Pass istorija</span>
+                  <div style={listWrapStyle}>
+                    {(activeBeautyPass?.treatmentHistory || []).slice(0, 8).map((item) => (
+                      <div key={item.id} style={listItemStyle}>
+                        <strong>{fmtDateTime(item.treatmentDate)}</strong>
+                        <span>{item.notes || "Bez napomene"}</span>
+                        {item.product?.name ? <span>Preparat: {item.product.name}</span> : null}
+                      </div>
+                    ))}
+                    {!activeBeautyPass?.treatmentHistory?.length ? (
+                      <span style={mutedTextStyle}>Nema unosa u Beauty Pass-u.</span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <Link
+                  href={`/admin/klijenti/${activeClientId}`}
+                  className="admin-template-link-btn"
+                  onClick={() => {
+                    setActiveClientId("");
+                    setDetailPayload(null);
+                    setDetailError("");
+                  }}
+                >
+                  Otvori puni profil
+                </Link>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
 
-const thStyle = {
-  textAlign: "left",
-  borderBottom: "1px solid rgba(217,232,248,0.2)",
-  padding: "8px 6px",
-};
-
-const tdStyle = {
-  borderBottom: "1px solid rgba(217,232,248,0.12)",
-  padding: "8px 6px",
-  verticalAlign: "top",
-};
-
 const mutedTextStyle = {
   color: "#a8bed8",
   fontSize: 12,
+};
+
+const listWrapStyle = {
+  display: "grid",
+  gap: 8,
+  marginTop: 6,
+};
+
+const listItemStyle = {
+  display: "grid",
+  gap: 2,
+  border: "1px solid rgba(217,232,248,0.2)",
+  borderRadius: 10,
+  padding: "8px 9px",
+  background: "rgba(9,16,27,0.42)",
 };

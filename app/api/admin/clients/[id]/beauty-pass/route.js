@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 
 const createRecordSchema = z.object({
   bookingId: z.string().uuid().nullable().optional(),
+  productId: z.string().uuid().nullable().optional(),
   treatmentDate: z.string().datetime().optional(),
   notes: z.string().max(3000).optional(),
   correctionDueDate: z.string().nullable().optional(),
@@ -39,7 +40,7 @@ async function assertClient(db, id) {
     .where(eq(schema.users.id, id))
     .limit(1);
 
-  if (!client || client.role !== "client") {
+  if (!client || !["client", "admin"].includes(client.role)) {
     return null;
   }
   return client;
@@ -69,6 +70,9 @@ export async function GET(request, { params }) {
       .select({
         recordId: schema.treatmentRecords.id,
         bookingId: schema.treatmentRecords.bookingId,
+        productId: schema.treatmentRecords.productId,
+        productName: schema.treatmentProducts.name,
+        productLogoUrl: schema.treatmentProducts.logoUrl,
         treatmentDate: schema.treatmentRecords.treatmentDate,
         notes: schema.treatmentRecords.notes,
         correctionDueDate: schema.treatmentRecords.correctionDueDate,
@@ -80,6 +84,10 @@ export async function GET(request, { params }) {
       .leftJoin(
         schema.treatmentRecordMedia,
         eq(schema.treatmentRecordMedia.treatmentRecordId, schema.treatmentRecords.id)
+      )
+      .leftJoin(
+        schema.treatmentProducts,
+        eq(schema.treatmentProducts.id, schema.treatmentRecords.productId)
       )
       .where(eq(schema.treatmentRecords.userId, id))
       .orderBy(desc(schema.treatmentRecords.treatmentDate)),
@@ -120,6 +128,13 @@ export async function GET(request, { params }) {
         treatmentDate: row.treatmentDate,
         notes: row.notes,
         correctionDueDate: row.correctionDueDate,
+        product: row.productId
+          ? {
+              id: row.productId,
+              name: row.productName,
+              logoUrl: row.productLogoUrl,
+            }
+          : null,
         media: [],
       });
     }
@@ -163,6 +178,16 @@ export async function GET(request, { params }) {
   );
 
   const treatmentHistory = Array.from(treatmentMap.values());
+  const treatmentProducts = await db
+    .select({
+      id: schema.treatmentProducts.id,
+      name: schema.treatmentProducts.name,
+      logoUrl: schema.treatmentProducts.logoUrl,
+      isActive: schema.treatmentProducts.isActive,
+      sortOrder: schema.treatmentProducts.sortOrder,
+    })
+    .from(schema.treatmentProducts)
+    .orderBy(asc(schema.treatmentProducts.sortOrder), asc(schema.treatmentProducts.name));
 
   return ok({
     ok: true,
@@ -177,6 +202,7 @@ export async function GET(request, { params }) {
         correctionDueDate: record.correctionDueDate,
       })),
     penalties: penaltyRows,
+    treatmentProducts,
   });
 }
 
@@ -221,6 +247,20 @@ export async function POST(request, { params }) {
     }
   }
 
+  if (payload.productId) {
+    const [product] = await db
+      .select({
+        id: schema.treatmentProducts.id,
+      })
+      .from(schema.treatmentProducts)
+      .where(eq(schema.treatmentProducts.id, payload.productId))
+      .limit(1);
+
+    if (!product) {
+      return fail(400, "Preparat nije pronadjen.");
+    }
+  }
+
   const treatmentDate = payload.treatmentDate ? new Date(payload.treatmentDate) : new Date();
 
   const [record] = await db
@@ -228,6 +268,7 @@ export async function POST(request, { params }) {
     .values({
       userId: client.id,
       bookingId: payload.bookingId || null,
+      productId: payload.productId || null,
       employeeId: employee.id,
       treatmentDate,
       notes: payload.notes || null,

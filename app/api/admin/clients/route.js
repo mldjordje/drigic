@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
+import { and, count, desc, eq, exists, ilike, inArray, or } from "drizzle-orm";
 import { ok } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
@@ -41,7 +41,25 @@ export async function GET(request) {
   const page = clampPage(searchParams.get("page"));
   const offset = (page - 1) * limit;
 
-  const filters = [eq(schema.users.role, "client")];
+  const hasBookingsSubquery = db
+    .select({ id: schema.bookings.id })
+    .from(schema.bookings)
+    .where(eq(schema.bookings.userId, schema.users.id))
+    .limit(1);
+
+  const hasTreatmentsSubquery = db
+    .select({ id: schema.treatmentRecords.id })
+    .from(schema.treatmentRecords)
+    .where(eq(schema.treatmentRecords.userId, schema.users.id))
+    .limit(1);
+
+  const filters = [
+    or(
+      eq(schema.users.role, "client"),
+      exists(hasBookingsSubquery),
+      exists(hasTreatmentsSubquery)
+    ),
+  ];
   if (search) {
     const like = `%${search}%`;
     filters.push(

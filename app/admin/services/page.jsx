@@ -461,7 +461,7 @@ export default function AdminServicesPage() {
             </select>
           </label>
 
-          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+          <div className="admin-services-split-grid">
             <label>
               Cena (RSD)
               <input
@@ -516,19 +516,27 @@ export default function AdminServicesPage() {
 
           {serviceForm.kind === "single" ? (
             <>
-              <label style={checkboxStyle}>
+              <label
+                className={`admin-toggle-card ${serviceForm.supportsMl ? "is-active" : ""}`}
+              >
                 <input
                   type="checkbox"
+                  className="admin-toggle-card-input"
                   checked={serviceForm.supportsMl}
                   onChange={(event) =>
                     setServiceForm((prev) => ({ ...prev, supportsMl: event.target.checked }))
                   }
                 />
-                Podrzava ml booking (preset dugmici)
+                <span className="admin-toggle-card-title">
+                  Podrzava ml booking (preset dugmici)
+                </span>
+                <small className="admin-toggle-card-subtitle">
+                  Klik za ukljuci/iskljuci ml konfiguraciju.
+                </small>
               </label>
 
               {serviceForm.supportsMl ? (
-                <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+                <div className="admin-services-split-grid">
                   <label>
                     Max ml
                     <input
@@ -634,25 +642,27 @@ export default function AdminServicesPage() {
             />
           </label>
 
-          <label style={checkboxStyle}>
+          <label className={`admin-toggle-card ${serviceForm.isActive ? "is-active" : ""}`}>
             <input
               type="checkbox"
+              className="admin-toggle-card-input"
               checked={serviceForm.isActive}
               onChange={(event) =>
                 setServiceForm((prev) => ({ ...prev, isActive: event.target.checked }))
               }
             />
-            Aktivna usluga
+            <span className="admin-toggle-card-title">Aktivna usluga</span>
           </label>
-          <label style={checkboxStyle}>
+          <label className={`admin-toggle-card ${serviceForm.isVip ? "is-active" : ""}`}>
             <input
               type="checkbox"
+              className="admin-toggle-card-input"
               checked={serviceForm.isVip}
               onChange={(event) =>
                 setServiceForm((prev) => ({ ...prev, isVip: event.target.checked }))
               }
             />
-            VIP usluga
+            <span className="admin-toggle-card-title">VIP usluga</span>
           </label>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -935,7 +945,7 @@ const checkboxStyle = {
 const packageItemRowStyle = {
   display: "grid",
   gap: 8,
-  gridTemplateColumns: "minmax(120px,1fr) 90px auto",
+  gridTemplateColumns: "minmax(0,1fr) 96px auto",
 };
 
 const metaWrapStyle = {
