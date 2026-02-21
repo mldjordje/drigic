@@ -238,6 +238,20 @@ a.clinic-glow-btn {
     z-index: 2;
   }
 
+  .clinic-btn-label {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    color: #f4f8ff !important;
+    -webkit-text-fill-color: #f4f8ff !important;
+    text-shadow: 0 1px 2px rgba(1, 6, 12, 0.5);
+    opacity: 1 !important;
+  }
+
   .clinic-glow-btn::before {
     content: "";
     position: absolute;
@@ -328,23 +342,43 @@ a.clinic-glow-btn {
 
   .mobile-cta-buttons {
     display: flex;
-    gap: 10px;
-    margin: 14px 0 10px;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 18px 0 14px;
   }
 
   .mobile-cta-link {
     flex: 1 1 calc(50% - 6px);
-    text-align: center;
-    border: 1px solid rgba(217, 232, 248, 0.55);
-    border-radius: 14px;
-    padding: 9px 12px;
-    background: rgba(10, 16, 26, 0.86);
-    color: #edf3ff;
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid rgba(217, 232, 248, 0.62);
+    border-radius: 15px;
+    background: linear-gradient(
+      155deg,
+      rgba(11, 20, 33, 0.95),
+      rgba(17, 34, 55, 0.9)
+    );
     color: #f4f8ff !important;
     -webkit-text-fill-color: #f4f8ff !important;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: center;
+    box-shadow: inset 0 0 0 1px rgba(217, 232, 248, 0.17),
+      0 8px 18px rgba(2, 10, 20, 0.45);
+    opacity: 1 !important;
+  }
+
+  .mobile-cta-link .mobile-cta-link-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    width: 100%;
+    color: inherit !important;
+    -webkit-text-fill-color: inherit !important;
     opacity: 1 !important;
   }
 
@@ -360,6 +394,19 @@ a.clinic-glow-btn {
   .mobile-cta-link:focus {
     color: #f4f8ff !important;
     -webkit-text-fill-color: #f4f8ff !important;
+  }
+
+  .mobile-cta-link:hover,
+  .mobile-cta-link:focus-visible {
+    border-color: rgba(217, 232, 248, 0.88);
+    box-shadow: inset 0 0 0 1px rgba(217, 232, 248, 0.25),
+      0 10px 20px rgba(3, 12, 24, 0.52);
+    transform: translateY(-1px);
+  }
+
+  .mobile-cta-link:disabled {
+    cursor: not-allowed;
+    opacity: 0.72 !important;
   }
 
   .clinic-footer-cta-wrap {

@@ -68,8 +68,7 @@ export default function GooglePopupButton({
 
   return (
     <button type="button" className={className} onClick={handleClick} title={title}>
-      {children}
+      <span className="clinic-btn-label">{children}</span>
     </button>
   );
 }
-

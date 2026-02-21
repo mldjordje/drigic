@@ -152,7 +152,9 @@ export default function Header4() {
                 onClick={handleLogout}
                 disabled={logoutBusy}
               >
-                {logoutBusy ? "Odjava..." : "Odjavi me"}
+                <span className="mobile-cta-link-text">
+                  {logoutBusy ? "Odjava..." : "Odjavi me"}
+                </span>
               </button>
             ) : (
               <GooglePopupButton
@@ -160,15 +162,15 @@ export default function Header4() {
                 nextPath="/"
                 onBeforeOpen={() => setMobileMenuOpen(false)}
               >
-                Login
+                <span className="mobile-cta-link-text">Login</span>
               </GooglePopupButton>
             )}
             <a href="#booking" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
-              Zakazi
+              <span className="mobile-cta-link-text">Zakazi</span>
             </a>
             {currentUser ? (
               <a href="#beauty-pass" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
-                Beauty Pass
+                <span className="mobile-cta-link-text">Beauty Pass</span>
               </a>
             ) : null}
           </div>
