@@ -12,6 +12,7 @@
 # next.js
 /.next/
 /out/
+/.next_bak_*/
 
 # production
 /build
@@ -19,6 +20,11 @@
 # misc
 .DS_Store
 *.pem
+
+# local sandbox/template sources (must not be pushed in drigic repo)
+/admintemplate/
+/admintemplate-demo/
+/doctorbarber/
 
 # debug
 npm-debug.log*
@@ -35,3 +41,6 @@ client_secret_*.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# lockfile policy (use yarn in this repo)
+package-lock.json

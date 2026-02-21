@@ -1,21 +1,13 @@
-"use client";
-
-import { usePathname } from "next/navigation";
-import { useEffect } from "react";
-import "../public/assets/css/vendor.css";
+import "../public/assets/css/bootstrap.min.css";
+import "../public/assets/css/all.min.css";
+import "../public/assets/css/magnific-popup.min.css";
+import "../public/assets/css/slick.min.css";
+import "../public/assets/css/animate.min.css";
+import "../public/assets/css/imageRevealHover.css";
 import "../public/assets/sass/style.scss";
-import { ParallaxProvider } from "react-scroll-parallax";
-import ScrollTop from "@/components/common/ScrollTop";
 import "rc-slider/assets/index.css";
 import { Unbounded, Poppins } from "next/font/google";
-import ScrollTopBehaviour from "@/components/common/ScrollTopBehavier";
-import Context from "@/context/Context";
-import PWARegister from "@/components/common/PWARegister";
-if (typeof window !== "undefined") {
-  import("bootstrap/dist/js/bootstrap.esm").then((module) => {
-    // Module is imported, you can access any exported functionality if
-  });
-}
+import AppProviders from "@/components/common/AppProviders";
 // wow js
 
 const unbounded = Unbounded({
@@ -32,29 +24,10 @@ const poppins = Poppins({
 });
 
 export default function RootLayout({ children }) {
-  const path = usePathname();
-  let wow = null;
-  useEffect(() => {
-    const WOW = require("@/utils/wow");
-    wow = new WOW.default({
-      live: false,
-      mobile: false,
-    });
-    wow.init();
-  }, [path]);
-  //useEffect(() => {
-
-  //wow?.sync();
-  //}, [path]);
   return (
     <html lang="sr">
       <body className={`body  ${poppins.variable} ${unbounded.variable}`}>
-        <Context>
-          <ParallaxProvider>{children}</ParallaxProvider>
-          <PWARegister />
-          <ScrollTop />
-          <ScrollTopBehaviour />
-        </Context>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

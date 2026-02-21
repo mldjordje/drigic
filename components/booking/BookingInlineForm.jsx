@@ -167,6 +167,22 @@ export default function BookingInlineForm({
     [availableSlotsForDay]
   );
 
+  const selectedServiceLabels = useMemo(() => {
+    if (!selectedServices.length) {
+      return [];
+    }
+    const map = new Map();
+    services.forEach((category) => {
+      (category.services || []).forEach((service) => {
+        map.set(service.id, service);
+      });
+    });
+    return selectedServices
+      .map((id) => map.get(id))
+      .filter(Boolean)
+      .map((service) => `${service.name} (${service.durationMin} min)`);
+  }, [services, selectedServices]);
+
   async function loadSession() {
     const response = await fetch("/api/me/profile");
     if (!response.ok) {
@@ -432,12 +448,27 @@ export default function BookingInlineForm({
 
       <form onSubmit={handleBook}>
         <h3 style={{ color: "#f2f5fb" }}>1) Izaberite tretmane</h3>
+        {selectedServiceLabels.length ? (
+          <div className="clinic-selected-services">
+            {selectedServiceLabels.map((label) => (
+              <span key={label} className="clinic-selected-service-chip">
+                {label}
+              </span>
+            ))}
+          </div>
+        ) : null}
         {services.map((category) => (
           <div key={category.id} className="clinic-service-category">
             <h4 style={{ marginBottom: 8, color: "#f2f5fb" }}>{category.name}</h4>
             <div style={{ display: "grid", gap: 8 }}>
               {(category.services || []).map((service) => (
-                <label key={service.id} style={checkboxRowStyle} className="clinic-service-option">
+                <label
+                  key={service.id}
+                  style={checkboxRowStyle}
+                  className={`clinic-service-option ${
+                    selectedServices.includes(service.id) ? "is-selected" : ""
+                  }`}
+                >
                   <input
                     type="checkbox"
                     checked={selectedServices.includes(service.id)}
@@ -509,8 +540,7 @@ export default function BookingInlineForm({
                   const isDisabled =
                     !cell.inCurrentMonth ||
                     isPast ||
-                    (availableCount !== undefined && Number(availableCount) <= 0) ||
-                    (monthLoading && availableCount === undefined);
+                    (availableCount !== undefined && Number(availableCount) <= 0);
 
                   return (
                     <button
@@ -578,6 +608,7 @@ export default function BookingInlineForm({
 
         <h3 style={{ marginTop: 20, color: "#f2f5fb" }}>3) Napomena</h3>
         <textarea
+          className="clinic-booking-note-input clinic-glow-field"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={4}

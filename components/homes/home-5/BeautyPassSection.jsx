@@ -23,6 +23,46 @@ function todayDateInput() {
   return `${y}-${m}-${d}`;
 }
 
+function parseIsoDate(isoDate) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addMonths(date, amount) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function buildCalendarCells(monthDate) {
+  const firstDayOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const gridStart = new Date(firstDayOfMonth);
+  const dayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+  gridStart.setDate(firstDayOfMonth.getDate() - dayOfWeek);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + index);
+    return {
+      iso: formatIsoDate(date),
+      dayNumber: date.getDate(),
+      inCurrentMonth: date.getMonth() === monthDate.getMonth(),
+    };
+  });
+}
+
+function formatMonthLabel(date, locale = "sr-RS") {
+  return new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function BeautyPassSection() {
   const [user, setUser] = useState(null);
   const [beautyPass, setBeautyPass] = useState(null);
@@ -35,8 +75,22 @@ export default function BeautyPassSection() {
     treatmentDate: todayDateInput(),
     notes: "",
   });
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const today = parseIsoDate(todayDateInput());
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
 
   const pastBookings = useMemo(() => bookings?.past || [], [bookings]);
+  const calendarCells = useMemo(() => buildCalendarCells(calendarMonth), [calendarMonth]);
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat("sr-RS", { weekday: "short" });
+    const monday = new Date(2024, 0, 1);
+    return Array.from({ length: 7 }, (_, index) => {
+      const item = new Date(monday);
+      item.setDate(monday.getDate() + index);
+      return formatter.format(item);
+    });
+  }, []);
 
   async function loadData() {
     setLoading(true);
@@ -166,22 +220,56 @@ export default function BeautyPassSection() {
               <div style={glassCardStyle}>
                 <h3 style={{ ...titleTextStyle, marginTop: 0 }}>Dodaj sta je radjeno i kada</h3>
                 <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
-                  <label style={{ color: "#edf3ff" }}>
-                    Datum
-                    <input
-                      type="date"
-                      className="admin-inline-input"
-                      value={form.treatmentDate}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, treatmentDate: event.target.value }))
-                      }
-                      required
-                    />
-                  </label>
+                  <label style={{ color: "#edf3ff" }}>Datum</label>
+                  <div className="clinic-booking-calendar" style={{ marginBottom: 4 }}>
+                    <div className="clinic-cal-header">
+                      <button
+                        type="button"
+                        className="clinic-cal-nav"
+                        onClick={() => setCalendarMonth((prev) => addMonths(prev, -1))}
+                      >
+                        Prethodni
+                      </button>
+                      <div className="clinic-cal-title">{formatMonthLabel(calendarMonth, "sr-RS")}</div>
+                      <button
+                        type="button"
+                        className="clinic-cal-nav"
+                        onClick={() => setCalendarMonth((prev) => addMonths(prev, 1))}
+                      >
+                        Sledeci
+                      </button>
+                    </div>
+
+                    <div className="clinic-cal-weekdays">
+                      {weekdayLabels.map((label) => (
+                        <span key={label}>{label}</span>
+                      ))}
+                    </div>
+
+                    <div className="clinic-cal-grid">
+                      {calendarCells.map((cell) => (
+                        <button
+                          key={cell.iso}
+                          type="button"
+                          className={`clinic-cal-day ${
+                            form.treatmentDate === cell.iso ? "is-active" : ""
+                          } ${!cell.inCurrentMonth ? "is-out" : ""}`}
+                          onClick={() =>
+                            setForm((prev) => ({
+                              ...prev,
+                              treatmentDate: cell.iso,
+                            }))
+                          }
+                        >
+                          <span>{cell.dayNumber}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <label style={{ color: "#edf3ff" }}>
                     Sta je radjeno
                     <textarea
-                      className="admin-inline-textarea"
+                      className="clinic-beauty-notes clinic-glow-field"
                       rows={4}
                       value={form.notes}
                       onChange={(event) =>
@@ -192,7 +280,7 @@ export default function BeautyPassSection() {
                     />
                   </label>
 
-                  <button type="submit" className="admin-template-link-btn" disabled={saving}>
+                  <button type="submit" className="btn clinic-glow-btn" disabled={saving}>
                     {saving ? "Cuvanje..." : "Sacuvaj u Beauty Pass"}
                   </button>
                 </form>

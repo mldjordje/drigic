@@ -1,4 +1,4 @@
-import { count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db/client";
 
 async function getStats() {
@@ -10,6 +10,10 @@ async function getStats() {
   const [announcementsCount] = await db
     .select({ value: count() })
     .from(schema.homeAnnouncements);
+  const [clientsCount] = await db
+    .select({ value: count() })
+    .from(schema.users)
+    .where(eq(schema.users.role, "client"));
 
   return {
     services: servicesCount?.value || 0,
@@ -17,6 +21,7 @@ async function getStats() {
     vipRequests: vipCount?.value || 0,
     galleryMedia: mediaCount?.value || 0,
     announcements: announcementsCount?.value || 0,
+    clients: clientsCount?.value || 0,
   };
 }
 
@@ -35,6 +40,10 @@ export default async function AdminDashboardPage() {
           <div className="admin-card">
             <h3 style={{ marginTop: 0 }}>Termini</h3>
             <p style={{ fontSize: 28, marginBottom: 0 }}>{stats.bookings}</p>
+          </div>
+          <div className="admin-card">
+            <h3 style={{ marginTop: 0 }}>Klijenti</h3>
+            <p style={{ fontSize: 28, marginBottom: 0 }}>{stats.clients}</p>
           </div>
           <div className="admin-card">
             <h3 style={{ marginTop: 0 }}>VIP upiti</h3>

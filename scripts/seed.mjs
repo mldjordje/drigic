@@ -54,8 +54,8 @@ async function seed() {
     await db.insert(schema.clinicSettings).values({
       slotMinutes: Number(process.env.CLINIC_SLOT_MINUTES || 15),
       bookingWindowDays: Number(process.env.CLINIC_BOOKING_WINDOW_DAYS || 31),
-      workdayStart: process.env.CLINIC_WORKDAY_START || "09:00",
-      workdayEnd: process.env.CLINIC_WORKDAY_END || "20:00",
+      workdayStart: process.env.CLINIC_WORKDAY_START || "16:00",
+      workdayEnd: process.env.CLINIC_WORKDAY_END || "21:00",
     });
   }
 

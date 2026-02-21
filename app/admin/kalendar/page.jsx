@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "Na cekanju" },
@@ -10,408 +14,260 @@ const STATUS_OPTIONS = [
   { value: "no_show", label: "No-show" },
 ];
 
-const STATUS_CLASS = {
-  pending: "is-pending",
-  confirmed: "is-confirmed",
-  completed: "is-completed",
-  cancelled: "is-cancelled",
-  no_show: "is-no-show",
-};
-
-function getMonday(date = new Date()) {
-  const next = new Date(date);
-  next.setHours(0, 0, 0, 0);
-  const day = (next.getDay() + 6) % 7;
-  next.setDate(next.getDate() - day);
-  return next;
+function parseResponse(response) {
+  return response
+    .text()
+    .then((text) => {
+      if (!text) {
+        return null;
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        return null;
+      }
+    })
+    .catch(() => null);
 }
 
-function addDays(date, days) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
+function toLocalInputValue(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  const adjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return adjusted.toISOString().slice(0, 16);
 }
 
-function toDateInput(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function toTimeLabel(value) {
-  return value.toLocaleTimeString("sr-RS", { hour: "2-digit", minute: "2-digit" });
-}
-
-function fmtDateLabel(date) {
-  return date.toLocaleDateString("sr-RS", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-  });
-}
-
-function timeToMinutes(value) {
-  const [h, m] = value.split(":").map(Number);
-  return h * 60 + m;
-}
-
-function minutesToTime(minutes) {
-  const h = String(Math.floor(minutes / 60)).padStart(2, "0");
-  const m = String(minutes % 60).padStart(2, "0");
-  return `${h}:${m}`;
-}
-
-function startOfDayIso(date) {
-  const value = new Date(date);
-  value.setHours(0, 0, 0, 0);
-  return value.toISOString();
-}
-
-function endOfDayIso(date) {
-  const value = new Date(date);
-  value.setHours(23, 59, 59, 999);
-  return value.toISOString();
-}
-
-function makeIso(dateValue, timeValue) {
-  return new Date(`${dateValue}T${timeValue}:00`).toISOString();
-}
-
-async function parseResponse(response) {
-  const text = await response.text();
-  if (!text) {
+function toIsoFromLocalInput(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
     return null;
   }
-  try {
-    return JSON.parse(text);
-  } catch {
+  return date.toISOString();
+}
+
+function endFromStart(startIso, durationMin) {
+  const start = new Date(startIso);
+  if (Number.isNaN(start.getTime())) {
     return null;
   }
+  return new Date(start.getTime() + durationMin * 60000).toISOString();
+}
+
+function fmtDateTime(value) {
+  return new Date(value).toLocaleString("sr-RS");
+}
+
+function normalizeSlotStart(value) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T16:00`;
+  }
+  return value;
 }
 
 export default function AdminKalendarPage() {
-  const [settings, setSettings] = useState({
-    workdayStart: "09:00",
-    workdayEnd: "20:00",
-    slotMinutes: 15,
-  });
-  const [services, setServices] = useState([]);
-  const [weekStart, setWeekStart] = useState(() => getMonday(new Date()));
+  const [range, setRange] = useState({ from: "", to: "" });
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
   const [bookings, setBookings] = useState([]);
   const [blocks, setBlocks] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [activePanel, setActivePanel] = useState("details");
-  const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
-  const [slotSelection, setSlotSelection] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [services, setServices] = useState([]);
 
-  const [statusDraft, setStatusDraft] = useState("pending");
-  const [notesDraft, setNotesDraft] = useState("");
-
-  const [manualForm, setManualForm] = useState({
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createType, setCreateType] = useState("booking");
+  const [bookingForm, setBookingForm] = useState({
     clientName: "",
     email: "",
     phone: "",
-    date: toDateInput(new Date()),
-    time: "10:00",
-    notes: "",
-    status: "confirmed",
+    startAtLocal: "",
     serviceIds: [],
+    status: "confirmed",
+    notes: "",
   });
-
   const [blockForm, setBlockForm] = useState({
-    date: toDateInput(new Date()),
-    time: "10:00",
+    startAtLocal: "",
     durationMin: 60,
     note: "",
   });
 
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [activeEvent, setActiveEvent] = useState(null);
+  const [statusDraft, setStatusDraft] = useState("pending");
+  const [notesDraft, setNotesDraft] = useState("");
 
-  const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
-    [weekStart]
-  );
+  const bookingById = useMemo(() => {
+    const map = new Map();
+    bookings.forEach((item) => map.set(item.id, item));
+    return map;
+  }, [bookings]);
 
-  const slotTimes = useMemo(() => {
-    const start = timeToMinutes(settings.workdayStart || "09:00");
-    const end = timeToMinutes(settings.workdayEnd || "20:00");
-    const step = Math.max(5, Number(settings.slotMinutes) || 15);
-    const values = [];
-    for (let cursor = start; cursor < end; cursor += step) {
-      values.push(minutesToTime(cursor));
+  const blockById = useMemo(() => {
+    const map = new Map();
+    blocks.forEach((item) => map.set(item.id, item));
+    return map;
+  }, [blocks]);
+
+  const allServices = useMemo(() => {
+    return services.flatMap((category) => category.services || []);
+  }, [services]);
+
+  async function loadServices() {
+    const response = await fetch("/api/services");
+    const data = await parseResponse(response);
+    if (!response.ok || !data?.ok) {
+      throw new Error(data?.message || "Neuspesno ucitavanje usluga.");
     }
-    return values;
-  }, [settings]);
-
-  const selectedBooking = useMemo(() => {
-    if (!selectedItem || selectedItem.type !== "booking") {
-      return null;
-    }
-    return bookings.find((item) => item.id === selectedItem.id) || null;
-  }, [bookings, selectedItem]);
-
-  const selectedBlock = useMemo(() => {
-    if (!selectedItem || selectedItem.type !== "block") {
-      return null;
-    }
-    return blocks.find((item) => item.id === selectedItem.id) || null;
-  }, [blocks, selectedItem]);
-
-  const calendarItems = useMemo(() => {
-    const openMinutes = timeToMinutes(settings.workdayStart || "09:00");
-    const slotStep = Math.max(5, Number(settings.slotMinutes) || 15);
-
-    const bookingItems = bookings
-      .map((booking) => {
-        const start = new Date(booking.startsAt);
-        const dayIndex = (start.getDay() + 6) % 7;
-        const startMinutes = start.getHours() * 60 + start.getMinutes();
-        const startRow = Math.max(0, Math.floor((startMinutes - openMinutes) / slotStep));
-        const span = Math.max(
-          1,
-          Math.ceil((Number(booking.totalDurationMin) || slotStep) / slotStep)
-        );
-
-        if (dayIndex < 0 || dayIndex > 6) {
-          return null;
-        }
-
-        return {
-          id: booking.id,
-          type: "booking",
-          status: booking.status,
-          title: booking.clientName || "Klijent",
-          subtitle: booking.serviceSummary || "Tretman",
-          dayIndex,
-          startRow,
-          span,
-          startLabel: toTimeLabel(start),
-          endLabel: toTimeLabel(new Date(booking.endsAt)),
-        };
-      })
-      .filter(Boolean);
-
-    const blockItems = blocks
-      .map((block) => {
-        const start = new Date(block.startsAt);
-        const dayIndex = (start.getDay() + 6) % 7;
-        const startMinutes = start.getHours() * 60 + start.getMinutes();
-        const startRow = Math.max(0, Math.floor((startMinutes - openMinutes) / slotStep));
-        const duration = Number(block.durationMin) || slotStep;
-        const span = Math.max(1, Math.ceil(duration / slotStep));
-
-        if (dayIndex < 0 || dayIndex > 6) {
-          return null;
-        }
-
-        return {
-          id: block.id,
-          type: "block",
-          title: "Blokiran termin",
-          subtitle: block.note || "Nedostupno",
-          dayIndex,
-          startRow,
-          span,
-          startLabel: toTimeLabel(start),
-          endLabel: toTimeLabel(new Date(block.endsAt)),
-        };
-      })
-      .filter(Boolean);
-
-    return [...bookingItems, ...blockItems];
-  }, [bookings, blocks, settings]);
+    setServices(data.categories || []);
+  }
 
   useEffect(() => {
-    async function loadInitialData() {
-      const [settingsRes, servicesRes] = await Promise.all([
-        fetch("/api/admin/clinic-settings"),
-        fetch("/api/services"),
-      ]);
-
-      const settingsData = await parseResponse(settingsRes);
-      const servicesData = await parseResponse(servicesRes);
-
-      if (!settingsRes.ok || !settingsData?.ok) {
-        throw new Error(settingsData?.message || "Neuspesno ucitavanje settings.");
-      }
-      if (!servicesRes.ok || !servicesData?.ok) {
-        throw new Error(servicesData?.message || "Neuspesno ucitavanje usluga.");
-      }
-
-      setSettings({
-        workdayStart: settingsData.data.workdayStart || "09:00",
-        workdayEnd: settingsData.data.workdayEnd || "20:00",
-        slotMinutes: settingsData.data.slotMinutes || 15,
-      });
-      setServices(servicesData.categories || []);
-    }
-
-    loadInitialData().catch((err) => setError(err.message));
+    loadServices().catch((err) => setError(err.message || "Greska pri ucitavanju usluga."));
   }, []);
 
+  async function loadCalendarData(fromIso, toIso) {
+    if (!fromIso || !toIso) {
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const params = new URLSearchParams({ from: fromIso, to: toIso });
+      const [bookingsRes, blocksRes] = await Promise.all([
+        fetch(`/api/admin/bookings?${params.toString()}`),
+        fetch(`/api/admin/blocks?${params.toString()}`),
+      ]);
+
+      const bookingsData = await parseResponse(bookingsRes);
+      const blocksData = await parseResponse(blocksRes);
+
+      if (!bookingsRes.ok || !bookingsData?.ok) {
+        throw new Error(bookingsData?.message || "Neuspesno ucitavanje termina.");
+      }
+      if (!blocksRes.ok || !blocksData?.ok) {
+        throw new Error(blocksData?.message || "Neuspesno ucitavanje blokada.");
+      }
+
+      const bookingsList = bookingsData.data || [];
+      const blocksList = blocksData.data || [];
+      setBookings(bookingsList);
+      setBlocks(blocksList);
+
+      const bookingEvents = bookingsList.map((item) => ({
+        id: `booking:${item.id}`,
+        title: item.clientName || "Klijent",
+        start: item.startsAt,
+        end: item.endsAt,
+        classNames: ["clinic-fc-event", `is-${item.status || "pending"}`],
+        extendedProps: {
+          kind: "booking",
+          refId: item.id,
+          subtitle: item.serviceSummary || "",
+          status: item.status || "pending",
+        },
+      }));
+
+      const blockEvents = blocksList.map((item) => ({
+        id: `block:${item.id}`,
+        title: "Blokiran termin",
+        start: item.startsAt,
+        end: item.endsAt,
+        classNames: ["clinic-fc-event", "is-block"],
+        extendedProps: {
+          kind: "block",
+          refId: item.id,
+          subtitle: item.note || "",
+        },
+      }));
+
+      setEvents([...bookingEvents, ...blockEvents]);
+    } catch (loadError) {
+      setError(loadError.message || "Greska pri ucitavanju kalendara.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    setManualForm((prev) => ({
+    if (range.from && range.to) {
+      loadCalendarData(range.from, range.to);
+    }
+  }, [range.from, range.to]);
+
+  function openCreateModal(startIso) {
+    const localValue = toLocalInputValue(normalizeSlotStart(startIso));
+    setCreateType("booking");
+    setBookingForm((prev) => ({
       ...prev,
-      date: prev.date || toDateInput(weekStart),
-      time: prev.time || settings.workdayStart,
+      startAtLocal: localValue,
     }));
     setBlockForm((prev) => ({
       ...prev,
-      date: prev.date || toDateInput(weekStart),
-      time: prev.time || settings.workdayStart,
+      startAtLocal: localValue,
     }));
-  }, [weekStart, settings.workdayStart]);
-
-  useEffect(() => {
-    async function loadWeekData() {
-      setLoading(true);
-      setError("");
-      try {
-        const from = startOfDayIso(weekStart);
-        const to = endOfDayIso(addDays(weekStart, 6));
-        const params = new URLSearchParams({ from, to });
-
-        const [bookingRes, blockRes] = await Promise.all([
-          fetch(`/api/admin/bookings?${params.toString()}`),
-          fetch(`/api/admin/blocks?${params.toString()}`),
-        ]);
-
-        const bookingData = await parseResponse(bookingRes);
-        const blockData = await parseResponse(blockRes);
-
-        if (!bookingRes.ok || !bookingData?.ok) {
-          throw new Error(bookingData?.message || "Neuspesno ucitavanje termina.");
-        }
-        if (!blockRes.ok || !blockData?.ok) {
-          throw new Error(blockData?.message || "Neuspesno ucitavanje blokada.");
-        }
-
-        setBookings(bookingData.data || []);
-        setBlocks(blockData.data || []);
-      } catch (err) {
-        setError(err.message || "Greska pri ucitavanju kalendara.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadWeekData();
-  }, [weekStart]);
-
-  useEffect(() => {
-    if (!selectedBooking) {
-      setStatusDraft("pending");
-      setNotesDraft("");
-      return;
-    }
-
-    setStatusDraft(selectedBooking.status || "pending");
-    setNotesDraft(selectedBooking.notes || "");
-  }, [selectedBooking]);
-
-  async function refreshWeek() {
-    const from = startOfDayIso(weekStart);
-    const to = endOfDayIso(addDays(weekStart, 6));
-    const params = new URLSearchParams({ from, to });
-    const [bookingRes, blockRes] = await Promise.all([
-      fetch(`/api/admin/bookings?${params.toString()}`),
-      fetch(`/api/admin/blocks?${params.toString()}`),
-    ]);
-
-    const bookingData = await parseResponse(bookingRes);
-    const blockData = await parseResponse(blockRes);
-
-    if (!bookingRes.ok || !bookingData?.ok) {
-      throw new Error(bookingData?.message || "Neuspesno osvezavanje termina.");
-    }
-    if (!blockRes.ok || !blockData?.ok) {
-      throw new Error(blockData?.message || "Neuspesno osvezavanje blokada.");
-    }
-
-    setBookings(bookingData.data || []);
-    setBlocks(blockData.data || []);
+    setMessage("");
+    setError("");
+    setIsCreateModalOpen(true);
   }
 
-  async function saveBooking() {
-    if (!selectedBooking) {
+  function handleDateClick(info) {
+    openCreateModal(info.dateStr);
+  }
+
+  function handleSelect(info) {
+    openCreateModal(info.startStr);
+  }
+
+  function handleEventClick(info) {
+    const { kind, refId } = info.event.extendedProps || {};
+    if (!kind || !refId) {
+      return;
+    }
+    setMessage("");
+    setError("");
+    setActiveEvent({ kind, refId });
+    if (kind === "booking") {
+      const booking = bookingById.get(refId);
+      setStatusDraft(booking?.status || "pending");
+      setNotesDraft(booking?.notes || "");
+    }
+  }
+
+  async function refreshData() {
+    if (range.from && range.to) {
+      await loadCalendarData(range.from, range.to);
+    }
+  }
+
+  async function createBooking() {
+    const startAt = toIsoFromLocalInput(bookingForm.startAtLocal);
+    if (!startAt) {
+      setError("Datum i vreme termina nisu validni.");
+      return;
+    }
+    if (!bookingForm.serviceIds.length) {
+      setError("Izaberite barem jednu uslugu.");
       return;
     }
 
     setSaving(true);
-    setMessage("");
     setError("");
-    try {
-      const response = await fetch("/api/admin/bookings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: selectedBooking.id,
-          status: statusDraft,
-          notes: notesDraft,
-        }),
-      });
-      const data = await parseResponse(response);
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje.");
-      }
-      setMessage("Termin je azuriran.");
-      await refreshWeek();
-    } catch (err) {
-      setError(err.message || "Greska pri cuvanju termina.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function completeBooking() {
-    if (!selectedBooking) {
-      return;
-    }
-
-    setSaving(true);
     setMessage("");
-    setError("");
-    try {
-      const response = await fetch(`/api/admin/bookings/${selectedBooking.id}/complete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes: notesDraft }),
-      });
-      const data = await parseResponse(response);
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno zavrsavanje termina.");
-      }
-      setMessage("Termin je oznacen kao zavrsen.");
-      await refreshWeek();
-    } catch (err) {
-      setError(err.message || "Greska pri zavrsavanju termina.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function createManualBooking(event) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage("");
-    setError("");
-
     try {
       const response = await fetch("/api/admin/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientName: manualForm.clientName,
-          email: manualForm.email || undefined,
-          phone: manualForm.phone || undefined,
-          serviceIds: manualForm.serviceIds,
-          startAt: makeIso(manualForm.date, manualForm.time),
-          notes: manualForm.notes || undefined,
-          status: manualForm.status,
+          clientName: bookingForm.clientName,
+          email: bookingForm.email || undefined,
+          phone: bookingForm.phone || undefined,
+          serviceIds: bookingForm.serviceIds,
+          startAt,
+          notes: bookingForm.notes || undefined,
+          status: bookingForm.status,
         }),
       });
 
@@ -420,29 +276,32 @@ export default function AdminKalendarPage() {
         throw new Error(data?.message || "Neuspesno kreiranje termina.");
       }
 
-      setMessage("Termin je uspesno dodat iz admin kalendara.");
-      setActivePanel("details");
-      setSelectedItem({ type: "booking", id: data.data.id });
-      await refreshWeek();
-    } catch (err) {
-      setError(err.message || "Greska pri kreiranju termina.");
+      setMessage("Termin je uspesno dodat.");
+      setIsCreateModalOpen(false);
+      await refreshData();
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri kreiranju termina.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function createBlock(event) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage("");
-    setError("");
+  async function createBlock() {
+    const startAt = toIsoFromLocalInput(blockForm.startAtLocal);
+    if (!startAt) {
+      setError("Datum i vreme blokade nisu validni.");
+      return;
+    }
 
+    setSaving(true);
+    setError("");
+    setMessage("");
     try {
       const response = await fetch("/api/admin/blocks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          startsAt: makeIso(blockForm.date, blockForm.time),
+          startsAt: startAt,
           durationMin: Number(blockForm.durationMin),
           note: blockForm.note || undefined,
         }),
@@ -454,503 +313,504 @@ export default function AdminKalendarPage() {
       }
 
       setMessage("Blokada je uspesno dodata.");
-      setActivePanel("details");
-      setSelectedItem({ type: "block", id: data.data.id });
-      await refreshWeek();
-    } catch (err) {
-      setError(err.message || "Greska pri kreiranju blokade.");
+      setIsCreateModalOpen(false);
+      await refreshData();
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri kreiranju blokade.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveBookingDetails() {
+    if (!activeEvent || activeEvent.kind !== "booking") {
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: activeEvent.refId,
+          status: statusDraft,
+          notes: notesDraft,
+        }),
+      });
+      const data = await parseResponse(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Neuspesno cuvanje izmene.");
+      }
+      setMessage("Termin je azuriran.");
+      await refreshData();
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri cuvanju termina.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function completeBooking() {
+    if (!activeEvent || activeEvent.kind !== "booking") {
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch(`/api/admin/bookings/${activeEvent.refId}/complete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes: notesDraft || undefined }),
+      });
+      const data = await parseResponse(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Neuspesno zavrsavanje termina.");
+      }
+      setMessage("Termin je oznacen kao zavrsen.");
+      setActiveEvent(null);
+      await refreshData();
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri zavrsavanju termina.");
     } finally {
       setSaving(false);
     }
   }
 
   async function deleteBlock() {
-    if (!selectedBlock) {
+    if (!activeEvent || activeEvent.kind !== "block") {
       return;
     }
-
     setSaving(true);
-    setMessage("");
     setError("");
-
+    setMessage("");
     try {
-      const response = await fetch(`/api/admin/blocks/${selectedBlock.id}`, {
+      const response = await fetch(`/api/admin/blocks/${activeEvent.refId}`, {
         method: "DELETE",
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
         throw new Error(data?.message || "Neuspesno brisanje blokade.");
       }
-
-      setSelectedItem(null);
       setMessage("Blokada je obrisana.");
-      await refreshWeek();
-    } catch (err) {
-      setError(err.message || "Greska pri brisanju blokade.");
+      setActiveEvent(null);
+      await refreshData();
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri brisanju blokade.");
     } finally {
       setSaving(false);
     }
   }
 
-  const bookingCount = bookings.length;
-  const blockCount = blocks.length;
-  const confirmedCount = bookings.filter((item) => item.status === "confirmed").length;
-  const pendingCount = bookings.filter((item) => item.status === "pending").length;
-  const weekLabel = `${fmtDateLabel(weekDays[0])} - ${fmtDateLabel(weekDays[6])}`;
+  const activeBooking =
+    activeEvent?.kind === "booking" ? bookingById.get(activeEvent.refId) : null;
+  const activeBlock = activeEvent?.kind === "block" ? blockById.get(activeEvent.refId) : null;
 
-  function handleSlotSelect(dateValue, timeValue, existingItem = null) {
-    setSlotSelection({ date: dateValue, time: timeValue });
-    setManualForm((prev) => ({ ...prev, date: dateValue, time: timeValue }));
-    setBlockForm((prev) => ({ ...prev, date: dateValue, time: timeValue }));
-    setMessage("");
-    setError("");
-
-    if (existingItem) {
-      setSelectedItem({ type: existingItem.type, id: existingItem.id });
-      setActivePanel("details");
-    } else {
-      setSelectedItem(null);
-      setActivePanel("new");
-    }
-
-    setIsSlotModalOpen(true);
-  }
+  const stats = useMemo(() => {
+    const pending = bookings.filter((item) => item.status === "pending").length;
+    const confirmed = bookings.filter((item) => item.status === "confirmed").length;
+    return {
+      totalBookings: bookings.length,
+      totalBlocks: blocks.length,
+      pending,
+      confirmed,
+    };
+  }, [bookings, blocks]);
 
   return (
     <section className="admin-calendar-page">
-      <div className="admin-calendar-layout admin-calendar-layout--single">
-        <div className="admin-card admin-calendar-grid-wrap">
-          <div
-            className="admin-calendar-grid"
-            style={{ "--slot-count": slotTimes.length }}
-            aria-busy={loading ? "true" : "false"}
-          >
-            <div className="admin-calendar-corner" />
-            {weekDays.map((day, dayIndex) => (
-              <div key={`head-${dayIndex}`} className="admin-calendar-day-head">
-                <strong>{day.toLocaleDateString("sr-RS", { weekday: "short" })}</strong>
-                <span>{day.toLocaleDateString("sr-RS", { day: "2-digit", month: "2-digit" })}</span>
-              </div>
-            ))}
-
-            {slotTimes.map((slot) => (
-              <div key={`time-${slot}`} className="admin-calendar-time">
-                {slot}
-              </div>
-            ))}
-
-            {slotTimes.map((slot, rowIndex) =>
-              weekDays.map((day, dayIndex) => {
-                const dateValue = toDateInput(day);
-                const existingItem = calendarItems.find(
-                  (item) =>
-                    item.dayIndex === dayIndex &&
-                    rowIndex >= item.startRow &&
-                    rowIndex < item.startRow + item.span
-                );
-
-                return (
-                  <button
-                    type="button"
-                    key={`cell-${rowIndex}-${dayIndex}`}
-                    className={`admin-calendar-cell admin-calendar-cell-btn ${
-                      existingItem ? "is-filled" : "is-open"
-                    } ${
-                      dayIndex >= 5 ? "is-weekend" : ""
-                    }`}
-                    onClick={() => handleSlotSelect(dateValue, slot, existingItem)}
-                    title={`${dateValue} ${slot}`}
-                    aria-label={`${dateValue} u ${slot}${existingItem ? ", zauzeto" : ", slobodno"}`}
-                  >
-                    {!existingItem ? <span className="admin-calendar-cell-mark">+</span> : null}
-                  </button>
-                );
-              })
-            )}
-
-            {calendarItems.map((item) => (
-              <button
-                type="button"
-                key={`${item.type}-${item.id}`}
-                className={`admin-calendar-item ${
-                  item.type === "booking" ? STATUS_CLASS[item.status] || "" : "is-block"
-                } ${
-                  selectedItem && selectedItem.id === item.id && selectedItem.type === item.type
-                    ? "is-selected"
-                    : ""
-                }`}
-                style={{
-                  gridColumn: item.dayIndex + 2,
-                  gridRow: `${item.startRow + 2} / span ${item.span}`,
-                }}
-                onClick={() => {
-                  setSelectedItem({ type: item.type, id: item.id });
-                  setActivePanel("details");
-                  setIsSlotModalOpen(true);
-                }}
-                title={`${item.title} | ${item.startLabel}-${item.endLabel}`}
-              >
-                <strong>{item.title}</strong>
-                <span>
-                  {item.startLabel} - {item.endLabel}
-                </span>
-                <span>{item.subtitle}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {isSlotModalOpen ? (
-          <div className="admin-calendar-modal" role="dialog" aria-modal="true">
-            <div className="admin-calendar-modal-backdrop" onClick={() => setIsSlotModalOpen(false)} />
-            <div className="admin-card admin-calendar-modal-card">
-              <div className="admin-calendar-modal-head">
-                <div>
-                  <h3 style={{ margin: 0 }}>Akcije termina</h3>
-                  {slotSelection ? (
-                    <p style={{ margin: "4px 0 0", color: "#bed0e8" }}>
-                      {slotSelection.date} {slotSelection.time}
-                    </p>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className="admin-template-link-btn"
-                  onClick={() => setIsSlotModalOpen(false)}
-                >
-                  Zatvori
-                </button>
-              </div>
-
-              <div className="admin-calendar-tabs">
-                <button
-                  type="button"
-                  className={`admin-template-link-btn ${activePanel === "details" ? "is-active" : ""}`}
-                  onClick={() => setActivePanel("details")}
-                >
-                  Detalji
-                </button>
-                <button
-                  type="button"
-                  className={`admin-template-link-btn ${activePanel === "new" ? "is-active" : ""}`}
-                  onClick={() => setActivePanel("new")}
-                >
-                  Novi termin
-                </button>
-                <button
-                  type="button"
-                  className={`admin-template-link-btn ${activePanel === "block" ? "is-active" : ""}`}
-                  onClick={() => setActivePanel("block")}
-                >
-                  Blokiraj
-                </button>
-              </div>
-
-              {activePanel === "details" ? (
-                <>
-                  {!selectedBooking && !selectedBlock ? (
-                    <p style={{ color: "#bed0e8", marginTop: 12 }}>
-                      Izaberite postojeci termin/blokadu ili kreirajte novi.
-                    </p>
-                  ) : null}
-
-                  {selectedBooking ? (
-                    <div className="admin-calendar-details">
-                      <div>
-                        <span>Klijent</span>
-                        <strong>{selectedBooking.clientName || "Nepoznato"}</strong>
-                      </div>
-                      <div>
-                        <span>Email</span>
-                        <strong>{selectedBooking.clientEmail || "-"}</strong>
-                      </div>
-                      <div>
-                        <span>Telefon</span>
-                        <strong>{selectedBooking.clientPhone || "-"}</strong>
-                      </div>
-                      <div>
-                        <span>Termin</span>
-                        <strong>{new Date(selectedBooking.startsAt).toLocaleString("sr-RS")}</strong>
-                      </div>
-                      <div>
-                        <span>Trajanje</span>
-                        <strong>{selectedBooking.totalDurationMin} min</strong>
-                      </div>
-                      <div>
-                        <span>Cena</span>
-                        <strong>{selectedBooking.totalPriceRsd} RSD</strong>
-                      </div>
-                      <div>
-                        <span>Usluge</span>
-                        <strong>{selectedBooking.serviceSummary || "-"}</strong>
-                      </div>
-
-                      <label>
-                        Status
-                        <select
-                          className="admin-inline-input"
-                          value={statusDraft}
-                          onChange={(event) => setStatusDraft(event.target.value)}
-                        >
-                          {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-
-                      <label>
-                        Napomena
-                        <textarea
-                          className="admin-inline-textarea"
-                          rows={4}
-                          value={notesDraft}
-                          onChange={(event) => setNotesDraft(event.target.value)}
-                        />
-                      </label>
-
-                      <div className="admin-calendar-detail-actions">
-                        <button
-                          type="button"
-                          className="admin-template-link-btn"
-                          disabled={saving}
-                          onClick={saveBooking}
-                        >
-                          Sacuvaj izmenu
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-template-link-btn"
-                          disabled={saving}
-                          onClick={completeBooking}
-                        >
-                          Oznaci kao zavrsen
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {selectedBlock ? (
-                    <div className="admin-calendar-details">
-                      <div>
-                        <span>Blokada</span>
-                        <strong>{new Date(selectedBlock.startsAt).toLocaleString("sr-RS")}</strong>
-                      </div>
-                      <div>
-                        <span>Trajanje</span>
-                        <strong>{selectedBlock.durationMin} min</strong>
-                      </div>
-                      <div>
-                        <span>Napomena</span>
-                        <strong>{selectedBlock.note || "-"}</strong>
-                      </div>
-                      <div className="admin-calendar-detail-actions">
-                        <button
-                          type="button"
-                          className="admin-template-link-btn"
-                          disabled={saving}
-                          onClick={deleteBlock}
-                        >
-                          Obrisi blokadu
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </>
-              ) : null}
-
-              {activePanel === "new" ? (
-                <>
-                  <h3 style={{ marginTop: 12 }}>Novi termin</h3>
-                  <form onSubmit={createManualBooking} style={{ display: "grid", gap: 8 }}>
-                    <input
-                      className="admin-inline-input"
-                      placeholder="Ime i prezime"
-                      value={manualForm.clientName}
-                      onChange={(event) =>
-                        setManualForm((prev) => ({ ...prev, clientName: event.target.value }))
-                      }
-                      required
-                    />
-                    <input
-                      className="admin-inline-input"
-                      placeholder="Email (opciono)"
-                      value={manualForm.email}
-                      onChange={(event) => setManualForm((prev) => ({ ...prev, email: event.target.value }))}
-                    />
-                    <input
-                      className="admin-inline-input"
-                      placeholder="Telefon (opciono)"
-                      value={manualForm.phone}
-                      onChange={(event) => setManualForm((prev) => ({ ...prev, phone: event.target.value }))}
-                    />
-                    <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-                      <input
-                        type="date"
-                        className="admin-inline-input"
-                        value={manualForm.date}
-                        onChange={(event) => setManualForm((prev) => ({ ...prev, date: event.target.value }))}
-                        required
-                      />
-                      <input
-                        type="time"
-                        className="admin-inline-input"
-                        value={manualForm.time}
-                        onChange={(event) => setManualForm((prev) => ({ ...prev, time: event.target.value }))}
-                        required
-                      />
-                    </div>
-                    <select
-                      className="admin-inline-input"
-                      value={manualForm.status}
-                      onChange={(event) => setManualForm((prev) => ({ ...prev, status: event.target.value }))}
-                    >
-                      <option value="confirmed">Potvrdjen</option>
-                      <option value="pending">Na cekanju</option>
-                    </select>
-
-                    <div className="admin-calendar-service-list">
-                      {services.map((category) => (
-                        <div key={category.id} className="admin-calendar-service-group">
-                          <strong>{category.name}</strong>
-                          <div>
-                            {(category.services || []).map((service) => (
-                              <label key={service.id} className="admin-calendar-service-option">
-                                <input
-                                  type="checkbox"
-                                  checked={manualForm.serviceIds.includes(service.id)}
-                                  onChange={(event) => {
-                                    if (event.target.checked) {
-                                      setManualForm((prev) => ({
-                                        ...prev,
-                                        serviceIds: prev.serviceIds.includes(service.id)
-                                          ? prev.serviceIds
-                                          : [...prev.serviceIds, service.id],
-                                      }));
-                                    } else {
-                                      setManualForm((prev) => ({
-                                        ...prev,
-                                        serviceIds: prev.serviceIds.filter((id) => id !== service.id),
-                                      }));
-                                    }
-                                  }}
-                                />
-                                <span>
-                                  {service.name} ({service.durationMin}m)
-                                </span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <textarea
-                      className="admin-inline-textarea"
-                      rows={3}
-                      placeholder="Napomena"
-                      value={manualForm.notes}
-                      onChange={(event) => setManualForm((prev) => ({ ...prev, notes: event.target.value }))}
-                    />
-
-                    <button type="submit" className="admin-template-link-btn" disabled={saving}>
-                      Kreiraj termin
-                    </button>
-                  </form>
-                </>
-              ) : null}
-
-              {activePanel === "block" ? (
-                <>
-                  <h3 style={{ marginTop: 12 }}>Blokiraj termin</h3>
-                  <form onSubmit={createBlock} style={{ display: "grid", gap: 8 }}>
-                    <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
-                      <input
-                        type="date"
-                        className="admin-inline-input"
-                        value={blockForm.date}
-                        onChange={(event) => setBlockForm((prev) => ({ ...prev, date: event.target.value }))}
-                        required
-                      />
-                      <input
-                        type="time"
-                        className="admin-inline-input"
-                        value={blockForm.time}
-                        onChange={(event) => setBlockForm((prev) => ({ ...prev, time: event.target.value }))}
-                        required
-                      />
-                    </div>
-                    <input
-                      type="number"
-                      min={5}
-                      max={720}
-                      className="admin-inline-input"
-                      value={blockForm.durationMin}
-                      onChange={(event) =>
-                        setBlockForm((prev) => ({ ...prev, durationMin: event.target.value }))
-                      }
-                      placeholder="Trajanje (min)"
-                      required
-                    />
-                    <textarea
-                      className="admin-inline-textarea"
-                      rows={3}
-                      placeholder="Napomena"
-                      value={blockForm.note}
-                      onChange={(event) => setBlockForm((prev) => ({ ...prev, note: event.target.value }))}
-                    />
-                    <button type="submit" className="admin-template-link-btn" disabled={saving}>
-                      Sacuvaj blokadu
-                    </button>
-                  </form>
-                </>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-      </div>
-
       <div className="admin-card admin-calendar-toolbar">
         <div>
-          <h2 style={{ marginTop: 0, marginBottom: 4 }}>Admin kalendar</h2>
-          <p style={{ margin: 0, color: "#bed0e8" }}>
-            {weekLabel} | termini: {bookingCount} | blokade: {blockCount} | potvrdjeni: {confirmedCount} | na cekanju: {pendingCount}
+          <h2 style={{ margin: 0 }}>Admin kalendar</h2>
+          <p style={{ margin: "4px 0 0", color: "#bed0e8" }}>
+            Termini: {stats.totalBookings} | Blokade: {stats.totalBlocks} | Potvrdjeni:{" "}
+            {stats.confirmed} | Na cekanju: {stats.pending}
           </p>
         </div>
         <div className="admin-calendar-toolbar-actions">
           <button
             type="button"
             className="admin-template-link-btn"
-            onClick={() => setWeekStart((prev) => addDays(prev, -7))}
+            onClick={() => openCreateModal(new Date().toISOString())}
           >
-            Prethodna nedelja
+            Novi termin / blokada
           </button>
           <button
             type="button"
             className="admin-template-link-btn"
-            onClick={() => setWeekStart(getMonday(new Date()))}
+            onClick={() => refreshData()}
+            disabled={loading}
           >
-            Tekuca nedelja
+            Osvezi
           </button>
-          <button
-            type="button"
-            className="admin-template-link-btn"
-            onClick={() => setWeekStart((prev) => addDays(prev, 7))}
-          >
-            Sledeca nedelja
-          </button>
-          <input
-            type="date"
-            value={toDateInput(weekStart)}
-            onChange={(event) => setWeekStart(getMonday(new Date(`${event.target.value}T12:00:00`)))}
-            className="admin-inline-input"
-          />
         </div>
       </div>
 
       {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
       {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
+
+      <div className="admin-card clinic-fc-wrap">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          locale="sr"
+          firstDay={1}
+          allDaySlot={false}
+          slotDuration="00:15:00"
+          slotMinTime="16:00:00"
+          slotMaxTime="21:00:00"
+          nowIndicator
+          editable={false}
+          selectable
+          selectMirror
+          select={handleSelect}
+          dateClick={handleDateClick}
+          eventClick={handleEventClick}
+          datesSet={(info) =>
+            setRange({
+              from: info.start.toISOString(),
+              to: info.end.toISOString(),
+            })
+          }
+          events={events}
+          height="auto"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
+          }}
+          buttonText={{
+            today: "Danas",
+            month: "Mesec",
+            week: "Nedelja",
+            day: "Dan",
+          }}
+          eventContent={(arg) => (
+            <div className="clinic-fc-event-inner">
+              <strong>{arg.event.title}</strong>
+              {arg.event.extendedProps.subtitle ? <span>{arg.event.extendedProps.subtitle}</span> : null}
+            </div>
+          )}
+        />
+      </div>
+
+      {isCreateModalOpen ? (
+        <div className="admin-calendar-modal" role="dialog" aria-modal="true">
+          <div className="admin-calendar-modal-backdrop" onClick={() => setIsCreateModalOpen(false)} />
+          <div className="admin-card admin-calendar-modal-card">
+            <div className="admin-calendar-modal-head">
+              <h3 style={{ margin: 0 }}>Akcija na slotu</h3>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() => setIsCreateModalOpen(false)}
+              >
+                Zatvori
+              </button>
+            </div>
+
+            <div className="admin-calendar-tabs">
+              <button
+                type="button"
+                className={`admin-template-link-btn ${createType === "booking" ? "is-active" : ""}`}
+                onClick={() => setCreateType("booking")}
+              >
+                Zakazi termin
+              </button>
+              <button
+                type="button"
+                className={`admin-template-link-btn ${createType === "block" ? "is-active" : ""}`}
+                onClick={() => setCreateType("block")}
+              >
+                Blokiraj
+              </button>
+            </div>
+
+            {createType === "booking" ? (
+              <div className="admin-calendar-details" style={{ marginTop: 12 }}>
+                <label>
+                  Ime i prezime
+                  <input
+                    className="admin-inline-input"
+                    value={bookingForm.clientName}
+                    onChange={(event) =>
+                      setBookingForm((prev) => ({ ...prev, clientName: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Email (opciono)
+                  <input
+                    className="admin-inline-input"
+                    type="email"
+                    value={bookingForm.email}
+                    onChange={(event) =>
+                      setBookingForm((prev) => ({ ...prev, email: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Telefon (opciono)
+                  <input
+                    className="admin-inline-input"
+                    value={bookingForm.phone}
+                    onChange={(event) =>
+                      setBookingForm((prev) => ({ ...prev, phone: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Datum i vreme
+                  <input
+                    type="datetime-local"
+                    className="admin-inline-input"
+                    value={bookingForm.startAtLocal}
+                    onChange={(event) =>
+                      setBookingForm((prev) => ({ ...prev, startAtLocal: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Status
+                  <select
+                    className="admin-inline-input"
+                    value={bookingForm.status}
+                    onChange={(event) =>
+                      setBookingForm((prev) => ({ ...prev, status: event.target.value }))
+                    }
+                  >
+                    <option value="confirmed">Potvrdjen</option>
+                    <option value="pending">Na cekanju</option>
+                  </select>
+                </label>
+
+                <div className="admin-calendar-service-list">
+                  {services.map((category) => (
+                    <div key={category.id} className="admin-calendar-service-group">
+                      <strong>{category.name}</strong>
+                      {(category.services || []).map((service) => (
+                        <label
+                          key={service.id}
+                          className={`admin-calendar-service-option ${
+                            bookingForm.serviceIds.includes(service.id) ? "is-selected" : ""
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={bookingForm.serviceIds.includes(service.id)}
+                            onChange={(event) => {
+                              if (event.target.checked) {
+                                setBookingForm((prev) => ({
+                                  ...prev,
+                                  serviceIds: prev.serviceIds.includes(service.id)
+                                    ? prev.serviceIds
+                                    : [...prev.serviceIds, service.id],
+                                }));
+                              } else {
+                                setBookingForm((prev) => ({
+                                  ...prev,
+                                  serviceIds: prev.serviceIds.filter((id) => id !== service.id),
+                                }));
+                              }
+                            }}
+                          />
+                          <span>
+                            {service.name} ({service.durationMin}m)
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+
+                <label>
+                  Napomena
+                  <textarea
+                    className="admin-inline-textarea"
+                    rows={3}
+                    value={bookingForm.notes}
+                    onChange={(event) =>
+                      setBookingForm((prev) => ({ ...prev, notes: event.target.value }))
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="admin-template-link-btn"
+                  disabled={saving || !bookingForm.clientName || !bookingForm.serviceIds.length}
+                  onClick={createBooking}
+                >
+                  Sacuvaj termin
+                </button>
+              </div>
+            ) : (
+              <div className="admin-calendar-details" style={{ marginTop: 12 }}>
+                <label>
+                  Datum i vreme
+                  <input
+                    type="datetime-local"
+                    className="admin-inline-input"
+                    value={blockForm.startAtLocal}
+                    onChange={(event) =>
+                      setBlockForm((prev) => ({ ...prev, startAtLocal: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Trajanje (min)
+                  <input
+                    type="number"
+                    min={5}
+                    max={720}
+                    className="admin-inline-input"
+                    value={blockForm.durationMin}
+                    onChange={(event) =>
+                      setBlockForm((prev) => ({ ...prev, durationMin: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Napomena
+                  <textarea
+                    className="admin-inline-textarea"
+                    rows={3}
+                    value={blockForm.note}
+                    onChange={(event) =>
+                      setBlockForm((prev) => ({ ...prev, note: event.target.value }))
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="admin-template-link-btn"
+                  disabled={saving}
+                  onClick={createBlock}
+                >
+                  Sacuvaj blokadu
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {activeEvent ? (
+        <div className="admin-calendar-modal" role="dialog" aria-modal="true">
+          <div className="admin-calendar-modal-backdrop" onClick={() => setActiveEvent(null)} />
+          <div className="admin-card admin-calendar-modal-card">
+            <div className="admin-calendar-modal-head">
+              <h3 style={{ margin: 0 }}>
+                {activeEvent.kind === "booking" ? "Detalji termina" : "Detalji blokade"}
+              </h3>
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() => setActiveEvent(null)}
+              >
+                Zatvori
+              </button>
+            </div>
+
+            {activeBooking ? (
+              <div className="admin-calendar-details" style={{ marginTop: 12 }}>
+                <div>
+                  <span>Klijent</span>
+                  <strong>{activeBooking.clientName || "-"}</strong>
+                </div>
+                <div>
+                  <span>Termin</span>
+                  <strong>
+                    {fmtDateTime(activeBooking.startsAt)} - {fmtDateTime(activeBooking.endsAt)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Usluge</span>
+                  <strong>{activeBooking.serviceSummary || "-"}</strong>
+                </div>
+                <div>
+                  <span>Cena</span>
+                  <strong>{activeBooking.totalPriceRsd} RSD</strong>
+                </div>
+                <label>
+                  Status
+                  <select
+                    className="admin-inline-input"
+                    value={statusDraft}
+                    onChange={(event) => setStatusDraft(event.target.value)}
+                  >
+                    {STATUS_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Napomena
+                  <textarea
+                    className="admin-inline-textarea"
+                    rows={3}
+                    value={notesDraft}
+                    onChange={(event) => setNotesDraft(event.target.value)}
+                  />
+                </label>
+                <div className="admin-calendar-detail-actions">
+                  <button
+                    type="button"
+                    className="admin-template-link-btn"
+                    disabled={saving}
+                    onClick={saveBookingDetails}
+                  >
+                    Sacuvaj izmene
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-template-link-btn"
+                    disabled={saving}
+                    onClick={completeBooking}
+                  >
+                    Oznaci kao zavrsen
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {activeBlock ? (
+              <div className="admin-calendar-details" style={{ marginTop: 12 }}>
+                <div>
+                  <span>Pocetak</span>
+                  <strong>{fmtDateTime(activeBlock.startsAt)}</strong>
+                </div>
+                <div>
+                  <span>Kraj</span>
+                  <strong>{fmtDateTime(activeBlock.endsAt)}</strong>
+                </div>
+                <div>
+                  <span>Trajanje</span>
+                  <strong>{activeBlock.durationMin} min</strong>
+                </div>
+                <div>
+                  <span>Napomena</span>
+                  <strong>{activeBlock.note || "-"}</strong>
+                </div>
+                <button
+                  type="button"
+                  className="admin-template-link-btn"
+                  disabled={saving}
+                  onClick={deleteBlock}
+                >
+                  Obrisi blokadu
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

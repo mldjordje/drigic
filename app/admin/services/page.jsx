@@ -2,12 +2,66 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+function parseResponse(response) {
+  return response
+    .text()
+    .then((text) => {
+      if (!text) {
+        return null;
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        return null;
+      }
+    })
+    .catch(() => null);
+}
+
 function toIsoOrNull(localDateTime) {
   if (!localDateTime) {
     return null;
   }
-  return new Date(localDateTime).toISOString();
+  const date = new Date(localDateTime);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toISOString();
 }
+
+function toLocalDateTime(value) {
+  if (!value) {
+    return "";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  const adjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return adjusted.toISOString().slice(0, 16);
+}
+
+const emptyServiceForm = {
+  id: "",
+  categoryId: "",
+  bodyAreaId: "",
+  name: "",
+  description: "",
+  priceRsd: 0,
+  durationMin: 30,
+  isActive: true,
+  isVip: false,
+};
+
+const emptyPromotionForm = {
+  id: "",
+  serviceId: "",
+  title: "",
+  promoPriceRsd: 0,
+  startsAt: "",
+  endsAt: "",
+  isActive: true,
+};
 
 export default function AdminServicesPage() {
   const [services, setServices] = useState([]);
@@ -18,55 +72,48 @@ export default function AdminServicesPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [serviceForm, setServiceForm] = useState({
-    categoryId: "",
-    bodyAreaId: "",
-    name: "",
-    description: "",
-    priceRsd: 0,
-    durationMin: 30,
-    isActive: true,
-    isVip: false,
-  });
-
-  const [promotionForm, setPromotionForm] = useState({
-    serviceId: "",
-    title: "",
-    promoPriceRsd: 0,
-    startsAt: "",
-    endsAt: "",
-    isActive: true,
-  });
+  const [serviceForm, setServiceForm] = useState(emptyServiceForm);
+  const [promotionForm, setPromotionForm] = useState(emptyPromotionForm);
 
   async function loadAll() {
-    const [metaRes, servicesRes, promotionsRes] = await Promise.all([
-      fetch("/api/admin/service-metadata"),
-      fetch("/api/admin/services"),
-      fetch("/api/admin/promotions"),
-    ]);
+    setLoading(true);
+    setError("");
+    try {
+      const [metaRes, servicesRes, promotionsRes] = await Promise.all([
+        fetch("/api/admin/service-metadata"),
+        fetch("/api/admin/services"),
+        fetch("/api/admin/promotions"),
+      ]);
 
-    const metaData = await metaRes.json();
-    const servicesData = await servicesRes.json();
-    const promotionsData = await promotionsRes.json();
+      const [metaData, servicesData, promotionsData] = await Promise.all([
+        parseResponse(metaRes),
+        parseResponse(servicesRes),
+        parseResponse(promotionsRes),
+      ]);
 
-    if (!metaRes.ok || !metaData?.ok) {
-      throw new Error(metaData?.message || "Neuspešno učitavanje metadata.");
-    }
-    if (!servicesRes.ok || !servicesData?.ok) {
-      throw new Error(servicesData?.message || "Neuspešno učitavanje usluga.");
-    }
-    if (!promotionsRes.ok || !promotionsData?.ok) {
-      throw new Error(promotionsData?.message || "Neuspešno učitavanje promocija.");
-    }
+      if (!metaRes.ok || !metaData?.ok) {
+        throw new Error(metaData?.message || "Neuspesno ucitavanje metadata.");
+      }
+      if (!servicesRes.ok || !servicesData?.ok) {
+        throw new Error(servicesData?.message || "Neuspesno ucitavanje usluga.");
+      }
+      if (!promotionsRes.ok || !promotionsData?.ok) {
+        throw new Error(promotionsData?.message || "Neuspesno ucitavanje promocija.");
+      }
 
-    setCategories(metaData.categories || []);
-    setBodyAreas(metaData.bodyAreas || []);
-    setServices(servicesData.data || []);
-    setPromotions(promotionsData.data || []);
+      setCategories(metaData.categories || []);
+      setBodyAreas(metaData.bodyAreas || []);
+      setServices(servicesData.data || []);
+      setPromotions(promotionsData.data || []);
+    } catch (loadError) {
+      setError(loadError.message || "Greska pri ucitavanju podataka.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
-    loadAll().catch((err) => setError(err.message));
+    loadAll();
   }, []);
 
   useEffect(() => {
@@ -75,7 +122,7 @@ export default function AdminServicesPage() {
     }
   }, [categories, serviceForm.categoryId]);
 
-  async function createService(event) {
+  async function submitService(event) {
     event.preventDefault();
     setError("");
     setMessage("");
@@ -83,34 +130,72 @@ export default function AdminServicesPage() {
 
     try {
       const payload = {
-        ...serviceForm,
+        categoryId: serviceForm.categoryId,
         bodyAreaId: serviceForm.bodyAreaId || null,
+        name: serviceForm.name,
+        description: serviceForm.description || "",
         priceRsd: Number(serviceForm.priceRsd),
         durationMin: Number(serviceForm.durationMin),
+        isActive: Boolean(serviceForm.isActive),
+        isVip: Boolean(serviceForm.isVip),
       };
 
+      const isEdit = Boolean(serviceForm.id);
       const response = await fetch("/api/admin/services", {
-        method: "POST",
+        method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(isEdit ? { ...payload, id: serviceForm.id } : payload),
       });
-      const data = await response.json();
-
+      const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno kreiranje usluge.");
+        throw new Error(data?.message || "Neuspesno cuvanje usluge.");
       }
 
-      setMessage("Usluga je sačuvana.");
-      setServiceForm((prev) => ({
-        ...prev,
-        name: "",
-        description: "",
-        priceRsd: 0,
-        durationMin: 30,
-      }));
+      setMessage(isEdit ? "Usluga je azurirana." : "Usluga je dodata.");
+      setServiceForm({
+        ...emptyServiceForm,
+        categoryId: categories[0]?.id || "",
+      });
       await loadAll();
-    } catch (err) {
-      setError(err.message || "Greška pri kreiranju usluge.");
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri cuvanju usluge.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitPromotion(event) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const payload = {
+        serviceId: promotionForm.serviceId,
+        title: promotionForm.title,
+        promoPriceRsd: Number(promotionForm.promoPriceRsd),
+        startsAt: toIsoOrNull(promotionForm.startsAt),
+        endsAt: toIsoOrNull(promotionForm.endsAt),
+        isActive: Boolean(promotionForm.isActive),
+      };
+
+      const isEdit = Boolean(promotionForm.id);
+      const response = await fetch("/api/admin/promotions", {
+        method: isEdit ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(isEdit ? { ...payload, id: promotionForm.id } : payload),
+      });
+      const data = await parseResponse(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Neuspesno cuvanje promocije.");
+      }
+
+      setMessage(isEdit ? "Promocija je azurirana." : "Promocija je dodata.");
+      setPromotionForm(emptyPromotionForm);
+      await loadAll();
+    } catch (saveError) {
+      setError(saveError.message || "Greska pri cuvanju promocije.");
     } finally {
       setLoading(false);
     }
@@ -124,162 +209,161 @@ export default function AdminServicesPage() {
       const response = await fetch("/api/admin/services", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: service.id,
-          isActive: !service.isActive,
-        }),
+        body: JSON.stringify({ id: service.id, isActive: !service.isActive }),
       });
-      const data = await response.json();
+      const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešna izmena statusa usluge.");
+        throw new Error(data?.message || "Neuspesna izmena statusa.");
       }
-      setMessage("Status usluge je ažuriran.");
+      setMessage("Status usluge je azuriran.");
       await loadAll();
-    } catch (err) {
-      setError(err.message || "Greška pri ažuriranju.");
+    } catch (toggleError) {
+      setError(toggleError.message || "Greska pri azuriranju statusa.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function createPromotion(event) {
-    event.preventDefault();
+  async function togglePromotionActive(promotion) {
     setError("");
     setMessage("");
     setLoading(true);
     try {
-      const payload = {
-        serviceId: promotionForm.serviceId,
-        title: promotionForm.title,
-        promoPriceRsd: Number(promotionForm.promoPriceRsd),
-        startsAt: toIsoOrNull(promotionForm.startsAt),
-        endsAt: toIsoOrNull(promotionForm.endsAt),
-        isActive: promotionForm.isActive,
-      };
-
       const response = await fetch("/api/admin/promotions", {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          id: promotion.id,
+          isActive: !promotion.isActive,
+        }),
       });
-      const data = await response.json();
+      const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno kreiranje promocije.");
+        throw new Error(data?.message || "Neuspesna izmena promocije.");
       }
-      setMessage("Promocija je sačuvana.");
-      setPromotionForm({
-        serviceId: "",
-        title: "",
-        promoPriceRsd: 0,
-        startsAt: "",
-        endsAt: "",
-        isActive: true,
-      });
+      setMessage("Status promocije je azuriran.");
       await loadAll();
-    } catch (err) {
-      setError(err.message || "Greška pri kreiranju promocije.");
+    } catch (toggleError) {
+      setError(toggleError.message || "Greska pri azuriranju promocije.");
     } finally {
       setLoading(false);
     }
   }
 
-  const serviceNameById = useMemo(() => {
-    const map = {};
-    services.forEach((service) => {
-      map[service.id] = service.name;
-    });
-    return map;
-  }, [services]);
+  const categoriesById = useMemo(
+    () => Object.fromEntries(categories.map((item) => [item.id, item.name])),
+    [categories]
+  );
+
+  const bodyAreasById = useMemo(
+    () => Object.fromEntries(bodyAreas.map((item) => [item.id, item.name])),
+    [bodyAreas]
+  );
+
+  const serviceNameById = useMemo(
+    () => Object.fromEntries(services.map((item) => [item.id, item.name])),
+    [services]
+  );
 
   return (
-    <section>
-      <h2>Admin - Usluge i promocije</h2>
-      <p style={{ color: "#c6d7ef" }}>
-        Ovde možeš da dodaš novu uslugu i promociju (fiksna nova cena).
-      </p>
+    <section style={{ display: "grid", gap: 12 }}>
+      <div className="admin-card">
+        <h2 style={{ marginTop: 0 }}>Usluge i promocije</h2>
+        <p style={{ color: "#bed0e8" }}>
+          Detaljno dodavanje i edit usluga, VIP flag i fixed-price promocije.
+        </p>
+        {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
+        {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
+      </div>
 
-      <div style={gridStyle}>
-        <form onSubmit={createService} style={cardStyle}>
-          <h3 style={{ marginTop: 0 }}>Nova usluga</h3>
-          <label style={labelStyle}>Naziv</label>
-          <input
-            required
-            style={inputStyle}
-            value={serviceForm.name}
-            onChange={(event) =>
-              setServiceForm((prev) => ({ ...prev, name: event.target.value }))
-            }
-          />
-
-          <label style={labelStyle}>Kategorija</label>
-          <select
-            style={inputStyle}
-            value={serviceForm.categoryId}
-            onChange={(event) =>
-              setServiceForm((prev) => ({ ...prev, categoryId: event.target.value }))
-            }
-            required
-          >
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-
-          <label style={labelStyle}>Deo tela (opciono)</label>
-          <select
-            style={inputStyle}
-            value={serviceForm.bodyAreaId}
-            onChange={(event) =>
-              setServiceForm((prev) => ({ ...prev, bodyAreaId: event.target.value }))
-            }
-          >
-            <option value="">Bez dela tela</option>
-            {bodyAreas.map((area) => (
-              <option key={area.id} value={area.id}>
-                {area.name}
-              </option>
-            ))}
-          </select>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            <div>
-              <label style={labelStyle}>Cena (RSD)</label>
+      <div className="admin-card admin-card-grid">
+        <form onSubmit={submitService} className="admin-card" style={{ display: "grid", gap: 8 }}>
+          <h3 style={{ marginTop: 0 }}>
+            {serviceForm.id ? "Izmena usluge" : "Nova usluga"}
+          </h3>
+          <label>
+            Naziv
+            <input
+              className="admin-inline-input"
+              value={serviceForm.name}
+              onChange={(event) =>
+                setServiceForm((prev) => ({ ...prev, name: event.target.value }))
+              }
+              required
+            />
+          </label>
+          <label>
+            Kategorija
+            <select
+              className="admin-inline-input"
+              value={serviceForm.categoryId}
+              onChange={(event) =>
+                setServiceForm((prev) => ({ ...prev, categoryId: event.target.value }))
+              }
+              required
+            >
+              <option value="">Izaberi kategoriju</option>
+              {categories.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Deo tela (opciono)
+            <select
+              className="admin-inline-input"
+              value={serviceForm.bodyAreaId}
+              onChange={(event) =>
+                setServiceForm((prev) => ({ ...prev, bodyAreaId: event.target.value }))
+              }
+            >
+              <option value="">Bez dela tela</option>
+              {bodyAreas.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+            <label>
+              Cena (RSD)
               <input
                 type="number"
                 min={0}
-                style={inputStyle}
+                className="admin-inline-input"
                 value={serviceForm.priceRsd}
                 onChange={(event) =>
                   setServiceForm((prev) => ({ ...prev, priceRsd: event.target.value }))
                 }
               />
-            </div>
-            <div>
-              <label style={labelStyle}>Trajanje (min)</label>
+            </label>
+            <label>
+              Trajanje (min)
               <input
                 type="number"
                 min={5}
-                style={inputStyle}
+                className="admin-inline-input"
                 value={serviceForm.durationMin}
                 onChange={(event) =>
                   setServiceForm((prev) => ({ ...prev, durationMin: event.target.value }))
                 }
               />
-            </div>
+            </label>
           </div>
-
-          <label style={labelStyle}>Opis</label>
-          <textarea
-            rows={3}
-            style={{ ...inputStyle, resize: "vertical" }}
-            value={serviceForm.description}
-            onChange={(event) =>
-              setServiceForm((prev) => ({ ...prev, description: event.target.value }))
-            }
-          />
-
+          <label>
+            Opis
+            <textarea
+              className="admin-inline-textarea"
+              rows={3}
+              value={serviceForm.description}
+              onChange={(event) =>
+                setServiceForm((prev) => ({ ...prev, description: event.target.value }))
+              }
+            />
+          </label>
           <label style={checkboxStyle}>
             <input
               type="checkbox"
@@ -300,75 +384,98 @@ export default function AdminServicesPage() {
             />
             VIP usluga
           </label>
-
-          <button type="submit" style={buttonStyle} disabled={loading}>
-            Sačuvaj uslugu
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="submit" className="admin-template-link-btn" disabled={loading}>
+              {serviceForm.id ? "Sacuvaj izmene" : "Dodaj uslugu"}
+            </button>
+            {serviceForm.id ? (
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() =>
+                  setServiceForm({
+                    ...emptyServiceForm,
+                    categoryId: categories[0]?.id || "",
+                  })
+                }
+              >
+                Otkazi izmenu
+              </button>
+            ) : null}
+          </div>
         </form>
 
-        <form onSubmit={createPromotion} style={cardStyle}>
-          <h3 style={{ marginTop: 0 }}>Nova promocija</h3>
-          <label style={labelStyle}>Usluga</label>
-          <select
-            style={inputStyle}
-            value={promotionForm.serviceId}
-            onChange={(event) =>
-              setPromotionForm((prev) => ({ ...prev, serviceId: event.target.value }))
-            }
-            required
-          >
-            <option value="">Izaberi uslugu</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name}
-              </option>
-            ))}
-          </select>
-
-          <label style={labelStyle}>Naziv promocije</label>
-          <input
-            required
-            style={inputStyle}
-            value={promotionForm.title}
-            onChange={(event) =>
-              setPromotionForm((prev) => ({ ...prev, title: event.target.value }))
-            }
-          />
-
-          <label style={labelStyle}>Nova cena (RSD)</label>
-          <input
-            type="number"
-            min={0}
-            style={inputStyle}
-            value={promotionForm.promoPriceRsd}
-            onChange={(event) =>
-              setPromotionForm((prev) => ({
-                ...prev,
-                promoPriceRsd: event.target.value,
-              }))
-            }
-          />
-
-          <label style={labelStyle}>Početak</label>
-          <input
-            type="datetime-local"
-            style={inputStyle}
-            value={promotionForm.startsAt}
-            onChange={(event) =>
-              setPromotionForm((prev) => ({ ...prev, startsAt: event.target.value }))
-            }
-          />
-
-          <label style={labelStyle}>Kraj</label>
-          <input
-            type="datetime-local"
-            style={inputStyle}
-            value={promotionForm.endsAt}
-            onChange={(event) =>
-              setPromotionForm((prev) => ({ ...prev, endsAt: event.target.value }))
-            }
-          />
-
+        <form onSubmit={submitPromotion} className="admin-card" style={{ display: "grid", gap: 8 }}>
+          <h3 style={{ marginTop: 0 }}>
+            {promotionForm.id ? "Izmena promocije" : "Nova promocija"}
+          </h3>
+          <label>
+            Usluga
+            <select
+              className="admin-inline-input"
+              value={promotionForm.serviceId}
+              onChange={(event) =>
+                setPromotionForm((prev) => ({ ...prev, serviceId: event.target.value }))
+              }
+              required
+            >
+              <option value="">Izaberi uslugu</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Naziv promocije
+            <input
+              className="admin-inline-input"
+              value={promotionForm.title}
+              onChange={(event) =>
+                setPromotionForm((prev) => ({ ...prev, title: event.target.value }))
+              }
+              required
+            />
+          </label>
+          <label>
+            Nova cena (RSD)
+            <input
+              type="number"
+              min={0}
+              className="admin-inline-input"
+              value={promotionForm.promoPriceRsd}
+              onChange={(event) =>
+                setPromotionForm((prev) => ({
+                  ...prev,
+                  promoPriceRsd: event.target.value,
+                }))
+              }
+              required
+            />
+          </label>
+          <label>
+            Vaznost od
+            <input
+              type="datetime-local"
+              className="admin-inline-input"
+              value={promotionForm.startsAt}
+              onChange={(event) =>
+                setPromotionForm((prev) => ({ ...prev, startsAt: event.target.value }))
+              }
+            />
+          </label>
+          <label>
+            Vaznost do
+            <input
+              type="datetime-local"
+              className="admin-inline-input"
+              value={promotionForm.endsAt}
+              onChange={(event) =>
+                setPromotionForm((prev) => ({ ...prev, endsAt: event.target.value }))
+              }
+            />
+          </label>
           <label style={checkboxStyle}>
             <input
               type="checkbox"
@@ -379,125 +486,171 @@ export default function AdminServicesPage() {
             />
             Aktivna promocija
           </label>
-
-          <button type="submit" style={buttonStyle} disabled={loading}>
-            Sačuvaj promociju
-          </button>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="submit" className="admin-template-link-btn" disabled={loading}>
+              {promotionForm.id ? "Sacuvaj izmenu" : "Dodaj promociju"}
+            </button>
+            {promotionForm.id ? (
+              <button
+                type="button"
+                className="admin-template-link-btn"
+                onClick={() => setPromotionForm(emptyPromotionForm)}
+              >
+                Otkazi izmenu
+              </button>
+            ) : null}
+          </div>
         </form>
       </div>
 
-      {message ? <p style={{ color: "#9be39f" }}>{message}</p> : null}
-      {error ? <p style={{ color: "#ff9f9f" }}>{error}</p> : null}
-
-      <section style={{ ...cardStyle, marginTop: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Sve usluge</h3>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Naziv</th>
-                <th style={thStyle}>Cena</th>
-                <th style={thStyle}>Trajanje</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {services.map((service) => (
-                <tr key={service.id}>
-                  <td style={tdStyle}>{service.name}</td>
-                  <td style={tdStyle}>{service.priceRsd} RSD</td>
-                  <td style={tdStyle}>{service.durationMin} min</td>
-                  <td style={tdStyle}>{service.isActive ? "aktivna" : "neaktivna"}</td>
-                  <td style={tdStyle}>
+      <div className="admin-card" style={{ overflowX: "auto" }}>
+        <h3 style={{ marginTop: 0 }}>Lista usluga</h3>
+        <table style={{ width: "100%", minWidth: 1080, borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Naziv</th>
+              <th style={thStyle}>Kategorija</th>
+              <th style={thStyle}>Deo tela</th>
+              <th style={thStyle}>Cena</th>
+              <th style={thStyle}>Trajanje</th>
+              <th style={thStyle}>Status</th>
+              <th style={thStyle}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {services.map((service) => (
+              <tr key={service.id}>
+                <td style={tdStyle}>
+                  <strong>{service.name}</strong>
+                  {service.description ? (
+                    <div style={{ color: "#adc2db", fontSize: 12 }}>{service.description}</div>
+                  ) : null}
+                </td>
+                <td style={tdStyle}>{categoriesById[service.categoryId] || service.categoryId}</td>
+                <td style={tdStyle}>
+                  {service.bodyAreaId ? bodyAreasById[service.bodyAreaId] || service.bodyAreaId : "-"}
+                </td>
+                <td style={tdStyle}>{service.priceRsd} RSD</td>
+                <td style={tdStyle}>{service.durationMin} min</td>
+                <td style={tdStyle}>
+                  <div>{service.isActive ? "aktivna" : "neaktivna"}</div>
+                  <div style={{ color: "#adc2db", fontSize: 12 }}>
+                    {service.isVip ? "VIP" : "regularna"}
+                  </div>
+                </td>
+                <td style={tdStyle}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     <button
                       type="button"
-                      style={miniButtonStyle}
+                      className="admin-template-link-btn"
+                      onClick={() =>
+                        setServiceForm({
+                          id: service.id,
+                          categoryId: service.categoryId || "",
+                          bodyAreaId: service.bodyAreaId || "",
+                          name: service.name || "",
+                          description: service.description || "",
+                          priceRsd: service.priceRsd || 0,
+                          durationMin: service.durationMin || 30,
+                          isActive: Boolean(service.isActive),
+                          isVip: Boolean(service.isVip),
+                        })
+                      }
+                    >
+                      Izmeni
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-template-link-btn"
                       onClick={() => toggleServiceActive(service)}
+                      disabled={loading}
                     >
                       {service.isActive ? "Deaktiviraj" : "Aktiviraj"}
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section style={{ ...cardStyle, marginTop: 16 }}>
-        <h3 style={{ marginTop: 0 }}>Aktivne promocije</h3>
-        {promotions.length ? (
-          <ul style={{ paddingLeft: 18, margin: 0 }}>
-            {promotions.map((promotion) => (
-              <li key={promotion.id} style={{ marginBottom: 8 }}>
-                <strong>{promotion.title}</strong> -{" "}
-                {serviceNameById[promotion.serviceId] || promotion.serviceId} -{" "}
-                {promotion.promoPriceRsd} RSD
-              </li>
+                  </div>
+                </td>
+              </tr>
             ))}
-          </ul>
-        ) : (
-          <p style={{ marginBottom: 0 }}>Nema promocija.</p>
-        )}
-      </section>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="admin-card" style={{ overflowX: "auto" }}>
+        <h3 style={{ marginTop: 0 }}>Promocije</h3>
+        <table style={{ width: "100%", minWidth: 980, borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Naziv</th>
+              <th style={thStyle}>Usluga</th>
+              <th style={thStyle}>Cena</th>
+              <th style={thStyle}>Period</th>
+              <th style={thStyle}>Status</th>
+              <th style={thStyle}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {promotions.map((promotion) => (
+              <tr key={promotion.id}>
+                <td style={tdStyle}>{promotion.title}</td>
+                <td style={tdStyle}>
+                  {serviceNameById[promotion.serviceId] || promotion.serviceId}
+                </td>
+                <td style={tdStyle}>{promotion.promoPriceRsd} RSD</td>
+                <td style={tdStyle}>
+                  {promotion.startsAt ? new Date(promotion.startsAt).toLocaleString("sr-RS") : "-"}
+                  {" - "}
+                  {promotion.endsAt ? new Date(promotion.endsAt).toLocaleString("sr-RS") : "-"}
+                </td>
+                <td style={tdStyle}>{promotion.isActive ? "aktivna" : "neaktivna"}</td>
+                <td style={tdStyle}>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      className="admin-template-link-btn"
+                      onClick={() =>
+                        setPromotionForm({
+                          id: promotion.id,
+                          serviceId: promotion.serviceId,
+                          title: promotion.title,
+                          promoPriceRsd: promotion.promoPriceRsd,
+                          startsAt: toLocalDateTime(promotion.startsAt),
+                          endsAt: toLocalDateTime(promotion.endsAt),
+                          isActive: Boolean(promotion.isActive),
+                        })
+                      }
+                    >
+                      Izmeni
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-template-link-btn"
+                      onClick={() => togglePromotionActive(promotion)}
+                      disabled={loading}
+                    >
+                      {promotion.isActive ? "Deaktiviraj" : "Aktiviraj"}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!promotions.length ? (
+              <tr>
+                <td style={tdStyle} colSpan={6}>
+                  Nema promocija.
+                </td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
 
-const gridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-  gap: 16,
-};
-
-const cardStyle = {
-  background: "rgba(217,232,248,0.16)",
-  border: "1px solid rgba(217,232,248,0.3)",
-  borderRadius: 12,
-  padding: 16,
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: 6,
-  fontWeight: 600,
-};
-
-const inputStyle = {
-  width: "100%",
-  borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.35)",
-  padding: "9px 10px",
-  background: "rgba(10,12,0,0.5)",
-  color: "#f2f5fb",
-  marginBottom: 10,
-};
-
 const checkboxStyle = {
   display: "flex",
   gap: 8,
-  marginBottom: 8,
   alignItems: "center",
-};
-
-const buttonStyle = {
-  borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.6)",
-  background: "#d9e8f8",
-  color: "#102844",
-  padding: "9px 12px",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const miniButtonStyle = {
-  borderRadius: 8,
-  border: "1px solid rgba(217,232,248,0.6)",
-  background: "transparent",
-  color: "#d9e8f8",
-  padding: "6px 10px",
-  cursor: "pointer",
 };
 
 const thStyle = {
@@ -509,5 +662,5 @@ const thStyle = {
 const tdStyle = {
   borderBottom: "1px solid rgba(217,232,248,0.12)",
   padding: "8px 6px",
+  verticalAlign: "top",
 };
-

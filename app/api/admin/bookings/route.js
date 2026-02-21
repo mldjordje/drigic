@@ -3,8 +3,13 @@ import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
-import { addMinutes, findConflicts, resolveQuote } from "@/lib/booking/engine";
-import { getDefaultEmployee } from "@/lib/booking/config";
+import {
+  addMinutes,
+  findConflicts,
+  isWithinWorkHours,
+  resolveQuote,
+} from "@/lib/booking/engine";
+import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
 
 export const runtime = "nodejs";
 
@@ -178,14 +183,22 @@ export async function POST(request) {
   const db = getDb();
   const quote = await resolveQuote(payload.serviceIds);
   const employee = await getDefaultEmployee();
+  const settings = await getClinicSettings();
   const startAt = new Date(payload.startAt);
   const endsAt = addMinutes(startAt, quote.totalDurationMin);
   const finalStatus = payload.status || "confirmed";
 
+  if (!isWithinWorkHours(startAt, quote.totalDurationMin, settings)) {
+    return fail(
+      400,
+      `Clinic working hours are ${settings.workdayStart}-${settings.workdayEnd}.`
+    );
+  }
+
   const conflicts = await findConflicts({
     employeeId: employee.id,
-    startsAt: startAt.toISOString(),
-    endsAt: endsAt.toISOString(),
+    startsAt: startAt,
+    endsAt: endsAt,
   });
   if (conflicts.length) {
     return fail(409, "Selected slot overlaps with existing booking/block.");

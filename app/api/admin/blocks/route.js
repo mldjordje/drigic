@@ -4,7 +4,7 @@ import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import { addMinutes, findConflicts } from "@/lib/booking/engine";
-import { getDefaultEmployee } from "@/lib/booking/config";
+import { getClinicSettings, getDefaultEmployee, toMinutes } from "@/lib/booking/config";
 
 export const runtime = "nodejs";
 
@@ -65,14 +65,26 @@ export async function POST(request) {
 
   try {
     const employee = await getDefaultEmployee();
+    const settings = await getClinicSettings();
     const startsAt = new Date(parsed.data.startsAt);
     const endsAt = addMinutes(startsAt, parsed.data.durationMin);
     const db = getDb();
+    const startMinutes = startsAt.getHours() * 60 + startsAt.getMinutes();
+    const endMinutes = endsAt.getHours() * 60 + endsAt.getMinutes();
+    if (
+      startMinutes < toMinutes(settings.workdayStart) ||
+      endMinutes > toMinutes(settings.workdayEnd)
+    ) {
+      return fail(
+        400,
+        `Clinic working hours are ${settings.workdayStart}-${settings.workdayEnd}.`
+      );
+    }
 
     const conflicts = await findConflicts({
       employeeId: employee.id,
-      startsAt: startsAt.toISOString(),
-      endsAt: endsAt.toISOString(),
+      startsAt: startsAt,
+      endsAt: endsAt,
       tx: db,
     });
 

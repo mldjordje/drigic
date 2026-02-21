@@ -531,12 +531,43 @@
   .clinic-service-option {
     transition: border-color 0.22s ease, transform 0.22s ease,
       background-color 0.22s ease;
+    cursor: pointer;
   }
 
   .clinic-service-option:hover {
     border-color: rgba(217, 232, 248, 0.45) !important;
     background: rgba(217, 232, 248, 0.08);
     transform: translateY(-1px);
+  }
+
+  .clinic-service-option input {
+    accent-color: #d9e8f8;
+  }
+
+  .clinic-service-option.is-selected {
+    border-color: rgba(217, 232, 248, 0.78) !important;
+    background: rgba(36, 58, 86, 0.72);
+    box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.34),
+      0 8px 22px rgba(7, 14, 22, 0.44);
+  }
+
+  .clinic-selected-services {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .clinic-selected-service-chip {
+    border-radius: 999px;
+    border: 1px solid rgba(217, 232, 248, 0.6);
+    background: rgba(24, 40, 60, 0.85);
+    color: #f3f8ff;
+    font-size: 12px;
+    line-height: 1.2;
+    padding: 6px 10px;
+    box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.2),
+      0 0 22px rgba(217, 232, 248, 0.18);
   }
 
   .clinic-booking-calendar {
@@ -717,6 +748,36 @@
     border-color: rgba(217, 232, 248, 0.9);
     background: rgba(217, 232, 248, 0.22);
     color: #f4f8ff;
+  }
+
+  .clinic-glow-field {
+    border-color: rgba(217, 232, 248, 0.52) !important;
+    box-shadow: inset 0 0 0 1px rgba(217, 232, 248, 0.2),
+      0 0 24px rgba(217, 232, 248, 0.16);
+    transition: border-color 0.22s ease, box-shadow 0.22s ease;
+  }
+
+  .clinic-glow-field:focus {
+    outline: none;
+    border-color: rgba(217, 232, 248, 0.84) !important;
+    box-shadow: inset 0 0 0 1px rgba(217, 232, 248, 0.34),
+      0 0 30px rgba(217, 232, 248, 0.24);
+  }
+
+  .clinic-booking-note-input::placeholder,
+  .clinic-beauty-notes::placeholder {
+    color: rgba(225, 236, 250, 0.68);
+  }
+
+  .clinic-beauty-notes {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(217, 232, 248, 0.35);
+    padding: 12px 14px;
+    background: rgba(9, 14, 22, 0.76);
+    color: #f3f8ff;
+    resize: vertical;
+    min-height: 132px;
   }
 
   @media (max-width: 767px) {

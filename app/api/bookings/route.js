@@ -6,6 +6,7 @@ import {
   addMinutes,
   findConflicts,
   isWithinBookingWindow,
+  isWithinWorkHours,
   resolveQuote,
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
@@ -44,10 +45,17 @@ export async function POST(request) {
     const endsAt = addMinutes(startAt, quote.totalDurationMin);
     const employee = await getDefaultEmployee();
 
+    if (!isWithinWorkHours(startAt, quote.totalDurationMin, settings)) {
+      return fail(
+        400,
+        `Clinic working hours are ${settings.workdayStart}-${settings.workdayEnd}.`
+      );
+    }
+
     const conflicts = await findConflicts({
       employeeId: employee.id,
-      startsAt: startAt.toISOString(),
-      endsAt: endsAt.toISOString(),
+      startsAt: startAt,
+      endsAt: endsAt,
     });
 
     if (conflicts.length) {
@@ -59,7 +67,7 @@ export async function POST(request) {
       .values({
         userId: auth.user.id,
         employeeId: employee.id,
-        startsAt,
+        startsAt: startAt,
         endsAt,
         status: "confirmed",
         totalDurationMin: quote.totalDurationMin,
@@ -113,6 +121,7 @@ export async function POST(request) {
     console.error("[bookings.create] unexpected error", error);
     return fail(500, "Booking failed unexpectedly. Please retry.", {
       code: errorCode || null,
+      reason: process.env.NODE_ENV === "development" ? message : null,
     });
   }
 }

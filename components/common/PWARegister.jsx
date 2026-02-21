@@ -8,9 +8,23 @@ export default function PWARegister() {
       return;
     }
 
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    if (process.env.NODE_ENV !== "production") {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) => {
+          registrations.forEach((registration) => {
+            registration.unregister();
+          });
+        })
+        .catch(() => {});
+      return;
+    }
+
+    navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => registration.update().catch(() => {}))
+      .catch(() => {});
   }, []);
 
   return null;
 }
-
