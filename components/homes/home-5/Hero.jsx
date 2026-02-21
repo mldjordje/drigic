@@ -20,7 +20,7 @@ export default function Hero() {
 
   const heroVideoSrc = useMemo(
     () =>
-      "https://www.youtube-nocookie.com/embed/T2w-sqZ2_BY?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=T2w-sqZ2_BY&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&fs=0&enablejsapi=1",
+      "https://www.youtube.com/embed/T2w-sqZ2_BY?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=T2w-sqZ2_BY&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&fs=0&enablejsapi=1",
     []
   );
 
@@ -49,19 +49,39 @@ export default function Hero() {
     );
   }, []);
 
+  const triggerPlaybackWithGesture = useCallback(() => {
+    forcePlayMuted();
+    window.setTimeout(() => forcePlayMuted(), 220);
+  }, [forcePlayMuted]);
+
   useEffect(() => {
     const intervalId = window.setInterval(() => {
       forcePlayMuted();
-    }, 2200);
+    }, 1800);
 
     return () => window.clearInterval(intervalId);
   }, [forcePlayMuted]);
+
+  useEffect(() => {
+    const resume = () => triggerPlaybackWithGesture();
+    window.addEventListener("touchstart", resume, { passive: true });
+    window.addEventListener("pointerdown", resume, { passive: true });
+    window.addEventListener("visibilitychange", resume);
+
+    return () => {
+      window.removeEventListener("touchstart", resume);
+      window.removeEventListener("pointerdown", resume);
+      window.removeEventListener("visibilitychange", resume);
+    };
+  }, [triggerPlaybackWithGesture]);
 
   return (
     <div className="hero-wrapper hero-5" id="hero">
       <div
         className="hero-slider background-image por"
         style={{ backgroundImage: "url(/assets/img/slika1.png)" }}
+        onTouchStart={triggerPlaybackWithGesture}
+        onPointerDown={triggerPlaybackWithGesture}
       >
         <div className="clinic-hero-mobile-video" aria-hidden="true">
           <iframe
