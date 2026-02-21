@@ -459,6 +459,21 @@
   gap: 2px;
 }
 
+.admin-calendar-client-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-calendar-client-panel {
+  border: 1px solid rgba(217, 232, 248, 0.2);
+  border-radius: 12px;
+  background: rgba(8, 13, 22, 0.5);
+  padding: 10px;
+}
+
 .admin-calendar-details span {
   color: #9fb8d8;
   font-size: 12px;
@@ -656,12 +671,14 @@
   border: 0;
   border-radius: 10px;
   padding: 2px 4px;
+  overflow: hidden;
 }
 
 .clinic-fc-event {
   background: rgba(75, 102, 136, 0.92);
   color: #f4f8ff;
   border-left: 4px solid var(--clinic-event-service-edge, rgba(217, 232, 248, 0.35));
+  min-width: 0;
 }
 
 .clinic-fc-event.is-pending {
@@ -691,17 +708,27 @@
 .clinic-fc-event-inner {
   display: grid;
   gap: 2px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .clinic-fc-event-inner strong {
+  display: block;
   font-size: 12px;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .clinic-fc-event-inner span {
+  display: block;
   font-size: 11px;
   line-height: 1.2;
   opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-clients-grid {

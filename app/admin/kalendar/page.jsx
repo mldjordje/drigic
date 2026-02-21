@@ -101,6 +101,10 @@ export default function AdminKalendarPage() {
   const [activeEvent, setActiveEvent] = useState(null);
   const [statusDraft, setStatusDraft] = useState("pending");
   const [notesDraft, setNotesDraft] = useState("");
+  const [showClientDetails, setShowClientDetails] = useState(false);
+  const [clientDetailsLoading, setClientDetailsLoading] = useState(false);
+  const [clientDetailsError, setClientDetailsError] = useState("");
+  const [clientDetailsPayload, setClientDetailsPayload] = useState(null);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -250,6 +254,10 @@ export default function AdminKalendarPage() {
     }
     setMessage("");
     setError("");
+    setShowClientDetails(false);
+    setClientDetailsLoading(false);
+    setClientDetailsError("");
+    setClientDetailsPayload(null);
     setActiveEvent({ kind, refId });
     if (kind === "booking") {
       const booking = bookingById.get(refId);
@@ -428,6 +436,52 @@ export default function AdminKalendarPage() {
       setError(saveError.message || "Greska pri brisanju blokade.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  function closeActiveEvent() {
+    setActiveEvent(null);
+    setShowClientDetails(false);
+    setClientDetailsLoading(false);
+    setClientDetailsError("");
+    setClientDetailsPayload(null);
+  }
+
+  async function openClientDetailsPanel(userId) {
+    if (!userId) {
+      return;
+    }
+
+    setShowClientDetails(true);
+    setClientDetailsLoading(true);
+    setClientDetailsError("");
+    setClientDetailsPayload(null);
+
+    try {
+      const [clientRes, beautyPassRes] = await Promise.all([
+        fetch(`/api/admin/clients/${userId}`),
+        fetch(`/api/admin/clients/${userId}/beauty-pass`),
+      ]);
+      const [clientData, beautyPassData] = await Promise.all([
+        parseResponse(clientRes),
+        parseResponse(beautyPassRes),
+      ]);
+
+      if (!clientRes.ok || !clientData?.ok) {
+        throw new Error(clientData?.message || "Neuspesno ucitavanje klijenta.");
+      }
+      if (!beautyPassRes.ok || !beautyPassData?.ok) {
+        throw new Error(beautyPassData?.message || "Neuspesno ucitavanje beauty pass-a.");
+      }
+
+      setClientDetailsPayload({
+        client: clientData.data || null,
+        beautyPass: beautyPassData || null,
+      });
+    } catch (loadError) {
+      setClientDetailsError(loadError.message || "Greska pri ucitavanju klijenta.");
+    } finally {
+      setClientDetailsLoading(false);
     }
   }
 
@@ -829,7 +883,7 @@ export default function AdminKalendarPage() {
 
       {activeEvent ? (
         <div className="admin-calendar-modal" role="dialog" aria-modal="true">
-          <div className="admin-calendar-modal-backdrop" onClick={() => setActiveEvent(null)} />
+          <div className="admin-calendar-modal-backdrop" onClick={closeActiveEvent} />
           <div className="admin-card admin-calendar-modal-card">
             <div className="admin-calendar-modal-head">
               <h3 style={{ margin: 0 }}>
@@ -838,7 +892,7 @@ export default function AdminKalendarPage() {
               <button
                 type="button"
                 className="admin-template-link-btn"
-                onClick={() => setActiveEvent(null)}
+                onClick={closeActiveEvent}
               >
                 Zatvori
               </button>
@@ -848,7 +902,21 @@ export default function AdminKalendarPage() {
               <div className="admin-calendar-details" style={{ marginTop: 12 }}>
                 <div>
                   <span>Klijent</span>
-                  <strong>{activeBooking.clientName || "-"}</strong>
+                  <div className="admin-calendar-client-row">
+                    <strong>{activeBooking.clientName || "-"}</strong>
+                    {activeBooking.userId ? (
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        disabled={clientDetailsLoading}
+                        onClick={() => openClientDetailsPanel(activeBooking.userId)}
+                      >
+                        {clientDetailsLoading && showClientDetails
+                          ? "Ucitavanje..."
+                          : "Profil + Beauty Pass"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
                 <div>
                   <span>Termin</span>
@@ -906,12 +974,77 @@ export default function AdminKalendarPage() {
                       type="button"
                       className="admin-template-link-btn"
                       disabled={saving}
-                      onClick={() => setActiveEvent(null)}
+                      onClick={closeActiveEvent}
                     >
                       Zatvori
                     </button>
                   </div>
                 </div>
+
+                {showClientDetails ? (
+                  <div className="admin-calendar-client-panel">
+                    {clientDetailsError ? (
+                      <p style={{ color: "#ffabab", margin: 0 }}>{clientDetailsError}</p>
+                    ) : null}
+
+                    {!clientDetailsLoading && !clientDetailsError && clientDetailsPayload ? (
+                      <div className="admin-calendar-details">
+                        <div>
+                          <span>Email / telefon</span>
+                          <strong>
+                            {clientDetailsPayload.client?.email || "-"} /{" "}
+                            {clientDetailsPayload.client?.phone || "-"}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>Pol / datum rodjenja</span>
+                          <strong>
+                            {clientDetailsPayload.client?.profile?.gender || "-"} /{" "}
+                            {clientDetailsPayload.client?.profile?.birthDate || "-"}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>Sledeci termini</span>
+                          <strong>
+                            {clientDetailsPayload.beautyPass?.upcomingBookings?.length || 0}
+                          </strong>
+                        </div>
+                        <div>
+                          <span>Beauty pass zapisi</span>
+                          <strong>
+                            {clientDetailsPayload.beautyPass?.treatmentHistory?.length || 0}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Poslednja 3 Beauty Pass unosa</span>
+                          <div style={{ display: "grid", gap: 6, marginTop: 4 }}>
+                            {(clientDetailsPayload.beautyPass?.treatmentHistory || [])
+                              .slice(0, 3)
+                              .map((record) => (
+                                <div key={record.id} style={clientMiniItemStyle}>
+                                  <strong>{fmtDateTime(record.treatmentDate)}</strong>
+                                  <span>{record.notes || "Bez napomene"}</span>
+                                </div>
+                              ))}
+                            {!clientDetailsPayload.beautyPass?.treatmentHistory?.length ? (
+                              <span style={{ color: "#9fb8d8" }}>Nema unosa.</span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {activeBooking.userId ? (
+                          <a
+                            href={`/admin/klijenti/${activeBooking.userId}`}
+                            className="admin-template-link-btn"
+                          >
+                            Otvori puni profil klijenta
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -949,3 +1082,12 @@ export default function AdminKalendarPage() {
     </section>
   );
 }
+
+const clientMiniItemStyle = {
+  display: "grid",
+  gap: 2,
+  border: "1px solid rgba(217,232,248,0.2)",
+  borderRadius: 10,
+  padding: "7px 8px",
+  background: "rgba(9,15,24,0.4)",
+};

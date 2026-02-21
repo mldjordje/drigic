@@ -27,10 +27,18 @@ export async function GET(request) {
     .where(eq(schema.profiles.userId, auth.user.id))
     .limit(1);
 
+  const normalizedName = String(profile?.fullName || "").trim();
+  const normalizedGender = String(profile?.gender || "").trim();
+  const hasBirthDate = Boolean(profile?.birthDate);
+  const needsProfileSetup =
+    auth.user.role === "client" &&
+    (!normalizedName || !normalizedGender || !hasBirthDate);
+
   return ok({
     ok: true,
     user: auth.user,
     profile: profile || null,
+    needsProfileSetup,
   });
 }
 
@@ -61,15 +69,28 @@ export async function PATCH(request) {
   }
 
   const profilePayload = {
-    fullName: parsed.data.fullName,
-    gender: parsed.data.gender,
-    birthDate: parsed.data.birthDate || null,
-    avatarUrl: parsed.data.avatarUrl,
     updatedAt: new Date(),
   };
+  if (parsed.data.fullName !== undefined) {
+    profilePayload.fullName = parsed.data.fullName;
+  }
+  if (parsed.data.gender !== undefined) {
+    profilePayload.gender = parsed.data.gender;
+  }
+  if (parsed.data.birthDate !== undefined) {
+    profilePayload.birthDate = parsed.data.birthDate || null;
+  }
+  if (parsed.data.avatarUrl !== undefined) {
+    profilePayload.avatarUrl = parsed.data.avatarUrl;
+  }
+  const hasProfileField =
+    parsed.data.fullName !== undefined ||
+    parsed.data.gender !== undefined ||
+    parsed.data.birthDate !== undefined ||
+    parsed.data.avatarUrl !== undefined;
 
   let profile = existing;
-  if (!existing) {
+  if (!existing && hasProfileField) {
     [profile] = await db
       .insert(schema.profiles)
       .values({
@@ -77,7 +98,7 @@ export async function PATCH(request) {
         ...profilePayload,
       })
       .returning();
-  } else {
+  } else if (existing && hasProfileField) {
     [profile] = await db
       .update(schema.profiles)
       .set(profilePayload)
@@ -90,4 +111,3 @@ export async function PATCH(request) {
     profile,
   });
 }
-

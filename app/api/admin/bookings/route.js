@@ -150,7 +150,8 @@ export async function GET(request) {
     if (!byId.has(id)) {
       byId.set(id, {
         ...row.booking,
-        clientName: row.profileName || row.userEmail || "Klijent",
+        clientName:
+          String(row.profileName || "").trim() || String(row.userPhone || "").trim() || "Klijent",
         clientEmail: row.userEmail || "",
         clientPhone: row.userPhone || "",
         services: [],

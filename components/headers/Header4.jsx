@@ -9,6 +9,7 @@ export default function Header4() {
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [logoutBusy, setLogoutBusy] = useState(false);
   const [useDarkMobileLogo, setUseDarkMobileLogo] = useState(false);
   const lastScrollYRef = useRef(0);
 
@@ -96,6 +97,22 @@ export default function Header4() {
 
   const headerLogoSrc = useDarkMobileLogo ? "/assets/img/logo-dark.png" : "/assets/img/logo.png";
 
+  async function handleLogout() {
+    if (logoutBusy) {
+      return;
+    }
+    setLogoutBusy(true);
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+    } catch {
+      // no-op, redirect anyway
+    } finally {
+      window.location.href = "/";
+    }
+  }
+
   return (
     <>
       <div className={`mobile-menu-wrapper ${mobileMenuOpen ? "body-visible" : ""} `}>
@@ -105,12 +122,10 @@ export default function Header4() {
           </button>
           <div className="mobile-logo">
             <Link scroll={false} href="/">
-              <Image
-                width={170}
-                height={48}
+              <img
                 src="/assets/img/logo.png"
                 alt="Dr Igic logo"
-                className="clinic-nav-logo"
+                className="clinic-nav-logo clinic-nav-logo-mobile"
               />
             </Link>
           </div>
@@ -130,13 +145,24 @@ export default function Header4() {
             </ul>
           </div>
           <div className="mobile-cta-buttons">
-            <GooglePopupButton
-              className="mobile-cta-link clinic-glow-btn"
-              nextPath="/"
-              onBeforeOpen={() => setMobileMenuOpen(false)}
-            >
-              Login
-            </GooglePopupButton>
+            {currentUser ? (
+              <button
+                type="button"
+                className="mobile-cta-link clinic-glow-btn"
+                onClick={handleLogout}
+                disabled={logoutBusy}
+              >
+                {logoutBusy ? "Odjava..." : "Odjavi me"}
+              </button>
+            ) : (
+              <GooglePopupButton
+                className="mobile-cta-link clinic-glow-btn"
+                nextPath="/"
+                onBeforeOpen={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </GooglePopupButton>
+            )}
             <a href="#booking" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
               Zakazi
             </a>
@@ -227,12 +253,30 @@ export default function Header4() {
                       </>
                     ) : null}
 
-                    <GooglePopupButton className="search-btn clinic-glow-btn" nextPath="/">
-                      <span className="link-effect">
-                        <span className="effect-1">LOGIN</span>
-                        <span className="effect-1">LOGIN</span>
-                      </span>
-                    </GooglePopupButton>
+                    {currentUser ? (
+                      <button
+                        type="button"
+                        className="search-btn clinic-glow-btn"
+                        onClick={handleLogout}
+                        disabled={logoutBusy}
+                      >
+                        <span className="link-effect">
+                          <span className="effect-1">
+                            {logoutBusy ? "ODJAVA..." : "ODJAVI ME"}
+                          </span>
+                          <span className="effect-1">
+                            {logoutBusy ? "ODJAVA..." : "ODJAVI ME"}
+                          </span>
+                        </span>
+                      </button>
+                    ) : (
+                      <GooglePopupButton className="search-btn clinic-glow-btn" nextPath="/">
+                        <span className="link-effect">
+                          <span className="effect-1">LOGIN</span>
+                          <span className="effect-1">LOGIN</span>
+                        </span>
+                      </GooglePopupButton>
+                    )}
 
                     <a href="#booking" className="search-btn clinic-glow-btn">
                       <span className="link-effect">
