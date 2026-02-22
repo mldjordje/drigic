@@ -10,8 +10,10 @@ const emptyBeforeAfterForm = {
   productUsed: "",
   beforeImageUrl: "",
   afterImageUrl: "",
+  collageImageUrl: "",
   beforeImage: null,
   afterImage: null,
+  collageImage: null,
   isPublished: true,
 };
 
@@ -120,6 +122,7 @@ export default function AdminMediaPage() {
       formData.set("productUsed", beforeAfterForm.productUsed.trim());
       formData.set("beforeImageUrl", beforeAfterForm.beforeImageUrl.trim());
       formData.set("afterImageUrl", beforeAfterForm.afterImageUrl.trim());
+      formData.set("collageImageUrl", beforeAfterForm.collageImageUrl.trim());
       formData.set("isPublished", String(Boolean(beforeAfterForm.isPublished)));
 
       if (beforeAfterForm.id) {
@@ -130,6 +133,9 @@ export default function AdminMediaPage() {
       }
       if (beforeAfterForm.afterImage) {
         formData.set("afterImage", beforeAfterForm.afterImage);
+      }
+      if (beforeAfterForm.collageImage) {
+        formData.set("collageImage", beforeAfterForm.collageImage);
       }
 
       const isEdit = Boolean(beforeAfterForm.id);
@@ -371,7 +377,15 @@ export default function AdminMediaPage() {
               setBeforeAfterForm((prev) => ({ ...prev, afterImageUrl: event.target.value }))
             }
           />
-          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr" }}>
+          <input
+            className="admin-inline-input"
+            placeholder="Kolaz image URL (opciono)"
+            value={beforeAfterForm.collageImageUrl}
+            onChange={(event) =>
+              setBeforeAfterForm((prev) => ({ ...prev, collageImageUrl: event.target.value }))
+            }
+          />
+          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr 1fr" }}>
             <input
               type="file"
               accept="image/*"
@@ -389,6 +403,16 @@ export default function AdminMediaPage() {
                 setBeforeAfterForm((prev) => ({
                   ...prev,
                   afterImage: event.target.files?.[0] || null,
+                }))
+              }
+            />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) =>
+                setBeforeAfterForm((prev) => ({
+                  ...prev,
+                  collageImage: event.target.files?.[0] || null,
                 }))
               }
             />
@@ -548,6 +572,16 @@ export default function AdminMediaPage() {
                   style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 10 }}
                 />
               </div>
+              {item.collageImageUrl ? (
+                <div style={{ display: "grid", gap: 6 }}>
+                  <small style={{ color: "#c8d9ee" }}>Kolaz pre/posle</small>
+                  <img
+                    src={item.collageImageUrl}
+                    alt={`${item.treatmentType || "Tretman"} kolaz`}
+                    style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 10 }}
+                  />
+                </div>
+              ) : null}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   type="button"
@@ -560,8 +594,10 @@ export default function AdminMediaPage() {
                       productUsed: item.productUsed || "",
                       beforeImageUrl: item.beforeImageUrl || "",
                       afterImageUrl: item.afterImageUrl || "",
+                      collageImageUrl: item.collageImageUrl || "",
                       beforeImage: null,
                       afterImage: null,
+                      collageImage: null,
                       isPublished: Boolean(item.isPublished),
                     })
                   }

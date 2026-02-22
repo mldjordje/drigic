@@ -1283,6 +1283,30 @@ a.clinic-glow-btn {
     color: #d7e5f8;
   }
 
+  .clinic-before-after-collage {
+    margin: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .clinic-before-after-collage img {
+    width: 100%;
+    height: 220px;
+    border-radius: 12px;
+    border: 1px solid rgba(217, 232, 248, 0.28);
+    object-fit: cover;
+    background: rgba(10, 12, 0, 0.56);
+  }
+
+  .clinic-before-after-collage span {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #d7e5f8;
+  }
+
   .mobile-category-dropdown {
     margin-top: 6px;
     display: grid;
@@ -1660,6 +1684,10 @@ a.clinic-glow-btn {
     .clinic-before-after-images img {
       height: 180px;
     }
+
+    .clinic-before-after-collage img {
+      height: 180px;
+    }
   }
 
   @media (min-width: 768px) {
@@ -1900,6 +1928,15 @@ a.clinic-glow-btn {
 }
 
 .clinic-theme-light .clinic-home5 .clinic-before-after-images img {
+  border-color: rgba(15, 23, 42, 0.16);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.clinic-theme-light .clinic-home5 .clinic-before-after-collage span {
+  color: #334155;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-before-after-collage img {
   border-color: rgba(15, 23, 42, 0.16);
   background: rgba(255, 255, 255, 0.95);
 }
@@ -2369,6 +2406,12 @@ a.clinic-glow-btn {
   max-width: 920px;
 }
 
+.clinic-home5 .clinic-before-after-filter-wrap.is-compact {
+  margin: -2px auto 16px;
+  gap: 6px;
+  max-width: 760px;
+}
+
 .clinic-home5 .clinic-before-after-filter-chip {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.46);
@@ -2383,12 +2426,23 @@ a.clinic-glow-btn {
   transition: all 0.2s ease;
 }
 
+.clinic-home5 .clinic-before-after-filter-wrap.is-compact .clinic-before-after-filter-chip {
+  padding: 6px 10px;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
 .clinic-home5 .clinic-before-after-filter-chip span {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.32);
   padding: 1px 6px;
   font-size: 11px;
   line-height: 1.2;
+}
+
+.clinic-home5 .clinic-before-after-filter-wrap.is-compact .clinic-before-after-filter-chip span {
+  font-size: 10px;
+  padding: 1px 5px;
 }
 
 .clinic-home5 .clinic-before-after-filter-chip:hover,

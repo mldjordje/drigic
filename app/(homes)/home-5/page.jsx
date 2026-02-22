@@ -24,7 +24,7 @@ export default function HomePage5() {
       <About />
       <Projects />
       <Steps />
-      <BeforeAfterShowcase maxItems={6} />
+      <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
       <Testimonials />
       <Video />
       <Blogs />

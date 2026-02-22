@@ -68,6 +68,9 @@ export default function BeforeAfterShowcase({
   showCta = true,
   sectionId = "rezultati",
   maxItems = null,
+  compactFilter = false,
+  viewMoreHref = "/rezultati",
+  viewMoreLabel = "POGLEDAJ VISE",
 }) {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -161,6 +164,10 @@ export default function BeforeAfterShowcase({
     return baseCases.slice(0, maxItems);
   }, [activeCategory, maxItems, normalizedCases]);
 
+  const shouldShowViewMore =
+    !loading &&
+    Boolean(maxItems && maxItems > 0 && normalizedCases.length > Number(maxItems || 0));
+
   if (!loading && !normalizedCases.length) {
     return null;
   }
@@ -180,7 +187,11 @@ export default function BeforeAfterShowcase({
         </div>
 
         {withFilter && !loading ? (
-          <div className="clinic-before-after-filter-wrap clinic-reveal">
+          <div
+            className={`clinic-before-after-filter-wrap clinic-reveal ${
+              compactFilter ? "is-compact" : ""
+            }`}
+          >
             {filterOptions.map((option) => (
               <button
                 key={option.slug}
@@ -211,26 +222,40 @@ export default function BeforeAfterShowcase({
                     <span className="clinic-before-after-category">{item.categoryLabel}</span>
                     {item.productUsed ? <span>{item.productUsed}</span> : null}
                   </div>
-                  <div className="clinic-before-after-images">
-                    <figure>
-                      <img src={item.beforeImageUrl} alt={`${item.treatmentType || "Tretman"} pre`} />
-                      <figcaption>Pre</figcaption>
-                    </figure>
-                    <figure>
-                      <img src={item.afterImageUrl} alt={`${item.treatmentType || "Tretman"} posle`} />
-                      <figcaption>Posle</figcaption>
-                    </figure>
-                  </div>
+                  {item.collageImageUrl ? (
+                    <div className="clinic-before-after-collage">
+                      <img
+                        src={item.collageImageUrl}
+                        alt={`${item.treatmentType || "Tretman"} pre i posle kolaz`}
+                      />
+                      <span>Pre / Posle kolaz</span>
+                    </div>
+                  ) : (
+                    <div className="clinic-before-after-images">
+                      <figure>
+                        <img src={item.beforeImageUrl} alt={`${item.treatmentType || "Tretman"} pre`} />
+                        <figcaption>Pre</figcaption>
+                      </figure>
+                      <figure>
+                        <img src={item.afterImageUrl} alt={`${item.treatmentType || "Tretman"} posle`} />
+                        <figcaption>Posle</figcaption>
+                      </figure>
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
 
-            {!withFilter && normalizedCases.length > filteredCases.length ? (
+            {shouldShowViewMore ? (
               <div className="btn-wrap mt-30 justify-content-center">
-                <Link scroll={false} href="/rezultati" className="btn bg-theme text-title clinic-glow-btn">
+                <Link
+                  scroll={false}
+                  href={viewMoreHref}
+                  className="btn bg-theme text-title clinic-glow-btn"
+                >
                   <span className="link-effect">
-                    <span className="effect-1">POGLEDAJ SVE REZULTATE</span>
-                    <span className="effect-1">POGLEDAJ SVE REZULTATE</span>
+                    <span className="effect-1">{viewMoreLabel}</span>
+                    <span className="effect-1">{viewMoreLabel}</span>
                   </span>
                 </Link>
               </div>
