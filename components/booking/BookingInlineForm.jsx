@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -562,6 +562,18 @@ export default function BookingInlineForm({
       </p>
 
       <form onSubmit={handleBook}>
+        {serviceSelections.length ? (
+          <div className="clinic-next-date-sticky">
+            <button
+              type="button"
+              className="clinic-glow-btn clinic-next-step-btn clinic-next-step-btn-sticky"
+              onClick={scrollToDateStep}
+            >
+              <span className="clinic-btn-label">Nastavi na datum</span>
+            </button>
+          </div>
+        ) : null}
+
         <h3 style={{ color: "#f2f5fb" }}>1) Izaberite tretmane</h3>
         {selectedServiceLabels.length ? (
           <div className="clinic-selected-services">
@@ -844,9 +856,7 @@ export default function BookingInlineForm({
           onClick={scrollToDateStep}
           aria-label="Nastavi na datum i vreme"
         >
-          <span className="clinic-next-date-fab-icon" aria-hidden="true">
-            ↓
-          </span>
+          <span className="clinic-next-date-fab-icon" aria-hidden="true">v</span>
           <span className="clinic-btn-label">Nastavi na datum</span>
         </button>
       ) : null}
@@ -900,3 +910,4 @@ const primaryButtonStyle = {
   fontWeight: 700,
   cursor: "pointer",
 };
+

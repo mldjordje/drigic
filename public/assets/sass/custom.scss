@@ -1087,6 +1087,10 @@ a.clinic-glow-btn {
     font-size: 12px;
   }
 
+  .clinic-next-date-sticky {
+    display: none;
+  }
+
   .clinic-next-step-wrap {
     display: flex;
     justify-content: flex-start;
@@ -1333,6 +1337,20 @@ a.clinic-glow-btn {
     .clinic-next-step-btn {
       width: 100%;
       justify-content: center;
+    }
+
+    .clinic-next-date-sticky {
+      position: sticky;
+      top: 74px;
+      z-index: 80;
+      display: block;
+      margin: 6px 0 12px;
+    }
+
+    .clinic-next-step-btn-sticky {
+      width: 100%;
+      min-height: 48px;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.42);
     }
 
     .clinic-next-date-fab {
