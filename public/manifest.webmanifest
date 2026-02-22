@@ -1,13 +1,12 @@
 {
-  "name": "Dr Igic Admin",
-  "short_name": "Admin",
-  "id": "/admin",
-  "description": "Admin panel za upravljanje klinikom Dr Igic.",
-  "start_url": "/admin/kalendar",
-  "scope": "/admin/",
+  "name": "Dr Igic App",
+  "short_name": "Dr Igic",
+  "description": "Online zakazivanje i upravljanje tretmanima klinike estetske medicine.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "lang": "sr-RS",
   "icons": [
     {

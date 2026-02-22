@@ -2104,3 +2104,166 @@ a.clinic-glow-btn {
     animation: none !important;
   }
 }
+
+/* Final monochrome pass + hero typing */
+.clinic-home5 .header-layout2 .menu-area .container-fluid {
+  padding-left: 10px;
+  padding-right: 12px;
+}
+
+.clinic-home5 .header-layout2 .header-logo {
+  margin-left: 0;
+}
+
+.clinic-home5 .clinic-nav-logo {
+  width: 276px;
+  max-height: 88px;
+  object-fit: contain;
+  object-position: left center;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.7));
+}
+
+.clinic-home5 .mobile-menu-area .mobile-logo {
+  margin-left: 0;
+  padding: 14px 0 18px !important;
+}
+
+.clinic-home5 .clinic-nav-logo-mobile {
+  width: 244px;
+}
+
+.clinic-home5 .hero-style5 .hero-title {
+  display: grid;
+  gap: 8px;
+  font-size: clamp(40px, 6.1vw, 82px);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  color: #fdfdfd !important;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.3), 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.clinic-home5 .hero-title-static {
+  display: block;
+}
+
+.clinic-home5 .hero-title-typed {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.1em;
+  color: #ffffff;
+}
+
+.clinic-home5 .hero-title-caret {
+  width: 2px;
+  height: 0.95em;
+  margin-left: 8px;
+  background: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.55);
+  animation: clinicTypeCaret 0.9s steps(1, end) infinite;
+}
+
+@keyframes clinicTypeCaret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.clinic-home5 .hero-style5 p,
+.clinic-home5 .hero-style5 .hero-year-tag a {
+  color: #efefef !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+}
+
+.clinic-home5 .clinic-glow-btn,
+.clinic-home5 button.clinic-glow-btn,
+.clinic-home5 a.clinic-glow-btn,
+.clinic-home5 .clinic-hero-cta-btn,
+.clinic-home5 .mobile-cta-link,
+.clinic-home5 .clinic-next-step-btn,
+.clinic-home5 .clinic-next-step-btn-sticky,
+.clinic-home5 .clinic-next-date-fab {
+  background: #050505 !important;
+  border: 1px solid rgba(255, 255, 255, 0.68) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 8px 24px rgba(0, 0, 0, 0.46), 0 0 18px rgba(255, 255, 255, 0.16) !important;
+}
+
+.clinic-home5 .clinic-glow-btn .effect-1,
+.clinic-home5 .clinic-glow-btn .link-effect,
+.clinic-home5 .clinic-btn-label,
+.clinic-home5 .mobile-cta-link .mobile-cta-link-text {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.clinic-home5 .clinic-glow-btn:hover,
+.clinic-home5 .mobile-cta-link:hover,
+.clinic-home5 .clinic-next-step-btn:hover,
+.clinic-home5 .clinic-next-step-btn-sticky:hover {
+  border-color: #ffffff !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 12px 28px rgba(0, 0, 0, 0.56), 0 0 26px rgba(255, 255, 255, 0.26) !important;
+}
+
+.clinic-home5 .mobile-menu-area {
+  background: rgba(8, 8, 8, 0.98) !important;
+}
+
+.clinic-home5 .mobile-menu-area .mobile-menu ul li a,
+.clinic-home5 .mobile-menu-area .sidebar-wrap h6,
+.clinic-home5 .mobile-category-toggle,
+.clinic-home5 .mobile-category-list li a,
+.clinic-home5 .footer-layout5 .menu li a,
+.clinic-home5 .footer-layout5 .copyright-text,
+.clinic-home5 .footer-layout5 p {
+  color: #f2f2f2 !important;
+}
+
+.clinic-theme-light .clinic-home5 .mobile-menu-area {
+  background: rgba(255, 255, 255, 0.99) !important;
+}
+
+.clinic-theme-light .clinic-home5 .mobile-menu-area .mobile-menu ul li a,
+.clinic-theme-light .clinic-home5 .mobile-menu-area .sidebar-wrap h6,
+.clinic-theme-light .clinic-home5 .mobile-category-toggle,
+.clinic-theme-light .clinic-home5 .mobile-category-list li a {
+  color: #050505 !important;
+}
+
+.clinic-theme-light .clinic-home5 .footer-layout5 .menu li a,
+.clinic-theme-light .clinic-home5 .footer-layout5 .copyright-text,
+.clinic-theme-light .clinic-home5 .footer-layout5 p {
+  color: #111111 !important;
+}
+
+@media (max-width: 991px) {
+  .clinic-home5 .clinic-nav-logo {
+    width: 248px;
+    max-height: 80px;
+  }
+
+  .clinic-home5 .mobile-menu-area .mobile-logo {
+    margin-left: 0;
+    padding: 12px 0 16px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .clinic-home5 .hero-style5 .hero-title {
+    font-size: clamp(34px, 11vw, 50px);
+    max-width: 96%;
+    gap: 6px;
+  }
+
+  .clinic-home5 .clinic-nav-logo {
+    width: 232px;
+    max-height: 74px;
+  }
+}

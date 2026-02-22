@@ -38,6 +38,7 @@ export default function AdminShell({ children }) {
     }
     try {
       window.localStorage.setItem("drigic-pwa-admin-start", "1");
+      document.cookie = "drigic-pwa-admin-start=1; path=/; max-age=31536000; SameSite=Lax";
     } catch {
       // localStorage is optional
     }

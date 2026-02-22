@@ -23,6 +23,15 @@ const poppins = Poppins({
   variable: "--body-font",
 });
 
+export const metadata = {
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Dr Igic",
+    statusBarStyle: "default",
+  },
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="sr">

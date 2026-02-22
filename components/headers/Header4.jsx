@@ -127,7 +127,8 @@ export default function Header4() {
     };
   }, []);
 
-  const headerLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.png";
+  const headerLogoSrc = "/assets/img/logo.png";
+  const mobileLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.png";
 
   function toggleThemeMode() {
     setThemeMode((prev) => (prev === "dark" ? "light" : "dark"));
@@ -165,7 +166,7 @@ export default function Header4() {
           <div className="mobile-logo">
             <Link scroll={false} href="/">
               <img
-                src={headerLogoSrc}
+                src={mobileLogoSrc}
                 alt="Dr Igic logo"
                 className="clinic-nav-logo clinic-nav-logo-mobile"
               />
@@ -283,8 +284,8 @@ export default function Header4() {
                   <div className="header-logo">
                     <Link scroll={false} href="/">
                       <Image
-                        width={250}
-                        height={72}
+                        width={286}
+                        height={84}
                         src={headerLogoSrc}
                         alt="Dr Igic logo"
                         className="clinic-nav-logo"

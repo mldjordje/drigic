@@ -40,7 +40,12 @@ export default function AppProviders({ children }) {
 
     let preferAdminStart = false;
     try {
-      preferAdminStart = window.localStorage.getItem("drigic-pwa-admin-start") === "1";
+      const hasLocalPreference =
+        window.localStorage.getItem("drigic-pwa-admin-start") === "1";
+      const hasCookiePreference =
+        typeof document !== "undefined" &&
+        document.cookie.split("; ").includes("drigic-pwa-admin-start=1");
+      preferAdminStart = hasLocalPreference || hasCookiePreference;
     } catch {
       preferAdminStart = false;
     }
@@ -49,14 +54,7 @@ export default function AppProviders({ children }) {
       return;
     }
 
-    fetch("/api/me/profile")
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (data?.user?.role === "admin" && window.location.pathname === "/") {
-          window.location.replace("/admin/kalendar");
-        }
-      })
-      .catch(() => {});
+    window.location.replace("/admin/kalendar");
   }, [pathname]);
 
   return (
