@@ -29,6 +29,13 @@
       "when": 1771752000000,
       "tag": "0003_fair_treatment_products",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771808400000,
+      "tag": "0004_euro_service_catalog",
+      "breakpoints": true
     }
   ]
 }

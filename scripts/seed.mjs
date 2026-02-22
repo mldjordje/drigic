@@ -42,10 +42,15 @@ async function seed() {
   const existingCategories = await db.select().from(schema.serviceCategories);
   if (!existingCategories.length) {
     await db.insert(schema.serviceCategories).values([
-      { name: "Akcije i paketi", sortOrder: 0 },
-      { name: "Lice", sortOrder: 1 },
-      { name: "Telo", sortOrder: 2 },
-      { name: "Anti-age", sortOrder: 3 },
+      { name: "Hijaluronski fileri", sortOrder: 1 },
+      { name: "Botox", sortOrder: 2 },
+      { name: "Skinbusteri", sortOrder: 3 },
+      { name: "Kolagen stimulatori", sortOrder: 4 },
+      { name: "Polinukleotidi i Egzozomi", sortOrder: 5 },
+      { name: "Lipoliza", sortOrder: 6 },
+      { name: "Hemijski piling", sortOrder: 7 },
+      { name: "PRP", sortOrder: 8 },
+      { name: "Mezoterapija", sortOrder: 9 },
     ]);
   }
 

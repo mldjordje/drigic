@@ -94,7 +94,7 @@ function toMlPresets(maxMl) {
 
 function getServicePriceLabel(service) {
   const value = service?.promotion?.promoPriceRsd || service?.priceRsd || 0;
-  return `${value} RSD`;
+  return `${value} EUR`;
 }
 
 export default function BookingInlineForm({
@@ -761,12 +761,12 @@ export default function BookingInlineForm({
 
         {quote ? (
           <div style={summaryStyle}>
-            <strong>Ukupno:</strong> {quote.totalDurationMin} min / {quote.totalPriceRsd} RSD
+            <strong>Ukupno:</strong> {quote.totalDurationMin} min / {quote.totalPriceRsd} EUR
             {quote.items?.length ? (
               <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
                 {quote.items.map((item) => (
                   <li key={item.serviceId} style={{ color: "#dfe9f8" }}>
-                    {item.name} - {item.quantity} {item.unitLabel} - {item.finalPriceRsd} RSD
+                    {item.name} - {item.quantity} {item.unitLabel} - {item.finalPriceRsd} EUR
                   </li>
                 ))}
               </ul>
@@ -790,7 +790,7 @@ export default function BookingInlineForm({
               {bookings.map((booking) => (
                 <li key={booking.id} style={{ marginBottom: 8, color: "#f2f5fb" }}>
                   {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min -{" "}
-                  {booking.totalPriceRsd} RSD ({booking.status})
+                  {booking.totalPriceRsd} EUR ({booking.status})
                 </li>
               ))}
             </ul>

@@ -211,7 +211,7 @@ export default function BeautyPassSection() {
                   <ul style={{ margin: 0, paddingLeft: 18, color: "#edf3ff" }}>
                     {pastBookings.slice(0, 12).map((booking) => (
                       <li key={booking.id} style={{ marginBottom: 8, color: "#edf3ff" }}>
-                        {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min - {booking.totalPriceRsd} RSD
+                        {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min - {booking.totalPriceRsd} EUR
                       </li>
                     ))}
                   </ul>

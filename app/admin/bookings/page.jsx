@@ -203,7 +203,7 @@ export default function AdminBookingsPage() {
               <div>
                 <small style={smallStyle}>Cena / trajanje</small>
                 <div>
-                  {booking.totalPriceRsd} RSD / {booking.totalDurationMin} min
+                  {booking.totalPriceRsd} EUR / {booking.totalDurationMin} min
                 </div>
               </div>
             </div>

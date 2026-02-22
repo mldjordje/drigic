@@ -1,65 +1,40 @@
-﻿import Image from "next/image";
 import Link from "next/link";
 import React from "react";
+import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 export default function Projects() {
-  const highlights = [
-    {
-      id: 1,
-      title: "Botox tretmani",
-      text: "Suptilna relaksacija mimičnih bora za svež i odmoran izgled.",
-      imageSrc: "/assets/img/slika1.png",
-    },
-    {
-      id: 2,
-      title: "Hijaluronski fileri",
-      text: "Konture, volumen i hidratacija uz prirodan rezultat.",
-      imageSrc: "/assets/img/normal/service_2-1.jpg",
-    },
-    {
-      id: 3,
-      title: "Before / After",
-      text: "Primer realnog rezultata uz očuvanu prirodnu ekspresiju lica.",
-      imageSrc: "/assets/img/before-after1.png",
-    },
-    {
-      id: 4,
-      title: "Anti-age planovi",
-      text: "Kombinovani pristup za prevenciju i korekciju znakova starenja.",
-      imageSrc: "/assets/img/normal/about_4-1.jpg",
-    },
-  ];
-
   return (
-    <div className="project-area-5 space overflow-hidden" id="rezultati">
+    <div className="project-area-5 space overflow-hidden" id="tretmani">
+      <div id="rezultati" />
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-8 col-lg-10">
             <div className="title-area text-center clinic-reveal">
-              <h2 className="sec-title text-smoke">Najtraženiji tretmani i rezultati</h2>
+              <h2 className="sec-title text-smoke">Tretmani po kategorijama</h2>
+              <p className="sec-text text-smoke">
+                Za svaku kategoriju postoji posebna stranica sa svim aktivnim uslugama.
+              </p>
             </div>
           </div>
         </div>
-        <div className="row gy-40 gx-30 justify-content-center">
-          {highlights.map((item, index) => (
+        <div className="clinic-treatment-grid">
+          {SERVICE_CATEGORY_SPECS.map((item, index) => (
             <div
-              key={item.id}
-              className={`col-xl-6 col-lg-6 clinic-reveal wow ${
+              key={item.slug}
+              className={`clinic-treatment-card glass-panel clinic-hover-raise clinic-reveal wow ${
                 index % 2 === 0 ? "img-custom-anim-left" : "img-custom-anim-right"
               } animated`}
               data-wow-duration="1.5s"
-              data-wow-delay={`${0.1 + index * 0.1}s`}
+              data-wow-delay={`${0.1 + index * 0.06}s`}
             >
-              <div className="portfolio-wrap style4 glass-panel h-100 clinic-hover-raise">
-                <div className="portfolio-thumb wow img-custom-anim-top animated" data-wow-duration="1.2s" data-wow-delay={`${0.2 + index * 0.1}s`}>
-                  <Image width={618} height={470} src={item.imageSrc} alt={item.title} />
-                </div>
-                <div className="portfolio-details">
-                  <h3 className="portfolio-title">{item.title}</h3>
-                  <ul className="portfolio-meta">
-                    <li>{item.text}</li>
-                  </ul>
-                </div>
+              <div className="portfolio-details">
+                <h3 className="portfolio-title">{item.name}</h3>
+                <p className="portfolio-meta" style={{ marginBottom: 10 }}>
+                  {item.shortDescription}
+                </p>
+                <Link href={`/tretmani/${item.slug}`} className="clinic-treatment-link">
+                  Pogledaj usluge
+                </Link>
               </div>
             </div>
           ))}
@@ -67,12 +42,22 @@ export default function Projects() {
         <div className="btn-wrap mt-50 justify-content-center">
           <Link
             scroll={false}
+            href="/tretmani"
+            className="btn bg-theme text-title clinic-glow-btn"
+          >
+            <span className="link-effect">
+              <span className="effect-1">SVE KATEGORIJE</span>
+              <span className="effect-1">SVE KATEGORIJE</span>
+            </span>
+          </Link>
+          <Link
+            scroll={false}
             href="#booking"
             className="btn bg-theme text-title clinic-glow-btn"
           >
             <span className="link-effect">
-              <span className="effect-1">ZAKAŽI PRVI PREGLED</span>
-              <span className="effect-1">ZAKAŽI PRVI PREGLED</span>
+              <span className="effect-1">ZAKAZI TERMIN</span>
+              <span className="effect-1">ZAKAZI TERMIN</span>
             </span>
           </Link>
         </div>

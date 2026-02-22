@@ -930,7 +930,7 @@ export default function AdminKalendarPage() {
                 </div>
                 <div>
                   <span>Cena</span>
-                  <strong>{activeBooking.totalPriceRsd} RSD</strong>
+                  <strong>{activeBooking.totalPriceRsd} EUR</strong>
                 </div>
                 <div>
                   <span>Status</span>

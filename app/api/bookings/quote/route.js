@@ -29,7 +29,7 @@ export async function POST(request) {
         ? parsed.data.serviceSelections
         : parsed.data.serviceIds || [];
     const quote = await resolveQuote(input);
-    return ok({ ok: true, ...quote, currency: "RSD" });
+    return ok({ ok: true, ...quote, currency: "EUR" });
   } catch (error) {
     return fail(400, error.message);
   }

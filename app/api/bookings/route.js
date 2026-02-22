@@ -137,7 +137,7 @@ export async function POST(request) {
           `Klijent: ${auth.user.email || auth.user.id}`,
           `Usluge: ${serviceSummary || "-"}`,
           `Trajanje: ${quote.totalDurationMin} min`,
-          `Cena: ${quote.totalPriceRsd} RSD`,
+          `Cena: ${quote.totalPriceRsd} EUR`,
         ].join("\n"),
       });
     } catch (notifyError) {

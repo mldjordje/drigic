@@ -463,7 +463,7 @@ export default function AdminServicesPage() {
 
           <div className="admin-services-split-grid">
             <label>
-              Cena (RSD)
+              Cena (EUR)
               <input
                 type="number"
                 min={0}
@@ -625,7 +625,7 @@ export default function AdminServicesPage() {
               ))}
 
               <div style={{ color: packageOverLimit ? "#ffabab" : "#bed0e8", fontSize: 13 }}>
-                Auto zbir paketa: {packageSummary.durationMin} min / {packageSummary.priceRsd} RSD
+                Auto zbir paketa: {packageSummary.durationMin} min / {packageSummary.priceRsd} EUR
               </div>
             </div>
           )}
@@ -720,7 +720,7 @@ export default function AdminServicesPage() {
             />
           </label>
           <label>
-            Nova cena (RSD)
+            Nova cena (EUR)
             <input
               type="number"
               min={0}
@@ -815,7 +815,7 @@ export default function AdminServicesPage() {
             ) : null}
 
             <div style={metaWrapStyle}>
-              <span>{service.priceRsd} RSD</span>
+              <span>{service.priceRsd} EUR</span>
               <span>{service.durationMin} min</span>
               <span>{service.isActive ? "aktivna" : "neaktivna"}</span>
               <span>{service.isVip ? "VIP" : "regularna"}</span>
@@ -897,7 +897,7 @@ export default function AdminServicesPage() {
               {serviceNameById[promotion.serviceId] || promotion.serviceId}
             </div>
             <div style={metaWrapStyle}>
-              <span>{promotion.promoPriceRsd} RSD</span>
+              <span>{promotion.promoPriceRsd} EUR</span>
               <span>{promotion.startsAt ? new Date(promotion.startsAt).toLocaleString("sr-RS") : "-"}</span>
               <span>{promotion.endsAt ? new Date(promotion.endsAt).toLocaleString("sr-RS") : "-"}</span>
             </div>

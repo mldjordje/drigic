@@ -19,7 +19,7 @@ export default function Footer5() {
                   sa strucnjakom i personalizovan plan tretmana.
                 </p>
                 <div className="clinic-footer-cta-wrap">
-                  <Link scroll={false} href="#booking" className="btn clinic-cta-pulse clinic-glow-btn">
+                  <Link scroll={false} href="/#booking" className="btn clinic-cta-pulse clinic-glow-btn">
                     <span className="link-effect">
                       <span className="effect-1">ZAKAZI ONLINE</span>
                       <span className="effect-1">ZAKAZI ONLINE</span>
@@ -56,13 +56,13 @@ export default function Footer5() {
                 <div className="menu-all-pages-container list-column2">
                   <ul className="menu">
                     <li>
-                      <a href="#tretmani">Tretmani</a>
+                      <a href="/#tretmani">Tretmani</a>
                     </li>
                     <li>
-                      <a href="#rezultati">Rezultati</a>
+                      <a href="/#rezultati">Rezultati</a>
                     </li>
                     <li>
-                      <a href="#aktuelnosti">Aktuelnosti</a>
+                      <a href="/#aktuelnosti">Aktuelnosti</a>
                     </li>
                     <li>
                       <Link scroll={false} href="/contact">

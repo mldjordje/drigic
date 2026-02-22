@@ -2,9 +2,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
 export default function Header4() {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -12,24 +14,26 @@ export default function Header4() {
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [useDarkMobileLogo, setUseDarkMobileLogo] = useState(false);
   const lastScrollYRef = useRef(0);
+  const sectionPrefix = pathname === "/" ? "" : "/";
+  const toSectionHref = (hash) => `${sectionPrefix}${hash}`;
 
   const navItems = useMemo(() => {
     const items = [
-      { href: "#hero", label: "Pocetna" },
-      { href: "#tretmani", label: "Tretmani" },
-      { href: "#osnivac", label: "Osnivac" },
-      { href: "#rezultati", label: "Rezultati" },
-      { href: "#aktuelnosti", label: "Aktuelnosti" },
-      { href: "#booking", label: "Zakazi" },
-      { href: "#konsultacije", label: "Kontakt" },
+      { href: `${sectionPrefix}#hero`, label: "Pocetna" },
+      { href: `${sectionPrefix}#tretmani`, label: "Tretmani" },
+      { href: `${sectionPrefix}#osnivac`, label: "Osnivac" },
+      { href: `${sectionPrefix}#rezultati`, label: "Rezultati" },
+      { href: `${sectionPrefix}#aktuelnosti`, label: "Aktuelnosti" },
+      { href: `${sectionPrefix}#booking`, label: "Zakazi" },
+      { href: `${sectionPrefix}#konsultacije`, label: "Kontakt" },
     ];
 
     if (currentUser) {
-      items.splice(5, 0, { href: "#beauty-pass", label: "Beauty Pass" });
+      items.splice(5, 0, { href: `${sectionPrefix}#beauty-pass`, label: "Beauty Pass" });
     }
 
     return items;
-  }, [currentUser]);
+  }, [currentUser, sectionPrefix]);
 
   useEffect(() => {
     fetch("/api/me/profile")
@@ -165,11 +169,11 @@ export default function Header4() {
                 <span className="mobile-cta-link-text">Login</span>
               </GooglePopupButton>
             )}
-            <a href="#booking" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+            <a href={toSectionHref("#booking")} className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
               <span className="mobile-cta-link-text">Zakazi</span>
             </a>
             {currentUser ? (
-              <a href="#beauty-pass" className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+              <a href={toSectionHref("#beauty-pass")} className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
                 <span className="mobile-cta-link-text">Beauty Pass</span>
               </a>
             ) : null}
@@ -246,7 +250,7 @@ export default function Header4() {
                             </span>
                           </Link>
                         ) : null}
-                        <a href="#beauty-pass" className="search-btn clinic-glow-btn">
+                        <a href={toSectionHref("#beauty-pass")} className="search-btn clinic-glow-btn">
                           <span className="link-effect">
                             <span className="effect-1">BEAUTY PASS</span>
                             <span className="effect-1">BEAUTY PASS</span>
@@ -280,7 +284,7 @@ export default function Header4() {
                       </GooglePopupButton>
                     )}
 
-                    <a href="#booking" className="search-btn clinic-glow-btn">
+                    <a href={toSectionHref("#booking")} className="search-btn clinic-glow-btn">
                       <span className="link-effect">
                         <span className="effect-1">ZAKAZI TERMIN</span>
                         <span className="effect-1">ZAKAZI TERMIN</span>

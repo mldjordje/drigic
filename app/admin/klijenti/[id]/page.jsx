@@ -750,7 +750,7 @@ export default function AdminClientDetailsPage() {
                 <td style={tdStyle}>{new Date(item.startsAt).toLocaleString("sr-RS")}</td>
                 <td style={tdStyle}>{item.status}</td>
                 <td style={tdStyle}>{item.serviceSummary || "-"}</td>
-                <td style={tdStyle}>{item.totalPriceRsd} RSD</td>
+                <td style={tdStyle}>{item.totalPriceRsd} EUR</td>
                 <td style={tdStyle}>{item.notes || "-"}</td>
               </tr>
             ))}
