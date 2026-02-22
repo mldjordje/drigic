@@ -103,6 +103,7 @@ export default function Hero() {
           />
         </div>
         <div className="hero-overlay" data-overlay="title" data-opacity="5"></div>
+        <div className="clinic-hero-modern-overlay" aria-hidden="true"></div>
         <div className="container">
           <div className="row">
             <div className="col-lg-9">

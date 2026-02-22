@@ -25,6 +25,40 @@ export default function AppProviders({ children }) {
     wow.init();
   }, [pathname]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const isStandalone =
+      window.matchMedia?.("(display-mode: standalone)")?.matches ||
+      window.navigator?.standalone === true;
+
+    if (!isStandalone || pathname !== "/") {
+      return;
+    }
+
+    let preferAdminStart = false;
+    try {
+      preferAdminStart = window.localStorage.getItem("drigic-pwa-admin-start") === "1";
+    } catch {
+      preferAdminStart = false;
+    }
+
+    if (!preferAdminStart) {
+      return;
+    }
+
+    fetch("/api/me/profile")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data?.user?.role === "admin" && window.location.pathname === "/") {
+          window.location.replace("/admin/kalendar");
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
   return (
     <Context>
       <ParallaxProvider>{children}</ParallaxProvider>

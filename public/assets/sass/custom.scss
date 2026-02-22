@@ -302,6 +302,29 @@ a.clinic-glow-btn {
     }
   }
 
+  @keyframes clinicHeroAura {
+    0% {
+      transform: translate3d(-2%, -1%, 0) rotate(0deg);
+    }
+    50% {
+      transform: translate3d(2%, 2%, 0) rotate(180deg);
+    }
+    100% {
+      transform: translate3d(-2%, -1%, 0) rotate(360deg);
+    }
+  }
+
+  @keyframes clinicHeroScan {
+    0% {
+      transform: translateX(-5%) translateY(0);
+      opacity: 0.08;
+    }
+    100% {
+      transform: translateX(5%) translateY(-2%);
+      opacity: 0.16;
+    }
+  }
+
   .clinic-header-actions {
     gap: 12px;
   }
@@ -570,6 +593,59 @@ a.clinic-glow-btn {
 
   .clinic-hero-mobile-video iframe {
     border: 0;
+  }
+
+  .hero-wrapper.hero-5 .hero-slider {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .clinic-hero-modern-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 18% 22%, rgba(0, 0, 0, 0.5), transparent 52%),
+      radial-gradient(circle at 88% 86%, rgba(255, 255, 255, 0.08), transparent 38%),
+      linear-gradient(118deg, rgba(0, 0, 0, 0.66) 8%, rgba(0, 0, 0, 0.28) 48%, rgba(0, 0, 0, 0.76) 100%);
+  }
+
+  .clinic-hero-modern-overlay::before {
+    content: "";
+    position: absolute;
+    inset: -18%;
+    background: conic-gradient(
+      from 45deg,
+      rgba(255, 255, 255, 0.2),
+      rgba(255, 255, 255, 0.02),
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.04)
+    );
+    filter: blur(54px);
+    opacity: 0.24;
+    animation: clinicHeroAura 18s linear infinite;
+  }
+
+  .clinic-hero-modern-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.07) 0,
+      rgba(255, 255, 255, 0.07) 2px,
+      transparent 2px,
+      transparent 14px
+    );
+    opacity: 0.12;
+    mix-blend-mode: screen;
+    animation: clinicHeroScan 16s ease-in-out infinite alternate;
+  }
+
+  .hero-style5 {
+    position: relative;
+    z-index: 3;
   }
 
   .mobile-menu-area {
@@ -2017,6 +2093,8 @@ a.clinic-glow-btn {
 
   .clinic-home5 .clinic-cta-pulse,
   .clinic-home5 .clinic-glow-btn::before,
+  .clinic-home5 .clinic-hero-modern-overlay::before,
+  .clinic-home5 .clinic-hero-modern-overlay::after,
   .clinic-home5 .movingX,
   .clinic-home5 .moving,
   .clinic-home5 .jump,

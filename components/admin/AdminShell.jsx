@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const approvedModules = [
   { href: "/admin/kalendar", label: "Kalendar", icon: "[CAL]" },
@@ -31,6 +31,17 @@ const quickLinks = [
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      window.localStorage.setItem("drigic-pwa-admin-start", "1");
+    } catch {
+      // localStorage is optional
+    }
+  }, []);
 
   const activeModuleTitle = useMemo(() => {
     const current = approvedModules.find((item) =>
