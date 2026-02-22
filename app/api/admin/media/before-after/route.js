@@ -174,14 +174,14 @@ export async function POST(request) {
     return fail(400, String(error?.message || "Upload nije uspeo."));
   }
 
-  const beforeImageUrl = beforeUploadedUrl || beforeUrlInput;
-  const afterImageUrl = afterUploadedUrl || afterUrlInput;
   const collageImageUrl = collageUploadedUrl || collageUrlInput || null;
+  const beforeImageUrl = beforeUploadedUrl || beforeUrlInput || collageImageUrl;
+  const afterImageUrl = afterUploadedUrl || afterUrlInput || collageImageUrl;
 
   if (!beforeImageUrl || !afterImageUrl) {
     return fail(
       400,
-      "Exactly two images are required: provide beforeImage and afterImage files or URLs."
+      "Potrebne su slike pre/posle ili jedna kolaz slika."
     );
   }
 

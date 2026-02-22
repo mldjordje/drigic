@@ -226,6 +226,62 @@
   resize: vertical;
 }
 
+.admin-media-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.admin-media-upload-field {
+  border: 1px solid rgba(217, 232, 248, 0.24);
+  border-radius: 12px;
+  background: rgba(10, 16, 26, 0.58);
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-media-upload-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #dce8f6;
+}
+
+.admin-media-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-media-upload-trigger {
+  border-radius: 10px;
+  border: 1px solid rgba(217, 232, 248, 0.5);
+  background: rgba(217, 232, 248, 0.12);
+  color: #f4f8ff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-media-upload-trigger:hover {
+  border-color: rgba(217, 232, 248, 0.75);
+  background: rgba(217, 232, 248, 0.24);
+}
+
+.admin-media-upload-name {
+  margin: 0;
+  color: #a9c0dc;
+  font-size: 11px;
+  line-height: 1.3;
+  min-height: 28px;
+  word-break: break-word;
+}
+
 .admin-services-split-grid {
   display: grid;
   gap: 8px;
@@ -879,6 +935,10 @@
   }
 
   .admin-services-split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-media-upload-grid {
     grid-template-columns: 1fr;
   }
 

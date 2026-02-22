@@ -8,9 +8,6 @@ const emptyBeforeAfterForm = {
   treatmentType: "",
   serviceCategory: "",
   productUsed: "",
-  beforeImageUrl: "",
-  afterImageUrl: "",
-  collageImageUrl: "",
   beforeImage: null,
   afterImage: null,
   collageImage: null,
@@ -115,14 +112,20 @@ export default function AdminMediaPage() {
       if (!beforeAfterForm.treatmentType.trim()) {
         throw new Error("Vrsta tretmana je obavezna.");
       }
+      if (
+        !beforeAfterForm.id &&
+        !beforeAfterForm.collageImage &&
+        (!beforeAfterForm.beforeImage || !beforeAfterForm.afterImage)
+      ) {
+        throw new Error(
+          "Za novi unos izaberi pre i posle sliku, ili samo kolaz sliku."
+        );
+      }
 
       const formData = new FormData();
       formData.set("treatmentType", beforeAfterForm.treatmentType.trim());
       formData.set("serviceCategory", beforeAfterForm.serviceCategory.trim());
       formData.set("productUsed", beforeAfterForm.productUsed.trim());
-      formData.set("beforeImageUrl", beforeAfterForm.beforeImageUrl.trim());
-      formData.set("afterImageUrl", beforeAfterForm.afterImageUrl.trim());
-      formData.set("collageImageUrl", beforeAfterForm.collageImageUrl.trim());
       formData.set("isPublished", String(Boolean(beforeAfterForm.isPublished)));
 
       if (beforeAfterForm.id) {
@@ -361,61 +364,70 @@ export default function AdminMediaPage() {
               setBeforeAfterForm((prev) => ({ ...prev, productUsed: event.target.value }))
             }
           />
-          <input
-            className="admin-inline-input"
-            placeholder="Before image URL (opciono ako je upload)"
-            value={beforeAfterForm.beforeImageUrl}
-            onChange={(event) =>
-              setBeforeAfterForm((prev) => ({ ...prev, beforeImageUrl: event.target.value }))
-            }
-          />
-          <input
-            className="admin-inline-input"
-            placeholder="After image URL (opciono ako je upload)"
-            value={beforeAfterForm.afterImageUrl}
-            onChange={(event) =>
-              setBeforeAfterForm((prev) => ({ ...prev, afterImageUrl: event.target.value }))
-            }
-          />
-          <input
-            className="admin-inline-input"
-            placeholder="Kolaz image URL (opciono)"
-            value={beforeAfterForm.collageImageUrl}
-            onChange={(event) =>
-              setBeforeAfterForm((prev) => ({ ...prev, collageImageUrl: event.target.value }))
-            }
-          />
-          <div style={{ display: "grid", gap: 8, gridTemplateColumns: "1fr 1fr 1fr" }}>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) =>
-                setBeforeAfterForm((prev) => ({
-                  ...prev,
-                  beforeImage: event.target.files?.[0] || null,
-                }))
-              }
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) =>
-                setBeforeAfterForm((prev) => ({
-                  ...prev,
-                  afterImage: event.target.files?.[0] || null,
-                }))
-              }
-            />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) =>
-                setBeforeAfterForm((prev) => ({
-                  ...prev,
-                  collageImage: event.target.files?.[0] || null,
-                }))
-              }
-            />
+          <div className="admin-media-upload-grid">
+            <div className="admin-media-upload-field">
+              <span className="admin-media-upload-title">Pre slika</span>
+              <input
+                id="before-after-before-file"
+                className="admin-media-upload-input"
+                type="file"
+                accept="image/*"
+                onChange={(event) =>
+                  setBeforeAfterForm((prev) => ({
+                    ...prev,
+                    beforeImage: event.target.files?.[0] || null,
+                  }))
+                }
+              />
+              <label htmlFor="before-after-before-file" className="admin-media-upload-trigger">
+                Odaberi sliku
+              </label>
+              <small className="admin-media-upload-name">
+                {beforeAfterForm.beforeImage?.name || "Nije odabrana nova slika"}
+              </small>
+            </div>
+            <div className="admin-media-upload-field">
+              <span className="admin-media-upload-title">Posle slika</span>
+              <input
+                id="before-after-after-file"
+                className="admin-media-upload-input"
+                type="file"
+                accept="image/*"
+                onChange={(event) =>
+                  setBeforeAfterForm((prev) => ({
+                    ...prev,
+                    afterImage: event.target.files?.[0] || null,
+                  }))
+                }
+              />
+              <label htmlFor="before-after-after-file" className="admin-media-upload-trigger">
+                Odaberi sliku
+              </label>
+              <small className="admin-media-upload-name">
+                {beforeAfterForm.afterImage?.name || "Nije odabrana nova slika"}
+              </small>
+            </div>
+            <div className="admin-media-upload-field">
+              <span className="admin-media-upload-title">Kolaz (opciono)</span>
+              <input
+                id="before-after-collage-file"
+                className="admin-media-upload-input"
+                type="file"
+                accept="image/*"
+                onChange={(event) =>
+                  setBeforeAfterForm((prev) => ({
+                    ...prev,
+                    collageImage: event.target.files?.[0] || null,
+                  }))
+                }
+              />
+              <label htmlFor="before-after-collage-file" className="admin-media-upload-trigger">
+                Odaberi kolaz
+              </label>
+              <small className="admin-media-upload-name">
+                {beforeAfterForm.collageImage?.name || "Nije odabran novi kolaz"}
+              </small>
+            </div>
           </div>
           <label className={`admin-toggle-card ${beforeAfterForm.isPublished ? "is-active" : ""}`}>
             <input
@@ -592,9 +604,6 @@ export default function AdminMediaPage() {
                       treatmentType: item.treatmentType || "",
                       serviceCategory: item.serviceCategory || "",
                       productUsed: item.productUsed || "",
-                      beforeImageUrl: item.beforeImageUrl || "",
-                      afterImageUrl: item.afterImageUrl || "",
-                      collageImageUrl: item.collageImageUrl || "",
                       beforeImage: null,
                       afterImage: null,
                       collageImage: null,
@@ -721,7 +730,7 @@ export default function AdminMediaPage() {
         </div>
       </div>
 
-      {loading ? <p style={{ margin: 0, color: "#9cb2cf" }}>Učitavanje...</p> : null}
+      {loading ? <p style={{ margin: 0, color: "#9cb2cf" }}>Ucitavanje...</p> : null}
     </section>
   );
 }
