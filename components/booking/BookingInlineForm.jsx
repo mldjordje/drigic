@@ -842,7 +842,11 @@ export default function BookingInlineForm({
           type="button"
           className="clinic-glow-btn clinic-next-date-fab"
           onClick={scrollToDateStep}
+          aria-label="Nastavi na datum i vreme"
         >
+          <span className="clinic-next-date-fab-icon" aria-hidden="true">
+            ↓
+          </span>
           <span className="clinic-btn-label">Nastavi na datum</span>
         </button>
       ) : null}
