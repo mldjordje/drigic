@@ -716,8 +716,12 @@ export default function BookingInlineForm({
         <h3 style={{ color: "var(--clinic-text-strong)" }}>1) Izaberite tretmane</h3>
         {selectedServiceLabels.length ? (
           <div className="clinic-selected-services">
-            {selectedServiceLabels.map((label) => (
-              <span key={label} className="clinic-selected-service-chip">
+            {selectedServiceLabels.map((label, labelIndex) => (
+              <span
+                key={label}
+                className="clinic-selected-service-chip clinic-reveal"
+                style={{ "--clinic-reveal-delay": `${Math.min(labelIndex, 8) * 35}ms` }}
+              >
                 {label}
               </span>
             ))}
@@ -730,16 +734,21 @@ export default function BookingInlineForm({
         ) : null}
 
         {packageServices.length ? (
-          <div className="clinic-service-category">
+          <div className="clinic-service-category clinic-reveal">
             <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>Paketi usluga</h4>
             <div style={{ display: "grid", gap: 8 }}>
-              {packageServices.map((service) => {
+              {packageServices.map((service, serviceIndex) => {
                 const selected = Boolean(selectedMap[service.id]);
                 return (
                   <div
                     key={service.id}
-                    style={checkboxRowStyle}
-                    className={`clinic-service-option ${selected ? "is-selected" : ""}`}
+                    style={{
+                      ...checkboxRowStyle,
+                      "--clinic-reveal-delay": `${Math.min(serviceIndex, 10) * 45}ms`,
+                    }}
+                    className={`clinic-service-option clinic-reveal ${
+                      selected ? "is-selected" : ""
+                    }`}
                   >
                     <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
                       <input
@@ -772,11 +781,15 @@ export default function BookingInlineForm({
           </div>
         ) : null}
 
-        {singleCategoryGroups.map((category) => (
-          <div key={category.id} className="clinic-service-category">
+        {singleCategoryGroups.map((category, categoryIndex) => (
+          <div
+            key={category.id}
+            className="clinic-service-category clinic-reveal"
+            style={{ "--clinic-reveal-delay": `${Math.min(categoryIndex, 7) * 55}ms` }}
+          >
             <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{category.name}</h4>
             <div style={{ display: "grid", gap: 8 }}>
-              {(category.services || []).map((service) => {
+              {(category.services || []).map((service, serviceIndex) => {
                 const selected = Boolean(selectedMap[service.id]);
                 const selectedQuantity = Math.max(1, Number(selectedMap[service.id] || 1));
                 const selectedBrand = selectedBrandMap[service.id] || "";
@@ -785,8 +798,13 @@ export default function BookingInlineForm({
                 return (
                   <div
                     key={service.id}
-                    style={checkboxRowStyle}
-                    className={`clinic-service-option ${selected ? "is-selected" : ""}`}
+                    style={{
+                      ...checkboxRowStyle,
+                      "--clinic-reveal-delay": `${Math.min(serviceIndex, 12) * 40}ms`,
+                    }}
+                    className={`clinic-service-option clinic-reveal ${
+                      selected ? "is-selected" : ""
+                    }`}
                   >
                     <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
                       <input
@@ -864,7 +882,7 @@ export default function BookingInlineForm({
           </p>
         ) : (
           <>
-            <div className="clinic-booking-calendar">
+            <div className="clinic-booking-calendar clinic-reveal">
               <div className="clinic-cal-header">
                 <button
                   type="button"
@@ -935,7 +953,7 @@ export default function BookingInlineForm({
               </div>
             </div>
 
-            <div className="clinic-slot-section">
+            <div className="clinic-slot-section clinic-reveal">
               <div className="clinic-slot-header">
                 <h4>{selectedDateLabel}</h4>
                 {calendarError ? <span>{calendarError}</span> : null}
@@ -943,14 +961,15 @@ export default function BookingInlineForm({
 
               <div className="clinic-slot-items">
                 {sortedAvailableSlots.length ? (
-                  sortedAvailableSlots.map((slot) => (
+                  sortedAvailableSlots.map((slot, slotIndex) => (
                     <button
                       type="button"
                       key={slot.startAt}
                       onClick={() => setSelectedStartAt(slot.startAt)}
-                      className={`clinic-slot-button ${
+                      className={`clinic-slot-button clinic-reveal ${
                         selectedStartAt === slot.startAt ? "is-active" : ""
                       }`}
+                      style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 10) * 30}ms` }}
                     >
                       {new Date(slot.startAt).toLocaleTimeString("sr-RS", {
                         hour: "2-digit",
@@ -979,7 +998,7 @@ export default function BookingInlineForm({
         />
 
         {quote ? (
-          <div style={summaryStyle}>
+          <div className="clinic-reveal" style={summaryStyle}>
             <strong>Ukupno:</strong> {quote.totalDurationMin} min / {quote.totalPriceRsd} EUR
             {quote.items?.length ? (
               <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
@@ -996,7 +1015,7 @@ export default function BookingInlineForm({
           </div>
         ) : null}
 
-        <button type="submit" style={primaryButtonStyle} disabled={loading}>
+        <button type="submit" className="clinic-reveal" style={primaryButtonStyle} disabled={loading}>
           {loading ? "Zakazivanje..." : "Potvrdi zakazivanje"}
         </button>
 
@@ -1009,8 +1028,16 @@ export default function BookingInlineForm({
           <h3 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Moji naredni termini</h3>
           {bookings.length ? (
             <ul style={{ paddingLeft: 18, margin: 0 }}>
-              {bookings.map((booking) => (
-                <li key={booking.id} style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>
+              {bookings.map((booking, bookingIndex) => (
+                <li
+                  key={booking.id}
+                  className="clinic-reveal"
+                  style={{
+                    marginBottom: 8,
+                    color: "var(--clinic-text-strong)",
+                    "--clinic-reveal-delay": `${Math.min(bookingIndex, 12) * 28}ms`,
+                  }}
+                >
                   {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min -{" "}
                   {booking.totalPriceRsd} EUR ({booking.status})
                 </li>

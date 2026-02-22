@@ -191,7 +191,7 @@ export default async function TreatmentCategoryPage({ params }) {
       <Header4 />
       <main style={{ paddingTop: 130, paddingBottom: 90 }}>
         <section className="container">
-          <div className="title-area text-center clinic-reveal is-visible">
+          <div className="title-area text-center clinic-reveal">
             <h1 className="sec-title text-smoke" style={{ marginBottom: 12 }}>
               {categorySpec.name}
             </h1>
@@ -201,7 +201,7 @@ export default async function TreatmentCategoryPage({ params }) {
           </div>
 
           <div className="clinic-treatment-detail-layout">
-            <article className="clinic-treatment-detail-content glass-panel">
+            <article className="clinic-treatment-detail-content glass-panel clinic-reveal">
               <h2>Detaljan opis tretmana</h2>
               {categorySpec.detailedOverview.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
@@ -224,15 +224,22 @@ export default async function TreatmentCategoryPage({ params }) {
               <p>{categorySpec.aftercare}</p>
             </article>
 
-            <aside className="clinic-treatment-detail-gallery glass-panel">
+            <aside
+              className="clinic-treatment-detail-gallery glass-panel clinic-reveal"
+              style={{ "--clinic-reveal-delay": "60ms" }}
+            >
               <h3>Prostor za slike tretmana</h3>
               <p>
                 Ovde je predvidjen prostor za galeriju ove kategorije. Kasnije mozemo povezati
                 stvarne fotografije i before/after prikaze.
               </p>
               <div className="clinic-treatment-gallery-grid">
-                {categorySpec.imageSlots.map((slot) => (
-                  <div key={slot} className="clinic-treatment-image-slot">
+                {categorySpec.imageSlots.map((slot, slotIndex) => (
+                  <div
+                    key={slot}
+                    className="clinic-treatment-image-slot clinic-reveal"
+                    style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 6) * 45}ms` }}
+                  >
                     <span>{slot}</span>
                   </div>
                 ))}
@@ -241,10 +248,11 @@ export default async function TreatmentCategoryPage({ params }) {
           </div>
 
           <div className="clinic-treatment-service-grid">
-            {services.map((service) => (
+            {services.map((service, serviceIndex) => (
               <article
                 key={service.id}
-                className="clinic-treatment-service-card glass-panel clinic-hover-raise"
+                className="clinic-treatment-service-card glass-panel clinic-hover-raise clinic-reveal"
+                style={{ "--clinic-reveal-delay": `${Math.min(serviceIndex, 12) * 45}ms` }}
               >
                 <div className="clinic-treatment-service-image-slot">Prostor za sliku usluge</div>
                 <h3>{service.name}</h3>
@@ -273,11 +281,15 @@ export default async function TreatmentCategoryPage({ params }) {
             </div>
           ) : null}
 
-          <div className="clinic-treatment-faq glass-panel">
+          <div className="clinic-treatment-faq glass-panel clinic-reveal">
             <h3>Najčešća pitanja</h3>
             <div className="clinic-treatment-faq-list">
-              {faq.map((item) => (
-                <details key={item.question}>
+              {faq.map((item, faqIndex) => (
+                <details
+                  key={item.question}
+                  className="clinic-reveal"
+                  style={{ "--clinic-reveal-delay": `${Math.min(faqIndex, 8) * 45}ms` }}
+                >
                   <summary>{item.question}</summary>
                   <p>{item.answer}</p>
                 </details>
@@ -292,7 +304,7 @@ export default async function TreatmentCategoryPage({ params }) {
                 <span className="effect-1">SVE KATEGORIJE</span>
               </span>
             </Link>
-            <Link href="/#booking" className="btn bg-theme text-title clinic-glow-btn">
+            <Link href="/booking" className="btn bg-theme text-title clinic-glow-btn">
               <span className="link-effect">
                 <span className="effect-1">ZAKAZI TERMIN</span>
                 <span className="effect-1">ZAKAZI TERMIN</span>

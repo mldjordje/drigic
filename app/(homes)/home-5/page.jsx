@@ -9,7 +9,6 @@ import Testimonials from "@/components/homes/home-5/Testimonials";
 import Video from "@/components/homes/home-5/Video";
 import BookingSection from "@/components/homes/home-5/BookingSection";
 import BeautyPassSection from "@/components/homes/home-5/BeautyPassSection";
-import LandingAnimator from "@/components/homes/home-5/LandingAnimator";
 import React from "react";
 import Footer5 from "@/components/footers/Footer5";
 import AnnouncementBar from "@/components/homes/home-5/AnnouncementBar";
@@ -21,7 +20,6 @@ export const metadata = {
 export default function HomePage5() {
   return (
     <div className="clinic-home5">
-      <LandingAnimator />
       <Header4 />
       <AnnouncementBar />
       <Hero />

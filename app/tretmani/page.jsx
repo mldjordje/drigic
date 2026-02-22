@@ -13,7 +13,7 @@ export default function TreatmentsIndexPage() {
       <Header4 />
       <main style={{ paddingTop: 130, paddingBottom: 90 }}>
         <section className="container">
-          <div className="title-area text-center clinic-reveal is-visible">
+          <div className="title-area text-center clinic-reveal">
             <h1 className="sec-title text-smoke" style={{ marginBottom: 12 }}>
               Kategorije tretmana
             </h1>
@@ -24,8 +24,12 @@ export default function TreatmentsIndexPage() {
           </div>
 
           <div className="clinic-treatment-grid">
-            {SERVICE_CATEGORY_SPECS.map((category) => (
-              <article key={category.slug} className="clinic-treatment-card glass-panel clinic-hover-raise">
+            {SERVICE_CATEGORY_SPECS.map((category, index) => (
+              <article
+                key={category.slug}
+                className="clinic-treatment-card glass-panel clinic-hover-raise clinic-reveal"
+                style={{ "--clinic-reveal-delay": `${Math.min(index, 10) * 45}ms` }}
+              >
                 <h3>{category.name}</h3>
                 <p>{category.shortDescription}</p>
                 <Link href={`/tretmani/${category.slug}`} className="clinic-treatment-link">
@@ -36,7 +40,7 @@ export default function TreatmentsIndexPage() {
           </div>
 
           <div className="btn-wrap mt-50 justify-content-center">
-            <Link href="/#booking" className="btn bg-theme text-title clinic-glow-btn">
+            <Link href="/booking" className="btn bg-theme text-title clinic-glow-btn">
               <span className="link-effect">
                 <span className="effect-1">ZAKAZI TERMIN</span>
                 <span className="effect-1">ZAKAZI TERMIN</span>

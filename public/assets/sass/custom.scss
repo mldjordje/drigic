@@ -741,6 +741,8 @@ a.clinic-glow-btn {
     opacity: 0;
     transform: translateY(36px);
     transition: transform 0.8s ease, opacity 0.8s ease;
+    transition-delay: var(--clinic-reveal-delay, 0ms);
+    will-change: transform, opacity;
   }
 
   .clinic-reveal.is-visible {
@@ -2089,6 +2091,7 @@ a.clinic-glow-btn {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+    transition-delay: 0ms !important;
   }
 
   .clinic-home5 .clinic-cta-pulse,
