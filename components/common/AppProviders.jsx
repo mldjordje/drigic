@@ -40,6 +40,7 @@ export default function AppProviders({ children }) {
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
+              entry.target.dataset.clinicRevealed = "1";
               entry.target.classList.add("is-visible");
               revealObserver.unobserve(entry.target);
             }
@@ -59,11 +60,16 @@ export default function AppProviders({ children }) {
       if (!node.classList.contains("clinic-reveal")) {
         return;
       }
+      if (node.dataset.clinicRevealed === "1") {
+        node.classList.add("is-visible");
+        return;
+      }
       if (node.classList.contains("is-visible")) {
         return;
       }
 
       if (reduceMotion) {
+        node.dataset.clinicRevealed = "1";
         node.classList.add("is-visible");
         return;
       }

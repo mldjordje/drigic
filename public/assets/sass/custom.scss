@@ -745,7 +745,8 @@ a.clinic-glow-btn {
     will-change: transform, opacity;
   }
 
-  .clinic-reveal.is-visible {
+  .clinic-reveal.is-visible,
+  .clinic-reveal[data-clinic-revealed="1"] {
     opacity: 1;
     transform: translateY(0);
   }
