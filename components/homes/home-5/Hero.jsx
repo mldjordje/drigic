@@ -171,7 +171,7 @@ export default function Hero() {
                   <Link
                     scroll={false}
                     className="btn clinic-hero-cta-btn clinic-glow-btn"
-                    href="/#booking"
+                    href="/booking"
                   >
                     <span className="link-effect">
                       <span className="effect-1">ZAKAZI TERMIN</span>

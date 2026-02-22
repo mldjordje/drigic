@@ -63,7 +63,7 @@ function formatMonthLabel(date, locale = "sr-RS") {
   }).format(date);
 }
 
-export default function BeautyPassSection() {
+export default function BeautyPassSection({ googleNextPath = "/" }) {
   const [user, setUser] = useState(null);
   const [beautyPass, setBeautyPass] = useState(null);
   const [bookings, setBookings] = useState(null);
@@ -196,7 +196,7 @@ export default function BeautyPassSection() {
             <p style={{ ...mutedTextStyle, marginTop: 0 }}>
               Beauty Pass je dostupan nakon prijave.
             </p>
-            <GooglePopupButton className="btn clinic-glow-btn" nextPath="/">
+            <GooglePopupButton className="btn clinic-glow-btn" nextPath={googleNextPath}>
               LOGIN WITH GOOGLE
             </GooglePopupButton>
           </div>

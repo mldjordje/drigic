@@ -36,7 +36,7 @@ export default function About() {
                   <h5 className="text-smoke mb-2 wow img-custom-anim-right animated" data-wow-delay="0.35s">Individualni plan za svako lice</h5>
                   <h5 className="text-smoke mb-0 wow img-custom-anim-right animated" data-wow-delay="0.4s">Prirodni rezultati i dugoročna harmonija</h5>
                   <div className="btn-wrap mt-50 d-flex align-items-center gap-3">
-                    <Link scroll={false} href="#booking" className="link-btn text-theme clinic-glow-btn">
+                    <Link scroll={false} href="/booking" className="link-btn text-theme clinic-glow-btn">
                       <span className="link-effect">
                         <span className="effect-1">REZERVIŠITE KONSULTACIJU</span>
                         <span className="effect-1">REZERVIŠITE KONSULTACIJU</span>

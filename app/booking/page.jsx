@@ -1,22 +1,19 @@
-"use client";
+import Header4 from "@/components/headers/Header4";
+import Footer5 from "@/components/footers/Footer5";
+import BookingSection from "@/components/homes/home-5/BookingSection";
 
-import BookingInlineForm from "@/components/booking/BookingInlineForm";
+export const metadata = {
+  title: "Booking | Dr Igic",
+};
 
 export default function BookingPage() {
   return (
-    <main
-      className="clinic-home5"
-      style={{
-        minHeight: "100vh",
-        background: "var(--clinic-page-bg, transparent)",
-        color: "var(--clinic-text-strong)",
-        padding: "32px 14px",
-      }}
-    >
-      <div style={{ maxWidth: 960, margin: "0 auto" }}>
-        <h1 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Online booking</h1>
-        <BookingInlineForm googleNextPath="/booking" />
-      </div>
-    </main>
+    <div className="clinic-home5">
+      <Header4 />
+      <main style={{ paddingTop: 130, paddingBottom: 90 }}>
+        <BookingSection googleNextPath="/booking" />
+      </main>
+      <Footer5 />
+    </div>
   );
 }

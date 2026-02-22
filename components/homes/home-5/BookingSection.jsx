@@ -16,7 +16,7 @@ async function parseResponse(response) {
   }
 }
 
-export default function BookingSection() {
+export default function BookingSection({ googleNextPath = "/" }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +39,7 @@ export default function BookingSection() {
         <div className="title-area text-center clinic-reveal">
           <h2 className="sec-title text-smoke">Zakazite termin</h2>
           <p className="sec-text text-smoke">
-            Sve je na pocetnoj: prijava, booking i beauty pass.
+            Izaberite tretmane, datum i termin na posebnoj booking stranici.
           </p>
         </div>
 
@@ -54,13 +54,15 @@ export default function BookingSection() {
             <p style={{ marginTop: 0, color: "#e8f1ff" }}>
               Da biste zakazali termin, prvo se prijavite preko Google naloga.
             </p>
-            <GooglePopupButton className="btn clinic-glow-btn" nextPath="/">
+            <GooglePopupButton className="btn clinic-glow-btn" nextPath={googleNextPath}>
               LOGIN WITH GOOGLE
             </GooglePopupButton>
           </div>
         ) : null}
 
-        {!loading && user ? <BookingInlineForm googleNextPath="/" showUpcoming={false} /> : null}
+        {!loading && user ? (
+          <BookingInlineForm googleNextPath={googleNextPath} showUpcoming={false} />
+        ) : null}
       </div>
     </section>
   );

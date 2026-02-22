@@ -7,8 +7,6 @@ import BeforeAfterShowcase from "@/components/homes/home-5/BeforeAfterShowcase";
 import Steps from "@/components/homes/home-5/Steps";
 import Testimonials from "@/components/homes/home-5/Testimonials";
 import Video from "@/components/homes/home-5/Video";
-import BookingSection from "@/components/homes/home-5/BookingSection";
-import BeautyPassSection from "@/components/homes/home-5/BeautyPassSection";
 import React from "react";
 import Footer5 from "@/components/footers/Footer5";
 import AnnouncementBar from "@/components/homes/home-5/AnnouncementBar";
@@ -23,8 +21,6 @@ export default function HomePage5() {
       <Header4 />
       <AnnouncementBar />
       <Hero />
-      <BookingSection />
-      <BeautyPassSection />
       <About />
       <Projects />
       <Steps />

@@ -57,7 +57,7 @@ export default function NikolaIgicPage() {
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Link href="/#booking" className="btn clinic-glow-btn clinic-hero-cta-btn">
+            <Link href="/booking" className="btn clinic-glow-btn clinic-hero-cta-btn">
               Zakazi termin
             </Link>
             <Link href="/#osnivac" className="btn clinic-glow-btn clinic-hero-cta-btn">

@@ -51,7 +51,7 @@ export default function Projects() {
           </Link>
           <Link
             scroll={false}
-            href="#booking"
+            href="/booking"
             className="btn bg-theme text-title clinic-glow-btn"
           >
             <span className="link-effect">
