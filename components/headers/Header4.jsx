@@ -4,12 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
+import PWAMenuActions from "@/components/common/PWAMenuActions";
+import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 export default function Header4() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [useDarkMobileLogo, setUseDarkMobileLogo] = useState(false);
@@ -54,6 +57,7 @@ export default function Header4() {
         menuWrapper.contains(event.target)
       ) {
         setMobileMenuOpen(false);
+        setMobileCategoryOpen(false);
       }
     };
 
@@ -121,7 +125,13 @@ export default function Header4() {
     <>
       <div className={`mobile-menu-wrapper ${mobileMenuOpen ? "body-visible" : ""} `}>
         <div className="mobile-menu-area">
-          <button className="menu-toggle" onClick={() => setMobileMenuOpen(false)}>
+          <button
+            className="menu-toggle"
+            onClick={() => {
+              setMobileMenuOpen(false);
+              setMobileCategoryOpen(false);
+            }}
+          >
             <i className="fas fa-times"></i>
           </button>
           <div className="mobile-logo">
@@ -147,6 +157,34 @@ export default function Header4() {
                 </li>
               ))}
             </ul>
+          </div>
+          <div className="mobile-category-dropdown">
+            <button
+              type="button"
+              className="mobile-category-toggle"
+              aria-expanded={mobileCategoryOpen}
+              onClick={() => setMobileCategoryOpen((prev) => !prev)}
+            >
+              Kategorije tretmana
+            </button>
+            {mobileCategoryOpen ? (
+              <ul className="mobile-category-list">
+                {SERVICE_CATEGORY_SPECS.map((category) => (
+                  <li key={category.slug}>
+                    <Link
+                      scroll={false}
+                      href={`/tretmani/${category.slug}`}
+                      onClick={() => {
+                        setMobileCategoryOpen(false);
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      {category.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
           <div className="mobile-cta-buttons">
             {currentUser ? (
@@ -178,6 +216,7 @@ export default function Header4() {
               </a>
             ) : null}
           </div>
+          <PWAMenuActions />
           <div className="sidebar-wrap">
             <h6>Dr Nikola Igic</h6>
             <h6>Klinika estetske medicine</h6>
@@ -201,8 +240,8 @@ export default function Header4() {
                   <div className="header-logo">
                     <Link scroll={false} href="/">
                       <Image
-                        width={170}
-                        height={48}
+                        width={250}
+                        height={72}
                         src={headerLogoSrc}
                         alt="Dr Igic logo"
                         className="clinic-nav-logo"

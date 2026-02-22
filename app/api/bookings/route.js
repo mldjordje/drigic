@@ -12,9 +12,9 @@ import {
   resolveQuote,
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
-import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
+const PRIMARY_ADMIN_NOTIFY_EMAIL = "igic.nikola8397@gmail.com";
 
 const payloadSchema = z.object({
   serviceIds: z.array(z.string().uuid()).optional(),
@@ -128,8 +128,8 @@ export async function POST(request) {
       const serviceSummary = quote.items
         .map((item) => `${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`)
         .join(", ");
-      await sendReminderEmail({
-        to: env.ADMIN_BOOKING_NOTIFY_EMAIL,
+      const notifyResult = await sendReminderEmail({
+        to: PRIMARY_ADMIN_NOTIFY_EMAIL,
         title: "Novi booking na cekanju",
         message: [
           `Stigao je novi booking koji ceka potvrdu admina.`,
@@ -140,6 +140,12 @@ export async function POST(request) {
           `Cena: ${quote.totalPriceRsd} EUR`,
         ].join("\n"),
       });
+      if (!notifyResult?.sent) {
+        console.error(
+          "[bookings.create] admin notify email not sent",
+          notifyResult?.reason || "unknown reason"
+        );
+      }
     } catch (notifyError) {
       console.error("[bookings.create] admin notify email failed", notifyError);
     }

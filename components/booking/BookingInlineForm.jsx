@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function todayIsoDate() {
   const now = new Date();
@@ -97,6 +97,17 @@ function getServicePriceLabel(service) {
   return `${value} EUR`;
 }
 
+function getMlDurationMin(baseDurationMin, quantity) {
+  const base = Math.max(5, Number(baseDurationMin || 30));
+  if (quantity <= 2) {
+    return base;
+  }
+  if (quantity === 3) {
+    return Math.min(60, base + 15);
+  }
+  return Math.min(60, base + 30);
+}
+
 export default function BookingInlineForm({
   googleNextPath = "/",
   cardClassName = "",
@@ -122,6 +133,7 @@ export default function BookingInlineForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const dateStepRef = useRef(null);
 
   const today = useMemo(() => todayIsoDate(), []);
   const monthKey = useMemo(() => formatMonthKey(calendarMonth), [calendarMonth]);
@@ -241,7 +253,10 @@ export default function BookingInlineForm({
           service.supportsMl || selection.quantity > 1
             ? ` (${selection.quantity} ${service.supportsMl ? "ml" : "kom"})`
             : "";
-        return `${service.name}${quantityLabel} - ${service.durationMin} min`;
+        const durationLabel = service.supportsMl
+          ? getMlDurationMin(service.durationMin, selection.quantity)
+          : Number(service.durationMin || 0) * Math.max(1, Number(selection.quantity || 1));
+        return `${service.name}${quantityLabel} - ${durationLabel} min`;
       })
       .filter(Boolean);
   }, [serviceSelections, serviceLookup]);
@@ -504,6 +519,10 @@ export default function BookingInlineForm({
     }
   }
 
+  function scrollToDateStep() {
+    dateStepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   const sectionClassName = ["clinic-booking-form", cardClassName].filter(Boolean).join(" ");
 
   if (isBootstrapping) {
@@ -515,24 +534,32 @@ export default function BookingInlineForm({
     );
   }
 
-  return (
-    <section className={sectionClassName} style={cardStyle}>
-      <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Zakazivanje termina</h2>
-      {user ? (
-        <p style={{ color: "#e6eefb" }}>
-          Prijavljeni ste kao <strong>{user.email}</strong>.
-        </p>
-      ) : (
-        <div style={guestNoticeStyle}>
-          <span>Forma je otvorena svima. Za potvrdu termina potreban je login.</span>
+  if (!user) {
+    return (
+      <section className={sectionClassName} style={cardStyle}>
+        <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Zakazivanje termina</h2>
+        <div className="clinic-login-lock">
+          <p style={{ marginTop: 0, color: "#e8f1ff" }}>
+            Da biste zakazali termin, prvo se prijavite preko Google naloga.
+          </p>
           <a
-            href={`/api/auth/google?next=${encodeURIComponent(googleNextPath)}`}
-            style={authButtonStyle}
+            href={`/api/auth/google?next=${encodeURIComponent(googleNextPath || "/")}`}
+            className="btn clinic-glow-btn"
+            style={{ textTransform: "uppercase", fontWeight: 800 }}
           >
             Login with Google
           </a>
         </div>
-      )}
+      </section>
+    );
+  }
+
+  return (
+    <section className={sectionClassName} style={cardStyle}>
+      <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Zakazivanje termina</h2>
+      <p style={{ color: "#e6eefb" }}>
+        Prijavljeni ste kao <strong>{user.email}</strong>.
+      </p>
 
       <form onSubmit={handleBook}>
         <h3 style={{ color: "#f2f5fb" }}>1) Izaberite tretmane</h3>
@@ -638,8 +665,19 @@ export default function BookingInlineForm({
             </div>
           </div>
         ))}
+        {serviceSelections.length ? (
+          <div className="clinic-next-step-wrap">
+            <button
+              type="button"
+              className="clinic-glow-btn clinic-next-step-btn"
+              onClick={scrollToDateStep}
+            >
+              <span className="clinic-btn-label">Nastavi na datum</span>
+            </button>
+          </div>
+        ) : null}
 
-        <h3 style={{ color: "#f2f5fb" }}>2) Datum i vreme</h3>
+        <h3 ref={dateStepRef} style={{ color: "#f2f5fb" }}>2) Datum i vreme</h3>
 
         {!serviceSelections.length ? (
           <p style={{ color: "#e6eefb" }}>Prvo izaberite uslugu da biste videli slobodne datume.</p>
@@ -799,6 +837,15 @@ export default function BookingInlineForm({
           )}
         </section>
       ) : null}
+      {serviceSelections.length ? (
+        <button
+          type="button"
+          className="clinic-glow-btn clinic-next-date-fab"
+          onClick={scrollToDateStep}
+        >
+          <span className="clinic-btn-label">Nastavi na datum</span>
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -848,29 +895,4 @@ const primaryButtonStyle = {
   padding: "10px 14px",
   fontWeight: 700,
   cursor: "pointer",
-};
-
-const authButtonStyle = {
-  borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.55)",
-  background: "rgba(20, 38, 61, 0.95)",
-  color: "#f4f8ff",
-  padding: "10px 14px",
-  fontWeight: 700,
-  textDecoration: "none",
-  display: "inline-flex",
-};
-
-const guestNoticeStyle = {
-  display: "flex",
-  gap: 10,
-  alignItems: "center",
-  justifyContent: "space-between",
-  flexWrap: "wrap",
-  padding: "10px 12px",
-  marginBottom: 10,
-  borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.28)",
-  background: "rgba(217,232,248,0.08)",
-  color: "#e6eefb",
 };

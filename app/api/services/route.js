@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { ok } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
 
@@ -31,6 +31,8 @@ export async function GET() {
       promoEndsAt: schema.servicePromotions.endsAt,
       promoActive: schema.servicePromotions.isActive,
       promotionTitle: schema.servicePromotions.title,
+      promoUpdatedAt: schema.servicePromotions.updatedAt,
+      promoCreatedAt: schema.servicePromotions.createdAt,
     })
     .from(schema.services)
     .innerJoin(
@@ -51,10 +53,22 @@ export async function GET() {
     .orderBy(
       asc(schema.serviceCategories.sortOrder),
       asc(schema.services.kind),
-      asc(schema.services.name)
+      asc(schema.services.name),
+      desc(schema.servicePromotions.updatedAt),
+      desc(schema.servicePromotions.createdAt)
     );
 
-  const packageServiceIds = rows
+  const uniqueRows = [];
+  const seenServiceIds = new Set();
+  for (const row of rows) {
+    if (seenServiceIds.has(row.serviceId)) {
+      continue;
+    }
+    seenServiceIds.add(row.serviceId);
+    uniqueRows.push(row);
+  }
+
+  const packageServiceIds = uniqueRows
     .filter((row) => row.serviceKind === "package")
     .map((row) => row.serviceId);
 
@@ -89,7 +103,7 @@ export async function GET() {
     return acc;
   }, {});
 
-  const grouped = rows.reduce((acc, row) => {
+  const grouped = uniqueRows.reduce((acc, row) => {
     if (!acc[row.categoryId]) {
       acc[row.categoryId] = {
         id: row.categoryId,

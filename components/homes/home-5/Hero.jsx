@@ -1,11 +1,12 @@
 ﻿"use client";
 import addGsap from "@/utils/addGsap";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
 export default function Hero() {
   const mobileVideoRef = useRef(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     document.body.classList.add("bg-title");
@@ -16,6 +17,13 @@ export default function Hero() {
 
   useEffect(() => {
     addGsap();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/me/profile")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setCurrentUser(data?.user || null))
+      .catch(() => setCurrentUser(null));
   }, []);
 
   const heroVideoSrc = useMemo(
@@ -97,43 +105,40 @@ export default function Hero() {
         <div className="hero-overlay" data-overlay="title" data-opacity="5"></div>
         <div className="container">
           <div className="row">
-            <div className="col-lg-7">
+            <div className="col-lg-9">
               <div className="hero-style5 clinic-reveal">
                 <h1 className="hero-title" data-ani="slideindown" data-ani-delay="0.1s">
                   Dr Igić klinika estetske medicine
                 </h1>
-                <p className="hero-text" data-ani="slideindown" data-ani-delay="0.2s">
-                  Prirodni rezultati, bez preterivanja.
-                </p>
+                <div
+                  className="hero-cta-group hero-cta-group-top"
+                  data-ani="slideindown"
+                  data-ani-delay="0.2s"
+                >
+                  {!currentUser ? (
+                    <GooglePopupButton className="btn clinic-hero-cta-btn clinic-glow-btn" nextPath="/">
+                      <span className="link-effect">
+                        <span className="effect-1">LOGIN</span>
+                        <span className="effect-1">LOGIN</span>
+                      </span>
+                    </GooglePopupButton>
+                  ) : null}
+                  <Link
+                    scroll={false}
+                    className="btn clinic-hero-cta-btn clinic-glow-btn"
+                    href="/#booking"
+                  >
+                    <span className="link-effect">
+                      <span className="effect-1">ZAKAZI TERMIN</span>
+                      <span className="effect-1">ZAKAZI TERMIN</span>
+                    </span>
+                  </Link>
+                </div>
                 <div className="hero-year-tag movingX" data-ani="slideindown" data-ani-delay="0.3s">
                   <Link scroll={false} href="/nikola-igic" className="clinic-founder-link">
                     Dr Nikola Igić
                   </Link>
                 </div>
-              </div>
-            </div>
-            <div className="col-lg-5 align-self-end text-lg-end">
-              <div
-                className="text-lg-end hero-cta-group"
-                data-ani="slideindown"
-                data-ani-delay="0.3s"
-              >
-                <GooglePopupButton className="btn clinic-hero-cta-btn clinic-glow-btn" nextPath="/">
-                  <span className="link-effect">
-                    <span className="effect-1">LOGIN</span>
-                    <span className="effect-1">LOGIN</span>
-                  </span>
-                </GooglePopupButton>
-                <Link
-                  scroll={false}
-                  className="btn clinic-hero-cta-btn clinic-glow-btn"
-                  href="#booking"
-                >
-                  <span className="link-effect">
-                    <span className="effect-1">ZAKAŽI TERMIN</span>
-                    <span className="effect-1">ZAKAŽI TERMIN</span>
-                  </span>
-                </Link>
               </div>
             </div>
           </div>

@@ -254,7 +254,7 @@ export async function PATCH(request) {
         .limit(1);
 
       if (user) {
-        await deliverBookingNotification({
+        const deliveryResult = await deliverBookingNotification({
           db,
           userId: user.id,
           email: user.email,
@@ -265,6 +265,12 @@ export async function PATCH(request) {
           scheduledFor: current.startsAt,
           dedupe: false,
         });
+        if (!deliveryResult?.sentEmail) {
+          console.error(
+            "[admin.bookings.patch] client status email not sent",
+            deliveryResult?.emailReason || "unknown reason"
+          );
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -53,10 +53,31 @@ export async function POST(request) {
   };
 
   const db = getDb();
-  const [record] = await db
-    .insert(schema.servicePromotions)
-    .values(data)
-    .returning();
+  const [record] = await db.transaction(async (tx) => {
+    if (data.isActive !== false) {
+      await tx
+        .update(schema.servicePromotions)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.servicePromotions.serviceId, data.serviceId),
+            eq(schema.servicePromotions.isActive, true)
+          )
+        );
+    }
+
+    const [createdPromotion] = await tx
+      .insert(schema.servicePromotions)
+      .values({
+        ...data,
+        isActive: data.isActive !== undefined ? data.isActive : true,
+      })
+      .returning();
+    return [createdPromotion];
+  });
 
   return created({ ok: true, data: record });
 }
@@ -75,18 +96,53 @@ export async function PATCH(request) {
 
   const { id, startsAt, endsAt, ...updates } = parsed.data;
   const db = getDb();
-  const [record] = await db
-    .update(schema.servicePromotions)
-    .set({
-      ...updates,
-      ...(startsAt !== undefined
-        ? { startsAt: startsAt ? new Date(startsAt) : null }
-        : {}),
-      ...(endsAt !== undefined ? { endsAt: endsAt ? new Date(endsAt) : null } : {}),
-      updatedAt: new Date(),
-    })
+
+  const [current] = await db
+    .select()
+    .from(schema.servicePromotions)
     .where(eq(schema.servicePromotions.id, id))
-    .returning();
+    .limit(1);
+
+  if (!current) {
+    return fail(404, "Promotion not found.");
+  }
+
+  const nextServiceId = updates.serviceId || current.serviceId;
+  const nextIsActive =
+    updates.isActive !== undefined ? updates.isActive : Boolean(current.isActive);
+
+  const [record] = await db.transaction(async (tx) => {
+    if (nextIsActive) {
+      await tx
+        .update(schema.servicePromotions)
+        .set({
+          isActive: false,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.servicePromotions.serviceId, nextServiceId),
+            eq(schema.servicePromotions.isActive, true),
+            ne(schema.servicePromotions.id, id)
+          )
+        );
+    }
+
+    const [updatedPromotion] = await tx
+      .update(schema.servicePromotions)
+      .set({
+        ...updates,
+        ...(startsAt !== undefined
+          ? { startsAt: startsAt ? new Date(startsAt) : null }
+          : {}),
+        ...(endsAt !== undefined ? { endsAt: endsAt ? new Date(endsAt) : null } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.servicePromotions.id, id))
+      .returning();
+
+    return [updatedPromotion];
+  });
 
   if (!record) {
     return fail(404, "Promotion not found.");
@@ -94,4 +150,3 @@ export async function PATCH(request) {
 
   return ok({ ok: true, data: record });
 }
-

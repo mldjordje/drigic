@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { and, asc, eq, gte, isNull, lte, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Header4 from "@/components/headers/Header4";
@@ -11,6 +11,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const FALLBACK_SITE_URL = "https://drigic.rs";
+
 export async function generateStaticParams() {
   return SERVICE_CATEGORY_SPECS.map((category) => ({ slug: category.slug }));
 }
@@ -18,11 +20,38 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const category = getCategorySpecBySlug(resolvedParams?.slug);
+
   if (!category) {
-    return { title: "Tretmani | Dr Igic" };
+    return {
+      title: "Tretmani | Dr Igic",
+      description: "Detaljne stranice tretmana i kategorija usluga klinike Dr Igic.",
+    };
   }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_SITE_URL;
+  const canonicalPath = `/tretmani/${category.slug}`;
+  const canonicalUrl = `${siteUrl}${canonicalPath}`;
+
   return {
-    title: `${category.name} | Dr Igic`,
+    title: category.seoTitle,
+    description: category.seoDescription,
+    keywords: category.seoKeywords,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      title: category.seoTitle,
+      description: category.seoDescription,
+      url: canonicalUrl,
+      type: "article",
+      locale: "sr_RS",
+      siteName: "Dr Igic klinika estetske medicine",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: category.seoTitle,
+      description: category.seoDescription,
+    },
   };
 }
 
@@ -114,6 +143,26 @@ async function loadCategoryServices(slug) {
   };
 }
 
+function buildFaq(categorySpec) {
+  return [
+    {
+      question: `Koliko traje tretman u kategoriji ${categorySpec.name}?`,
+      answer:
+        "Trajanje zavisi od konkretne usluge. U listi usluga je jasno prikazano trajanje svake stavke.",
+    },
+    {
+      question: "Da li je potreban pregled pre tretmana?",
+      answer:
+        "Da. Pre svakog tretmana radi se procena indikacije i individualni plan kako bi rezultat bio prirodan i bezbedan.",
+    },
+    {
+      question: "Da li postoji period oporavka?",
+      answer:
+        "U vecini slucajeva oporavak je kratak, ali zavisi od protokola i regije. Tacna uputstva dobijate odmah nakon tretmana.",
+    },
+  ];
+}
+
 export default async function TreatmentCategoryPage({ params }) {
   const resolvedParams = await params;
   const data = await loadCategoryServices(resolvedParams?.slug);
@@ -122,6 +171,20 @@ export default async function TreatmentCategoryPage({ params }) {
   }
 
   const { categorySpec, services } = data;
+  const faq = buildFaq(categorySpec);
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
 
   return (
     <div className="clinic-home5">
@@ -132,9 +195,49 @@ export default async function TreatmentCategoryPage({ params }) {
             <h1 className="sec-title text-smoke" style={{ marginBottom: 12 }}>
               {categorySpec.name}
             </h1>
-            <p className="sec-text text-smoke" style={{ maxWidth: 760, margin: "0 auto" }}>
-              {categorySpec.shortDescription}
+            <p className="sec-text text-smoke" style={{ maxWidth: 900, margin: "0 auto" }}>
+              {categorySpec.heroIntro}
             </p>
+          </div>
+
+          <div className="clinic-treatment-detail-layout">
+            <article className="clinic-treatment-detail-content glass-panel">
+              <h2>Detaljan opis tretmana</h2>
+              {categorySpec.detailedOverview.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+
+              <h3>Ključne prednosti</h3>
+              <ul>
+                {categorySpec.benefits.map((benefit) => (
+                  <li key={benefit}>{benefit}</li>
+                ))}
+              </ul>
+
+              <h3>Kome je tretman namenjen</h3>
+              <p>{categorySpec.candidate}</p>
+
+              <h3>Kako izgleda tretman</h3>
+              <p>{categorySpec.procedure}</p>
+
+              <h3>Nega nakon tretmana</h3>
+              <p>{categorySpec.aftercare}</p>
+            </article>
+
+            <aside className="clinic-treatment-detail-gallery glass-panel">
+              <h3>Prostor za slike tretmana</h3>
+              <p>
+                Ovde je predvidjen prostor za galeriju ove kategorije. Kasnije mozemo povezati
+                stvarne fotografije i before/after prikaze.
+              </p>
+              <div className="clinic-treatment-gallery-grid">
+                {categorySpec.imageSlots.map((slot) => (
+                  <div key={slot} className="clinic-treatment-image-slot">
+                    <span>{slot}</span>
+                  </div>
+                ))}
+              </div>
+            </aside>
           </div>
 
           <div className="clinic-treatment-service-grid">
@@ -143,6 +246,7 @@ export default async function TreatmentCategoryPage({ params }) {
                 key={service.id}
                 className="clinic-treatment-service-card glass-panel clinic-hover-raise"
               >
+                <div className="clinic-treatment-service-image-slot">Prostor za sliku usluge</div>
                 <h3>{service.name}</h3>
                 <p>{service.description || "Individualni tretman."}</p>
                 <div className="clinic-treatment-service-meta">
@@ -169,6 +273,18 @@ export default async function TreatmentCategoryPage({ params }) {
             </div>
           ) : null}
 
+          <div className="clinic-treatment-faq glass-panel">
+            <h3>Najčešća pitanja</h3>
+            <div className="clinic-treatment-faq-list">
+              {faq.map((item) => (
+                <details key={item.question}>
+                  <summary>{item.question}</summary>
+                  <p>{item.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+
           <div className="btn-wrap mt-50 justify-content-center" style={{ gap: 12 }}>
             <Link href="/tretmani" className="btn bg-theme text-title clinic-glow-btn">
               <span className="link-effect">
@@ -185,7 +301,13 @@ export default async function TreatmentCategoryPage({ params }) {
           </div>
         </section>
       </main>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Footer5 />
     </div>
   );
 }
+
