@@ -13,6 +13,7 @@ export async function POST(request) {
 
   const formData = await request.formData();
   const treatmentType = String(formData.get("treatmentType") || "").trim();
+  const serviceCategory = String(formData.get("serviceCategory") || "").trim();
   const productUsed = String(formData.get("productUsed") || "").trim();
   const beforeUrlInput = String(formData.get("beforeImageUrl") || "").trim();
   const afterUrlInput = String(formData.get("afterImageUrl") || "").trim();
@@ -42,6 +43,7 @@ export async function POST(request) {
     .insert(schema.beforeAfterCases)
     .values({
       treatmentType,
+      serviceCategory: serviceCategory || null,
       productUsed: productUsed || null,
       beforeImageUrl,
       afterImageUrl,
@@ -51,4 +53,3 @@ export async function POST(request) {
 
   return created({ ok: true, data: record });
 }
-

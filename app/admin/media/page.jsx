@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 async function toResponseError(response, fallback) {
   try {
@@ -21,6 +22,7 @@ export default function AdminMediaPage() {
 
   const [beforeAfterForm, setBeforeAfterForm] = useState({
     treatmentType: "",
+    serviceCategory: "",
     productUsed: "",
     beforeImageUrl: "",
     afterImageUrl: "",
@@ -67,6 +69,7 @@ export default function AdminMediaPage() {
     try {
       const formData = new FormData();
       formData.set("treatmentType", beforeAfterForm.treatmentType);
+      formData.set("serviceCategory", beforeAfterForm.serviceCategory);
       formData.set("productUsed", beforeAfterForm.productUsed);
       formData.set("beforeImageUrl", beforeAfterForm.beforeImageUrl);
       formData.set("afterImageUrl", beforeAfterForm.afterImageUrl);
@@ -87,6 +90,7 @@ export default function AdminMediaPage() {
 
       setBeforeAfterForm({
         treatmentType: "",
+        serviceCategory: "",
         productUsed: "",
         beforeImageUrl: "",
         afterImageUrl: "",
@@ -190,6 +194,20 @@ export default function AdminMediaPage() {
             }
             required
           />
+          <select
+            className="admin-inline-input"
+            value={beforeAfterForm.serviceCategory}
+            onChange={(event) =>
+              setBeforeAfterForm((prev) => ({ ...prev, serviceCategory: event.target.value }))
+            }
+          >
+            <option value="">Kategorija usluge (opciono)</option>
+            {SERVICE_CATEGORY_SPECS.map((category) => (
+              <option key={category.slug} value={category.slug}>
+                {category.name}
+              </option>
+            ))}
+          </select>
           <input
             className="admin-inline-input"
             placeholder="Preparat (opciono)"
@@ -315,6 +333,12 @@ export default function AdminMediaPage() {
             {beforeAfter.map((item) => (
               <article key={item.id} className="admin-card" style={{ display: "grid", gap: 8 }}>
                 <strong>{item.treatmentType || "Tretman"}</strong>
+                {item.serviceCategory ? (
+                  <small style={{ color: "#e7eef9" }}>
+                    {SERVICE_CATEGORY_SPECS.find((category) => category.slug === item.serviceCategory)
+                      ?.name || item.serviceCategory}
+                  </small>
+                ) : null}
                 {item.productUsed ? <small style={{ color: "#c8d9ee" }}>{item.productUsed}</small> : null}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   <img

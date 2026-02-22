@@ -11,7 +11,7 @@ export default function ResultsPage() {
     <div className="clinic-home5">
       <Header4 />
       <main style={{ paddingTop: 130, paddingBottom: 90 }}>
-        <BeforeAfterShowcase />
+        <BeforeAfterShowcase withFilter showCta={false} sectionId="" />
       </main>
       <Footer5 />
     </div>

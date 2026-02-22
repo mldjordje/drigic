@@ -27,10 +27,10 @@ export default function HomePage5() {
       <Hero />
       <BookingSection />
       <BeautyPassSection />
-      <Steps />
       <About />
       <Projects />
-      <BeforeAfterShowcase />
+      <Steps />
+      <BeforeAfterShowcase maxItems={6} />
       <Testimonials />
       <Video />
       <Blogs />

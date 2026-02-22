@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import PWAMenuActions from "@/components/common/PWAMenuActions";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
@@ -10,7 +9,6 @@ import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 const THEME_STORAGE_KEY = "clinic-theme-mode";
 
 export default function Header4() {
-  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -19,26 +17,24 @@ export default function Header4() {
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [themeMode, setThemeMode] = useState("light");
   const lastScrollYRef = useRef(0);
-  const sectionPrefix = pathname === "/" ? "" : "/";
-  const toSectionHref = (hash) => `${sectionPrefix}${hash}`;
 
   const navItems = useMemo(() => {
     const items = [
-      { href: `${sectionPrefix}#hero`, label: "Pocetna" },
-      { href: `${sectionPrefix}#tretmani`, label: "Tretmani" },
-      { href: `${sectionPrefix}#osnivac`, label: "Osnivac" },
-      { href: `${sectionPrefix}#rezultati`, label: "Rezultati" },
-      { href: `${sectionPrefix}#aktuelnosti`, label: "Aktuelnosti" },
-      { href: `${sectionPrefix}#booking`, label: "Zakazi" },
-      { href: `${sectionPrefix}#konsultacije`, label: "Kontakt" },
+      { href: "/", label: "Pocetna" },
+      { href: "/tretmani", label: "Tretmani" },
+      { href: "/nikola-igic", label: "Osnivac" },
+      { href: "/rezultati", label: "Pre/Posle" },
+      { href: "/blog", label: "Aktuelnosti" },
+      { href: "/booking", label: "Zakazi" },
+      { href: "/contact", label: "Kontakt" },
     ];
 
     if (currentUser) {
-      items.splice(5, 0, { href: `${sectionPrefix}#beauty-pass`, label: "Beauty Pass" });
+      items.splice(5, 0, { href: "/beauty-pass", label: "Beauty Pass" });
     }
 
     return items;
-  }, [currentUser, sectionPrefix]);
+  }, [currentUser]);
 
   useEffect(() => {
     fetch("/api/me/profile")
@@ -176,13 +172,9 @@ export default function Header4() {
             <ul>
               {navItems.map((item) => (
                 <li key={item.href} onClick={() => setMobileMenuOpen(false)}>
-                  {item.href.startsWith("#") ? (
-                    <a href={item.href}>{item.label}</a>
-                  ) : (
-                    <Link scroll={false} href={item.href}>
-                      {item.label}
-                    </Link>
-                  )}
+                  <Link scroll={false} href={item.href}>
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -251,13 +243,23 @@ export default function Header4() {
                 <span className="mobile-cta-link-text">Login</span>
               </GooglePopupButton>
             )}
-            <a href={toSectionHref("#booking")} className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+            <Link
+              scroll={false}
+              href="/booking"
+              className="mobile-cta-link clinic-glow-btn"
+              onClick={() => setMobileMenuOpen(false)}
+            >
               <span className="mobile-cta-link-text">Zakazi</span>
-            </a>
+            </Link>
             {currentUser ? (
-              <a href={toSectionHref("#beauty-pass")} className="mobile-cta-link clinic-glow-btn" onClick={() => setMobileMenuOpen(false)}>
+              <Link
+                scroll={false}
+                href="/beauty-pass"
+                className="mobile-cta-link clinic-glow-btn"
+                onClick={() => setMobileMenuOpen(false)}
+              >
                 <span className="mobile-cta-link-text">Beauty Pass</span>
-              </a>
+              </Link>
             ) : null}
           </div>
           <PWAMenuActions />
@@ -298,13 +300,9 @@ export default function Header4() {
                     <ul>
                       {navItems.map((item) => (
                         <li key={item.href}>
-                          {item.href.startsWith("#") ? (
-                            <a href={item.href}>{item.label}</a>
-                          ) : (
-                            <Link scroll={false} href={item.href}>
-                              {item.label}
-                            </Link>
-                          )}
+                          <Link scroll={false} href={item.href}>
+                            {item.label}
+                          </Link>
                         </li>
                       ))}
                     </ul>
@@ -341,19 +339,27 @@ export default function Header4() {
                     {currentUser ? (
                       <>
                         {currentUser.role === "admin" ? (
-                          <Link scroll={false} href="/admin" className="search-btn clinic-glow-btn">
+                          <Link
+                            scroll={false}
+                            href="/admin/kalendar"
+                            className="search-btn clinic-glow-btn"
+                          >
                             <span className="link-effect">
                               <span className="effect-1">ADMIN</span>
                               <span className="effect-1">ADMIN</span>
                             </span>
                           </Link>
                         ) : null}
-                        <a href={toSectionHref("#beauty-pass")} className="search-btn clinic-glow-btn">
+                        <Link
+                          scroll={false}
+                          href="/beauty-pass"
+                          className="search-btn clinic-glow-btn"
+                        >
                           <span className="link-effect">
                             <span className="effect-1">BEAUTY PASS</span>
                             <span className="effect-1">BEAUTY PASS</span>
                           </span>
-                        </a>
+                        </Link>
                       </>
                     ) : null}
 
@@ -382,12 +388,12 @@ export default function Header4() {
                       </GooglePopupButton>
                     )}
 
-                    <a href={toSectionHref("#booking")} className="search-btn clinic-glow-btn">
+                    <Link scroll={false} href="/booking" className="search-btn clinic-glow-btn">
                       <span className="link-effect">
                         <span className="effect-1">ZAKAZI TERMIN</span>
                         <span className="effect-1">ZAKAZI TERMIN</span>
                       </span>
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
