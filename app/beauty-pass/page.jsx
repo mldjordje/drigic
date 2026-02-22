@@ -53,7 +53,7 @@ export default function BeautyPassPage() {
   return (
     <main className="clinic-home5" style={pageStyle}>
       <div style={{ maxWidth: 980, margin: "0 auto", display: "grid", gap: 16 }}>
-        <h1 style={{ marginTop: 0, color: "#f2f5fb" }}>Beauty Pass</h1>
+        <h1 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Beauty Pass</h1>
 
         {!user ? (
           <section style={cardStyle}>
@@ -121,7 +121,7 @@ export default function BeautyPassPage() {
           </>
         )}
 
-        {error ? <p style={{ color: "#ff9f9f" }}>{error}</p> : null}
+        {error ? <p style={{ color: "var(--clinic-danger)" }}>{error}</p> : null}
       </div>
     </main>
   );
@@ -129,25 +129,25 @@ export default function BeautyPassPage() {
 
 const pageStyle = {
   minHeight: "100vh",
-  background: "#0A0C00",
-  color: "#f2f5fb",
+  background: "var(--clinic-page-bg, transparent)",
+  color: "var(--clinic-text-strong)",
   padding: "32px 14px",
 };
 
 const cardStyle = {
-  background: "rgba(20, 29, 42, 0.48)",
-  border: "1px solid rgba(217,232,248,0.28)",
+  background: "var(--clinic-card-bg)",
+  border: "1px solid var(--clinic-card-border)",
   borderRadius: 16,
   padding: 18,
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+  backdropFilter: "blur(var(--clinic-card-blur, 10px))",
+  WebkitBackdropFilter: "blur(var(--clinic-card-blur, 10px))",
 };
 
 const buttonStyle = {
   borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.55)",
-  background: "rgba(20, 38, 61, 0.95)",
-  color: "#f4f8ff",
+  border: "1px solid var(--clinic-button-border)",
+  background: "var(--clinic-button-bg)",
+  color: "var(--clinic-button-text)",
   padding: "10px 14px",
   fontWeight: 700,
   textDecoration: "none",

@@ -7,6 +7,8 @@ import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import PWAMenuActions from "@/components/common/PWAMenuActions";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
+const THEME_STORAGE_KEY = "clinic-theme-mode";
+
 export default function Header4() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -15,7 +17,7 @@ export default function Header4() {
   const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [logoutBusy, setLogoutBusy] = useState(false);
-  const [useDarkMobileLogo, setUseDarkMobileLogo] = useState(false);
+  const [themeMode, setThemeMode] = useState("light");
   const lastScrollYRef = useRef(0);
   const sectionPrefix = pathname === "/" ? "" : "/";
   const toSectionHref = (hash) => `${sectionPrefix}${hash}`;
@@ -46,6 +48,34 @@ export default function Header4() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const persistedMode = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (persistedMode === "dark" || persistedMode === "light") {
+      setThemeMode(persistedMode);
+      return;
+    }
+    setThemeMode("light");
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+    const isDark = themeMode === "dark";
+    document.documentElement.classList.remove("clinic-theme-light", "clinic-theme-dark");
+    document.body.classList.remove("clinic-theme-light", "clinic-theme-dark");
+    document.documentElement.classList.add(isDark ? "clinic-theme-dark" : "clinic-theme-light");
+    document.body.classList.add(isDark ? "clinic-theme-dark" : "clinic-theme-light");
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, isDark ? "dark" : "light");
+    } catch {
+      // localStorage is optional
+    }
+  }, [themeMode]);
+
+  useEffect(() => {
     const handleDocumentClick = (event) => {
       const menuWrapper = document.querySelector(".mobile-menu-wrapper");
       const menuContainer = document.querySelector(".mobile-menu-area");
@@ -71,11 +101,6 @@ export default function Header4() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
-      const isMobileViewport = window.innerWidth < 992;
-      const hero = document.getElementById("hero");
-      const heroSwitchPoint = hero
-        ? Math.max(140, hero.offsetHeight - 160)
-        : 240;
 
       if (currentScrollY <= 10) {
         setIsScrolled(false);
@@ -86,7 +111,6 @@ export default function Header4() {
         setIsHeaderHidden(isScrollingDown && currentScrollY > 120);
       }
 
-      setUseDarkMobileLogo(isMobileViewport && currentScrollY > heroSwitchPoint);
       lastScrollYRef.current = currentScrollY;
     };
 
@@ -103,7 +127,11 @@ export default function Header4() {
     };
   }, []);
 
-  const headerLogoSrc = useDarkMobileLogo ? "/assets/img/logo-dark.png" : "/assets/img/logo.png";
+  const headerLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.png";
+
+  function toggleThemeMode() {
+    setThemeMode((prev) => (prev === "dark" ? "light" : "dark"));
+  }
 
   async function handleLogout() {
     if (logoutBusy) {
@@ -137,7 +165,7 @@ export default function Header4() {
           <div className="mobile-logo">
             <Link scroll={false} href="/">
               <img
-                src="/assets/img/logo.png"
+                src={headerLogoSrc}
                 alt="Dr Igic logo"
                 className="clinic-nav-logo clinic-nav-logo-mobile"
               />
@@ -185,6 +213,21 @@ export default function Header4() {
                 ))}
               </ul>
             ) : null}
+          </div>
+          <div className="mobile-theme-toggle-wrap">
+            <button
+              type="button"
+              className={`clinic-theme-switch ${themeMode === "dark" ? "is-dark" : "is-light"}`}
+              onClick={toggleThemeMode}
+              aria-label="Promeni temu"
+            >
+              <span className="clinic-theme-switch-track">
+                <span className="clinic-theme-switch-knob" />
+              </span>
+              <span className="clinic-theme-switch-text">
+                {themeMode === "dark" ? "Dark mode" : "Light mode"}
+              </span>
+            </button>
           </div>
           <div className="mobile-cta-buttons">
             {currentUser ? (
@@ -279,6 +322,21 @@ export default function Header4() {
                 </div>
                 <div className="col-auto d-none d-lg-block">
                   <div className="header-button ms-0 clinic-header-actions">
+                    <button
+                      type="button"
+                      className={`clinic-theme-switch clinic-theme-switch-desktop ${
+                        themeMode === "dark" ? "is-dark" : "is-light"
+                      }`}
+                      onClick={toggleThemeMode}
+                      aria-label="Promeni temu"
+                    >
+                      <span className="clinic-theme-switch-track">
+                        <span className="clinic-theme-switch-knob" />
+                      </span>
+                      <span className="clinic-theme-switch-text">
+                        {themeMode === "dark" ? "Dark" : "Light"}
+                      </span>
+                    </button>
                     {currentUser ? (
                       <>
                         {currentUser.role === "admin" ? (

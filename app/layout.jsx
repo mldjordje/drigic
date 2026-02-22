@@ -26,7 +26,7 @@ const poppins = Poppins({
 export default function RootLayout({ children }) {
   return (
     <html lang="sr">
-      <body className={`body  ${poppins.variable} ${unbounded.variable}`}>
+      <body className={`body clinic-theme-light ${poppins.variable} ${unbounded.variable}`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

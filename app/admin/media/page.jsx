@@ -301,6 +301,38 @@ export default function AdminMediaPage() {
         <p style={{ marginBottom: 6 }}>Galerija: {gallery.length}</p>
         <p style={{ marginBottom: 0 }}>Video: {videos.length}</p>
       </div>
+
+      {beforeAfter.length ? (
+        <div className="admin-card" style={{ display: "grid", gap: 10 }}>
+          <h3 style={{ marginTop: 0 }}>Pre/posle galerija</h3>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: 10,
+            }}
+          >
+            {beforeAfter.map((item) => (
+              <article key={item.id} className="admin-card" style={{ display: "grid", gap: 8 }}>
+                <strong>{item.treatmentType || "Tretman"}</strong>
+                {item.productUsed ? <small style={{ color: "#c8d9ee" }}>{item.productUsed}</small> : null}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  <img
+                    src={item.beforeImageUrl}
+                    alt={`${item.treatmentType || "Tretman"} pre`}
+                    style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 10 }}
+                  />
+                  <img
+                    src={item.afterImageUrl}
+                    alt={`${item.treatmentType || "Tretman"} posle`}
+                    style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 10 }}
+                  />
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

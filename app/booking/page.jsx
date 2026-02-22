@@ -8,13 +8,13 @@ export default function BookingPage() {
       className="clinic-home5"
       style={{
         minHeight: "100vh",
-        background: "#0A0C00",
-        color: "#f2f5fb",
+        background: "var(--clinic-page-bg, transparent)",
+        color: "var(--clinic-text-strong)",
         padding: "32px 14px",
       }}
     >
       <div style={{ maxWidth: 960, margin: "0 auto" }}>
-        <h1 style={{ marginTop: 0, color: "#f2f5fb" }}>Online booking</h1>
+        <h1 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Online booking</h1>
         <BookingInlineForm googleNextPath="/booking" />
       </div>
     </main>

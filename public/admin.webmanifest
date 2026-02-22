@@ -1,0 +1,23 @@
+{
+  "name": "Dr Igic Admin",
+  "short_name": "Admin",
+  "description": "Admin panel za upravljanje klinikom Dr Igic.",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "sr-RS",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/assets/img/favicons/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

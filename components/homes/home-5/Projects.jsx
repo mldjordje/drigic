@@ -5,7 +5,6 @@ import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 export default function Projects() {
   return (
     <div className="project-area-5 space overflow-hidden" id="tretmani">
-      <div id="rezultati" />
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-8 col-lg-10">

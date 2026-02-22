@@ -3,6 +3,7 @@ import Blogs from "@/components/homes/home-5/Blogs";
 import About from "@/components/homes/home-5/About";
 import Hero from "@/components/homes/home-5/Hero";
 import Projects from "@/components/homes/home-5/Projects";
+import BeforeAfterShowcase from "@/components/homes/home-5/BeforeAfterShowcase";
 import Steps from "@/components/homes/home-5/Steps";
 import Testimonials from "@/components/homes/home-5/Testimonials";
 import Video from "@/components/homes/home-5/Video";
@@ -29,6 +30,7 @@ export default function HomePage5() {
       <Steps />
       <About />
       <Projects />
+      <BeforeAfterShowcase />
       <Testimonials />
       <Video />
       <Blogs />

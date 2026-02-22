@@ -30,8 +30,8 @@ export default function PopupCompletePage() {
         minHeight: "100vh",
         display: "grid",
         placeItems: "center",
-        background: "#0a0c00",
-        color: "#f2f5fb",
+        background: "var(--clinic-page-bg, transparent)",
+        color: "var(--clinic-text-strong)",
       }}
     >
       <p>Zatvaranje Google prijave...</p>

@@ -43,6 +43,13 @@
       "when": 1771833600000,
       "tag": "0005_active_service_promo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771839000000,
+      "tag": "0006_refresh_service_catalog",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,17 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+const HYALURONIC_BRANDS = [
+  { key: "revolax", label: "Revolax", unitPrice: 180 },
+  { key: "teoxane", label: "Teoxane", unitPrice: 220 },
+  { key: "juvederm", label: "Juvederm", unitPrice: 220 },
+];
+
+const HYALURONIC_BRAND_BY_KEY = HYALURONIC_BRANDS.reduce((acc, item) => {
+  acc[item.key] = item;
+  return acc;
+}, {});
+
 function todayIsoDate() {
   const now = new Date();
   const year = now.getFullYear();
@@ -92,7 +103,32 @@ function toMlPresets(maxMl) {
   return Array.from({ length: count }, (_, index) => index + 1);
 }
 
-function getServicePriceLabel(service) {
+function normalizeTextKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isHyaluronicFillerService(service) {
+  return normalizeTextKey(service?.name).includes("hijaluronski filer");
+}
+
+function getBrandLabel(brandKey) {
+  return HYALURONIC_BRAND_BY_KEY[brandKey]?.label || "";
+}
+
+function getServicePriceLabel(service, brandKey) {
+  if (service?.supportsMl && isHyaluronicFillerService(service)) {
+    const selectedBrand = HYALURONIC_BRAND_BY_KEY[brandKey];
+    if (selectedBrand) {
+      return `${selectedBrand.unitPrice} EUR / ml`;
+    }
+    const min = Math.min(...HYALURONIC_BRANDS.map((item) => item.unitPrice));
+    const max = Math.max(...HYALURONIC_BRANDS.map((item) => item.unitPrice));
+    return `${min}-${max} EUR / ml`;
+  }
+
   const value = service?.promotion?.promoPriceRsd || service?.priceRsd || 0;
   return `${value} EUR`;
 }
@@ -116,6 +152,7 @@ export default function BookingInlineForm({
   const [user, setUser] = useState(null);
   const [services, setServices] = useState([]);
   const [selectedMap, setSelectedMap] = useState({});
+  const [selectedBrandMap, setSelectedBrandMap] = useState({});
   const [date, setDate] = useState(todayIsoDate());
   const [availability, setAvailability] = useState([]);
   const [monthAvailability, setMonthAvailability] = useState({});
@@ -194,12 +231,38 @@ export default function BookingInlineForm({
   const serviceSelections = useMemo(
     () =>
       Object.entries(selectedMap)
-        .map(([serviceId, quantity]) => ({
-          serviceId,
-          quantity: Math.max(1, Number(quantity || 1)),
-        }))
+        .map(([serviceId, quantity]) => {
+          const service = serviceLookup.get(serviceId);
+          const brand = selectedBrandMap[serviceId] || null;
+
+          return {
+            serviceId,
+            quantity: Math.max(1, Number(quantity || 1)),
+            brand:
+              service?.supportsMl && isHyaluronicFillerService(service) && brand
+                ? brand
+                : undefined,
+          };
+        })
         .filter((item) => item.serviceId),
-    [selectedMap]
+    [selectedMap, selectedBrandMap, serviceLookup]
+  );
+
+  const missingHyaluronicBrandSelections = useMemo(
+    () =>
+      serviceSelections.filter((selection) => {
+        const service = serviceLookup.get(selection.serviceId);
+        if (!service?.supportsMl || !isHyaluronicFillerService(service)) {
+          return false;
+        }
+        return !selection.brand;
+      }),
+    [serviceSelections, serviceLookup]
+  );
+
+  const canRequestAvailability = useMemo(
+    () => !missingHyaluronicBrandSelections.length,
+    [missingHyaluronicBrandSelections.length]
   );
 
   const maxSlotsInMonth = useMemo(() => {
@@ -249,6 +312,10 @@ export default function BookingInlineForm({
         if (!service) {
           return null;
         }
+        const brandLabel =
+          service.supportsMl && isHyaluronicFillerService(service) && selection.brand
+            ? ` - ${getBrandLabel(selection.brand)}`
+            : "";
         const quantityLabel =
           service.supportsMl || selection.quantity > 1
             ? ` (${selection.quantity} ${service.supportsMl ? "ml" : "kom"})`
@@ -256,7 +323,7 @@ export default function BookingInlineForm({
         const durationLabel = service.supportsMl
           ? getMlDurationMin(service.durationMin, selection.quantity)
           : Number(service.durationMin || 0) * Math.max(1, Number(selection.quantity || 1));
-        return `${service.name}${quantityLabel} - ${durationLabel} min`;
+        return `${service.name}${brandLabel}${quantityLabel} - ${durationLabel} min`;
       })
       .filter(Boolean);
   }, [serviceSelections, serviceLookup]);
@@ -299,6 +366,17 @@ export default function BookingInlineForm({
       next[service.id] = Math.max(1, Number(next[service.id] || 1));
       return next;
     });
+    setSelectedBrandMap((prev) => {
+      const next = { ...prev };
+      if (!checked) {
+        delete next[service.id];
+        return next;
+      }
+      if (service.supportsMl && isHyaluronicFillerService(service) && !next[service.id]) {
+        next[service.id] = "";
+      }
+      return next;
+    });
     setError("");
     setMessage("");
     setSelectedStartAt("");
@@ -308,6 +386,16 @@ export default function BookingInlineForm({
     setSelectedMap((prev) => ({
       ...prev,
       [serviceId]: Math.max(1, Number(quantity || 1)),
+    }));
+    setError("");
+    setMessage("");
+    setSelectedStartAt("");
+  }
+
+  function updateSelectedBrand(serviceId, brandKey) {
+    setSelectedBrandMap((prev) => ({
+      ...prev,
+      [serviceId]: brandKey,
     }));
     setError("");
     setMessage("");
@@ -351,6 +439,11 @@ export default function BookingInlineForm({
       return;
     }
 
+    if (!canRequestAvailability) {
+      setQuote(null);
+      return;
+    }
+
     fetch("/api/bookings/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -365,10 +458,16 @@ export default function BookingInlineForm({
         setQuote(data);
       })
       .catch((err) => setError(err.message));
-  }, [serviceSelections]);
+  }, [serviceSelections, canRequestAvailability]);
 
   useEffect(() => {
     if (!serviceSelections.length) {
+      setMonthAvailability({});
+      setCalendarError("");
+      return;
+    }
+
+    if (!canRequestAvailability) {
       setMonthAvailability({});
       setCalendarError("");
       return;
@@ -413,10 +512,10 @@ export default function BookingInlineForm({
     return () => {
       cancelled = true;
     };
-  }, [serviceSelections, monthKey]);
+  }, [serviceSelections, monthKey, canRequestAvailability]);
 
   useEffect(() => {
-    if (!serviceSelections.length || monthLoading) {
+    if (!serviceSelections.length || monthLoading || !canRequestAvailability) {
       return;
     }
 
@@ -434,10 +533,10 @@ export default function BookingInlineForm({
       setDate(availableDates[0]);
       setSelectedStartAt("");
     }
-  }, [serviceSelections, monthAvailability, monthKey, date, monthLoading, today]);
+  }, [serviceSelections, monthAvailability, monthKey, date, monthLoading, today, canRequestAvailability]);
 
   useEffect(() => {
-    if (!serviceSelections.length || !date) {
+    if (!serviceSelections.length || !date || !canRequestAvailability) {
       setAvailability([]);
       return;
     }
@@ -468,7 +567,7 @@ export default function BookingInlineForm({
     return () => {
       cancelled = true;
     };
-  }, [serviceSelections, date]);
+  }, [serviceSelections, date, canRequestAvailability]);
 
   async function handleBook(event) {
     event.preventDefault();
@@ -483,6 +582,11 @@ export default function BookingInlineForm({
 
     if (!serviceSelections.length) {
       setError("Izaberite barem jednu uslugu.");
+      return;
+    }
+
+    if (missingHyaluronicBrandSelections.length) {
+      setError("Za Hijaluronski filer morate izabrati i brend i kolicinu.");
       return;
     }
 
@@ -528,8 +632,8 @@ export default function BookingInlineForm({
   if (isBootstrapping) {
     return (
       <section className={sectionClassName} style={cardStyle}>
-        <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Booking</h2>
-        <p style={{ color: "#e6eefb", marginBottom: 0 }}>Ucitavanje...</p>
+        <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Booking</h2>
+        <p style={{ color: "var(--clinic-text-muted)", marginBottom: 0 }}>Ucitavanje...</p>
       </section>
     );
   }
@@ -537,9 +641,9 @@ export default function BookingInlineForm({
   if (!user) {
     return (
       <section className={sectionClassName} style={cardStyle}>
-        <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Zakazivanje termina</h2>
+        <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Zakazivanje termina</h2>
         <div className="clinic-login-lock">
-          <p style={{ marginTop: 0, color: "#e8f1ff" }}>
+          <p style={{ marginTop: 0, color: "var(--clinic-text-muted)" }}>
             Da biste zakazali termin, prvo se prijavite preko Google naloga.
           </p>
           <a
@@ -556,8 +660,8 @@ export default function BookingInlineForm({
 
   return (
     <section className={sectionClassName} style={cardStyle}>
-      <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Zakazivanje termina</h2>
-      <p style={{ color: "#e6eefb" }}>
+      <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Zakazivanje termina</h2>
+      <p style={{ color: "var(--clinic-text-muted)" }}>
         Prijavljeni ste kao <strong>{user.email}</strong>.
       </p>
 
@@ -574,7 +678,7 @@ export default function BookingInlineForm({
           </div>
         ) : null}
 
-        <h3 style={{ color: "#f2f5fb" }}>1) Izaberite tretmane</h3>
+        <h3 style={{ color: "var(--clinic-text-strong)" }}>1) Izaberite tretmane</h3>
         {selectedServiceLabels.length ? (
           <div className="clinic-selected-services">
             {selectedServiceLabels.map((label) => (
@@ -584,10 +688,15 @@ export default function BookingInlineForm({
             ))}
           </div>
         ) : null}
+        {missingHyaluronicBrandSelections.length ? (
+          <p style={{ color: "var(--clinic-danger)", marginBottom: 12 }}>
+            Za uslugu Hijaluronski filer obavezno izaberite brend i kolicinu.
+          </p>
+        ) : null}
 
         {packageServices.length ? (
           <div className="clinic-service-category">
-            <h4 style={{ marginBottom: 8, color: "#f2f5fb" }}>Paketi usluga</h4>
+            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>Paketi usluga</h4>
             <div style={{ display: "grid", gap: 8 }}>
               {packageServices.map((service) => {
                 const selected = Boolean(selectedMap[service.id]);
@@ -603,7 +712,7 @@ export default function BookingInlineForm({
                         checked={selected}
                         onChange={(event) => updateSelectedService(service, event.target.checked)}
                       />
-                      <span style={{ color: "#f2f5fb", display: "grid", gap: 4 }}>
+                      <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
                         <strong>{service.name}</strong>
                         <small>
                           {service.durationMin} min - {getServicePriceLabel(service)}
@@ -630,11 +739,14 @@ export default function BookingInlineForm({
 
         {singleCategoryGroups.map((category) => (
           <div key={category.id} className="clinic-service-category">
-            <h4 style={{ marginBottom: 8, color: "#f2f5fb" }}>{category.name}</h4>
+            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{category.name}</h4>
             <div style={{ display: "grid", gap: 8 }}>
               {(category.services || []).map((service) => {
                 const selected = Boolean(selectedMap[service.id]);
                 const selectedQuantity = Math.max(1, Number(selectedMap[service.id] || 1));
+                const selectedBrand = selectedBrandMap[service.id] || "";
+                const showBrandPicker =
+                  service.supportsMl && isHyaluronicFillerService(service) && selected;
                 return (
                   <div
                     key={service.id}
@@ -647,10 +759,10 @@ export default function BookingInlineForm({
                         checked={selected}
                         onChange={(event) => updateSelectedService(service, event.target.checked)}
                       />
-                      <span style={{ color: "#f2f5fb", display: "grid", gap: 4 }}>
+                      <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
                         <strong>{service.name}</strong>
                         <small>
-                          {service.durationMin} min - {getServicePriceLabel(service)}
+                          {service.durationMin} min - {getServicePriceLabel(service, selectedBrand)}
                         </small>
                       </span>
                     </label>
@@ -667,6 +779,22 @@ export default function BookingInlineForm({
                             onClick={() => updateSelectedQuantity(service.id, mlValue)}
                           >
                             {mlValue} ml
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                    {showBrandPicker ? (
+                      <div className="clinic-brand-presets">
+                        {HYALURONIC_BRANDS.map((brand) => (
+                          <button
+                            key={brand.key}
+                            type="button"
+                            className={`clinic-brand-btn ${
+                              selectedBrand === brand.key ? "is-active" : ""
+                            }`}
+                            onClick={() => updateSelectedBrand(service.id, brand.key)}
+                          >
+                            {brand.label} ({brand.unitPrice} EUR/ml)
                           </button>
                         ))}
                       </div>
@@ -689,10 +817,16 @@ export default function BookingInlineForm({
           </div>
         ) : null}
 
-        <h3 ref={dateStepRef} style={{ color: "#f2f5fb" }}>2) Datum i vreme</h3>
+        <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>2) Datum i vreme</h3>
 
         {!serviceSelections.length ? (
-          <p style={{ color: "#e6eefb" }}>Prvo izaberite uslugu da biste videli slobodne datume.</p>
+          <p style={{ color: "var(--clinic-text-muted)" }}>
+            Prvo izaberite uslugu da biste videli slobodne datume.
+          </p>
+        ) : !canRequestAvailability ? (
+          <p style={{ color: "var(--clinic-text-muted)" }}>
+            Izaberite brend za Hijaluronski filer da bi se prikazali dostupni termini.
+          </p>
         ) : (
           <>
             <div className="clinic-booking-calendar">
@@ -790,7 +924,7 @@ export default function BookingInlineForm({
                     </button>
                   ))
                 ) : (
-                  <p style={{ color: "#e6eefb", marginBottom: 0 }}>
+                  <p style={{ color: "var(--clinic-text-muted)", marginBottom: 0 }}>
                     Nema slobodnih termina za izabrani datum/usluge.
                   </p>
                 )}
@@ -799,7 +933,7 @@ export default function BookingInlineForm({
           </>
         )}
 
-        <h3 style={{ marginTop: 20, color: "#f2f5fb" }}>3) Napomena</h3>
+        <h3 style={{ marginTop: 20, color: "var(--clinic-text-strong)" }}>3) Napomena</h3>
         <textarea
           className="clinic-booking-note-input clinic-glow-field"
           value={notes}
@@ -815,7 +949,10 @@ export default function BookingInlineForm({
             {quote.items?.length ? (
               <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
                 {quote.items.map((item) => (
-                  <li key={item.serviceId} style={{ color: "#dfe9f8" }}>
+                  <li
+                    key={`${item.serviceId}-${item.brand || "standard"}`}
+                    style={{ color: "var(--clinic-text-secondary)" }}
+                  >
                     {item.name} - {item.quantity} {item.unitLabel} - {item.finalPriceRsd} EUR
                   </li>
                 ))}
@@ -828,24 +965,24 @@ export default function BookingInlineForm({
           {loading ? "Zakazivanje..." : "Potvrdi zakazivanje"}
         </button>
 
-        {message ? <p style={{ color: "#9be39f" }}>{message}</p> : null}
-        {error ? <p style={{ color: "#ff9f9f" }}>{error}</p> : null}
+        {message ? <p style={{ color: "var(--clinic-success)" }}>{message}</p> : null}
+        {error ? <p style={{ color: "var(--clinic-danger)" }}>{error}</p> : null}
       </form>
 
       {showUpcoming && user ? (
         <section style={{ ...cardStyle, marginTop: 16 }}>
-          <h3 style={{ marginTop: 0, color: "#f2f5fb" }}>Moji naredni termini</h3>
+          <h3 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Moji naredni termini</h3>
           {bookings.length ? (
             <ul style={{ paddingLeft: 18, margin: 0 }}>
               {bookings.map((booking) => (
-                <li key={booking.id} style={{ marginBottom: 8, color: "#f2f5fb" }}>
+                <li key={booking.id} style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>
                   {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min -{" "}
                   {booking.totalPriceRsd} EUR ({booking.status})
                 </li>
               ))}
             </ul>
           ) : (
-            <p style={{ marginBottom: 0, color: "#e6eefb" }}>Nema zakazanih termina.</p>
+            <p style={{ marginBottom: 0, color: "var(--clinic-text-muted)" }}>Nema zakazanih termina.</p>
           )}
         </section>
       ) : null}
@@ -865,21 +1002,21 @@ export default function BookingInlineForm({
 }
 
 const cardStyle = {
-  background: "rgba(20, 29, 42, 0.48)",
-  border: "1px solid rgba(217,232,248,0.28)",
+  background: "var(--clinic-card-bg)",
+  border: "1px solid var(--clinic-card-border)",
   borderRadius: 16,
   padding: 18,
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
+  backdropFilter: "blur(var(--clinic-card-blur, 10px))",
+  WebkitBackdropFilter: "blur(var(--clinic-card-blur, 10px))",
 };
 
 const inputStyle = {
   width: "100%",
   borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.35)",
+  border: "1px solid var(--clinic-field-border)",
   padding: "10px 12px",
-  background: "rgba(10,12,0,0.5)",
-  color: "#f2f5fb",
+  background: "var(--clinic-field-bg)",
+  color: "var(--clinic-text-strong)",
 };
 
 const checkboxRowStyle = {
@@ -887,7 +1024,7 @@ const checkboxRowStyle = {
   gap: 8,
   alignItems: "center",
   padding: "8px 10px",
-  border: "1px solid rgba(217,232,248,0.2)",
+  border: "1px solid var(--clinic-card-border-soft)",
   borderRadius: 8,
 };
 
@@ -896,16 +1033,16 @@ const summaryStyle = {
   marginBottom: 14,
   padding: "10px 12px",
   borderRadius: 10,
-  background: "rgba(217,232,248,0.12)",
-  border: "1px solid rgba(217,232,248,0.28)",
-  color: "#f2f5fb",
+  background: "var(--clinic-summary-bg)",
+  border: "1px solid var(--clinic-card-border)",
+  color: "var(--clinic-text-strong)",
 };
 
 const primaryButtonStyle = {
   borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.6)",
-  background: "rgba(20, 38, 61, 0.95)",
-  color: "#f4f8ff",
+  border: "1px solid var(--clinic-button-border)",
+  background: "var(--clinic-button-bg)",
+  color: "var(--clinic-button-text)",
   padding: "10px 14px",
   fontWeight: 700,
   cursor: "pointer",

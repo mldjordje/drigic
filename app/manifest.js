@@ -5,8 +5,8 @@ export default function manifest() {
     description: "Online zakazivanje i upravljanje tretmanima klinike estetske medicine.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0A0C00",
-    theme_color: "#0A0C00",
+    background_color: "#F8F4EC",
+    theme_color: "#F8F4EC",
     lang: "sr-RS",
     icons: [
       {
@@ -17,4 +17,3 @@ export default function manifest() {
     ],
   };
 }
-

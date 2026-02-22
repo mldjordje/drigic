@@ -23,6 +23,7 @@ const payloadSchema = z.object({
       z.object({
         serviceId: z.string().uuid(),
         quantity: z.number().int().min(1).optional(),
+        brand: z.string().min(1).max(80).optional(),
       })
     )
     .optional(),
@@ -59,7 +60,9 @@ export async function POST(request) {
       return fail(400, `Booking must be within next ${settings.bookingWindowDays} days.`);
     }
 
-    const quote = await resolveQuote(normalizedSelections);
+    const quote = await resolveQuote(normalizedSelections, {
+      requireHyaluronicBrand: true,
+    });
     const endsAt = addMinutes(startAt, quote.totalDurationMin);
     const employee = await getDefaultEmployee();
 

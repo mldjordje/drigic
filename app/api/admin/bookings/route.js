@@ -33,6 +33,7 @@ const createSchema = z.object({
       z.object({
         serviceId: z.string().uuid(),
         quantity: z.number().int().min(1).optional(),
+        brand: z.string().min(1).max(80).optional(),
       })
     )
     .optional(),

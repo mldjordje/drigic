@@ -11,6 +11,7 @@ const payloadSchema = z.object({
       z.object({
         serviceId: z.string().uuid(),
         quantity: z.number().int().min(1).optional(),
+        brand: z.string().min(1).max(80).optional(),
       })
     )
     .optional(),
@@ -28,7 +29,7 @@ export async function POST(request) {
       parsed.data.serviceSelections?.length
         ? parsed.data.serviceSelections
         : parsed.data.serviceIds || [];
-    const quote = await resolveQuote(input);
+    const quote = await resolveQuote(input, { requireHyaluronicBrand: true });
     return ok({ ok: true, ...quote, currency: "EUR" });
   } catch (error) {
     return fail(400, error.message);

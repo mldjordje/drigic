@@ -28,11 +28,13 @@ function parseServiceSelections(value = "") {
       .map((item) => ({
         serviceId: String(item?.serviceId || "").trim(),
         quantity: Number(item?.quantity || 1),
+        brand: String(item?.brand || "").trim(),
       }))
       .filter((item) => item.serviceId)
       .map((item) => ({
         serviceId: item.serviceId,
         quantity: Number.isFinite(item.quantity) ? Math.max(1, Math.floor(item.quantity)) : 1,
+        brand: item.brand || undefined,
       }));
   } catch {
     return [];
@@ -52,11 +54,21 @@ export async function GET(request) {
 
   try {
     if (month) {
-      const data = await getAvailabilityByMonth({ month, serviceIds, serviceSelections });
+      const data = await getAvailabilityByMonth({
+        month,
+        serviceIds,
+        serviceSelections,
+        requireHyaluronicBrand: true,
+      });
       return ok({ ok: true, mode: "month", ...data });
     }
 
-    const data = await getAvailabilityByDay({ date: day, serviceIds, serviceSelections });
+    const data = await getAvailabilityByDay({
+      date: day,
+      serviceIds,
+      serviceSelections,
+      requireHyaluronicBrand: true,
+    });
     return ok({ ok: true, mode: "day", ...data });
   } catch (error) {
     return fail(400, error.message);
