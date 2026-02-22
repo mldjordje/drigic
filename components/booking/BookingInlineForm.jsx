@@ -170,6 +170,7 @@ export default function BookingInlineForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [hideNextDateCta, setHideNextDateCta] = useState(false);
   const dateStepRef = useRef(null);
 
   const today = useMemo(() => todayIsoDate(), []);
@@ -403,6 +404,39 @@ export default function BookingInlineForm({
   }
 
   useEffect(() => {
+    if (!serviceSelections.length) {
+      setHideNextDateCta(false);
+      return;
+    }
+    setHideNextDateCta(false);
+  }, [serviceSelections]);
+
+  useEffect(() => {
+    if (!serviceSelections.length || hideNextDateCta) {
+      return;
+    }
+
+    const node = dateStepRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setHideNextDateCta(true);
+        }
+      },
+      {
+        threshold: 0.25,
+      }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [serviceSelections.length, hideNextDateCta]);
+
+  useEffect(() => {
     let mounted = true;
     loadSession()
       .catch(() => {})
@@ -624,6 +658,7 @@ export default function BookingInlineForm({
   }
 
   function scrollToDateStep() {
+    setHideNextDateCta(true);
     dateStepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -666,7 +701,7 @@ export default function BookingInlineForm({
       </p>
 
       <form onSubmit={handleBook}>
-        {serviceSelections.length ? (
+        {serviceSelections.length && !hideNextDateCta ? (
           <div className="clinic-next-date-sticky">
             <button
               type="button"
@@ -805,7 +840,7 @@ export default function BookingInlineForm({
             </div>
           </div>
         ))}
-        {serviceSelections.length ? (
+        {serviceSelections.length && !hideNextDateCta ? (
           <div className="clinic-next-step-wrap">
             <button
               type="button"
@@ -986,7 +1021,7 @@ export default function BookingInlineForm({
           )}
         </section>
       ) : null}
-      {serviceSelections.length ? (
+      {serviceSelections.length && !hideNextDateCta ? (
         <button
           type="button"
           className="clinic-glow-btn clinic-next-date-fab"
