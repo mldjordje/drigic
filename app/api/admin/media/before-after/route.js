@@ -5,6 +5,14 @@ import { uploadOptionalFile } from "@/lib/storage/upload";
 
 export const runtime = "nodejs";
 
+function isMissingServiceCategoryColumn(error) {
+  const message = String(error?.message || error?.cause?.message || "").toLowerCase();
+  return (
+    message.includes("service_category") &&
+    (message.includes("does not exist") || message.includes("column"))
+  );
+}
+
 export async function POST(request) {
   const auth = await requireAdmin(request);
   if (auth.error) {
@@ -39,17 +47,37 @@ export async function POST(request) {
   }
 
   const db = getDb();
-  const [record] = await db
-    .insert(schema.beforeAfterCases)
-    .values({
-      treatmentType,
-      serviceCategory: serviceCategory || null,
-      productUsed: productUsed || null,
-      beforeImageUrl,
-      afterImageUrl,
-      isPublished: true,
-    })
-    .returning();
+  let record;
+  try {
+    [record] = await db
+      .insert(schema.beforeAfterCases)
+      .values({
+        treatmentType,
+        serviceCategory: serviceCategory || null,
+        productUsed: productUsed || null,
+        beforeImageUrl,
+        afterImageUrl,
+        isPublished: true,
+      })
+      .returning();
+  } catch (error) {
+    if (!isMissingServiceCategoryColumn(error)) {
+      throw error;
+    }
+
+    [record] = await db
+      .insert(schema.beforeAfterCases)
+      .values({
+        treatmentType,
+        productUsed: productUsed || null,
+        beforeImageUrl,
+        afterImageUrl,
+        isPublished: true,
+      })
+      .returning();
+
+    record = { ...record, serviceCategory: null };
+  }
 
   return created({ ok: true, data: record });
 }

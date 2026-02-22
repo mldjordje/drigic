@@ -4,15 +4,58 @@ import { getDb, schema } from "@/lib/db/client";
 
 export const runtime = "nodejs";
 
+function isMissingServiceCategoryColumn(error) {
+  const message = String(error?.message || error?.cause?.message || "").toLowerCase();
+  return (
+    message.includes("service_category") &&
+    (message.includes("does not exist") || message.includes("column"))
+  );
+}
+
 export async function GET() {
   const db = getDb();
-  const rows = await db
-    .select()
-    .from(schema.beforeAfterCases)
-    .where(eq(schema.beforeAfterCases.isPublished, true))
-    .orderBy(desc(schema.beforeAfterCases.createdAt))
-    .limit(30);
+  let rows;
+
+  try {
+    rows = await db
+      .select({
+        id: schema.beforeAfterCases.id,
+        treatmentType: schema.beforeAfterCases.treatmentType,
+        serviceCategory: schema.beforeAfterCases.serviceCategory,
+        productUsed: schema.beforeAfterCases.productUsed,
+        beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
+        afterImageUrl: schema.beforeAfterCases.afterImageUrl,
+        isPublished: schema.beforeAfterCases.isPublished,
+        createdAt: schema.beforeAfterCases.createdAt,
+        updatedAt: schema.beforeAfterCases.updatedAt,
+      })
+      .from(schema.beforeAfterCases)
+      .where(eq(schema.beforeAfterCases.isPublished, true))
+      .orderBy(desc(schema.beforeAfterCases.createdAt))
+      .limit(30);
+  } catch (error) {
+    if (!isMissingServiceCategoryColumn(error)) {
+      throw error;
+    }
+
+    const fallbackRows = await db
+      .select({
+        id: schema.beforeAfterCases.id,
+        treatmentType: schema.beforeAfterCases.treatmentType,
+        productUsed: schema.beforeAfterCases.productUsed,
+        beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
+        afterImageUrl: schema.beforeAfterCases.afterImageUrl,
+        isPublished: schema.beforeAfterCases.isPublished,
+        createdAt: schema.beforeAfterCases.createdAt,
+        updatedAt: schema.beforeAfterCases.updatedAt,
+      })
+      .from(schema.beforeAfterCases)
+      .where(eq(schema.beforeAfterCases.isPublished, true))
+      .orderBy(desc(schema.beforeAfterCases.createdAt))
+      .limit(30);
+
+    rows = fallbackRows.map((row) => ({ ...row, serviceCategory: null }));
+  }
 
   return ok({ ok: true, data: rows });
 }
-
