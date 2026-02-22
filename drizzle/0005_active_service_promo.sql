@@ -1,4 +1,4 @@
-﻿-- Keep only one active promotion per service to avoid quote/booking mismatches.
+-- Keep only one active promotion per service to avoid quote/booking mismatches.
 WITH ranked AS (
   SELECT
     id,
