@@ -22,6 +22,7 @@ const emptyForm = {
   id: "",
   name: "",
   logoUrl: "",
+  logoFile: null,
   sortOrder: 0,
   isActive: true,
 };
@@ -32,6 +33,21 @@ export default function AdminPreparatiPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState("");
+
+  useEffect(() => {
+    if (!form.logoFile) {
+      setLogoPreviewUrl("");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(form.logoFile);
+    setLogoPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [form.logoFile]);
 
   async function loadProducts() {
     setLoading(true);
@@ -61,18 +77,35 @@ export default function AdminPreparatiPage() {
     setMessage("");
 
     try {
-      const payload = {
-        name: form.name.trim(),
-        logoUrl: form.logoUrl.trim(),
-        sortOrder: Number(form.sortOrder || 0),
-        isActive: Boolean(form.isActive),
-      };
-
       const isEdit = Boolean(form.id);
+      const logoUrl = form.logoUrl.trim();
+      const name = form.name.trim();
+
+      if (!name) {
+        throw new Error("Naziv preparata je obavezan.");
+      }
+
+      if (!logoUrl && !form.logoFile) {
+        throw new Error("Unesite logo URL ili uploadujte sliku logo-a.");
+      }
+
+      const payload = new FormData();
+      payload.set("name", name);
+      payload.set("sortOrder", String(Number(form.sortOrder || 0)));
+      payload.set("isActive", String(Boolean(form.isActive)));
+      if (logoUrl) {
+        payload.set("logoUrl", logoUrl);
+      }
+      if (form.logoFile) {
+        payload.set("logoFile", form.logoFile);
+      }
+      if (isEdit) {
+        payload.set("id", form.id);
+      }
+
       const response = await fetch("/api/admin/treatment-products", {
         method: isEdit ? "PATCH" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isEdit ? { ...payload, id: form.id } : payload),
+        body: payload,
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
@@ -145,8 +178,21 @@ export default function AdminPreparatiPage() {
             value={form.logoUrl}
             onChange={(event) => setForm((prev) => ({ ...prev, logoUrl: event.target.value }))}
             placeholder="https://..."
-            required
           />
+        </label>
+        <label>
+          Upload logo slike
+          <input
+            type="file"
+            accept="image/*"
+            className="admin-inline-input"
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, logoFile: event.target.files?.[0] || null }))
+            }
+          />
+          <small style={{ color: "#9db5d4" }}>
+            Sa telefona mozete izabrati fotografiju iz galerije ili direktno kameru.
+          </small>
         </label>
         <div className="admin-services-split-grid">
           <label>
@@ -174,10 +220,10 @@ export default function AdminPreparatiPage() {
           </label>
         </div>
 
-        {form.logoUrl ? (
+        {logoPreviewUrl || form.logoUrl ? (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <img
-              src={form.logoUrl}
+              src={logoPreviewUrl || form.logoUrl}
               alt={form.name || "logo"}
               style={{
                 width: 44,
@@ -245,6 +291,7 @@ export default function AdminPreparatiPage() {
                     id: product.id,
                     name: product.name || "",
                     logoUrl: product.logoUrl || "",
+                    logoFile: null,
                     sortOrder: product.sortOrder || 0,
                     isActive: Boolean(product.isActive),
                   })

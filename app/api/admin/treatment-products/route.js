@@ -3,6 +3,7 @@ import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
+import { uploadOptionalFile } from "@/lib/storage/upload";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,80 @@ const updateSchema = z.object({
   sortOrder: z.coerce.number().int().min(0).max(9999).optional(),
   isActive: z.boolean().optional(),
 });
+
+function isMultipartRequest(request) {
+  const contentType = String(request.headers.get("content-type") || "").toLowerCase();
+  return contentType.includes("multipart/form-data");
+}
+
+function toOptionalString(value) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  const normalized = String(value).trim();
+  return normalized ? normalized : undefined;
+}
+
+function toOptionalNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return undefined;
+  }
+  return numeric;
+}
+
+function toOptionalBoolean(value) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (typeof value === "boolean") {
+    return value;
+  }
+  const normalized = String(value).toLowerCase().trim();
+  if (normalized === "true" || normalized === "1" || normalized === "on") {
+    return true;
+  }
+  if (normalized === "false" || normalized === "0" || normalized === "off") {
+    return false;
+  }
+  return undefined;
+}
+
+async function parseCreatePayload(request) {
+  if (!isMultipartRequest(request)) {
+    return readJson(request);
+  }
+
+  const formData = await request.formData();
+  const uploadedLogoUrl = await uploadOptionalFile(formData.get("logoFile"), "treatment-products");
+
+  return {
+    name: toOptionalString(formData.get("name")) || "",
+    logoUrl: uploadedLogoUrl || toOptionalString(formData.get("logoUrl")) || "",
+    sortOrder: toOptionalNumber(formData.get("sortOrder")) ?? 0,
+    isActive: toOptionalBoolean(formData.get("isActive")) ?? true,
+  };
+}
+
+async function parseUpdatePayload(request) {
+  if (!isMultipartRequest(request)) {
+    return readJson(request);
+  }
+
+  const formData = await request.formData();
+  const uploadedLogoUrl = await uploadOptionalFile(formData.get("logoFile"), "treatment-products");
+
+  return {
+    id: toOptionalString(formData.get("id")) || "",
+    name: toOptionalString(formData.get("name")),
+    logoUrl: uploadedLogoUrl || toOptionalString(formData.get("logoUrl")),
+    sortOrder: toOptionalNumber(formData.get("sortOrder")),
+    isActive: toOptionalBoolean(formData.get("isActive")),
+  };
+}
 
 export async function GET(request) {
   const auth = await requireAdmin(request);
@@ -42,7 +117,7 @@ export async function POST(request) {
     return auth.error;
   }
 
-  const body = await readJson(request);
+  const body = await parseCreatePayload(request);
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
     return fail(400, "Invalid payload", parsed.error.flatten());
@@ -77,7 +152,7 @@ export async function PATCH(request) {
     return auth.error;
   }
 
-  const body = await readJson(request);
+  const body = await parseUpdatePayload(request);
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
     return fail(400, "Invalid payload", parsed.error.flatten());
