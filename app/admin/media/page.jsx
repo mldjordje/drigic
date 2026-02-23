@@ -8,8 +8,6 @@ const emptyBeforeAfterForm = {
   treatmentType: "",
   serviceCategory: "",
   productUsed: "",
-  beforeImage: null,
-  afterImage: null,
   collageImage: null,
   isPublished: true,
 };
@@ -112,14 +110,8 @@ export default function AdminMediaPage() {
       if (!beforeAfterForm.treatmentType.trim()) {
         throw new Error("Vrsta tretmana je obavezna.");
       }
-      if (
-        !beforeAfterForm.id &&
-        !beforeAfterForm.collageImage &&
-        (!beforeAfterForm.beforeImage || !beforeAfterForm.afterImage)
-      ) {
-        throw new Error(
-          "Za novi unos izaberi pre i posle sliku, ili samo kolaz sliku."
-        );
+      if (!beforeAfterForm.id && !beforeAfterForm.collageImage) {
+        throw new Error("Za novi unos izaberi kolaz sliku.");
       }
 
       const formData = new FormData();
@@ -130,12 +122,6 @@ export default function AdminMediaPage() {
 
       if (beforeAfterForm.id) {
         formData.set("id", beforeAfterForm.id);
-      }
-      if (beforeAfterForm.beforeImage) {
-        formData.set("beforeImage", beforeAfterForm.beforeImage);
-      }
-      if (beforeAfterForm.afterImage) {
-        formData.set("afterImage", beforeAfterForm.afterImage);
       }
       if (beforeAfterForm.collageImage) {
         formData.set("collageImage", beforeAfterForm.collageImage);
@@ -366,49 +352,9 @@ export default function AdminMediaPage() {
           />
           <div className="admin-media-upload-grid">
             <div className="admin-media-upload-field">
-              <span className="admin-media-upload-title">Pre slika</span>
-              <input
-                id="before-after-before-file"
-                className="admin-media-upload-input"
-                type="file"
-                accept="image/*"
-                onChange={(event) =>
-                  setBeforeAfterForm((prev) => ({
-                    ...prev,
-                    beforeImage: event.target.files?.[0] || null,
-                  }))
-                }
-              />
-              <label htmlFor="before-after-before-file" className="admin-media-upload-trigger">
-                Odaberi sliku
-              </label>
-              <small className="admin-media-upload-name">
-                {beforeAfterForm.beforeImage?.name || "Nije odabrana nova slika"}
-              </small>
-            </div>
-            <div className="admin-media-upload-field">
-              <span className="admin-media-upload-title">Posle slika</span>
-              <input
-                id="before-after-after-file"
-                className="admin-media-upload-input"
-                type="file"
-                accept="image/*"
-                onChange={(event) =>
-                  setBeforeAfterForm((prev) => ({
-                    ...prev,
-                    afterImage: event.target.files?.[0] || null,
-                  }))
-                }
-              />
-              <label htmlFor="before-after-after-file" className="admin-media-upload-trigger">
-                Odaberi sliku
-              </label>
-              <small className="admin-media-upload-name">
-                {beforeAfterForm.afterImage?.name || "Nije odabrana nova slika"}
-              </small>
-            </div>
-            <div className="admin-media-upload-field">
-              <span className="admin-media-upload-title">Kolaz (opciono)</span>
+              <span className="admin-media-upload-title">
+                Kolaz slika {beforeAfterForm.id ? "(opciono)" : ""}
+              </span>
               <input
                 id="before-after-collage-file"
                 className="admin-media-upload-input"
@@ -604,8 +550,6 @@ export default function AdminMediaPage() {
                       treatmentType: item.treatmentType || "",
                       serviceCategory: item.serviceCategory || "",
                       productUsed: item.productUsed || "",
-                      beforeImage: null,
-                      afterImage: null,
                       collageImage: null,
                       isPublished: Boolean(item.isPublished),
                     })
