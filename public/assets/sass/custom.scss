@@ -2603,22 +2603,7 @@ a.clinic-glow-btn {
   height: auto;
 }
 
-/* Logo slot — CSS-only theme swap, works before JS runs */
-.clinic-preloader__logo-slot {
-  display: none;
-}
 
-.clinic-preloader__logo-slot--dark {
-  display: block;
-}
-
-.clinic-theme-light .clinic-preloader__logo-slot--dark {
-  display: none;
-}
-
-.clinic-theme-light .clinic-preloader__logo-slot--light {
-  display: block;
-}
 
 .clinic-preloader__sweep {
   position: absolute;
@@ -2698,31 +2683,4 @@ a.clinic-glow-btn {
   100% { width: 100%; }
 }
 
-.clinic-theme-light .clinic-preloader {
-  background: #fafafa;
-}
-
-
-.clinic-theme-light .clinic-preloader__tagline {
-  color: rgba(10, 10, 10, 0.65);
-}
-
-.clinic-theme-light .clinic-preloader__bar-track {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.clinic-theme-light .clinic-preloader__bar-fill {
-  background: rgba(0, 0, 0, 0.6);
-}
-
-.clinic-theme-light .clinic-preloader__sweep {
-  background: linear-gradient(
-    105deg,
-    transparent 30%,
-    rgba(0, 0, 0, 0.06) 45%,
-    rgba(0, 0, 0, 0.1) 50%,
-    rgba(0, 0, 0, 0.06) 55%,
-    transparent 70%
-  );
-}
 
