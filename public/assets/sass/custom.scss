@@ -2577,8 +2577,9 @@ a.clinic-glow-btn {
 
 @media (max-width: 991px) {
   .clinic-home5 .clinic-nav-logo {
-    width: 200px !important;
-    max-height: 62px !important;
+    width: 230px !important;
+    max-height: none !important;
+    height: auto !important;
   }
 
   .clinic-home5 .header-layout2 .header-logo {
@@ -2600,8 +2601,9 @@ a.clinic-glow-btn {
   }
 
   .clinic-home5 .clinic-nav-logo {
-    width: 170px !important;
-    max-height: 52px !important;
+    width: 200px !important;
+    max-height: none !important;
+    height: auto !important;
   }
 }
 
