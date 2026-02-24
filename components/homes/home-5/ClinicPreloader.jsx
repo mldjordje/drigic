@@ -16,7 +16,11 @@ export default function ClinicPreloader() {
       const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
       setTimeout(() => {
         setFadeOut(true);
-        setTimeout(() => setVisible(false), 700);
+        setTimeout(() => {
+          setVisible(false);
+          // Signal hero to start its entrance animation now
+          window.dispatchEvent(new CustomEvent("clinic:preloader:done"));
+        }, 700);
       }, remaining);
     };
 
