@@ -281,7 +281,7 @@ export default function Header4() {
         >
           <div className="menu-area">
             <div className="container-fluid">
-              <div className="row align-items-center justify-content-between" style={{ flexWrap: "nowrap", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div className="row align-items-center justify-content-between" style={{ flexWrap: "nowrap", display: "flex", alignItems: "center" }}>
                 <div className="col-auto">
                   <div className="header-logo">
                     <Link scroll={false} href="/">
