@@ -2440,8 +2440,8 @@ a.clinic-glow-btn {
 }
 
 .clinic-home5 .clinic-nav-logo {
-  width: 276px;
-  max-height: 88px;
+  width: 200px;
+  max-height: 70px;
   object-fit: contain;
   object-position: left center;
   filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.7));
@@ -2577,8 +2577,7 @@ a.clinic-glow-btn {
 
 @media (max-width: 991px) {
   .clinic-home5 .clinic-nav-logo {
-    width: 230px !important;
-    max-height: none !important;
+    width: 155px !important;
     height: auto !important;
   }
 
@@ -2601,8 +2600,7 @@ a.clinic-glow-btn {
   }
 
   .clinic-home5 .clinic-nav-logo {
-    width: 200px !important;
-    max-height: none !important;
+    width: 140px !important;
     height: auto !important;
   }
 }
