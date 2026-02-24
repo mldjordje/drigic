@@ -2393,11 +2393,6 @@ a.clinic-glow-btn {
     min-height: 56px;
   }
 
-  .clinic-home5 .clinic-nav-logo {
-    width: 216px;
-    max-height: 66px;
-  }
-
   .clinic-home5 .mobile-menu-area .mobile-logo {
     margin-left: -14px;
     padding: 12px 0 16px !important;
@@ -2582,8 +2577,8 @@ a.clinic-glow-btn {
 
 @media (max-width: 991px) {
   .clinic-home5 .clinic-nav-logo {
-    width: 200px;
-    max-height: 62px;
+    width: 200px !important;
+    max-height: 62px !important;
   }
 
   .clinic-home5 .header-layout2 .header-logo {
@@ -2605,8 +2600,8 @@ a.clinic-glow-btn {
   }
 
   .clinic-home5 .clinic-nav-logo {
-    width: 170px;
-    max-height: 52px;
+    width: 170px !important;
+    max-height: 52px !important;
   }
 }
 
