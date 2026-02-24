@@ -699,6 +699,8 @@ a.clinic-glow-btn {
     background: transparent !important;
     box-shadow: none !important;
     transition: transform 0.35s ease, opacity 0.35s ease;
+    animation: none !important;
+    top: 0 !important;
   }
 
   .header-layout2 .sticky-wrapper.header-hidden {
@@ -2377,6 +2379,13 @@ a.clinic-glow-btn {
 @media (max-width: 991px) {
   .clinic-home5 .header-layout2 .header-logo {
     margin-left: -28px;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .clinic-home5 .header-layout2 .sticky-wrapper {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 
   .clinic-home5 .clinic-nav-logo {
@@ -2677,6 +2686,18 @@ a.clinic-glow-btn {
 .clinic-theme-light .clinic-home5 .footer-wrapper.footer-layout5 .menu li a,
 .clinic-theme-light .clinic-home5 .footer-wrapper.footer-layout5 .about-text {
   color: #090909 !important;
+}
+
+.clinic-theme-light .clinic-home5 .scroll-top::after {
+  color: #0a0c00 !important;
+}
+
+.clinic-theme-light .clinic-home5 .scroll-top svg {
+  color: #0a0c00 !important;
+}
+
+.clinic-theme-light .clinic-home5 .scroll-top .progress-circle path {
+  stroke: #0a0c00 !important;
 }
 
 .clinic-home5 .clinic-before-after-filter-wrap {
