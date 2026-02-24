@@ -8,8 +8,7 @@ import GooglePopupButton from "@/components/auth/GooglePopupButton";
 gsap.registerPlugin(ScrollTrigger);
 
 const HERO_TITLE_LINES = [
-  [{ word: "Estetska", idx: 0 }, { word: "i", idx: 1 }],
-  [{ word: "anti-age", idx: 2 }],
+  [{ word: "Estetska", idx: 0 }, { word: "i", idx: 1 }, { word: "anti-age", idx: 2 }],
   [{ word: "medicina", idx: 3 }],
 ];
 

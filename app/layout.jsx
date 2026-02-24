@@ -6,20 +6,18 @@ import "../public/assets/css/animate.min.css";
 import "../public/assets/css/imageRevealHover.css";
 import "../public/assets/sass/style.scss";
 import "rc-slider/assets/index.css";
-import { Unbounded, Poppins } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import AppProviders from "@/components/common/AppProviders";
-// wow js
 
-const unbounded = Unbounded({
+const montserratTitle = Montserrat({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--title-font",
 });
 
-// Poppins font
-const poppins = Poppins({
+const montserratBody = Montserrat({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--body-font",
 });
 
@@ -35,7 +33,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="sr">
-      <body className={`body clinic-theme-light ${poppins.variable} ${unbounded.variable}`}>
+      <body className={`body clinic-theme-light ${montserratBody.variable} ${montserratTitle.variable}`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
