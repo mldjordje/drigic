@@ -1,21 +1,12 @@
-﻿"use client";
+"use client";
 import addGsap from "@/utils/addGsap";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
-const HERO_TYPED_PHRASES = [
-  "estetske medicine",
-  "prirodnog anti-age pristupa",
-  "sigurnih i preciznih tretmana",
-];
-
 export default function Hero() {
   const mobileVideoRef = useRef(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [phraseIndex, setPhraseIndex] = useState(0);
-  const [characterCount, setCharacterCount] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     document.body.classList.add("bg-title");
@@ -34,35 +25,6 @@ export default function Hero() {
       .then((data) => setCurrentUser(data?.user || null))
       .catch(() => setCurrentUser(null));
   }, []);
-
-  useEffect(() => {
-    const phrase = HERO_TYPED_PHRASES[phraseIndex];
-    const atPhraseEnd = characterCount === phrase.length;
-    const atPhraseStart = characterCount === 0;
-    const tickDelay = isDeleting ? 42 : 80;
-    const pauseDelay = atPhraseEnd ? 1100 : atPhraseStart && isDeleting ? 260 : tickDelay;
-
-    const timeoutId = window.setTimeout(() => {
-      if (!isDeleting) {
-        if (characterCount < phrase.length) {
-          setCharacterCount((prev) => prev + 1);
-          return;
-        }
-        setIsDeleting(true);
-        return;
-      }
-
-      if (characterCount > 0) {
-        setCharacterCount((prev) => prev - 1);
-        return;
-      }
-
-      setIsDeleting(false);
-      setPhraseIndex((prev) => (prev + 1) % HERO_TYPED_PHRASES.length);
-    }, pauseDelay);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [characterCount, isDeleting, phraseIndex]);
 
   const heroVideoSrc = useMemo(
     () =>
@@ -99,8 +61,6 @@ export default function Hero() {
     forcePlayMuted();
     window.setTimeout(() => forcePlayMuted(), 220);
   }, [forcePlayMuted]);
-
-  const typedHeadline = HERO_TYPED_PHRASES[phraseIndex].slice(0, characterCount);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -149,11 +109,7 @@ export default function Hero() {
             <div className="col-lg-9">
               <div className="hero-style5 clinic-reveal">
                 <h1 className="hero-title" data-ani="slideindown" data-ani-delay="0.1s">
-                  <span className="hero-title-static">Dr Igić klinika</span>
-                  <span className="hero-title-typed">
-                    {typedHeadline}
-                    <span className="hero-title-caret" aria-hidden="true"></span>
-                  </span>
+                  <span className="hero-title-static">Estetska i anti-age medicina</span>
                 </h1>
                 <div
                   className="hero-cta-group hero-cta-group-top"

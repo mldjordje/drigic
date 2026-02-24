@@ -10,6 +10,7 @@ import Video from "@/components/homes/home-5/Video";
 import React from "react";
 import Footer5 from "@/components/footers/Footer5";
 import AnnouncementBar from "@/components/homes/home-5/AnnouncementBar";
+import ClinicPreloader from "@/components/homes/home-5/ClinicPreloader";
 
 export const metadata = {
   title: "Dr Igic Klinika Estetske Medicine",
@@ -18,13 +19,14 @@ export const metadata = {
 export default function HomePage5() {
   return (
     <div className="clinic-home5">
+      <ClinicPreloader />
       <Header4 />
       <AnnouncementBar />
       <Hero />
-      <About />
-      <Projects />
-      <Steps />
       <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
+      <Projects />
+      <About />
+      <Steps />
       <Testimonials />
       <Video />
       <Blogs />

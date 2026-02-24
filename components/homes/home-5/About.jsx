@@ -1,10 +1,10 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
 export default function About() {
   return (
-    <div className="about-area-1 space bg-gray shape-mockup-wrap" id="osnivac">
+    <div className="about-area-1 space bg-gray shape-mockup-wrap" id="osnivac" style={{ backgroundColor: "rgba(255, 255, 255, 1)", color: "rgba(255, 255, 255, 1)" }}>
       <div
         className="about-img-1-1 shape-mockup img-custom-anim-left wow animated clinic-reveal"
         data-wow-duration="1.5s"
