@@ -1799,12 +1799,12 @@ a.clinic-glow-btn {
 
 .clinic-theme-light .clinic-home5 .header-layout2 .main-menu > ul > li > a,
 .clinic-theme-light .clinic-home5 .header-layout2 .search-btn {
-  color: #0f172a !important;
+  color: #ffffff !important;
 }
 
 .clinic-theme-light .clinic-home5 .header-layout2 .main-menu > ul > li > a:hover,
 .clinic-theme-light .clinic-home5 .header-layout2 .search-btn:hover {
-  color: #334155 !important;
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 .clinic-theme-light .clinic-home5 .clinic-glow-btn,
@@ -2028,7 +2028,10 @@ a.clinic-glow-btn {
 }
 
 .clinic-theme-light .clinic-home5 .header-layout2 .main-menu > ul > li > a,
-.clinic-theme-light .clinic-home5 .header-layout2 .search-btn,
+.clinic-theme-light .clinic-home5 .header-layout2 .search-btn {
+  color: #ffffff !important;
+}
+
 .clinic-theme-light .clinic-home5 .mobile-menu-area .mobile-menu ul li a,
 .clinic-theme-light .clinic-home5 .mobile-menu-area .sidebar-wrap h6 {
   color: #0b0b0b !important;

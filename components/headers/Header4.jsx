@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -379,21 +379,7 @@ export default function Header4() {
                           </span>
                         </span>
                       </button>
-                    ) : (
-                      <GooglePopupButton className="search-btn clinic-glow-btn" nextPath="/">
-                        <span className="link-effect">
-                          <span className="effect-1">LOGIN</span>
-                          <span className="effect-1">LOGIN</span>
-                        </span>
-                      </GooglePopupButton>
-                    )}
-
-                    <Link scroll={false} href="/booking" className="search-btn clinic-glow-btn">
-                      <span className="link-effect">
-                        <span className="effect-1">ZAKAZI TERMIN</span>
-                        <span className="effect-1">ZAKAZI TERMIN</span>
-                      </span>
-                    </Link>
+                    ) : null}
                   </div>
                 </div>
               </div>
