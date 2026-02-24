@@ -2603,6 +2603,23 @@ a.clinic-glow-btn {
   height: auto;
 }
 
+/* Logo slot — CSS-only theme swap, works before JS runs */
+.clinic-preloader__logo-slot {
+  display: none;
+}
+
+.clinic-preloader__logo-slot--dark {
+  display: block;
+}
+
+.clinic-theme-light .clinic-preloader__logo-slot--dark {
+  display: none;
+}
+
+.clinic-theme-light .clinic-preloader__logo-slot--light {
+  display: block;
+}
+
 .clinic-preloader__sweep {
   position: absolute;
   inset: 0;
