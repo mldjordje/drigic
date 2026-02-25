@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
@@ -75,6 +75,17 @@ export default function BeforeAfterShowcase({
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const lightboxRef = useRef(null);
+
+  useEffect(() => {
+    if (!lightboxImage) return;
+    function handleKey(e) {
+      if (e.key === "Escape") setLightboxImage(null);
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [lightboxImage]);
 
   useEffect(() => {
     let mounted = true;
@@ -222,26 +233,26 @@ export default function BeforeAfterShowcase({
                     <span className="clinic-before-after-category">{item.categoryLabel}</span>
                     {item.productUsed ? <span>{item.productUsed}</span> : null}
                   </div>
-                  {item.collageImageUrl ? (
-                    <div className="clinic-before-after-collage">
-                      <img
-                        src={item.collageImageUrl}
-                        alt={`${item.treatmentType || "Tretman"} pre i posle kolaz`}
-                      />
-                      <span>Pre / Posle kolaz</span>
-                    </div>
-                  ) : (
-                    <div className="clinic-before-after-images">
-                      <figure>
-                        <img src={item.beforeImageUrl} alt={`${item.treatmentType || "Tretman"} pre`} />
-                        <figcaption>Pre</figcaption>
-                      </figure>
-                      <figure>
-                        <img src={item.afterImageUrl} alt={`${item.treatmentType || "Tretman"} posle`} />
-                        <figcaption>Posle</figcaption>
-                      </figure>
-                    </div>
-                  )}
+                  <div
+                    className="clinic-before-after-collage"
+                    style={{ cursor: "zoom-in" }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Pogledaj punu sliku"
+                    onClick={() =>
+                      setLightboxImage(item.collageImageUrl || item.beforeImageUrl)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ")
+                        setLightboxImage(item.collageImageUrl || item.beforeImageUrl);
+                    }}
+                  >
+                    <img
+                      src={item.collageImageUrl || item.beforeImageUrl}
+                      alt={`${item.treatmentType || "Tretman"} pre i posle`}
+                    />
+                    <span>Pre / Posle</span>
+                  </div>
                 </article>
               ))}
             </div>
@@ -274,6 +285,58 @@ export default function BeforeAfterShowcase({
           </div>
         ) : null}
       </div>
+
+      {lightboxImage ? (
+        <div
+          ref={lightboxRef}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0,0,0,0.88)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "zoom-out",
+          }}
+          onClick={() => setLightboxImage(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Pregled slike"
+        >
+          <img
+            src={lightboxImage}
+            alt="Pre i posle"
+            style={{
+              maxWidth: "92vw",
+              maxHeight: "90vh",
+              borderRadius: 8,
+              boxShadow: "0 4px 40px rgba(0,0,0,0.8)",
+              display: "block",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            aria-label="Zatvori"
+            onClick={() => setLightboxImage(null)}
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 20,
+              background: "none",
+              border: "none",
+              color: "#fff",
+              fontSize: 32,
+              lineHeight: 1,
+              cursor: "pointer",
+              padding: "4px 8px",
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }

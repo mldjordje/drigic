@@ -3,6 +3,39 @@
 import { useEffect, useState } from "react";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
+async function compressImage(file, maxSizeMB = 1.5, quality = 0.85) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      const maxPx = 2000;
+      if (width > maxPx || height > maxPx) {
+        const ratio = Math.min(maxPx / width, maxPx / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { resolve(file); return; }
+          const compressed = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+          resolve(compressed.size < file.size ? compressed : file);
+        },
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
 const emptyBeforeAfterForm = {
   id: "",
   treatmentType: "",
@@ -111,7 +144,7 @@ export default function AdminMediaPage() {
         throw new Error("Vrsta tretmana je obavezna.");
       }
       if (!beforeAfterForm.id && !beforeAfterForm.collageImage) {
-        throw new Error("Za novi unos izaberi kolaz sliku.");
+        throw new Error("Za novi unos izaberi pre/posle sliku.");
       }
 
       const formData = new FormData();
@@ -124,7 +157,8 @@ export default function AdminMediaPage() {
         formData.set("id", beforeAfterForm.id);
       }
       if (beforeAfterForm.collageImage) {
-        formData.set("collageImage", beforeAfterForm.collageImage);
+        const compressed = await compressImage(beforeAfterForm.collageImage);
+        formData.set("collageImage", compressed);
       }
 
       const isEdit = Boolean(beforeAfterForm.id);
@@ -353,7 +387,7 @@ export default function AdminMediaPage() {
           <div className="admin-media-upload-grid">
             <div className="admin-media-upload-field">
               <span className="admin-media-upload-title">
-                Kolaz slika {beforeAfterForm.id ? "(opciono)" : ""}
+                Pre / Posle slika {beforeAfterForm.id ? "(opciono)" : ""}
               </span>
               <input
                 id="before-after-collage-file"
@@ -368,10 +402,10 @@ export default function AdminMediaPage() {
                 }
               />
               <label htmlFor="before-after-collage-file" className="admin-media-upload-trigger">
-                Odaberi kolaz
+                Odaberi sliku
               </label>
               <small className="admin-media-upload-name">
-                {beforeAfterForm.collageImage?.name || "Nije odabran novi kolaz"}
+                {beforeAfterForm.collageImage?.name || "Nije odabrana nova slika"}
               </small>
             </div>
           </div>
@@ -518,28 +552,11 @@ export default function AdminMediaPage() {
                 <small style={{ color: "#e7eef9" }}>{categoryNameFromSlug(item.serviceCategory)}</small>
               ) : null}
               {item.productUsed ? <small style={{ color: "#c8d9ee" }}>{item.productUsed}</small> : null}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <img
-                  src={item.beforeImageUrl}
-                  alt={`${item.treatmentType || "Tretman"} pre`}
-                  style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 10 }}
-                />
-                <img
-                  src={item.afterImageUrl}
-                  alt={`${item.treatmentType || "Tretman"} posle`}
-                  style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 10 }}
-                />
-              </div>
-              {item.collageImageUrl ? (
-                <div style={{ display: "grid", gap: 6 }}>
-                  <small style={{ color: "#c8d9ee" }}>Kolaz pre/posle</small>
-                  <img
-                    src={item.collageImageUrl}
-                    alt={`${item.treatmentType || "Tretman"} kolaz`}
-                    style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 10 }}
-                  />
-                </div>
-              ) : null}
+              <img
+                src={item.collageImageUrl || item.beforeImageUrl}
+                alt={`${item.treatmentType || "Tretman"} pre i posle`}
+                style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 10 }}
+              />
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   type="button"
