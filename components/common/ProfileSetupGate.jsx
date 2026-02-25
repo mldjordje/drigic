@@ -23,7 +23,39 @@ function normalizeBirthDate(value) {
   if (!value) {
     return "";
   }
-  return String(value).slice(0, 10);
+  const normalized = String(value).slice(0, 10);
+  const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return "";
+  }
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+function toIsoBirthDate(value) {
+  const match = String(value || "")
+    .trim()
+    .match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) {
+    return null;
+  }
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  if (year < 1900 || year > 2100) {
+    return null;
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${match[3]}-${match[2]}-${match[1]}`;
 }
 
 export default function ProfileSetupGate() {
@@ -82,6 +114,11 @@ export default function ProfileSetupGate() {
       setError("Popunite ime, pol i datum rodjenja.");
       return;
     }
+    const isoBirthDate = toIsoBirthDate(form.birthDate);
+    if (!isoBirthDate) {
+      setError("Datum rodjenja mora biti u formatu DD/MM/YYYY.");
+      return;
+    }
 
     setSaving(true);
     setError("");
@@ -92,7 +129,7 @@ export default function ProfileSetupGate() {
         body: JSON.stringify({
           fullName: form.fullName.trim(),
           gender: form.gender,
-          birthDate: form.birthDate,
+          birthDate: isoBirthDate,
         }),
       });
       const data = await parseResponse(response);
@@ -150,9 +187,13 @@ export default function ProfileSetupGate() {
         <label style={labelStyle}>
           Datum rodjenja
           <input
-            type="date"
+            type="text"
             style={inputStyle}
             value={form.birthDate}
+            inputMode="numeric"
+            placeholder="DD/MM/YYYY"
+            pattern="\\d{2}/\\d{2}/\\d{4}"
+            title="Unesi datum u formatu DD/MM/YYYY"
             onChange={(event) =>
               setForm((prev) => ({ ...prev, birthDate: event.target.value }))
             }
