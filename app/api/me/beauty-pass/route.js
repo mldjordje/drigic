@@ -40,6 +40,31 @@ export async function GET(request) {
     .where(eq(schema.treatmentRecords.userId, auth.user.id))
     .orderBy(desc(schema.treatmentRecords.treatmentDate));
 
+  // Fetch media for all treatment records in one query
+  const recordIds = treatmentRows.map((r) => r.id);
+  const mediaRows =
+    recordIds.length > 0
+      ? await db
+          .select({
+            id: schema.treatmentRecordMedia.id,
+            treatmentRecordId: schema.treatmentRecordMedia.treatmentRecordId,
+            mediaUrl: schema.treatmentRecordMedia.mediaUrl,
+            mediaType: schema.treatmentRecordMedia.mediaType,
+          })
+          .from(schema.treatmentRecordMedia)
+          .where(inArray(schema.treatmentRecordMedia.treatmentRecordId, recordIds))
+          .orderBy(asc(schema.treatmentRecordMedia.createdAt))
+      : [];
+
+  // Group media by record id
+  const mediaByRecord = {};
+  for (const m of mediaRows) {
+    if (!mediaByRecord[m.treatmentRecordId]) {
+      mediaByRecord[m.treatmentRecordId] = [];
+    }
+    mediaByRecord[m.treatmentRecordId].push({ id: m.id, mediaUrl: m.mediaUrl, mediaType: m.mediaType });
+  }
+
   const treatmentHistory = treatmentRows.map((row) => ({
     id: row.id,
     bookingId: row.bookingId,
@@ -47,6 +72,7 @@ export async function GET(request) {
     notes: row.notes,
     correctionDueDate: row.correctionDueDate,
     createdAt: row.createdAt,
+    media: mediaByRecord[row.id] || [],
     product: row.productId
       ? {
           id: row.productId,
