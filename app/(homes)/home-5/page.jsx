@@ -2,6 +2,7 @@ import Header4 from "@/components/headers/Header4";
 import Blogs from "@/components/homes/home-5/Blogs";
 import About from "@/components/homes/home-5/About";
 import Hero from "@/components/homes/home-5/Hero";
+import HeroActions from "@/components/homes/home-5/HeroActions";
 import Projects from "@/components/homes/home-5/Projects";
 import BeforeAfterShowcase from "@/components/homes/home-5/BeforeAfterShowcase";
 import Steps from "@/components/homes/home-5/Steps";
@@ -23,6 +24,7 @@ export default function HomePage5() {
       <Header4 />
       <AnnouncementBar />
       <Hero />
+      <HeroActions />
       <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
       <Projects />
       <About />

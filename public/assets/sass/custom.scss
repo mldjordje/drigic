@@ -2979,6 +2979,880 @@ a.clinic-glow-btn {
   }
 }
 
+/* ── Hero Actions Section (logged-in users) ── */
+/* ── Hero Actions Section — animated light background ── */
+.clinic-hero-actions {
+  background: #faf9f7;
+  position: relative;
+  /* NO overflow:hidden — orbs need room to breathe */
+
+  /* Orb 1 — top-left rose, center INSIDE section */
+  &::before {
+    content: "";
+    position: absolute;
+    width: 560px;
+    height: 560px;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+    /* Center the orb inside, top-left quadrant */
+    top: -60px;
+    left: -60px;
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(218, 165, 145, 0.82) 0%,
+      rgba(230, 185, 165, 0.55) 38%,
+      rgba(240, 205, 188, 0.22) 60%,
+      transparent 72%
+    );
+    filter: blur(40px);
+    animation: clinicOrbDrift1 9s ease-in-out infinite alternate;
+  }
+
+  /* Orb 2 — bottom-right champagne, center INSIDE section */
+  &::after {
+    content: "";
+    position: absolute;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+    bottom: -50px;
+    right: -50px;
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(205, 175, 148, 0.78) 0%,
+      rgba(220, 192, 165, 0.50) 40%,
+      rgba(235, 212, 192, 0.20) 62%,
+      transparent 74%
+    );
+    filter: blur(40px);
+    animation: clinicOrbDrift2 12s ease-in-out infinite alternate;
+  }
+
+  &__orb3 {
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+    /* Center orb in the middle of the section */
+    top: 50%;
+    left: 55%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(208, 178, 158, 0.55) 0%,
+      rgba(222, 195, 175, 0.32) 45%,
+      transparent 68%
+    );
+    filter: blur(50px);
+    animation: clinicOrbDrift3 15s ease-in-out infinite alternate;
+    z-index: 0;
+  }
+
+  &__separator {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.06) 20%,
+      rgba(0, 0, 0, 0.12) 50%,
+      rgba(0, 0, 0, 0.06) 80%,
+      transparent 100%
+    );
+  }
+
+  &__header {
+    text-align: center;
+    padding-top: 52px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 2;
+  }
+
+  &__eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(10, 10, 10, 0.38);
+    margin: 0;
+  }
+
+  &__ctas {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 28px 0 52px;
+    position: relative;
+    z-index: 2;
+  }
+
+  &__bottom-space {
+    height: 0;
+  }
+}
+
+/* Orb drift keyframes */
+@keyframes clinicOrbDrift1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(50px, 35px) scale(1.1); }
+  66%  { transform: translate(25px, -15px) scale(0.94); }
+  100% { transform: translate(70px, 25px) scale(1.06); }
+}
+
+@keyframes clinicOrbDrift2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(-40px, -30px) scale(1.08); }
+  66%  { transform: translate(-60px, 20px) scale(0.95); }
+  100% { transform: translate(-25px, -40px) scale(1.04); }
+}
+
+@keyframes clinicOrbDrift3 {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  40%  { transform: translate(calc(-50% + 35px), calc(-50% - 25px)) scale(1.12); }
+  70%  { transform: translate(calc(-50% - 25px), calc(-50% + 30px)) scale(0.91); }
+  100% { transform: translate(calc(-50% + 15px), calc(-50% - 35px)) scale(1.06); }
+}
+
+/* ── Action Button — dark on light ── */
+.clinic-action-btn {
+  /* Reset */
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  font-family: inherit;
+
+  /* Layout */
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 240px;
+  min-height: 68px;
+  padding: 14px 28px 14px 22px;
+
+  /* Shape */
+  border-radius: 50px;
+  border: 1px solid rgba(10, 10, 10, 0.12) !important;
+
+  /* Dark glass surface */
+  background: rgba(12, 12, 14, 0.92) !important;
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+
+  /* Typography */
+  color: #ffffff !important;
+  outline: none !important;
+  position: relative;
+  overflow: hidden;
+
+  /* Depth — soft shadow on white bg */
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.12),
+    0 1px 4px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* Transitions */
+  transition:
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease !important;
+
+  /* Shimmer pseudo — light sweep on dark surface */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -110%;
+    width: 55%;
+    height: 100%;
+    background: linear-gradient(
+      100deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.07) 40%,
+      rgba(255, 255, 255, 0.14) 50%,
+      rgba(255, 255, 255, 0.07) 60%,
+      transparent 100%
+    );
+    transform: skewX(-20deg);
+    pointer-events: none;
+    border-radius: inherit;
+    animation: clinicActionShimmer 6s ease-in-out infinite;
+    animation-fill-mode: both;
+  }
+
+  &:nth-child(2)::after {
+    animation-delay: 2.8s;
+  }
+
+  &:hover {
+    transform: translateY(-4px) scale(1.03);
+    background: rgba(20, 20, 24, 0.96) !important;
+    border-color: rgba(10, 10, 10, 0.22) !important;
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.18),
+      0 4px 12px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  }
+
+  &:active {
+    transform: translateY(-1px) scale(1.01);
+  }
+
+  &.is-active {
+    background: rgba(8, 8, 10, 1) !important;
+    border-color: rgba(10, 10, 10, 0.35) !important;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.22),
+      0 0 0 3px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    animation: clinicActionBtnGlow 4s ease-in-out infinite;
+
+    .clinic-action-btn__label .clinic-action-char {
+      animation: clinicCharFloat 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      animation-delay: calc(var(--char-i) * 0.032s);
+    }
+  }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.55);
+    flex-shrink: 0;
+    transition: color 0.3s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  &:hover &__icon,
+  &.is-active &__icon {
+    color: rgba(255, 255, 255, 0.9);
+    transform: scale(1.12);
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+    flex: 1;
+  }
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    white-space: nowrap;
+    transition: letter-spacing 0.35s ease;
+  }
+
+  &:hover &__label,
+  &.is-active &__label {
+    letter-spacing: 0.14em;
+  }
+
+  &__sublabel {
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.38) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.38) !important;
+    text-transform: none;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+  }
+
+  &:hover &__sublabel,
+  &.is-active &__sublabel {
+    color: rgba(255, 255, 255, 0.65) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.65) !important;
+  }
+
+  &__arrow {
+    display: inline-flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.45) !important;
+    flex-shrink: 0;
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s ease;
+    will-change: transform;
+
+    &.is-rotated {
+      transform: rotate(90deg);
+      color: rgba(255, 255, 255, 0.8) !important;
+    }
+  }
+
+  &:hover &__arrow {
+    color: rgba(255, 255, 255, 0.9) !important;
+    transform: translateX(4px);
+  }
+
+  &.is-active:hover &__arrow {
+    transform: rotate(90deg) translateY(-4px);
+  }
+}
+
+/* Per-character float animation */
+@keyframes clinicCharFloat {
+  0%   { transform: translateY(0); }
+  45%  { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
+}
+
+/* Active button glow pulse — warm, no blue */
+@keyframes clinicActionBtnGlow {
+  0%, 100% {
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.22),
+      0 0 0 3px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 12px 48px rgba(0, 0, 0, 0.28),
+      0 0 0 3px rgba(0, 0, 0, 0.1),
+      0 0 60px rgba(180, 160, 150, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* Shimmer sweep animation */
+@keyframes clinicActionShimmer {
+  0%      { left: -110%; opacity: 0; }
+  5%      { opacity: 1; }
+  35%     { left: 160%; opacity: 0; }
+  100%    { left: 160%; opacity: 0; }
+}
+
+/* ── Expand Panel ── */
+.clinic-action-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+
+  &.is-open {
+    grid-template-rows: 1fr;
+  }
+
+  &__inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+/* ── Beauty Pass Section — clean light UI ── */
+.clinic-bp {
+  background: transparent;
+  padding: 56px 0 72px;
+
+  &__header {
+    text-align: center;
+    margin-bottom: 44px;
+  }
+
+  &__tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(10, 10, 10, 0.38);
+    margin-bottom: 10px;
+  }
+
+  &__title {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    color: #111111;
+    margin: 0 0 10px;
+    letter-spacing: -0.02em;
+  }
+
+  &__subtitle {
+    font-size: 15px;
+    color: rgba(10, 10, 10, 0.5);
+    margin: 0;
+  }
+
+  /* Loading dots */
+  &__loader {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 40px 0;
+  }
+
+  &__loader-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+    animation: clinicBpDotPulse 1.4s ease-in-out infinite both;
+
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+
+  /* Not-logged-in lock */
+  &__lock {
+    text-align: center;
+    padding: 48px 24px;
+    max-width: 440px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  &__lock-text {
+    font-size: 15px;
+    color: rgba(0, 0, 0, 0.55);
+    margin: 0 0 20px;
+  }
+
+  &__login-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    border-radius: 50px;
+    background: #111111;
+    color: #ffffff !important;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  /* Two-column grid */
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* Card */
+  &__card {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    padding: 28px;
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.05),
+      0 6px 24px rgba(0, 0, 0, 0.06);
+
+    &--form {
+      padding: 24px;
+    }
+  }
+
+  &__card-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.35);
+    margin-bottom: 18px;
+  }
+
+  /* Booking list */
+  &__booking-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  &__booking-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  &__booking-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #d0c4b8;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  &__booking-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__booking-date {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+
+  &__booking-meta {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  &__empty {
+    font-size: 13px;
+    color: rgba(0, 0, 0, 0.38);
+    margin: 0;
+    font-style: italic;
+  }
+
+  /* ── Calendar ── */
+  &__cal-wrap {
+    background: #f7f5f3;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  &__cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 8px;
+  }
+
+  &__cal-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111111;
+    text-transform: capitalize;
+    flex: 1;
+    text-align: center;
+    letter-spacing: -0.01em;
+  }
+
+  &__cal-nav {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #ffffff;
+    color: #333333;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+
+    &:hover {
+      background: #111111;
+      color: #ffffff;
+      border-color: #111111;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  &__cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 6px;
+
+    span {
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(0, 0, 0, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: center;
+      padding: 4px 0;
+    }
+  }
+
+  &__cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  &__cal-day {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+
+    &:hover {
+      background: #f0ebe6;
+      border-color: rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+
+    &.is-selected {
+      background: #111111;
+      color: #ffffff;
+      border-color: #111111;
+      font-weight: 700;
+    }
+
+    &.is-out {
+      color: rgba(0, 0, 0, 0.22);
+      background: transparent;
+
+      &:hover {
+        background: transparent;
+        transform: none;
+      }
+    }
+  }
+
+  /* Form fields */
+  &__field-group {
+    margin-bottom: 16px;
+  }
+
+  &__field-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.45);
+    margin-bottom: 10px;
+  }
+
+  /* Products grid */
+  &__products {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+  }
+
+  &__product {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 6px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: #f7f5f3;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+
+    img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    span {
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.6);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    &:hover {
+      background: #eee8e2;
+      border-color: rgba(0, 0, 0, 0.14);
+      transform: translateY(-1px);
+    }
+
+    &.is-selected {
+      background: #111111;
+      border-color: #111111;
+
+      span { color: rgba(255, 255, 255, 0.85); }
+    }
+  }
+
+  /* Textarea */
+  &__textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #f7f5f3;
+    color: #111111;
+    font-size: 14px;
+    font-family: inherit;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 96px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+
+    &::placeholder { color: rgba(0, 0, 0, 0.3); }
+
+    &:focus {
+      border-color: rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  /* Messages */
+  &__msg {
+    font-size: 13px;
+    margin: 0 0 12px;
+
+    &--ok  { color: #3a7d44; }
+    &--err { color: #b94040; }
+  }
+
+  /* Submit button */
+  &__submit {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 50px;
+    border: none;
+    background: #111111;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0; left: -100%; width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      animation: clinicBpBtnShimmer 3s ease-in-out infinite 1s;
+    }
+
+    &:hover:not(:disabled) {
+      background: #2a2a2a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+  }
+}
+
+@keyframes clinicBpDotPulse {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40%            { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes clinicBpBtnShimmer {
+  0%   { left: -100%; opacity: 0; }
+  10%  { opacity: 1; }
+  50%  { left: 150%; opacity: 0; }
+  100% { left: 150%; opacity: 0; }
+}
+
+/* Mobile — stack columns */
+@media (max-width: 768px) {
+  .clinic-bp__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .clinic-bp__cal-day {
+    font-size: 12px;
+    border-radius: 8px;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .clinic-action-btn {
+    min-width: 0;
+    width: 100%;
+    max-width: 360px;
+    justify-content: flex-start;
+  }
+
+  .clinic-hero-actions__ctas {
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 40px;
+  }
+
+  .clinic-hero-actions__header {
+    padding-top: 36px;
+  }
+
+  .clinic-hero-actions::before {
+    width: 320px;
+    height: 320px;
+    top: -30px;
+    left: -30px;
+  }
+
+  .clinic-hero-actions::after {
+    width: 280px;
+    height: 280px;
+    bottom: -30px;
+    right: -30px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .clinic-hero-actions::before,
+  .clinic-hero-actions::after,
+  .clinic-hero-actions__orb3 {
+    animation: none !important;
+  }
+
+  .clinic-action-btn,
+  .clinic-action-btn::after,
+  .clinic-action-char,
+  .clinic-action-btn__arrow,
+  .clinic-action-btn__icon {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .clinic-action-panel {
+    transition: none !important;
+  }
+}
+
 /* ── Clinic preloader ── */
 .clinic-preloader {
   position: fixed;

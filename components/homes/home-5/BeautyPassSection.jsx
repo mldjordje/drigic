@@ -1,13 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 
 async function parseResponse(response) {
   const text = await response.text();
-  if (!text) {
-    return null;
-  }
+  if (!text) return null;
   try {
     return JSON.parse(text);
   } catch {
@@ -44,7 +42,6 @@ function buildCalendarCells(monthDate) {
   const gridStart = new Date(firstDayOfMonth);
   const dayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
   gridStart.setDate(firstDayOfMonth.getDate() - dayOfWeek);
-
   return Array.from({ length: 42 }, (_, index) => {
     const date = new Date(gridStart);
     date.setDate(gridStart.getDate() + index);
@@ -56,11 +53,21 @@ function buildCalendarCells(monthDate) {
   });
 }
 
-function formatMonthLabel(date, locale = "sr-RS") {
-  return new Intl.DateTimeFormat(locale, {
-    month: "long",
-    year: "numeric",
-  }).format(date);
+function formatMonthLabel(date) {
+  return new Intl.DateTimeFormat("sr-RS", { month: "long", year: "numeric" }).format(date);
+}
+
+function formatBookingDate(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleString("sr-RS", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function formatHistoryDate(isoString) {
+  const d = new Date(isoString);
+  return d.toLocaleDateString("sr-RS", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 export default function BeautyPassSection({ googleNextPath = "/" }) {
@@ -86,278 +93,240 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
   const weekdayLabels = useMemo(() => {
     const formatter = new Intl.DateTimeFormat("sr-RS", { weekday: "short" });
     const monday = new Date(2024, 0, 1);
-    return Array.from({ length: 7 }, (_, index) => {
-      const item = new Date(monday);
-      item.setDate(monday.getDate() + index);
-      return formatter.format(item);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return formatter.format(d);
     });
   }, []);
 
   async function loadData() {
     setLoading(true);
     setError("");
-
     try {
       const profileRes = await fetch("/api/me/profile");
       if (!profileRes.ok) {
-        setUser(null);
-        setBeautyPass(null);
-        setBookings(null);
+        setUser(null); setBeautyPass(null); setBookings(null);
         return;
       }
-
       const profileData = await parseResponse(profileRes);
       const sessionUser = profileData?.user || null;
       setUser(sessionUser);
-
       if (!sessionUser) {
-        setBeautyPass(null);
-        setBookings(null);
+        setBeautyPass(null); setBookings(null);
         return;
       }
-
       const [passRes, bookingsRes] = await Promise.all([
         fetch("/api/me/beauty-pass"),
         fetch("/api/me/bookings"),
       ]);
-
       const passData = await parseResponse(passRes);
       const bookingsData = await parseResponse(bookingsRes);
-
-      if (!passRes.ok || !passData?.ok) {
-        throw new Error(passData?.message || "Neuspesno ucitavanje beauty pass podataka.");
-      }
-
-      if (!bookingsRes.ok || !bookingsData?.ok) {
-        throw new Error(bookingsData?.message || "Neuspesno ucitavanje termina.");
-      }
-
+      if (!passRes.ok || !passData?.ok) throw new Error(passData?.message || "Greška pri učitavanju beauty pass podataka.");
+      if (!bookingsRes.ok || !bookingsData?.ok) throw new Error(bookingsData?.message || "Greška pri učitavanju termina.");
       setBeautyPass(passData);
       setBookings(bookingsData);
-    } catch (loadError) {
-      setError(loadError.message || "Greska pri ucitavanju beauty pass sekcije.");
+    } catch (e) {
+      setError(e.message || "Greška pri učitavanju.");
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setSaving(true);
-    setError("");
-    setMessage("");
-
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSaving(true); setError(""); setMessage("");
     try {
-      const response = await fetch("/api/me/beauty-pass/records", {
+      const res = await fetch("/api/me/beauty-pass/records", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          treatmentDate: form.treatmentDate,
-          notes: form.notes,
-          productId: form.productId || null,
-        }),
+        body: JSON.stringify({ treatmentDate: form.treatmentDate, notes: form.notes, productId: form.productId || null }),
       });
-      const data = await parseResponse(response);
-
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje unosa.");
-      }
-
-      setMessage("Unos je sacuvan u Beauty Pass istoriji.");
+      const data = await parseResponse(res);
+      if (!res.ok || !data?.ok) throw new Error(data?.message || "Neuspešno čuvanje unosa.");
+      setMessage("Unos je sačuvan u Beauty Pass istoriji.");
       setForm((prev) => ({ ...prev, notes: "" }));
       await loadData();
-    } catch (submitError) {
-      setError(submitError.message || "Greska pri cuvanju.");
+    } catch (e) {
+      setError(e.message || "Greška pri čuvanju.");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <section className="space" id="beauty-pass">
+    <section className="clinic-bp" id="beauty-pass">
       <div className="container">
-        <div className="title-area text-center clinic-reveal">
-          <h2 className="sec-title text-smoke">Beauty Pass</h2>
-          <p className="sec-text text-smoke">Istorija tretmana i licni unos tretmana na jednom mestu.</p>
+
+        {/* Header */}
+        <div className="clinic-bp__header">
+          <span className="clinic-bp__tag">Moj nalog</span>
+          <h2 className="clinic-bp__title">Beauty Pass</h2>
+          <p className="clinic-bp__subtitle">Istorija tretmana i lični unos na jednom mestu.</p>
         </div>
 
-        {loading ? (
-          <div style={{ ...glassCardStyle, maxWidth: 960, margin: "0 auto" }}>
-            <p style={{ ...mutedTextStyle, margin: 0 }}>Ucitavanje...</p>
+        {/* Loading */}
+        {loading && (
+          <div className="clinic-bp__loader">
+            <span className="clinic-bp__loader-dot" />
+            <span className="clinic-bp__loader-dot" />
+            <span className="clinic-bp__loader-dot" />
           </div>
-        ) : null}
+        )}
 
-        {!loading && !user ? (
-          <div className="clinic-login-lock" style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
-            <p style={{ ...mutedTextStyle, marginTop: 0 }}>
-              Beauty Pass je dostupan nakon prijave.
-            </p>
-            <GooglePopupButton className="btn clinic-glow-btn" nextPath={googleNextPath}>
-              LOGIN WITH GOOGLE
+        {/* Not logged in */}
+        {!loading && !user && (
+          <div className="clinic-bp__lock">
+            <p className="clinic-bp__lock-text">Beauty Pass je dostupan nakon prijave.</p>
+            <GooglePopupButton className="clinic-bp__login-btn" nextPath={googleNextPath}>
+              Prijavi se
             </GooglePopupButton>
           </div>
-        ) : null}
+        )}
 
-        {!loading && user ? (
-          <div className="row g-4">
-            <div className="col-lg-6">
-              <div style={glassCardStyle}>
-                <h3 style={{ ...titleTextStyle, marginTop: 0 }}>Prethodni termini</h3>
-                {pastBookings.length ? (
-                  <ul style={{ margin: 0, paddingLeft: 18, color: "#edf3ff" }}>
-                    {pastBookings.slice(0, 12).map((booking) => (
-                      <li key={booking.id} style={{ marginBottom: 8, color: "#edf3ff" }}>
-                        {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min - {booking.totalPriceRsd} EUR
+        {/* Main content */}
+        {!loading && user && (
+          <div className="clinic-bp__grid">
+
+            {/* LEFT — Previous bookings */}
+            <div className="clinic-bp__card">
+              <div className="clinic-bp__card-label">Prethodni termini</div>
+              {pastBookings.length ? (
+                <ul className="clinic-bp__booking-list">
+                  {pastBookings.slice(0, 10).map((b) => (
+                    <li key={b.id} className="clinic-bp__booking-item">
+                      <span className="clinic-bp__booking-dot" />
+                      <div className="clinic-bp__booking-info">
+                        <span className="clinic-bp__booking-date">{formatBookingDate(b.startsAt)}</span>
+                        <span className="clinic-bp__booking-meta">{b.totalDurationMin} min &middot; {b.totalPriceRsd} EUR</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="clinic-bp__empty">Nemate prethodnih termina.</p>
+              )}
+
+              {/* Treatment history */}
+              {beautyPass?.treatmentHistory?.length ? (
+                <>
+                  <div className="clinic-bp__card-label" style={{ marginTop: 28 }}>Istorija unosa</div>
+                  <ul className="clinic-bp__booking-list">
+                    {beautyPass.treatmentHistory.slice(0, 10).map((item) => (
+                      <li key={item.id} className="clinic-bp__booking-item">
+                        <span className="clinic-bp__booking-dot" />
+                        <div className="clinic-bp__booking-info">
+                          <span className="clinic-bp__booking-date">{formatHistoryDate(item.treatmentDate)}</span>
+                          <span className="clinic-bp__booking-meta">
+                            {item.notes || "Bez napomene"}
+                            {item.product?.name ? ` · ${item.product.name}` : ""}
+                          </span>
+                        </div>
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p style={{ ...mutedTextStyle, marginBottom: 0 }}>Nemate prethodnih termina.</p>
-                )}
-              </div>
+                </>
+              ) : null}
             </div>
 
-            <div className="col-lg-6">
-              <div style={glassCardStyle}>
-                <h3 style={{ ...titleTextStyle, marginTop: 0 }}>Dodaj sta je radjeno i kada</h3>
-                <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
-                  <label style={{ color: "#edf3ff" }}>Datum</label>
-                  <div className="clinic-booking-calendar" style={{ marginBottom: 4 }}>
-                    <div className="clinic-cal-header">
-                      <button
-                        type="button"
-                        className="clinic-cal-nav"
-                        onClick={() => setCalendarMonth((prev) => addMonths(prev, -1))}
-                      >
-                        Prethodni
-                      </button>
-                      <div className="clinic-cal-title">{formatMonthLabel(calendarMonth, "sr-RS")}</div>
-                      <button
-                        type="button"
-                        className="clinic-cal-nav"
-                        onClick={() => setCalendarMonth((prev) => addMonths(prev, 1))}
-                      >
-                        Sledeci
-                      </button>
-                    </div>
+            {/* RIGHT — Add entry form */}
+            <div className="clinic-bp__card clinic-bp__card--form">
+              <div className="clinic-bp__card-label">Dodaj tretman</div>
 
-                    <div className="clinic-cal-weekdays">
-                      {weekdayLabels.map((label) => (
-                        <span key={label}>{label}</span>
-                      ))}
-                    </div>
+              <form onSubmit={handleSubmit}>
+                {/* Calendar */}
+                <div className="clinic-bp__cal-wrap">
+                  <div className="clinic-bp__cal-header">
+                    <button
+                      type="button"
+                      className="clinic-bp__cal-nav"
+                      onClick={() => setCalendarMonth((prev) => addMonths(prev, -1))}
+                      aria-label="Prethodni mesec"
+                    >
+                      ←
+                    </button>
+                    <span className="clinic-bp__cal-title">{formatMonthLabel(calendarMonth)}</span>
+                    <button
+                      type="button"
+                      className="clinic-bp__cal-nav"
+                      onClick={() => setCalendarMonth((prev) => addMonths(prev, 1))}
+                      aria-label="Sledeći mesec"
+                    >
+                      →
+                    </button>
+                  </div>
 
-                    <div className="clinic-cal-grid">
-                      {calendarCells.map((cell) => (
+                  <div className="clinic-bp__cal-weekdays">
+                    {weekdayLabels.map((label) => (
+                      <span key={label}>{label}</span>
+                    ))}
+                  </div>
+
+                  <div className="clinic-bp__cal-grid">
+                    {calendarCells.map((cell) => (
+                      <button
+                        key={cell.iso}
+                        type="button"
+                        className={`clinic-bp__cal-day${form.treatmentDate === cell.iso ? " is-selected" : ""}${!cell.inCurrentMonth ? " is-out" : ""}`}
+                        onClick={() => setForm((prev) => ({ ...prev, treatmentDate: cell.iso }))}
+                      >
+                        {cell.dayNumber}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Products */}
+                {beautyPass?.products?.length ? (
+                  <div className="clinic-bp__field-group">
+                    <label className="clinic-bp__field-label">Brend preparata</label>
+                    <div className="clinic-bp__products">
+                      {beautyPass.products.map((product) => (
                         <button
-                          key={cell.iso}
+                          key={product.id}
                           type="button"
-                          className={`clinic-cal-day ${
-                            form.treatmentDate === cell.iso ? "is-active" : ""
-                          } ${!cell.inCurrentMonth ? "is-out" : ""}`}
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              treatmentDate: cell.iso,
-                            }))
-                          }
+                          className={`clinic-bp__product${form.productId === product.id ? " is-selected" : ""}`}
+                          onClick={() => setForm((prev) => ({
+                            ...prev,
+                            productId: prev.productId === product.id ? "" : product.id,
+                          }))}
                         >
-                          <span>{cell.dayNumber}</span>
+                          <img src={product.logoUrl} alt={product.name} />
+                          <span>{product.name}</span>
                         </button>
                       ))}
                     </div>
                   </div>
-                  <label style={{ color: "#edf3ff", marginTop: 2 }}>
-                    Brend preparata
-                  </label>
-                  <div className="clinic-product-grid">
-                    {(beautyPass?.products || []).map((product) => (
-                      <button
-                        key={product.id}
-                        type="button"
-                        className={`clinic-product-btn ${
-                          form.productId === product.id ? "is-active" : ""
-                        }`}
-                        onClick={() =>
-                          setForm((prev) => ({
-                            ...prev,
-                            productId: prev.productId === product.id ? "" : product.id,
-                          }))
-                        }
-                      >
-                        <img src={product.logoUrl} alt={product.name} />
-                        <span>{product.name}</span>
-                      </button>
-                    ))}
-                    {!beautyPass?.products?.length ? (
-                      <p style={{ ...mutedTextStyle, margin: 0 }}>
-                        Trenutno nema dodatih preparata.
-                      </p>
-                    ) : null}
-                  </div>
-                  <label style={{ color: "#edf3ff" }}>
-                    Sta je radjeno
-                    <textarea
-                      className="clinic-beauty-notes clinic-glow-field"
-                      rows={4}
-                      value={form.notes}
-                      onChange={(event) =>
-                        setForm((prev) => ({ ...prev, notes: event.target.value }))
-                      }
-                      placeholder="Npr. Botox celo + korekcija usana..."
-                      required
-                    />
-                  </label>
+                ) : null}
 
-                  <button type="submit" className="btn clinic-glow-btn" disabled={saving}>
-                    {saving ? "Cuvanje..." : "Sacuvaj u Beauty Pass"}
-                  </button>
-                </form>
+                {/* Notes */}
+                <div className="clinic-bp__field-group">
+                  <label className="clinic-bp__field-label">Šta je rađeno</label>
+                  <textarea
+                    className="clinic-bp__textarea"
+                    rows={3}
+                    value={form.notes}
+                    onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                    placeholder="Npr. Botoks čelo + korekcija usana..."
+                    required
+                  />
+                </div>
 
-                <h4 style={{ ...titleTextStyle, marginTop: 18 }}>Istorija unosa</h4>
-                {beautyPass?.treatmentHistory?.length ? (
-                  <ul style={{ margin: 0, paddingLeft: 18, color: "#edf3ff" }}>
-                    {beautyPass.treatmentHistory.slice(0, 12).map((item) => (
-                      <li key={item.id} style={{ marginBottom: 8, color: "#edf3ff" }}>
-                        {new Date(item.treatmentDate).toLocaleDateString("sr-RS")}:{" "}
-                        {item.notes || "Bez napomene"}
-                        {item.product?.name ? ` (${item.product.name})` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p style={{ ...mutedTextStyle, marginBottom: 0 }}>Jos nema unosa.</p>
-                )}
-              </div>
+                {message && <p className="clinic-bp__msg clinic-bp__msg--ok">{message}</p>}
+                {error && <p className="clinic-bp__msg clinic-bp__msg--err">{error}</p>}
+
+                <button type="submit" className="clinic-bp__submit" disabled={saving}>
+                  {saving ? "Čuvanje..." : "Sačuvaj u Beauty Pass"}
+                </button>
+              </form>
             </div>
-          </div>
-        ) : null}
 
-        {message ? <p style={{ color: "#9be39f" }}>{message}</p> : null}
-        {error ? <p style={{ color: "#ffabab" }}>{error}</p> : null}
+          </div>
+        )}
+
       </div>
     </section>
   );
 }
-
-const glassCardStyle = {
-  background: "rgba(20, 29, 42, 0.58)",
-  border: "1px solid rgba(217, 232, 248, 0.32)",
-  borderRadius: 16,
-  padding: 18,
-  backdropFilter: "blur(10px)",
-  WebkitBackdropFilter: "blur(10px)",
-  color: "#edf3ff",
-};
-
-const titleTextStyle = {
-  color: "#f4f8ff",
-};
-
-const mutedTextStyle = {
-  color: "#dfe9f8",
-};
