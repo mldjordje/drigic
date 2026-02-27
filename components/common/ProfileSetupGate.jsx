@@ -182,7 +182,7 @@ export default function ProfileSetupGate() {
   return (
     <div style={wrapStyle}>
       <div style={backdropStyle} />
-      <form style={cardStyle} onSubmit={saveProfile}>
+      <form style={cardStyle} onSubmit={saveProfile} noValidate>
         <h3 style={{ marginTop: 0, marginBottom: 6 }}>Dovrsi profil</h3>
         <p style={{ marginTop: 0, color: "#c6d8ee" }}>
           Unesi podatke jednom kako bi admin video tvoje ime u kalendaru.
@@ -224,7 +224,6 @@ export default function ProfileSetupGate() {
             inputMode="numeric"
             placeholder="DD/MM/YYYY"
             maxLength={10}
-            pattern="\\d{2}/\\d{2}/\\d{4}"
             title="Unesi datum kao DDMMYYYY ili DD/MM/YYYY"
             onChange={(event) =>
               setForm((prev) => ({
