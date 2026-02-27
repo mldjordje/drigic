@@ -31,6 +31,20 @@ function normalizeBirthDate(value) {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
+function normalizeBirthDateInput(value) {
+  const digitsOnly = String(value || "").replace(/\D/g, "").slice(0, 8);
+  if (!digitsOnly) {
+    return "";
+  }
+  if (digitsOnly.length <= 2) {
+    return digitsOnly;
+  }
+  if (digitsOnly.length <= 4) {
+    return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2)}`;
+  }
+  return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4)}`;
+}
+
 function toIsoBirthDate(value) {
   const match = String(value || "")
     .trim()
@@ -108,15 +122,32 @@ export default function ProfileSetupGate() {
       .finally(() => setLoading(false));
   }, [pathname]);
 
+  useEffect(() => {
+    if (!visible || typeof document === "undefined") {
+      return undefined;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyOverscrollX = document.body.style.overscrollBehaviorX;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehaviorX = "none";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.overscrollBehaviorX = previousBodyOverscrollX;
+    };
+  }, [visible]);
+
   async function saveProfile(event) {
     event.preventDefault();
-    if (!form.fullName.trim() || !form.gender || !form.birthDate) {
+    const normalizedBirthDate = normalizeBirthDateInput(form.birthDate);
+    if (!form.fullName.trim() || !form.gender || !normalizedBirthDate) {
       setError("Popunite ime, pol i datum rodjenja.");
       return;
     }
-    const isoBirthDate = toIsoBirthDate(form.birthDate);
+    const isoBirthDate = toIsoBirthDate(normalizedBirthDate);
     if (!isoBirthDate) {
-      setError("Datum rodjenja mora biti u formatu DD/MM/YYYY.");
+      setError("Datum rodjenja mora biti validan (DDMMYYYY ili DD/MM/YYYY).");
       return;
     }
 
@@ -192,10 +223,14 @@ export default function ProfileSetupGate() {
             value={form.birthDate}
             inputMode="numeric"
             placeholder="DD/MM/YYYY"
+            maxLength={10}
             pattern="\\d{2}/\\d{2}/\\d{4}"
-            title="Unesi datum u formatu DD/MM/YYYY"
+            title="Unesi datum kao DDMMYYYY ili DD/MM/YYYY"
             onChange={(event) =>
-              setForm((prev) => ({ ...prev, birthDate: event.target.value }))
+              setForm((prev) => ({
+                ...prev,
+                birthDate: normalizeBirthDateInput(event.target.value),
+              }))
             }
             required
           />
@@ -218,6 +253,10 @@ const wrapStyle = {
   display: "grid",
   placeItems: "center",
   padding: 16,
+  boxSizing: "border-box",
+  overflowX: "hidden",
+  overflowY: "auto",
+  WebkitOverflowScrolling: "touch",
 };
 
 const backdropStyle = {
@@ -229,11 +268,13 @@ const backdropStyle = {
 const cardStyle = {
   position: "relative",
   zIndex: 1,
-  width: "min(520px, calc(100vw - 22px))",
+  width: "100%",
+  maxWidth: 520,
   borderRadius: 16,
   border: "1px solid rgba(217,232,248,0.42)",
   background: "linear-gradient(180deg, #132238 0%, #0f1827 100%)",
   padding: 16,
+  boxSizing: "border-box",
   color: "#f4f8ff",
   display: "grid",
   gap: 8,
