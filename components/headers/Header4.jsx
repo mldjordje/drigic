@@ -24,6 +24,7 @@ export default function Header4() {
       { href: "/tretmani", label: "Tretmani" },
       { href: "/nikola-igic", label: "Osnivac" },
       { href: "/rezultati", label: "Pre/Posle" },
+      { href: "/video-galerija", label: "Video" },
       { href: "/blog", label: "Aktuelnosti" },
       { href: "/booking", label: "Zakazi" },
       { href: "/contact", label: "Kontakt" },
