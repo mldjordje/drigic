@@ -163,8 +163,8 @@ export default function HeroActions() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState(null);
-  const [nextConfirmedBooking, setNextConfirmedBooking] = useState(null);
-  const [showConfirmedNotice, setShowConfirmedNotice] = useState(true);
+  const [statusNotice, setStatusNotice] = useState(null);
+  const [showStatusNotice, setShowStatusNotice] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -175,7 +175,7 @@ export default function HeroActions() {
         if (!profileRes.ok) {
           if (mounted) {
             setCurrentUser(null);
-            setNextConfirmedBooking(null);
+            setStatusNotice(null);
           }
           return;
         }
@@ -188,7 +188,7 @@ export default function HeroActions() {
 
         setCurrentUser(user);
         if (!user) {
-          setNextConfirmedBooking(null);
+          setStatusNotice(null);
           return;
         }
 
@@ -198,17 +198,41 @@ export default function HeroActions() {
           return;
         }
 
-        const nextConfirmed =
-          (bookingsData?.upcoming || []).find(
-            (booking) => String(booking?.status || "").toLowerCase() === "confirmed"
-          ) || null;
+        const nowTime = Date.now();
+        const rows = Array.isArray(bookingsData?.all)
+          ? bookingsData.all
+          : [...(bookingsData?.upcoming || []), ...(bookingsData?.past || [])];
 
-        setNextConfirmedBooking(nextConfirmed);
-        setShowConfirmedNotice(Boolean(nextConfirmed));
+        const upcomingStatusRows = rows
+          .filter((booking) => {
+            const startsAtTime = new Date(booking?.startsAt || "").getTime();
+            const normalized = String(booking?.status || "").toLowerCase();
+            if (!Number.isFinite(startsAtTime) || startsAtTime < nowTime) {
+              return false;
+            }
+            return normalized === "confirmed" || normalized === "cancelled" || normalized === "canceled";
+          })
+          .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+
+        const nextStatusBooking = upcomingStatusRows[0] || null;
+        if (!nextStatusBooking) {
+          setStatusNotice(null);
+          setShowStatusNotice(false);
+          return;
+        }
+
+        const normalizedStatus = String(nextStatusBooking.status || "").toLowerCase();
+        const tone = normalizedStatus === "confirmed" ? "confirmed" : "cancelled";
+        setStatusNotice({
+          tone,
+          label: tone === "confirmed" ? "Termin je potvrdjen" : "Termin je otkazan",
+          startsAt: nextStatusBooking.startsAt,
+        });
+        setShowStatusNotice(true);
       } catch {
         if (mounted) {
           setCurrentUser(null);
-          setNextConfirmedBooking(null);
+          setStatusNotice(null);
         }
       } finally {
         if (mounted) {
@@ -230,8 +254,11 @@ export default function HeroActions() {
     setActiveSection((prev) => (prev === section ? null : section));
   };
 
+  const sectionStatusClass =
+    showStatusNotice && statusNotice?.tone ? `has-status-${statusNotice.tone}` : "";
+
   return (
-    <section className="clinic-hero-actions">
+    <section className={`clinic-hero-actions ${sectionStatusClass}`.trim()}>
       <div className="clinic-hero-actions__separator" aria-hidden="true" />
       <div className="clinic-hero-actions__orb3" aria-hidden="true" />
 
@@ -240,10 +267,12 @@ export default function HeroActions() {
           <p className="clinic-hero-actions__eyebrow">Moj nalog</p>
         </div>
 
-        {nextConfirmedBooking && showConfirmedNotice ? (
+        {statusNotice && showStatusNotice ? (
           <div className="clinic-hero-actions__notice-wrap">
             <div
-              className="clinic-action-btn clinic-action-btn--notice is-active"
+              className={`clinic-action-btn clinic-action-btn--notice is-active ${
+                statusNotice.tone === "cancelled" ? "is-cancelled" : "is-confirmed"
+              }`}
               role="status"
               aria-live="polite"
             >
@@ -251,15 +280,15 @@ export default function HeroActions() {
                 <ConfirmedIcon />
               </span>
               <span className="clinic-action-btn__text">
-                <span className="clinic-action-btn__label">Termin je potvrdjen</span>
+                <span className="clinic-action-btn__label">{statusNotice.label}</span>
                 <span className="clinic-action-btn__sublabel">
-                  {formatBookingDateTime(nextConfirmedBooking.startsAt)}
+                  {formatBookingDateTime(statusNotice.startsAt)}
                 </span>
               </span>
               <button
                 type="button"
                 className="clinic-action-notice__close"
-                onClick={() => setShowConfirmedNotice(false)}
+                onClick={() => setShowStatusNotice(false)}
                 aria-label="Zatvori obavestenje"
               >
                 x

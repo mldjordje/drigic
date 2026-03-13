@@ -4539,6 +4539,21 @@ a.clinic-glow-btn {
   border-color: rgba(205, 255, 228, 0.48) !important;
 }
 
+.clinic-action-btn--notice.is-cancelled {
+  background: linear-gradient(135deg, rgba(153, 31, 43, 0.96) 0%, rgba(118, 22, 33, 0.98) 100%) !important;
+  border-color: rgba(255, 198, 205, 0.34) !important;
+  box-shadow:
+    0 8px 28px rgba(71, 10, 18, 0.48),
+    0 0 0 2px rgba(224, 84, 102, 0.16),
+    inset 0 1px 0 rgba(255, 228, 232, 0.28) !important;
+  animation: clinicActionBtnGlowRed 3.6s ease-in-out infinite;
+}
+
+.clinic-action-btn--notice.is-cancelled:hover {
+  background: linear-gradient(135deg, rgba(168, 33, 47, 0.98) 0%, rgba(130, 24, 37, 1) 100%) !important;
+  border-color: rgba(255, 214, 219, 0.44) !important;
+}
+
 .clinic-action-btn--notice .clinic-action-btn__icon {
   color: rgba(233, 255, 243, 0.95);
 }
@@ -4581,39 +4596,33 @@ a.clinic-glow-btn {
   outline-offset: 2px;
 }
 
-/* Dark mode contrast on hero expandable sections */
-.clinic-theme-dark .clinic-home5 .clinic-hero-actions {
+/* Dark mode accent while notice is visible */
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-confirmed {
   background: #070707;
 }
 
-.clinic-theme-dark .clinic-home5 .clinic-hero-actions::before {
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-confirmed::before {
   background: radial-gradient(
     circle at 50% 50%,
     rgba(60, 123, 92, 0.5) 0%,
     rgba(43, 90, 68, 0.3) 45%,
     transparent 72%
   );
-}
-
-.clinic-theme-dark .clinic-home5 .clinic-hero-actions::after {
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-confirmed::after {
   background: radial-gradient(
     circle at 50% 50%,
     rgba(82, 132, 103, 0.46) 0%,
     rgba(47, 85, 65, 0.25) 44%,
     transparent 74%
   );
-}
-
-.clinic-theme-dark .clinic-home5 .clinic-hero-actions__orb3 {
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-confirmed .clinic-hero-actions__orb3 {
   background: radial-gradient(
     circle at 50% 50%,
     rgba(102, 160, 125, 0.3) 0%,
     rgba(62, 99, 79, 0.2) 45%,
     transparent 68%
   );
-}
-
-.clinic-theme-dark .clinic-home5 .clinic-hero-actions__separator {
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-confirmed .clinic-hero-actions__separator {
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -4622,9 +4631,53 @@ a.clinic-glow-btn {
     rgba(255, 255, 255, 0.1) 80%,
     transparent 100%
   );
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-confirmed .clinic-hero-actions__eyebrow {
+  color: rgba(243, 247, 252, 0.72);
 }
 
-.clinic-theme-dark .clinic-home5 .clinic-hero-actions__eyebrow {
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-cancelled {
+  background: #090506;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-cancelled::before {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(143, 41, 58, 0.46) 0%,
+    rgba(97, 27, 39, 0.32) 45%,
+    transparent 72%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-cancelled::after {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(164, 54, 72, 0.4) 0%,
+    rgba(110, 33, 47, 0.28) 44%,
+    transparent 74%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-cancelled .clinic-hero-actions__orb3 {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(181, 74, 92, 0.24) 0%,
+    rgba(105, 36, 49, 0.18) 45%,
+    transparent 68%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-cancelled .clinic-hero-actions__separator {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 190, 199, 0.14) 20%,
+    rgba(255, 173, 184, 0.28) 50%,
+    rgba(255, 190, 199, 0.14) 80%,
+    transparent 100%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-cancelled .clinic-hero-actions__eyebrow {
   color: rgba(243, 247, 252, 0.72);
 }
 
@@ -4672,5 +4725,22 @@ a.clinic-glow-btn {
       0 0 0 3px rgba(135, 232, 175, 0.24),
       0 0 34px rgba(139, 240, 183, 0.22),
       inset 0 1px 0 rgba(238, 255, 247, 0.42);
+  }
+}
+
+@keyframes clinicActionBtnGlowRed {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 28px rgba(71, 10, 18, 0.48),
+      0 0 0 2px rgba(224, 84, 102, 0.16),
+      inset 0 1px 0 rgba(255, 228, 232, 0.28);
+  }
+  50% {
+    box-shadow:
+      0 14px 34px rgba(89, 12, 24, 0.56),
+      0 0 0 3px rgba(240, 104, 122, 0.22),
+      0 0 34px rgba(244, 120, 136, 0.24),
+      inset 0 1px 0 rgba(255, 236, 239, 0.34);
   }
 }
