@@ -47,6 +47,11 @@ export default function Header4() {
   }, []);
 
   useEffect(() => {
+    setMobileMenuOpen(false);
+    setMobileCategoryOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
@@ -95,6 +100,23 @@ export default function Header4() {
       document.removeEventListener("click", handleDocumentClick);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const previousBodyOverflow = document.body.style.overflow;
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = previousBodyOverflow || "";
+    }
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const handleScroll = () => {

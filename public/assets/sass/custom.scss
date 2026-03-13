@@ -2023,6 +2023,12 @@ a.clinic-glow-btn {
   color: #1d2738;
 }
 
+.clinic-theme-light .clinic-home5 .clinic-booking-note-input::placeholder,
+.clinic-theme-light .clinic-home5 .clinic-beauty-notes::placeholder {
+  color: rgba(68, 83, 104, 0.82) !important;
+  opacity: 1;
+}
+
 .clinic-theme-light .clinic-home5 .glass-panel,
 .clinic-theme-light .clinic-home5 .process-card,
 .clinic-theme-light .clinic-home5 .portfolio-wrap.style4,
@@ -2433,7 +2439,7 @@ a.clinic-glow-btn {
 
 @media (max-width: 991px) {
   .clinic-home5 .header-layout2 .header-logo {
-    margin-left: -28px;
+    margin-left: 0;
     padding-top: 4px !important;
     padding-bottom: 4px !important;
   }
@@ -2446,6 +2452,41 @@ a.clinic-glow-btn {
   .clinic-home5 .header-layout2 .sticky-wrapper .row {
     align-items: center !important;
     min-height: 56px;
+  }
+
+  .clinic-home5 .header-layout2 .menu-area .row > .col-auto.ms-auto {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 0 0 56px;
+    padding-left: 10px;
+  }
+
+  .clinic-home5 .header-layout2 .navbar-right {
+    width: 50px;
+    min-width: 50px;
+    display: inline-flex !important;
+    justify-content: flex-end;
+  }
+
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn {
+    margin: 0 !important;
+    flex-shrink: 0;
+    transform: none !important;
+  }
+
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn:hover,
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn:active,
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn:focus-visible {
+    transform: none !important;
+  }
+
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn .line,
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn:hover .line,
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn:active .line,
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn:focus-visible .line {
+    width: 18px !important;
+    transform: none !important;
   }
 
   .clinic-home5 .mobile-menu-area .mobile-logo {

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 const HYALURONIC_BRANDS = [
   { key: "revolax", label: "Revolax", unitPrice: 180 },
@@ -185,6 +186,7 @@ export default function BookingInlineForm({
   const [error, setError] = useState("");
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [hideNextDateCta, setHideNextDateCta] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const dateStepRef = useRef(null);
 
   const today = useMemo(() => todayIsoDate(), []);
@@ -464,6 +466,10 @@ export default function BookingInlineForm({
   }, []);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
     loadServices().catch((err) => setError(err.message));
   }, []);
 
@@ -671,11 +677,46 @@ export default function BookingInlineForm({
 
   function scrollToDateStep() {
     setHideNextDateCta(true);
-    dateStepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const targetNode = dateStepRef.current;
+    if (!targetNode) {
+      return;
+    }
+
+    const stickyHeader = document.querySelector(".clinic-header .sticky-wrapper");
+    const headerHeight = stickyHeader instanceof HTMLElement ? stickyHeader.offsetHeight : 0;
+    const targetTop =
+      targetNode.getBoundingClientRect().top + window.scrollY - headerHeight - 16;
+
+    window.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "smooth",
+    });
   }
 
   const sectionClassName = ["clinic-booking-form", cardClassName].filter(Boolean).join(" ");
-  const shouldShowNextDateCta = serviceSelections.length && !hideNextDateCta;
+  const shouldShowNextDateCta = serviceSelections.length > 0 && !hideNextDateCta;
+  const nextDateButton = shouldShowNextDateCta ? (
+    <button
+      type="button"
+      className="clinic-glow-btn clinic-next-date-fab"
+      style={nextDateFabStyle}
+      onClick={scrollToDateStep}
+      aria-label="Nastavi na datum i vreme"
+    >
+      <span
+        className="clinic-next-date-fab-icon"
+        style={nextDateFabIconStyle}
+        aria-hidden="true"
+      >
+        v
+      </span>
+      <span className="clinic-btn-label">Nastavi na datum</span>
+    </button>
+  ) : null;
 
   if (isBootstrapping) {
     return (
@@ -862,24 +903,6 @@ export default function BookingInlineForm({
             </div>
           </div>
         ))}
-        {shouldShowNextDateCta ? (
-          <button
-            type="button"
-            className="clinic-glow-btn clinic-next-date-fab"
-            style={nextDateFabStyle}
-            onClick={scrollToDateStep}
-            aria-label="Nastavi na datum i vreme"
-          >
-            <span
-              className="clinic-next-date-fab-icon"
-              style={nextDateFabIconStyle}
-              aria-hidden="true"
-            >
-              v
-            </span>
-            <span className="clinic-btn-label">Nastavi na datum</span>
-          </button>
-        ) : null}
         <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>2) Datum i vreme</h3>
 
         {!serviceSelections.length ? (
@@ -1058,6 +1081,7 @@ export default function BookingInlineForm({
           )}
         </section>
       ) : null}
+      {isClient && nextDateButton ? createPortal(nextDateButton, document.body) : null}
     </section>
   );
 }
@@ -1121,6 +1145,13 @@ const nextDateFabStyle = {
   width: "min(calc(100vw - 32px), 420px)",
   padding: "14px 18px",
   borderRadius: 999,
+  border: "1px solid rgba(255, 255, 255, 0.68)",
+  background: "#050505",
+  color: "#ffffff",
+  WebkitTextFillColor: "#ffffff",
+  fontWeight: 800,
+  letterSpacing: "0.03em",
+  textTransform: "uppercase",
   boxShadow: "0 20px 45px rgba(5, 22, 42, 0.28)",
   zIndex: 40,
 };
