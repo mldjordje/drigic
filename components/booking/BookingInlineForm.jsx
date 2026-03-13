@@ -185,7 +185,6 @@ export default function BookingInlineForm({
   const [error, setError] = useState("");
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [hideNextDateCta, setHideNextDateCta] = useState(false);
-  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const dateStepRef = useRef(null);
 
   const today = useMemo(() => todayIsoDate(), []);
@@ -427,27 +426,7 @@ export default function BookingInlineForm({
   }, [serviceSelections]);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const syncViewport = () => {
-      setIsDesktopViewport(window.innerWidth >= 992);
-    };
-
-    syncViewport();
-    window.addEventListener("resize", syncViewport);
-    return () => {
-      window.removeEventListener("resize", syncViewport);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!serviceSelections.length || hideNextDateCta) {
-      return;
-    }
-
-    if (!isDesktopViewport) {
+    if (!serviceSelections.length) {
       return;
     }
 
@@ -458,18 +437,16 @@ export default function BookingInlineForm({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setHideNextDateCta(true);
-        }
+        setHideNextDateCta(entries.some((entry) => entry.isIntersecting));
       },
       {
-        threshold: 0.25,
+        threshold: 0.2,
       }
     );
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [serviceSelections.length, hideNextDateCta, isDesktopViewport]);
+  }, [serviceSelections.length]);
 
   useEffect(() => {
     let mounted = true;
@@ -693,13 +670,12 @@ export default function BookingInlineForm({
   }
 
   function scrollToDateStep() {
-    if (isDesktopViewport) {
-      setHideNextDateCta(true);
-    }
+    setHideNextDateCta(true);
     dateStepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   const sectionClassName = ["clinic-booking-form", cardClassName].filter(Boolean).join(" ");
+  const shouldShowNextDateCta = serviceSelections.length && !hideNextDateCta;
 
   if (isBootstrapping) {
     return (
@@ -737,7 +713,10 @@ export default function BookingInlineForm({
         Prijavljeni ste kao <strong>{user.email}</strong>.
       </p>
 
-      <form onSubmit={handleBook}>
+      <form
+        onSubmit={handleBook}
+        style={shouldShowNextDateCta ? { paddingBottom: 96 } : undefined}
+      >
         <h3 style={{ color: "var(--clinic-text-strong)" }}>1) Izaberite tretmane</h3>
         {selectedServiceLabels.length ? (
           <div className="clinic-selected-services">
@@ -883,6 +862,24 @@ export default function BookingInlineForm({
             </div>
           </div>
         ))}
+        {shouldShowNextDateCta ? (
+          <button
+            type="button"
+            className="clinic-glow-btn clinic-next-date-fab"
+            style={nextDateFabStyle}
+            onClick={scrollToDateStep}
+            aria-label="Nastavi na datum i vreme"
+          >
+            <span
+              className="clinic-next-date-fab-icon"
+              style={nextDateFabIconStyle}
+              aria-hidden="true"
+            >
+              v
+            </span>
+            <span className="clinic-btn-label">Nastavi na datum</span>
+          </button>
+        ) : null}
         <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>2) Datum i vreme</h3>
 
         {!serviceSelections.length ? (
@@ -1061,17 +1058,6 @@ export default function BookingInlineForm({
           )}
         </section>
       ) : null}
-      {serviceSelections.length && (!hideNextDateCta || !isDesktopViewport) ? (
-        <button
-          type="button"
-          className="clinic-glow-btn clinic-next-date-fab"
-          onClick={scrollToDateStep}
-          aria-label="Nastavi na datum i vreme"
-        >
-          <span className="clinic-next-date-fab-icon" aria-hidden="true">v</span>
-          <span className="clinic-btn-label">Nastavi na datum</span>
-        </button>
-      ) : null}
     </section>
   );
 }
@@ -1121,5 +1107,32 @@ const primaryButtonStyle = {
   padding: "10px 14px",
   fontWeight: 700,
   cursor: "pointer",
+};
+
+const nextDateFabStyle = {
+  position: "fixed",
+  left: "50%",
+  bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+  transform: "translateX(-50%)",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+  width: "min(calc(100vw - 32px), 420px)",
+  padding: "14px 18px",
+  borderRadius: 999,
+  boxShadow: "0 20px 45px rgba(5, 22, 42, 0.28)",
+  zIndex: 40,
+};
+
+const nextDateFabIconStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 22,
+  height: 22,
+  borderRadius: "50%",
+  background: "rgba(255, 255, 255, 0.18)",
+  fontWeight: 800,
 };
 
