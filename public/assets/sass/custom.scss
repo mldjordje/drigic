@@ -4596,6 +4596,53 @@ a.clinic-glow-btn {
   outline-offset: 2px;
 }
 
+/* Dark mode base for hero actions panels */
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions {
+  background: #080808;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions::before {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(120, 120, 120, 0.2) 0%,
+    rgba(75, 75, 75, 0.14) 45%,
+    transparent 72%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions::after {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(110, 110, 110, 0.18) 0%,
+    rgba(65, 65, 65, 0.12) 44%,
+    transparent 74%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions .clinic-hero-actions__orb3 {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(140, 140, 140, 0.12) 0%,
+    rgba(80, 80, 80, 0.09) 45%,
+    transparent 68%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions .clinic-hero-actions__separator {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 20%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.08) 80%,
+    transparent 100%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions .clinic-hero-actions__eyebrow {
+  color: rgba(243, 247, 252, 0.72);
+}
+
 /* Dark mode accent while notice is visible */
 .clinic-theme-dark .clinic-home5 .clinic-hero-actions.has-status-confirmed {
   background: #070707;

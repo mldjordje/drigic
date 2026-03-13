@@ -23,8 +23,8 @@ export default function HomePage5() {
       <ClinicPreloader />
       <Header4 />
       <AnnouncementBar />
-      <HeroActions />
       <Hero />
+      <HeroActions />
       <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
       <Projects />
       <About />
