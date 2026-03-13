@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
@@ -6,6 +6,10 @@ import { generateOtpCode, hashOtpCode, normalizeIdentifier } from "@/lib/auth/ot
 import { sendOtpEmail } from "@/lib/auth/email";
 
 export const runtime = "nodejs";
+
+const OTP_REQUEST_WINDOW_MINUTES = 15;
+const OTP_MAX_REQUESTS_PER_WINDOW = 4;
+const OTP_REQUEST_COOLDOWN_SECONDS = 45;
 
 const payloadSchema = z.object({
   identifier: z.string().min(3),
@@ -27,6 +31,36 @@ export async function POST(request) {
   const db = getDb();
   let user = null;
   let targetEmail = null;
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - OTP_REQUEST_WINDOW_MINUTES * 60 * 1000);
+
+  const recentRequests = await db
+    .select({
+      createdAt: schema.otpCodes.createdAt,
+    })
+    .from(schema.otpCodes)
+    .where(
+      and(
+        eq(schema.otpCodes.identifier, value),
+        gte(schema.otpCodes.createdAt, windowStart)
+      )
+    )
+    .orderBy(desc(schema.otpCodes.createdAt))
+    .limit(OTP_MAX_REQUESTS_PER_WINDOW);
+
+  const latestRequestAt = recentRequests[0]?.createdAt
+    ? new Date(recentRequests[0].createdAt).getTime()
+    : 0;
+  if (latestRequestAt && now.getTime() - latestRequestAt < OTP_REQUEST_COOLDOWN_SECONDS * 1000) {
+    return fail(
+      429,
+      `Sacekajte ${OTP_REQUEST_COOLDOWN_SECONDS} sekundi pre novog koda.`
+    );
+  }
+
+  if (recentRequests.length >= OTP_MAX_REQUESTS_PER_WINDOW) {
+    return fail(429, "Previse OTP zahteva. Pokusajte ponovo kasnije.");
+  }
 
   if (type === "email") {
     const [existing] = await db
@@ -67,7 +101,7 @@ export async function POST(request) {
 
   const code = generateOtpCode();
   const codeHash = hashOtpCode(code);
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+  const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
   await db.insert(schema.otpCodes).values({
     identifier: value,
@@ -80,6 +114,10 @@ export async function POST(request) {
     to: targetEmail,
     code,
   });
+
+  if (!emailResult.sent && process.env.NODE_ENV === "production") {
+    return fail(503, "OTP delivery is temporarily unavailable. Try again shortly.");
+  }
 
   return ok({
     ok: true,

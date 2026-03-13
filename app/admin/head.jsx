@@ -5,7 +5,7 @@ export default function AdminHead() {
       <meta name="apple-mobile-web-app-capable" content="yes" />
       <meta name="apple-mobile-web-app-title" content="Dr Igic Admin" />
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      <link rel="apple-touch-icon" href="/assets/img/favicons/favicon.png" />
+      <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     </>
   );
 }

@@ -142,7 +142,42 @@ export default function AppProviders({ children }) {
       return;
     }
 
-    window.location.replace("/admin/kalendar");
+    let cancelled = false;
+    const clearAdminStartPreference = () => {
+      try {
+        window.localStorage.removeItem("drigic-pwa-admin-start");
+      } catch {
+        // localStorage is optional
+      }
+      if (typeof document !== "undefined") {
+        document.cookie =
+          "drigic-pwa-admin-start=; path=/; max-age=0; SameSite=Lax";
+      }
+    };
+
+    fetch("/api/me/profile")
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (cancelled) {
+          return;
+        }
+
+        if (data?.user?.role === "admin") {
+          window.location.replace("/admin/kalendar");
+          return;
+        }
+
+        clearAdminStartPreference();
+      })
+      .catch(() => {
+        if (!cancelled) {
+          clearAdminStartPreference();
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [pathname]);
 
   return (

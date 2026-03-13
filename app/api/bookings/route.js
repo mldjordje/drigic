@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 import { created, fail, readJson } from "@/lib/api/http";
 import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
@@ -30,6 +31,12 @@ const payloadSchema = z.object({
   startAt: z.string().datetime(),
   notes: z.string().max(1000).optional(),
 });
+
+async function lockEmployeeSchedule(tx, employeeId) {
+  await tx.execute(
+    sql`SELECT pg_advisory_xact_lock(hashtextextended(${employeeId}, 0))`
+  );
+}
 
 export async function POST(request) {
   try {
@@ -73,56 +80,62 @@ export async function POST(request) {
       );
     }
 
-    const conflicts = await findConflicts({
-      employeeId: employee.id,
-      startsAt: startAt,
-      endsAt: endsAt,
-    });
+    let createdBooking = null;
+    await db.transaction(async (tx) => {
+      await lockEmployeeSchedule(tx, employee.id);
 
-    if (conflicts.length) {
-      throw new Error("Requested slot is no longer available.");
-    }
-
-    const [createdBooking] = await db
-      .insert(schema.bookings)
-      .values({
-        userId: auth.user.id,
+      const conflicts = await findConflicts({
         employeeId: employee.id,
         startsAt: startAt,
-        endsAt,
-        status: "pending",
-        totalDurationMin: quote.totalDurationMin,
-        totalPriceRsd: quote.totalPriceRsd,
-        primaryServiceColor: quote.primaryServiceColor,
-        notes: parsed.data.notes || null,
-      })
-      .returning();
-
-    await db.insert(schema.bookingItems).values(
-      quote.items.map((item) => ({
-        bookingId: createdBooking.id,
-        serviceId: item.serviceId,
-        quantity: item.quantity,
-        unitLabel: item.unitLabel,
-        serviceNameSnapshot: item.name,
-        durationMinSnapshot: item.durationMin,
-        priceRsdSnapshot: item.finalPriceRsd,
-        serviceColorSnapshot: item.serviceColor,
-        sourcePackageServiceId: item.sourcePackageServiceId || null,
-      }))
-    );
-
-    try {
-      await db.insert(schema.bookingStatusLog).values({
-        bookingId: createdBooking.id,
-        previousStatus: null,
-        nextStatus: "pending",
-        changedByUserId: auth.user.id,
-        note: "Booking created online (awaiting admin confirmation)",
+        endsAt: endsAt,
+        tx,
       });
-    } catch (logError) {
-      console.error("[bookings.create] status log insert failed", logError);
-    }
+
+      if (conflicts.length) {
+        throw new Error("Requested slot is no longer available.");
+      }
+
+      [createdBooking] = await tx
+        .insert(schema.bookings)
+        .values({
+          userId: auth.user.id,
+          employeeId: employee.id,
+          startsAt: startAt,
+          endsAt,
+          status: "pending",
+          totalDurationMin: quote.totalDurationMin,
+          totalPriceRsd: quote.totalPriceRsd,
+          primaryServiceColor: quote.primaryServiceColor,
+          notes: parsed.data.notes || null,
+        })
+        .returning();
+
+      await tx.insert(schema.bookingItems).values(
+        quote.items.map((item) => ({
+          bookingId: createdBooking.id,
+          serviceId: item.serviceId,
+          quantity: item.quantity,
+          unitLabel: item.unitLabel,
+          serviceNameSnapshot: item.name,
+          durationMinSnapshot: item.durationMin,
+          priceRsdSnapshot: item.finalPriceRsd,
+          serviceColorSnapshot: item.serviceColor,
+          sourcePackageServiceId: item.sourcePackageServiceId || null,
+        }))
+      );
+
+      try {
+        await tx.insert(schema.bookingStatusLog).values({
+          bookingId: createdBooking.id,
+          previousStatus: null,
+          nextStatus: "pending",
+          changedByUserId: auth.user.id,
+          note: "Booking created online (awaiting admin confirmation)",
+        });
+      } catch (logError) {
+        console.error("[bookings.create] status log insert failed", logError);
+      }
+    });
 
     try {
       const startsAtLabel = new Date(createdBooking.startsAt).toLocaleString("sr-RS", {

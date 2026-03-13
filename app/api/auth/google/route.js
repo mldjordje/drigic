@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   buildGoogleAuthUrl,
   createGoogleOauthState,
+  getGoogleOauthCookieOptions,
   GOOGLE_OAUTH_NEXT_COOKIE,
   GOOGLE_OAUTH_STATE_COOKIE,
   hasGoogleConfig,
@@ -24,27 +25,21 @@ export async function GET(request) {
 
   const state = createGoogleOauthState();
   const authUrl = buildGoogleAuthUrl(request, state);
+  const cookieOptions = getGoogleOauthCookieOptions();
 
   const response = NextResponse.redirect(authUrl);
   response.cookies.set({
     name: GOOGLE_OAUTH_STATE_COOKIE,
     value: state,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
+    ...cookieOptions,
     maxAge: 60 * 10,
   });
   response.cookies.set({
     name: GOOGLE_OAUTH_NEXT_COOKIE,
     value: nextPath,
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
+    ...cookieOptions,
     maxAge: 60 * 10,
   });
 
   return response;
 }
-

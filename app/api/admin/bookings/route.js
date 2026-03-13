@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, gte, lte, or } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -49,6 +50,13 @@ const ALLOWED_STATUS_TRANSITIONS = {
   cancelled: new Set(["cancelled"]),
   no_show: new Set(["no_show"]),
 };
+const SLOT_CONFLICT_ERROR = "Selected slot overlaps with existing booking/block.";
+
+async function lockEmployeeSchedule(tx, employeeId) {
+  await tx.execute(
+    sql`SELECT pg_advisory_xact_lock(hashtextextended(${employeeId}, 0))`
+  );
+}
 
 function isValidStatusTransition(fromStatus, toStatus) {
   const allowed = ALLOWED_STATUS_TRANSITIONS[fromStatus];
@@ -327,7 +335,7 @@ export async function POST(request) {
     endsAt,
   });
   if (conflicts.length) {
-    return fail(409, "Selected slot overlaps with existing booking/block.");
+    return fail(409, SLOT_CONFLICT_ERROR);
   }
 
   const userFilter = [];
@@ -395,45 +403,67 @@ export async function POST(request) {
       .where(eq(schema.profiles.id, profile.id));
   }
 
-  const [createdBooking] = await db
-    .insert(schema.bookings)
-    .values({
-      userId: user.id,
-      employeeId: employee.id,
-      startsAt: startAt,
-      endsAt,
-      status: finalStatus,
-      totalDurationMin: quote.totalDurationMin,
-      totalPriceRsd: quote.totalPriceRsd,
-      primaryServiceColor: quote.primaryServiceColor,
-      notes: payload.notes || "Booked by admin",
-    })
-    .returning();
-
-  await db.insert(schema.bookingItems).values(
-    quote.items.map((item) => ({
-      bookingId: createdBooking.id,
-      serviceId: item.serviceId,
-      quantity: item.quantity,
-      unitLabel: item.unitLabel,
-      serviceNameSnapshot: item.name,
-      durationMinSnapshot: item.durationMin,
-      priceRsdSnapshot: item.finalPriceRsd,
-      serviceColorSnapshot: item.serviceColor,
-      sourcePackageServiceId: item.sourcePackageServiceId || null,
-    }))
-  );
-
+  let createdBooking = null;
   try {
-    await db.insert(schema.bookingStatusLog).values({
-      bookingId: createdBooking.id,
-      previousStatus: null,
-      nextStatus: finalStatus,
-      changedByUserId: auth.user.id,
-      note: "Booking created from admin calendar",
+    await db.transaction(async (tx) => {
+      await lockEmployeeSchedule(tx, employee.id);
+
+      const conflictsInTx = await findConflicts({
+        employeeId: employee.id,
+        startsAt: startAt,
+        endsAt,
+        tx,
+      });
+      if (conflictsInTx.length) {
+        throw new Error(SLOT_CONFLICT_ERROR);
+      }
+
+      [createdBooking] = await tx
+        .insert(schema.bookings)
+        .values({
+          userId: user.id,
+          employeeId: employee.id,
+          startsAt: startAt,
+          endsAt,
+          status: finalStatus,
+          totalDurationMin: quote.totalDurationMin,
+          totalPriceRsd: quote.totalPriceRsd,
+          primaryServiceColor: quote.primaryServiceColor,
+          notes: payload.notes || "Booked by admin",
+        })
+        .returning();
+
+      await tx.insert(schema.bookingItems).values(
+        quote.items.map((item) => ({
+          bookingId: createdBooking.id,
+          serviceId: item.serviceId,
+          quantity: item.quantity,
+          unitLabel: item.unitLabel,
+          serviceNameSnapshot: item.name,
+          durationMinSnapshot: item.durationMin,
+          priceRsdSnapshot: item.finalPriceRsd,
+          serviceColorSnapshot: item.serviceColor,
+          sourcePackageServiceId: item.sourcePackageServiceId || null,
+        }))
+      );
+
+      try {
+        await tx.insert(schema.bookingStatusLog).values({
+          bookingId: createdBooking.id,
+          previousStatus: null,
+          nextStatus: finalStatus,
+          changedByUserId: auth.user.id,
+          note: "Booking created from admin calendar",
+        });
+      } catch (logError) {
+        console.error("[admin.bookings.create] status log insert failed", logError);
+      }
     });
-  } catch (logError) {
-    console.error("[admin.bookings.create] status log insert failed", logError);
+  } catch (error) {
+    if (String(error?.message || "").includes(SLOT_CONFLICT_ERROR)) {
+      return fail(409, SLOT_CONFLICT_ERROR);
+    }
+    throw error;
   }
 
   return created({ ok: true, data: createdBooking, quote });

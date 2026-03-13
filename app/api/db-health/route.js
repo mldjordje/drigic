@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
 import { getSql } from "@/lib/db";
+import { isCronAuthorized } from "@/lib/cron/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request) {
+  if (process.env.NODE_ENV === "production" && !isCronAuthorized(request)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Unauthorized",
+      },
+      { status: 401 }
+    );
+  }
+
   try {
     const sql = getSql();
     const result = await sql`SELECT NOW() as now`;
@@ -24,4 +35,3 @@ export async function GET() {
     );
   }
 }
-

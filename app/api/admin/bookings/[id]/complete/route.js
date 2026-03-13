@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -11,6 +12,12 @@ const payloadSchema = z.object({
   notes: z.string().max(2000).optional(),
   correctionDueDate: z.string().optional(),
 });
+const TREATMENT_RECORD_EXISTS_ERROR = "Treatment record for this booking already exists.";
+const COMPLETION_STATUS_ERROR = "Booking cannot be completed from current status.";
+
+async function lockBooking(tx, bookingId) {
+  await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${bookingId}, 0))`);
+}
 
 export async function POST(request, { params }) {
   const auth = await requireAdmin(request);
@@ -26,47 +33,80 @@ export async function POST(request, { params }) {
   }
 
   const db = getDb();
-  const [booking] = await db
-    .select()
-    .from(schema.bookings)
-    .where(eq(schema.bookings.id, id))
-    .limit(1);
-
-  if (!booking) {
-    return fail(404, "Booking not found.");
-  }
-
   const employee = await getDefaultEmployee();
   const now = new Date();
+  let booking = null;
+  let updatedBooking = null;
+  let record = null;
 
-  const [updatedBooking] = await db
-    .update(schema.bookings)
-    .set({
-      status: "completed",
-      updatedAt: now,
-    })
-    .where(eq(schema.bookings.id, booking.id))
-    .returning();
+  try {
+    await db.transaction(async (tx) => {
+      await lockBooking(tx, id);
 
-  await db.insert(schema.bookingStatusLog).values({
-    bookingId: booking.id,
-    previousStatus: booking.status,
-    nextStatus: "completed",
-    changedByUserId: auth.user.id,
-    note: parsed.data.notes || "Completed by admin",
-  });
+      [booking] = await tx
+        .select()
+        .from(schema.bookings)
+        .where(eq(schema.bookings.id, id))
+        .limit(1);
 
-  const [record] = await db
-    .insert(schema.treatmentRecords)
-    .values({
-      userId: booking.userId,
+      if (!booking) {
+        throw new Error("BOOKING_NOT_FOUND");
+      }
+      if (!["pending", "confirmed"].includes(booking.status)) {
+        throw new Error(COMPLETION_STATUS_ERROR);
+      }
+
+      const [existingRecord] = await tx
+        .select({ id: schema.treatmentRecords.id })
+        .from(schema.treatmentRecords)
+        .where(eq(schema.treatmentRecords.bookingId, booking.id))
+        .limit(1);
+      if (existingRecord) {
+        throw new Error(TREATMENT_RECORD_EXISTS_ERROR);
+      }
+
+    [updatedBooking] = await tx
+      .update(schema.bookings)
+      .set({
+        status: "completed",
+        updatedAt: now,
+      })
+      .where(eq(schema.bookings.id, booking.id))
+      .returning();
+
+    await tx.insert(schema.bookingStatusLog).values({
       bookingId: booking.id,
-      employeeId: employee.id,
-      treatmentDate: booking.endsAt || booking.startsAt,
-      notes: parsed.data.notes || null,
-      correctionDueDate: parsed.data.correctionDueDate || null,
-    })
-    .returning();
+      previousStatus: booking.status,
+      nextStatus: "completed",
+      changedByUserId: auth.user.id,
+      note: parsed.data.notes || "Completed by admin",
+    });
+
+    [record] = await tx
+      .insert(schema.treatmentRecords)
+      .values({
+        userId: booking.userId,
+        bookingId: booking.id,
+        employeeId: employee.id,
+        treatmentDate: booking.endsAt || booking.startsAt,
+        notes: parsed.data.notes || null,
+        correctionDueDate: parsed.data.correctionDueDate || null,
+      })
+      .returning();
+    });
+  } catch (error) {
+    const message = String(error?.message || "");
+    if (message.includes("BOOKING_NOT_FOUND")) {
+      return fail(404, "Booking not found.");
+    }
+    if (message.includes(COMPLETION_STATUS_ERROR)) {
+      return fail(409, `Booking cannot be completed from status '${booking?.status || "unknown"}'.`);
+    }
+    if (message.includes(TREATMENT_RECORD_EXISTS_ERROR)) {
+      return fail(409, TREATMENT_RECORD_EXISTS_ERROR);
+    }
+    return fail(500, error?.message || "Failed to complete booking.");
+  }
 
   return created({
     ok: true,
@@ -74,4 +114,3 @@ export async function POST(request, { params }) {
     treatmentRecord: record,
   });
 }
-

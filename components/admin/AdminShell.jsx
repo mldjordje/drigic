@@ -84,17 +84,29 @@ export default function AdminShell({ children }) {
         <div className="admin-template-group">
           <p className="admin-template-group-title">Navigacija</p>
           <nav className="admin-template-nav">
-            {quickLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="admin-template-nav-item"
-                onClick={() => setMenuOpen(false)}
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {quickLinks.map((item) =>
+              item.href.startsWith("/api/") ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="admin-template-nav-item"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </a>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="admin-template-nav-item"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span>{item.icon}</span>
+                  <span>{item.label}</span>
+                </Link>
+              )
+            )}
           </nav>
         </div>
 

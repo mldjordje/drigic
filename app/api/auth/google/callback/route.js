@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getDb, schema } from "@/lib/db/client";
 import {
   getBaseUrl,
+  getGoogleOauthCookieOptions,
   getGoogleRedirectUri,
   GOOGLE_OAUTH_NEXT_COOKIE,
   GOOGLE_OAUTH_STATE_COOKIE,
@@ -26,24 +27,26 @@ function loginRedirect(request, reason, nextPath = "/") {
 }
 
 function clearGoogleOauthCookies(response) {
+  const cookieOptions = getGoogleOauthCookieOptions();
+
   response.cookies.set({
     name: GOOGLE_OAUTH_STATE_COOKIE,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
+    ...cookieOptions,
     maxAge: 0,
   });
   response.cookies.set({
     name: GOOGLE_OAUTH_NEXT_COOKIE,
     value: "",
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
+    ...cookieOptions,
     maxAge: 0,
   });
+}
+
+function redirectToLogin(request, reason, nextPath) {
+  const response = NextResponse.redirect(loginRedirect(request, reason, nextPath));
+  clearGoogleOauthCookies(response);
+  return response;
 }
 
 export async function GET(request) {
@@ -55,16 +58,12 @@ export async function GET(request) {
   );
 
   if (!hasGoogleConfig()) {
-    return NextResponse.redirect(
-      loginRedirect(request, "google-config-missing", nextPathFromCookie)
-    );
+    return redirectToLogin(request, "google-config-missing", nextPathFromCookie);
   }
 
   const error = url.searchParams.get("error");
   if (error) {
-    return NextResponse.redirect(
-      loginRedirect(request, "google-denied", nextPathFromCookie)
-    );
+    return redirectToLogin(request, "google-denied", nextPathFromCookie);
   }
 
   const code = url.searchParams.get("code");
@@ -72,9 +71,7 @@ export async function GET(request) {
   const expectedState = request.cookies.get(GOOGLE_OAUTH_STATE_COOKIE)?.value;
 
   if (!code || !returnedState || !expectedState || returnedState !== expectedState) {
-    return NextResponse.redirect(
-      loginRedirect(request, "google-state-invalid", nextPathFromCookie)
-    );
+    return redirectToLogin(request, "google-state-invalid", nextPathFromCookie);
   }
 
   try {
@@ -91,16 +88,12 @@ export async function GET(request) {
     });
 
     if (!tokenResponse.ok) {
-      return NextResponse.redirect(
-        loginRedirect(request, "google-token-failed", nextPathFromCookie)
-      );
+      return redirectToLogin(request, "google-token-failed", nextPathFromCookie);
     }
 
     const tokenData = await tokenResponse.json();
     if (!tokenData?.access_token) {
-      return NextResponse.redirect(
-        loginRedirect(request, "google-token-failed", nextPathFromCookie)
-      );
+      return redirectToLogin(request, "google-token-failed", nextPathFromCookie);
     }
 
     const userInfoResponse = await fetch(
@@ -113,17 +106,13 @@ export async function GET(request) {
     );
 
     if (!userInfoResponse.ok) {
-      return NextResponse.redirect(
-        loginRedirect(request, "google-userinfo-failed", nextPathFromCookie)
-      );
+      return redirectToLogin(request, "google-userinfo-failed", nextPathFromCookie);
     }
 
     const userInfo = await userInfoResponse.json();
     const email = String(userInfo?.email || "").trim().toLowerCase();
     if (!email) {
-      return NextResponse.redirect(
-        loginRedirect(request, "google-email-missing", nextPathFromCookie)
-      );
+      return redirectToLogin(request, "google-email-missing", nextPathFromCookie);
     }
 
     const targetRole = ADMIN_EMAILS.has(email) ? "admin" : "client";
@@ -173,8 +162,6 @@ export async function GET(request) {
     clearGoogleOauthCookies(response);
     return response;
   } catch {
-    return NextResponse.redirect(
-      loginRedirect(request, "google-auth-failed", nextPathFromCookie)
-    );
+    return redirectToLogin(request, "google-auth-failed", nextPathFromCookie);
   }
 }

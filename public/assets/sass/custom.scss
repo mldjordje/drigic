@@ -2352,6 +2352,13 @@ a.clinic-glow-btn {
   --clinic-text-strong: #f8f8f8;
   --clinic-text-secondary: #e4e4e4;
   --clinic-text-muted: #d0d0d0;
+  --clinic-card-bg: rgba(0, 0, 0, 0.88);
+  --clinic-card-border: rgba(255, 255, 255, 0.28);
+  --clinic-card-border-soft: rgba(255, 255, 255, 0.18);
+  --clinic-card-blur: 6px;
+  --clinic-field-bg: rgba(0, 0, 0, 0.78);
+  --clinic-field-border: rgba(255, 255, 255, 0.32);
+  --clinic-summary-bg: rgba(255, 255, 255, 0.08);
   --clinic-button-bg: #000000;
   --clinic-button-border: rgba(255, 255, 255, 0.58);
   --clinic-button-text: #ffffff;
@@ -2374,6 +2381,31 @@ a.clinic-glow-btn {
   background: rgba(6, 6, 6, 0.96) !important;
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.26) !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-booking-calendar {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(0, 0, 0, 0.76);
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-cal-nav,
+.clinic-theme-dark .clinic-home5 .clinic-slot-button {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.86);
+  color: #f4f4f4 !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-cal-day {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.72);
+  color: #f6f6f6;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-cal-day.is-active,
+.clinic-theme-dark .clinic-home5 .clinic-slot-button.is-active {
+  border-color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff !important;
 }
 
 @media (max-width: 991px) {
@@ -4373,5 +4405,4 @@ a.clinic-glow-btn {
   85%  { width: 90%; }
   100% { width: 100%; }
 }
-
 

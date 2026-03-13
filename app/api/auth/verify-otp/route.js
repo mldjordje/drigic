@@ -50,7 +50,11 @@ export async function POST(request) {
 
   const incomingHash = hashOtpCode(parsed.data.code);
   if (incomingHash !== otpRow.codeHash) {
-    return fail(401, "OTP code is invalid.");
+    await db
+      .update(schema.otpCodes)
+      .set({ usedAt: now })
+      .where(eq(schema.otpCodes.id, otpRow.id));
+    return fail(401, "OTP code is invalid. Request a new code.");
   }
 
   await db
@@ -113,4 +117,3 @@ export async function POST(request) {
   setSessionCookie(response, token);
   return response;
 }
-
