@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 export default function ScrollTop() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrolled, setScrolled] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(400);
+  const [enabled, setEnabled] = useState(true);
 
   const scrollToTop = () => {
     if (window) {
@@ -13,7 +14,10 @@ export default function ScrollTop() {
       });
     }
   };
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
+    if (!enabled) {
+      return;
+    }
     setScrolled(document.body.scrollTop || document.documentElement.scrollTop);
     setShowScrollTop(window.scrollY >= window.innerHeight);
 
@@ -21,13 +25,42 @@ export default function ScrollTop() {
       document.documentElement.scrollHeight -
         document.documentElement.clientHeight
     );
-  };
+  }, [enabled]);
+
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncEnabled = () => {
+      const isTouchLike =
+        window.matchMedia?.("(pointer: coarse)")?.matches ||
+        window.matchMedia?.("(hover: none)")?.matches;
+      const isNarrow = window.innerWidth <= 991;
+      setEnabled(!(isTouchLike || isNarrow));
+    };
+
+    syncEnabled();
+    window.addEventListener("resize", syncEnabled);
+    return () => {
+      window.removeEventListener("resize", syncEnabled);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) {
+      setShowScrollTop(false);
+      return;
+    }
     window.addEventListener("scroll", handleScroll);
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [enabled, handleScroll]);
+
+  if (!enabled) {
+    return null;
+  }
 
   return (
     <div

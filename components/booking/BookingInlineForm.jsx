@@ -185,6 +185,7 @@ export default function BookingInlineForm({
   const [error, setError] = useState("");
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [hideNextDateCta, setHideNextDateCta] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const dateStepRef = useRef(null);
 
   const today = useMemo(() => todayIsoDate(), []);
@@ -426,11 +427,27 @@ export default function BookingInlineForm({
   }, [serviceSelections]);
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const syncViewport = () => {
+      setIsDesktopViewport(window.innerWidth >= 992);
+    };
+
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
+    return () => {
+      window.removeEventListener("resize", syncViewport);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!serviceSelections.length || hideNextDateCta) {
       return;
     }
 
-    if (typeof window !== "undefined" && window.innerWidth <= 991) {
+    if (!isDesktopViewport) {
       return;
     }
 
@@ -452,7 +469,7 @@ export default function BookingInlineForm({
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [serviceSelections.length, hideNextDateCta]);
+  }, [serviceSelections.length, hideNextDateCta, isDesktopViewport]);
 
   useEffect(() => {
     let mounted = true;
@@ -676,7 +693,7 @@ export default function BookingInlineForm({
   }
 
   function scrollToDateStep() {
-    if (typeof window !== "undefined" && window.innerWidth >= 992) {
+    if (isDesktopViewport) {
       setHideNextDateCta(true);
     }
     dateStepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1044,7 +1061,7 @@ export default function BookingInlineForm({
           )}
         </section>
       ) : null}
-      {serviceSelections.length && !hideNextDateCta ? (
+      {serviceSelections.length && (!hideNextDateCta || !isDesktopViewport) ? (
         <button
           type="button"
           className="clinic-glow-btn clinic-next-date-fab"
