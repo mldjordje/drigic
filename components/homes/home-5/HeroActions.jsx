@@ -4,6 +4,32 @@ import { useEffect, useRef, useState } from "react";
 import BookingSection from "@/components/homes/home-5/BookingSection";
 import BeautyPassSection from "@/components/homes/home-5/BeautyPassSection";
 
+async function parseResponse(response) {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function formatBookingDateTime(isoString) {
+  try {
+    return new Date(isoString).toLocaleString("sr-RS", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return isoString || "";
+  }
+}
+
 function ArrowIcon() {
   return (
     <svg
@@ -63,6 +89,28 @@ function PassIcon() {
   );
 }
 
+function ConfirmedIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+      <path
+        d="M8 12.4L10.7 15L16 9.8"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function ActionButton({ label, sublabel, isActive, onClick, icon }) {
   const chars = label.split("");
   return (
@@ -85,9 +133,9 @@ function ActionButton({ label, sublabel, isActive, onClick, icon }) {
             </span>
           ))}
         </span>
-        {sublabel && (
+        {sublabel ? (
           <span className="clinic-action-btn__sublabel">{sublabel}</span>
-        )}
+        ) : null}
       </span>
       <span className={`clinic-action-btn__arrow${isActive ? " is-rotated" : ""}`}>
         <ArrowIcon />
@@ -115,13 +163,65 @@ export default function HeroActions() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState(null);
+  const [nextConfirmedBooking, setNextConfirmedBooking] = useState(null);
+  const [showConfirmedNotice, setShowConfirmedNotice] = useState(true);
 
   useEffect(() => {
-    fetch("/api/me/profile")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setCurrentUser(data?.user || null))
-      .catch(() => setCurrentUser(null))
-      .finally(() => setLoading(false));
+    let mounted = true;
+
+    async function load() {
+      try {
+        const profileRes = await fetch("/api/me/profile");
+        if (!profileRes.ok) {
+          if (mounted) {
+            setCurrentUser(null);
+            setNextConfirmedBooking(null);
+          }
+          return;
+        }
+
+        const profileData = await parseResponse(profileRes);
+        const user = profileData?.user || null;
+        if (!mounted) {
+          return;
+        }
+
+        setCurrentUser(user);
+        if (!user) {
+          setNextConfirmedBooking(null);
+          return;
+        }
+
+        const bookingsRes = await fetch("/api/me/bookings");
+        const bookingsData = await parseResponse(bookingsRes);
+        if (!mounted) {
+          return;
+        }
+
+        const nextConfirmed =
+          (bookingsData?.upcoming || []).find(
+            (booking) => String(booking?.status || "").toLowerCase() === "confirmed"
+          ) || null;
+
+        setNextConfirmedBooking(nextConfirmed);
+        setShowConfirmedNotice(Boolean(nextConfirmed));
+      } catch {
+        if (mounted) {
+          setCurrentUser(null);
+          setNextConfirmedBooking(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   if (loading || !currentUser) return null;
@@ -132,18 +232,45 @@ export default function HeroActions() {
 
   return (
     <section className="clinic-hero-actions">
-      {/* Decorative top separator */}
       <div className="clinic-hero-actions__separator" aria-hidden="true" />
-      {/* Third orb — center warmth */}
       <div className="clinic-hero-actions__orb3" aria-hidden="true" />
 
       <div className="container">
         <div className="clinic-hero-actions__header">
           <p className="clinic-hero-actions__eyebrow">Moj nalog</p>
         </div>
+
+        {nextConfirmedBooking && showConfirmedNotice ? (
+          <div className="clinic-hero-actions__notice-wrap">
+            <div
+              className="clinic-action-btn clinic-action-btn--notice is-active"
+              role="status"
+              aria-live="polite"
+            >
+              <span className="clinic-action-btn__icon">
+                <ConfirmedIcon />
+              </span>
+              <span className="clinic-action-btn__text">
+                <span className="clinic-action-btn__label">Termin je potvrdjen</span>
+                <span className="clinic-action-btn__sublabel">
+                  {formatBookingDateTime(nextConfirmedBooking.startsAt)}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="clinic-action-notice__close"
+                onClick={() => setShowConfirmedNotice(false)}
+                aria-label="Zatvori obavestenje"
+              >
+                x
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="clinic-hero-actions__ctas">
           <ActionButton
-            label="Zakaži termin"
+            label="Zakazi termin"
             sublabel="Odaberi tretman, datum i termin"
             isActive={activeSection === "booking"}
             onClick={() => handleToggle("booking")}
@@ -167,8 +294,7 @@ export default function HeroActions() {
         <BeautyPassSection />
       </ExpandPanel>
 
-      {/* Bottom spacing when nothing is open */}
-      {!activeSection && <div className="clinic-hero-actions__bottom-space" />}
+      {!activeSection ? <div className="clinic-hero-actions__bottom-space" /> : null}
     </section>
   );
 }

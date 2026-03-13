@@ -4510,3 +4510,167 @@ a.clinic-glow-btn {
 .clinic-theme-dark .clinic-home5 .clinic-bp__preview-ok {
   color: #2f7c3b !important;
 }
+
+/* Hero confirmed booking notice */
+.clinic-hero-actions__notice-wrap {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  margin-top: 4px;
+}
+
+.clinic-action-btn--notice {
+  width: min(620px, 100%);
+  min-width: 0;
+  cursor: default;
+  background: linear-gradient(135deg, rgba(20, 113, 60, 0.96) 0%, rgba(15, 88, 49, 0.98) 100%) !important;
+  border-color: rgba(191, 255, 219, 0.35) !important;
+  box-shadow:
+    0 8px 28px rgba(10, 63, 35, 0.45),
+    0 0 0 2px rgba(108, 214, 154, 0.18),
+    inset 0 1px 0 rgba(231, 255, 242, 0.35) !important;
+  animation: clinicActionBtnGlowGreen 3.6s ease-in-out infinite;
+}
+
+.clinic-action-btn--notice:hover {
+  transform: translateY(-2px) scale(1.01);
+  background: linear-gradient(135deg, rgba(22, 126, 67, 0.98) 0%, rgba(16, 97, 53, 1) 100%) !important;
+  border-color: rgba(205, 255, 228, 0.48) !important;
+}
+
+.clinic-action-btn--notice .clinic-action-btn__icon {
+  color: rgba(233, 255, 243, 0.95);
+}
+
+.clinic-action-btn--notice .clinic-action-btn__label {
+  color: #f5fff8 !important;
+  -webkit-text-fill-color: #f5fff8 !important;
+}
+
+.clinic-action-btn--notice .clinic-action-btn__sublabel {
+  color: rgba(226, 255, 239, 0.85) !important;
+  -webkit-text-fill-color: rgba(226, 255, 239, 0.85) !important;
+}
+
+.clinic-action-notice__close {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(235, 255, 244, 0.5);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.14);
+  color: rgba(245, 255, 249, 0.95);
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.clinic-action-notice__close:hover {
+  background: rgba(0, 0, 0, 0.28);
+  border-color: rgba(245, 255, 250, 0.85);
+  transform: scale(1.06);
+}
+
+.clinic-action-notice__close:focus-visible {
+  outline: 2px solid rgba(238, 255, 246, 0.95);
+  outline-offset: 2px;
+}
+
+/* Dark mode contrast on hero expandable sections */
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions {
+  background: #070707;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions::before {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(60, 123, 92, 0.5) 0%,
+    rgba(43, 90, 68, 0.3) 45%,
+    transparent 72%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions::after {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(82, 132, 103, 0.46) 0%,
+    rgba(47, 85, 65, 0.25) 44%,
+    transparent 74%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions__orb3 {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(102, 160, 125, 0.3) 0%,
+    rgba(62, 99, 79, 0.2) 45%,
+    transparent 68%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions__separator {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 80%,
+    transparent 100%
+  );
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-hero-actions__eyebrow {
+  color: rgba(243, 247, 252, 0.72);
+}
+
+.clinic-theme-dark .clinic-home5 #booking .title-area .sec-title {
+  color: #f5f7fb !important;
+  text-shadow: none !important;
+}
+
+.clinic-theme-dark .clinic-home5 #booking .title-area .sec-text {
+  color: rgba(235, 241, 250, 0.84) !important;
+  text-shadow: none !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-bp__title {
+  color: #f5f7fb !important;
+  text-shadow: none !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-bp__subtitle {
+  color: rgba(235, 241, 250, 0.82) !important;
+  text-shadow: none !important;
+}
+
+@media (max-width: 600px) {
+  .clinic-hero-actions__notice-wrap {
+    padding: 0 6px;
+  }
+
+  .clinic-action-btn--notice {
+    max-width: 360px;
+  }
+}
+
+@keyframes clinicActionBtnGlowGreen {
+  0%,
+  100% {
+    box-shadow:
+      0 8px 28px rgba(10, 63, 35, 0.45),
+      0 0 0 2px rgba(108, 214, 154, 0.18),
+      inset 0 1px 0 rgba(231, 255, 242, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 14px 34px rgba(9, 73, 39, 0.52),
+      0 0 0 3px rgba(135, 232, 175, 0.24),
+      0 0 34px rgba(139, 240, 183, 0.22),
+      inset 0 1px 0 rgba(238, 255, 247, 0.42);
+  }
+}
