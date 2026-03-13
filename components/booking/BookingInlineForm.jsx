@@ -144,6 +144,20 @@ function getMlDurationMin(baseDurationMin, quantity) {
   return Math.min(60, base + 30);
 }
 
+function formatBookingStatus(status) {
+  const normalized = String(status || "").toLowerCase();
+  const labels = {
+    pending: "Na cekanju",
+    confirmed: "Potvrdjen",
+    completed: "Zavrsen",
+    cancelled: "Otkazan",
+    "no-show": "Nije dosao",
+    no_show: "Nije dosao",
+    block: "Blokirano",
+  };
+  return labels[normalized] || status || "Nepoznat";
+}
+
 export default function BookingInlineForm({
   googleNextPath = "/",
   cardClassName = "",
@@ -1015,7 +1029,7 @@ export default function BookingInlineForm({
                   }}
                 >
                   {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min -{" "}
-                  {booking.totalPriceRsd} EUR ({booking.status})
+                  {booking.totalPriceRsd} EUR ({formatBookingStatus(booking.status)})
                 </li>
               ))}
             </ul>

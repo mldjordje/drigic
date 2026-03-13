@@ -34,11 +34,17 @@ export async function GET(request) {
       ["pending", "confirmed"].includes(booking.status)
   );
   const past = rows.filter((booking) => new Date(booking.startsAt) < now);
+  const upcomingSorted = [...upcoming].sort(
+    (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
+  );
+  const pastSorted = [...past].sort(
+    (a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime()
+  );
 
   return ok({
     ok: true,
-    upcoming,
-    past,
+    upcoming: upcomingSorted,
+    past: pastSorted,
     all: rows,
   });
 }

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import PWAMenuActions from "@/components/common/PWAMenuActions";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
@@ -9,6 +10,7 @@ import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 const THEME_STORAGE_KEY = "clinic-theme-mode";
 
 export default function Header4() {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -127,6 +129,15 @@ export default function Header4() {
   const headerLogoSrc = "/assets/img/logo.png";
   const mobileLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.png";
 
+  function handleLogoClick() {
+    setMobileMenuOpen(false);
+    setMobileCategoryOpen(false);
+
+    if (pathname === "/" && typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
   function toggleThemeMode() {
     setThemeMode((prev) => (prev === "dark" ? "light" : "dark"));
   }
@@ -161,7 +172,7 @@ export default function Header4() {
             <i className="fas fa-times"></i>
           </button>
           <div className="mobile-logo">
-            <Link scroll={false} href="/">
+            <Link href="/" onClick={handleLogoClick}>
               <img
                 src={mobileLogoSrc}
                 alt="Dr Igic logo"
@@ -285,7 +296,7 @@ export default function Header4() {
               <div className="row align-items-center justify-content-between" style={{ flexWrap: "nowrap", display: "flex", alignItems: "center" }}>
                 <div className="col-auto">
                   <div className="header-logo">
-                    <Link scroll={false} href="/">
+                    <Link href="/" onClick={handleLogoClick}>
                       <Image
                         width={286}
                         height={84}
@@ -339,18 +350,6 @@ export default function Header4() {
                     </button>
                     {currentUser ? (
                       <>
-                        {currentUser.role === "admin" ? (
-                          <Link
-                            scroll={false}
-                            href="/admin/kalendar"
-                            className="search-btn clinic-glow-btn"
-                          >
-                            <span className="link-effect">
-                              <span className="effect-1">ADMIN</span>
-                              <span className="effect-1">ADMIN</span>
-                            </span>
-                          </Link>
-                        ) : null}
                         <Link
                           scroll={false}
                           href="/beauty-pass"

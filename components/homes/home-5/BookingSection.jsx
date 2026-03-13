@@ -63,7 +63,7 @@ export default function BookingSection({ googleNextPath = "/" }) {
         ) : null}
 
         {!loading && user ? (
-          <BookingInlineForm googleNextPath={googleNextPath} showUpcoming={false} />
+          <BookingInlineForm googleNextPath={googleNextPath} showUpcoming />
         ) : null}
       </div>
     </section>

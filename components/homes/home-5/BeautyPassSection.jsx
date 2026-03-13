@@ -53,6 +53,20 @@ function formatBookingDate(isoString) {
   return new Date(isoString).toLocaleString("sr-RS", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function formatBookingStatus(status) {
+  const normalized = String(status || "").toLowerCase();
+  const labels = {
+    pending: "Na cekanju",
+    confirmed: "Potvrdjen",
+    completed: "Zavrsen",
+    cancelled: "Otkazan",
+    "no-show": "Nije dosao",
+    no_show: "Nije dosao",
+    block: "Blokirano",
+  };
+  return labels[normalized] || status || "Nepoznat";
+}
+
 async function getCroppedBlob(imageSrc, croppedAreaPixels) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -242,6 +256,14 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
   const [lightboxSrc, setLightboxSrc] = useState(null);
 
   const pastBookings = useMemo(() => bookings?.past || [], [bookings]);
+  const upcomingBookings = useMemo(() => bookings?.upcoming || [], [bookings]);
+  const nextConfirmedBooking = useMemo(
+    () =>
+      upcomingBookings.find(
+        (booking) => String(booking?.status || "").toLowerCase() === "confirmed"
+      ) || null,
+    [upcomingBookings]
+  );
   const calendarCells = useMemo(() => buildCalendarCells(calendarMonth), [calendarMonth]);
   const weekdayLabels = useMemo(() => {
     const formatter = new Intl.DateTimeFormat("sr-RS", { weekday: "short" });
@@ -378,6 +400,25 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
             <div className="clinic-bp__card">
               <div className="clinic-bp__card-label">Istorija nalepnica</div>
 
+              <div className="clinic-bp__next-booking">
+                <span className="clinic-bp__next-booking-label">Sledeci potvrdjen termin</span>
+                {nextConfirmedBooking ? (
+                  <>
+                    <strong className="clinic-bp__next-booking-date">
+                      {formatBookingDate(nextConfirmedBooking.startsAt)}
+                    </strong>
+                    <span className="clinic-bp__next-booking-meta">
+                      {nextConfirmedBooking.totalDurationMin} min &middot;{" "}
+                      {nextConfirmedBooking.totalPriceRsd} EUR
+                    </span>
+                  </>
+                ) : (
+                  <span className="clinic-bp__next-booking-empty">
+                    Trenutno nemate potvrdjen naredni termin.
+                  </span>
+                )}
+              </div>
+
               {beautyPass?.treatmentHistory?.length ? (
                 <div className="clinic-bp__history">
                   {beautyPass.treatmentHistory.slice(0, 20).map((item) => (
@@ -415,6 +456,26 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
                 <p className="clinic-bp__empty">Još nema sačuvanih nalepnica.</p>
               )}
 
+              {upcomingBookings.length > 0 && (
+                <>
+                  <div className="clinic-bp__card-label" style={{ marginTop: 28 }}>Naredni termini</div>
+                  <ul className="clinic-bp__booking-list">
+                    {upcomingBookings.slice(0, 6).map((b) => (
+                      <li key={b.id} className="clinic-bp__booking-item">
+                        <span className="clinic-bp__booking-dot" />
+                        <div className="clinic-bp__booking-info">
+                          <span className="clinic-bp__booking-date">{formatBookingDate(b.startsAt)}</span>
+                          <span className="clinic-bp__booking-meta">
+                            {b.totalDurationMin} min &middot; {b.totalPriceRsd} EUR &middot;{" "}
+                            {formatBookingStatus(b.status)}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
               {/* Past bookings */}
               {pastBookings.length > 0 && (
                 <>
@@ -425,7 +486,10 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
                         <span className="clinic-bp__booking-dot" />
                         <div className="clinic-bp__booking-info">
                           <span className="clinic-bp__booking-date">{formatBookingDate(b.startsAt)}</span>
-                          <span className="clinic-bp__booking-meta">{b.totalDurationMin} min &middot; {b.totalPriceRsd} EUR</span>
+                          <span className="clinic-bp__booking-meta">
+                            {b.totalDurationMin} min &middot; {b.totalPriceRsd} EUR &middot;{" "}
+                            {formatBookingStatus(b.status)}
+                          </span>
                         </div>
                       </li>
                     ))}

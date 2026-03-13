@@ -92,7 +92,7 @@ export async function GET(request) {
         inArray(schema.bookings.status, ["pending", "confirmed"])
       )
     )
-    .orderBy(desc(schema.bookings.startsAt));
+    .orderBy(asc(schema.bookings.startsAt));
 
   const penalties = await db
     .select()
