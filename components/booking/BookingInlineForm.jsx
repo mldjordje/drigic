@@ -701,18 +701,6 @@ export default function BookingInlineForm({
       </p>
 
       <form onSubmit={handleBook}>
-        {serviceSelections.length && !hideNextDateCta ? (
-          <div className="clinic-next-date-sticky">
-            <button
-              type="button"
-              className="clinic-glow-btn clinic-next-step-btn clinic-next-step-btn-sticky"
-              onClick={scrollToDateStep}
-            >
-              <span className="clinic-btn-label">Nastavi na datum</span>
-            </button>
-          </div>
-        ) : null}
-
         <h3 style={{ color: "var(--clinic-text-strong)" }}>1) Izaberite tretmane</h3>
         {selectedServiceLabels.length ? (
           <div className="clinic-selected-services">
@@ -858,18 +846,6 @@ export default function BookingInlineForm({
             </div>
           </div>
         ))}
-        {serviceSelections.length && !hideNextDateCta ? (
-          <div className="clinic-next-step-wrap">
-            <button
-              type="button"
-              className="clinic-glow-btn clinic-next-step-btn"
-              onClick={scrollToDateStep}
-            >
-              <span className="clinic-btn-label">Nastavi na datum</span>
-            </button>
-          </div>
-        ) : null}
-
         <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>2) Datum i vreme</h3>
 
         {!serviceSelections.length ? (

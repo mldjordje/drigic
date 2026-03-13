@@ -1632,11 +1632,13 @@ a.clinic-glow-btn {
 
   .clinic-next-date-fab {
     position: fixed;
-    right: 12px;
-    left: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
     bottom: calc(12px + env(safe-area-inset-bottom));
     min-height: 52px;
     min-width: 182px;
+    max-width: calc(100vw - 24px);
     border-radius: 999px;
     font-size: 13px;
     font-weight: 800;
@@ -1890,11 +1892,7 @@ a.clinic-glow-btn {
     }
 
     .clinic-next-date-sticky {
-      position: sticky;
-      top: 74px;
-      z-index: 80;
-      display: block;
-      margin: 6px 0 12px;
+      display: none;
     }
 
     .clinic-next-step-btn-sticky {
@@ -1904,9 +1902,11 @@ a.clinic-glow-btn {
     }
 
     .clinic-next-date-fab {
-      right: 10px;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
       bottom: calc(10px + env(safe-area-inset-bottom));
-      min-width: 170px;
+      min-width: 190px;
       min-height: 48px;
       padding: 8px 12px;
       font-size: 12px;
@@ -1952,7 +1952,7 @@ a.clinic-glow-btn {
 
   @media (min-width: 768px) {
     .clinic-next-date-fab {
-      display: none;
+      display: inline-flex;
     }
   }
 
@@ -4405,4 +4405,3 @@ a.clinic-glow-btn {
   85%  { width: 90%; }
   100% { width: 100%; }
 }
-
