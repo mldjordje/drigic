@@ -1028,6 +1028,22 @@ a.clinic-glow-btn {
     margin-bottom: 14px;
   }
 
+  .clinic-service-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  @media (min-width: 992px) {
+    .clinic-service-grid--desktop-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    }
+
+    .clinic-service-grid--desktop-2 .clinic-service-option {
+      height: 100%;
+    }
+  }
+
   .clinic-service-option {
     transition: border-color 0.22s ease, transform 0.22s ease,
       background-color 0.22s ease;

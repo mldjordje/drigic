@@ -430,6 +430,10 @@ export default function BookingInlineForm({
       return;
     }
 
+    if (typeof window !== "undefined" && window.innerWidth <= 991) {
+      return;
+    }
+
     const node = dateStepRef.current;
     if (!node || typeof IntersectionObserver === "undefined") {
       return;
@@ -672,7 +676,9 @@ export default function BookingInlineForm({
   }
 
   function scrollToDateStep() {
-    setHideNextDateCta(true);
+    if (typeof window !== "undefined" && window.innerWidth >= 992) {
+      setHideNextDateCta(true);
+    }
     dateStepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -738,7 +744,7 @@ export default function BookingInlineForm({
         {packageServices.length ? (
           <div className="clinic-service-category clinic-reveal">
             <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>Paketi usluga</h4>
-            <div style={{ display: "grid", gap: 8 }}>
+            <div className="clinic-service-grid clinic-service-grid--desktop-2">
               {packageServices.map((service, serviceIndex) => {
                 const selected = Boolean(selectedMap[service.id]);
                 return (
@@ -790,7 +796,7 @@ export default function BookingInlineForm({
             style={{ "--clinic-reveal-delay": `${Math.min(categoryIndex, 7) * 55}ms` }}
           >
             <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{category.name}</h4>
-            <div style={{ display: "grid", gap: 8 }}>
+            <div className="clinic-service-grid clinic-service-grid--desktop-2">
               {(category.services || []).map((service, serviceIndex) => {
                 const selected = Boolean(selectedMap[service.id]);
                 const selectedQuantity = Math.max(1, Number(selectedMap[service.id] || 1));
