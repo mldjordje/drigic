@@ -2171,6 +2171,13 @@ a.clinic-glow-btn {
   color: #1f2937 !important;
 }
 
+.clinic-theme-light .clinic-home5 .clinic-slot-button.is-active {
+  border-color: rgba(15, 23, 42, 0.78);
+  background: #0f172a;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.36), 0 10px 22px rgba(2, 6, 23, 0.22);
+}
+
 .clinic-theme-light .clinic-home5 .clinic-cal-day {
   border-color: rgba(15, 23, 42, 0.16);
   background: rgba(255, 255, 255, 0.94);
@@ -2637,6 +2644,32 @@ a.clinic-glow-btn {
   .clinic-home5 .mobile-menu-area .mobile-logo {
     margin-left: 0;
     padding: 12px 0 16px !important;
+  }
+
+  .clinic-home5 .header-layout2 .sticky-wrapper,
+  .clinic-home5 .header-layout2 .sticky-wrapper.header-sticky,
+  .clinic-home5 .header-layout2 .sticky-wrapper.header-hidden {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn,
+  .clinic-home5 .header-layout2 .navbar-right .sidebar-btn .line {
+    transition: none !important;
+  }
+
+  .clinic-home5 .clinic-booking-form {
+    padding-bottom: max(96px, calc(96px + env(safe-area-inset-bottom)));
+  }
+
+  .clinic-home5 .clinic-next-date-fab {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+    z-index: 2147483000 !important;
   }
 }
 

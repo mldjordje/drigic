@@ -100,6 +100,15 @@ export default function Header4() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
+      const isMobileViewport = window.innerWidth <= 991;
+
+      // Mobile keeps header stable to avoid janky hide/show transitions.
+      if (isMobileViewport) {
+        setIsScrolled(currentScrollY > 10);
+        setIsHeaderHidden(false);
+        lastScrollYRef.current = currentScrollY;
+        return;
+      }
 
       if (currentScrollY <= 10) {
         setIsScrolled(false);
