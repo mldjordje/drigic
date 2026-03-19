@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useLocale } from "@/components/common/LocaleProvider";
 import styles from "./VideoGalleryFeed.module.css";
 
 const FALLBACK_SHORTS = [
@@ -106,6 +107,7 @@ function buildEmbedUrl(youtubeId, autoplay) {
 }
 
 export default function VideoGalleryFeed() {
+  const { locale } = useLocale();
   const [apiVideos, setApiVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -156,6 +158,40 @@ export default function VideoGalleryFeed() {
     return merged;
   }, [apiVideos]);
 
+  const copy =
+    {
+      sr: {
+        loading: "Ucitavanje video galerije...",
+        empty: "Trenutno nema dostupnih videa.",
+        back: "Nazad",
+        title: "Video galerija",
+      },
+      en: {
+        loading: "Loading video gallery...",
+        empty: "There are currently no available videos.",
+        back: "Back",
+        title: "Video gallery",
+      },
+      de: {
+        loading: "Videogalerie wird geladen...",
+        empty: "Derzeit sind keine Videos verfuegbar.",
+        back: "Zurueck",
+        title: "Videogalerie",
+      },
+      it: {
+        loading: "Caricamento galleria video...",
+        empty: "Al momento non ci sono video disponibili.",
+        back: "Indietro",
+        title: "Galleria video",
+      },
+    }[locale] ||
+    {
+      loading: "Ucitavanje video galerije...",
+      empty: "Trenutno nema dostupnih videa.",
+      back: "Nazad",
+      title: "Video galerija",
+    };
+
   useEffect(() => {
     slideRefs.current = slideRefs.current.slice(0, videos.length);
   }, [videos.length]);
@@ -194,7 +230,7 @@ export default function VideoGalleryFeed() {
   if (loading && !videos.length) {
     return (
       <main className={styles.loadingRoot}>
-        <p>Ucitavanje video galerije...</p>
+        <p>{copy.loading}</p>
       </main>
     );
   }
@@ -202,7 +238,7 @@ export default function VideoGalleryFeed() {
   if (!videos.length) {
     return (
       <main className={styles.loadingRoot}>
-        <p>Trenutno nema dostupnih videa.</p>
+        <p>{copy.empty}</p>
       </main>
     );
   }
@@ -211,12 +247,12 @@ export default function VideoGalleryFeed() {
     <main className={styles.root}>
       <div className={styles.topBar}>
         <Link href="/" className={styles.topAction}>
-          Nazad
+          {copy.back}
         </Link>
-        <span className={styles.topTitle}>Video galerija</span>
+        <span className={styles.topTitle}>{copy.title}</span>
       </div>
 
-      <section className={styles.feed} aria-label="Video galerija">
+      <section className={styles.feed} aria-label={copy.title}>
         {videos.map((video, index) => (
           <article
             key={video.id}

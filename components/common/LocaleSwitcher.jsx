@@ -6,24 +6,27 @@ export default function LocaleSwitcher({ className = "", compact = false }) {
   const { locale, locales, setLocale, t } = useLocale();
 
   return (
-    <label className={className} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-      {!compact ? (
-        <span style={{ color: "var(--clinic-text-strong, #f4f8ff)", fontSize: 13 }}>
-          {t("common.language")}
-        </span>
-      ) : null}
-      <select
-        aria-label={t("header.changeLanguage")}
-        value={locale}
-        onChange={(event) => setLocale(event.target.value)}
-        className="clinic-locale-switch"
-      >
-        {locales.map((item) => (
-          <option key={item.code} value={item.code}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div
+      className={`clinic-locale-switcher ${compact ? "is-compact" : "is-full"} ${className}`.trim()}
+    >
+      {!compact ? <span className="clinic-locale-switcher__label">{t("common.language")}</span> : null}
+      <div className="clinic-locale-switcher__group" role="group" aria-label={t("header.changeLanguage")}>
+        {locales.map((item) => {
+          const active = locale === item.code;
+          return (
+            <button
+              key={item.code}
+              type="button"
+              className={`clinic-locale-switcher__option ${active ? "is-active" : ""}`.trim()}
+              onClick={() => setLocale(item.code)}
+              aria-pressed={active}
+              title={item.label}
+            >
+              <span className="clinic-locale-switcher__code">{item.code.toUpperCase()}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

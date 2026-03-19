@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useLocale } from "@/components/common/LocaleProvider";
 
 function isIosDevice() {
   if (typeof navigator === "undefined") {
@@ -46,6 +47,7 @@ async function parseResponse(response) {
 
 export default function PWAInstallButton() {
   const pathname = usePathname();
+  const { locale } = useLocale();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
   const [message, setMessage] = useState("");
@@ -56,6 +58,94 @@ export default function PWAInstallButton() {
 
   const ios = useMemo(() => isIosDevice(), []);
   const webPushPublicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY || "";
+  const copy =
+    {
+      sr: {
+        appInstalled: "Aplikacija je vec instalirana.",
+        installStarted: "Instalacija je pokrenuta.",
+        installCancelled: "Instalacija je otkazana.",
+        iosInstall: "Na iOS otvorite Share pa Add to Home Screen.",
+        promptUnavailable: "Install prompt trenutno nije dostupan.",
+        loginForPush: "Prijavite se da biste ukljucili push notifikacije.",
+        pushUnsupported: "Push notifikacije nisu podrzane na ovom uredjaju.",
+        pushKeysMissing: "Push kljucevi nisu podeseni.",
+        pushDenied: "Dozvola za notifikacije nije odobrena.",
+        pushEnabled: "Push notifikacije su ukljucene.",
+        pushEnableFailed: "Neuspesna aktivacija push notifikacija.",
+        pushGenericError: "Greska pri ukljucivanju push notifikacija.",
+        installApp: "Instaliraj app",
+        enablePush: "Ukljuci notifikacije",
+        enabling: "Aktivacija...",
+      },
+      en: {
+        appInstalled: "The app is already installed.",
+        installStarted: "Installation started.",
+        installCancelled: "Installation cancelled.",
+        iosInstall: "On iOS open Share and then Add to Home Screen.",
+        promptUnavailable: "The install prompt is currently unavailable.",
+        loginForPush: "Sign in to enable push notifications.",
+        pushUnsupported: "Push notifications are not supported on this device.",
+        pushKeysMissing: "Push keys are not configured.",
+        pushDenied: "Notification permission was not granted.",
+        pushEnabled: "Push notifications are enabled.",
+        pushEnableFailed: "Failed to enable push notifications.",
+        pushGenericError: "There was an error enabling push notifications.",
+        installApp: "Install app",
+        enablePush: "Enable notifications",
+        enabling: "Enabling...",
+      },
+      de: {
+        appInstalled: "Die App ist bereits installiert.",
+        installStarted: "Installation gestartet.",
+        installCancelled: "Installation abgebrochen.",
+        iosInstall: "Auf iOS: Teilen und dann Zum Home-Bildschirm.",
+        promptUnavailable: "Der Installationsdialog ist derzeit nicht verfuegbar.",
+        loginForPush: "Melden Sie sich an, um Push-Benachrichtigungen zu aktivieren.",
+        pushUnsupported: "Push-Benachrichtigungen werden auf diesem Geraet nicht unterstuetzt.",
+        pushKeysMissing: "Push-Schluessel sind nicht eingerichtet.",
+        pushDenied: "Die Benachrichtigungsfreigabe wurde nicht erteilt.",
+        pushEnabled: "Push-Benachrichtigungen sind aktiviert.",
+        pushEnableFailed: "Push-Benachrichtigungen konnten nicht aktiviert werden.",
+        pushGenericError: "Fehler beim Aktivieren der Push-Benachrichtigungen.",
+        installApp: "App installieren",
+        enablePush: "Benachrichtigungen aktivieren",
+        enabling: "Aktivierung...",
+      },
+      it: {
+        appInstalled: "L'app e gia installata.",
+        installStarted: "Installazione avviata.",
+        installCancelled: "Installazione annullata.",
+        iosInstall: "Su iOS apri Condividi e poi Aggiungi alla Home.",
+        promptUnavailable: "Il prompt di installazione non e disponibile al momento.",
+        loginForPush: "Accedi per attivare le notifiche push.",
+        pushUnsupported: "Le notifiche push non sono supportate su questo dispositivo.",
+        pushKeysMissing: "Le chiavi push non sono configurate.",
+        pushDenied: "Il permesso per le notifiche non e stato concesso.",
+        pushEnabled: "Le notifiche push sono attive.",
+        pushEnableFailed: "Impossibile attivare le notifiche push.",
+        pushGenericError: "Errore durante l'attivazione delle notifiche push.",
+        installApp: "Installa app",
+        enablePush: "Attiva notifiche",
+        enabling: "Attivazione...",
+      },
+    }[locale] ||
+    {
+      appInstalled: "Aplikacija je vec instalirana.",
+      installStarted: "Instalacija je pokrenuta.",
+      installCancelled: "Instalacija je otkazana.",
+      iosInstall: "Na iOS otvorite Share pa Add to Home Screen.",
+      promptUnavailable: "Install prompt trenutno nije dostupan.",
+      loginForPush: "Prijavite se da biste ukljucili push notifikacije.",
+      pushUnsupported: "Push notifikacije nisu podrzane na ovom uredjaju.",
+      pushKeysMissing: "Push kljucevi nisu podeseni.",
+      pushDenied: "Dozvola za notifikacije nije odobrena.",
+      pushEnabled: "Push notifikacije su ukljucene.",
+      pushEnableFailed: "Neuspesna aktivacija push notifikacija.",
+      pushGenericError: "Greska pri ukljucivanju push notifikacija.",
+      installApp: "Instaliraj app",
+      enablePush: "Ukljuci notifikacije",
+      enabling: "Aktivacija...",
+    };
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -128,7 +218,7 @@ export default function PWAInstallButton() {
   async function handleInstall() {
     setMessage("");
     if (installed) {
-      setMessage("Aplikacija je vec instalirana.");
+      setMessage(copy.appInstalled);
       return;
     }
 
@@ -136,20 +226,20 @@ export default function PWAInstallButton() {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice?.outcome === "accepted") {
-        setMessage("Instalacija je pokrenuta.");
+        setMessage(copy.installStarted);
       } else {
-        setMessage("Instalacija je otkazana.");
+        setMessage(copy.installCancelled);
       }
       setDeferredPrompt(null);
       return;
     }
 
     if (ios) {
-      setMessage("Na iOS otvorite Share pa Add to Home Screen.");
+      setMessage(copy.iosInstall);
       return;
     }
 
-    setMessage("Install prompt trenutno nije dostupan.");
+    setMessage(copy.promptUnavailable);
   }
 
   async function handleEnablePush() {
@@ -158,17 +248,17 @@ export default function PWAInstallButton() {
     }
 
     if (!isLoggedIn) {
-      setMessage("Prijavite se da biste ukljucili push notifikacije.");
+      setMessage(copy.loginForPush);
       return;
     }
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setMessage("Push notifikacije nisu podrzane na ovom uredjaju.");
+      setMessage(copy.pushUnsupported);
       return;
     }
 
     if (!webPushPublicKey) {
-      setMessage("Push kljucevi nisu podeseni.");
+      setMessage(copy.pushKeysMissing);
       return;
     }
 
@@ -177,7 +267,7 @@ export default function PWAInstallButton() {
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setMessage("Dozvola za notifikacije nije odobrena.");
+        setMessage(copy.pushDenied);
         return;
       }
 
@@ -201,13 +291,13 @@ export default function PWAInstallButton() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesna aktivacija push notifikacija.");
+        throw new Error(data?.message || copy.pushEnableFailed);
       }
 
       setPushEnabled(true);
-      setMessage("Push notifikacije su ukljucene.");
+      setMessage(copy.pushEnabled);
     } catch (error) {
-      setMessage(error?.message || "Greska pri ukljucivanju push notifikacija.");
+      setMessage(error?.message || copy.pushGenericError);
     } finally {
       setBusy(false);
     }
@@ -227,7 +317,7 @@ export default function PWAInstallButton() {
         <div style={mobileStickyWrapStyle}>
           {showInstall ? (
             <button type="button" style={mobileStickyStyle} onClick={handleInstall}>
-              Install App
+              {copy.installApp}
             </button>
           ) : null}
           {showPush ? (
@@ -237,7 +327,7 @@ export default function PWAInstallButton() {
               onClick={handleEnablePush}
               disabled={busy}
             >
-              {busy ? "Aktivacija..." : "Ukljuci notifikacije"}
+              {busy ? copy.enabling : copy.enablePush}
             </button>
           ) : null}
         </div>
@@ -245,7 +335,7 @@ export default function PWAInstallButton() {
         <div style={desktopWrapStyle}>
           {showInstall ? (
             <button type="button" style={buttonStyle} onClick={handleInstall}>
-              Install App
+              {copy.installApp}
             </button>
           ) : null}
           {showPush ? (
@@ -255,7 +345,7 @@ export default function PWAInstallButton() {
               onClick={handleEnablePush}
               disabled={busy}
             >
-              {busy ? "Aktivacija..." : "Ukljuci notifikacije"}
+              {busy ? copy.enabling : copy.enablePush}
             </button>
           ) : null}
         </div>

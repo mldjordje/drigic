@@ -1,42 +1,50 @@
+"use client";
+
 import Link from "next/link";
 import React from "react";
+import { useLocale } from "@/components/common/LocaleProvider";
+import { getLocalizedCategoryCopy } from "@/lib/services/category-copy";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 export default function Projects() {
+  const { locale, t } = useLocale();
+
   return (
     <div className="project-area-5 space overflow-hidden" id="tretmani">
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-xl-8 col-lg-10">
             <div className="title-area text-center clinic-reveal">
-              <h2 className="sec-title text-smoke">Tretmani po kategorijama</h2>
-              <p className="sec-text text-smoke">
-                Za svaku kategoriju postoji posebna stranica sa svim aktivnim uslugama.
-              </p>
+              <h2 className="sec-title text-smoke">{t("treatments.categoriesTitle")}</h2>
+              <p className="sec-text text-smoke">{t("treatments.categoriesBody")}</p>
             </div>
           </div>
         </div>
         <div className="clinic-treatment-grid">
-          {SERVICE_CATEGORY_SPECS.map((item, index) => (
-            <div
-              key={item.slug}
-              className={`clinic-treatment-card glass-panel clinic-hover-raise clinic-reveal wow ${
-                index % 2 === 0 ? "img-custom-anim-left" : "img-custom-anim-right"
-              } animated`}
-              data-wow-duration="1.5s"
-              data-wow-delay={`${0.1 + index * 0.06}s`}
-            >
-              <div className="portfolio-details">
-                <h3 className="portfolio-title">{item.name}</h3>
-                <p className="portfolio-meta" style={{ marginBottom: 10 }}>
-                  {item.shortDescription}
-                </p>
-                <Link href={`/tretmani/${item.slug}`} className="clinic-treatment-link">
-                  Pogledaj usluge
-                </Link>
+          {SERVICE_CATEGORY_SPECS.map((item, index) => {
+            const localizedItem = getLocalizedCategoryCopy(locale, item);
+
+            return (
+              <div
+                key={item.slug}
+                className={`clinic-treatment-card glass-panel clinic-hover-raise clinic-reveal wow ${
+                  index % 2 === 0 ? "img-custom-anim-left" : "img-custom-anim-right"
+                } animated`}
+                data-wow-duration="1.5s"
+                data-wow-delay={`${0.1 + index * 0.06}s`}
+              >
+                <div className="portfolio-details">
+                  <h3 className="portfolio-title">{localizedItem.name}</h3>
+                  <p className="portfolio-meta" style={{ marginBottom: 10 }}>
+                    {localizedItem.shortDescription}
+                  </p>
+                  <Link href={`/tretmani/${item.slug}`} className="clinic-treatment-link">
+                    {t("treatments.seeServices")}
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="btn-wrap mt-50 justify-content-center">
           <Link
@@ -45,8 +53,8 @@ export default function Projects() {
             className="btn bg-theme text-title clinic-glow-btn"
           >
             <span className="link-effect">
-              <span className="effect-1">SVE KATEGORIJE</span>
-              <span className="effect-1">SVE KATEGORIJE</span>
+              <span className="effect-1">{t("treatments.allCategories")}</span>
+              <span className="effect-1">{t("treatments.allCategories")}</span>
             </span>
           </Link>
           <Link
@@ -55,8 +63,8 @@ export default function Projects() {
             className="btn bg-theme text-title clinic-glow-btn"
           >
             <span className="link-effect">
-              <span className="effect-1">ZAKAZI TERMIN</span>
-              <span className="effect-1">ZAKAZI TERMIN</span>
+              <span className="effect-1">{t("treatments.bookAppointment")}</span>
+              <span className="effect-1">{t("treatments.bookAppointment")}</span>
             </span>
           </Link>
         </div>

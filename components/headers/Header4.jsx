@@ -8,13 +8,14 @@ import LocaleSwitcher from "@/components/common/LocaleSwitcher";
 import { useLocale } from "@/components/common/LocaleProvider";
 import PWAMenuActions from "@/components/common/PWAMenuActions";
 import { useSession } from "@/components/common/SessionProvider";
+import { getLocalizedCategoryCopy } from "@/lib/services/category-copy";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 const THEME_STORAGE_KEY = "clinic-theme-mode";
 
 export default function Header4() {
   const pathname = usePathname();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const { user: currentUser, clearUser } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
@@ -42,6 +43,15 @@ export default function Header4() {
 
     return items;
   }, [currentUser, t]);
+
+  const localizedCategories = useMemo(
+    () =>
+      SERVICE_CATEGORY_SPECS.map((category) => ({
+        ...category,
+        ...getLocalizedCategoryCopy(locale, category),
+      })),
+    [locale]
+  );
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -236,7 +246,7 @@ export default function Header4() {
             </button>
             {mobileCategoryOpen ? (
               <ul className="mobile-category-list">
-                {SERVICE_CATEGORY_SPECS.map((category) => (
+                {localizedCategories.map((category) => (
                   <li key={category.slug}>
                     <Link
                       scroll={false}

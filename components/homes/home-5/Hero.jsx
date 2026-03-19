@@ -4,14 +4,41 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
+import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const HERO_TITLE_LINES = [
-  [{ word: "Estetska,", idx: 0 }, { word: "anti-age", idx: 1 }, { word: "i", idx: 2 }],
-  [{ word: "regenerativna", idx: 3 }, { word: "medicina", idx: 4 }],
-];
+const HERO_COPY = {
+  sr: {
+    lines: [
+      ["Estetska,", "anti-age", "i"],
+      ["regenerativna", "medicina"],
+    ],
+    booking: "Zakazi termin",
+  },
+  en: {
+    lines: [
+      ["Aesthetic,", "anti-age", "and"],
+      ["regenerative", "medicine"],
+    ],
+    booking: "Book appointment",
+  },
+  de: {
+    lines: [
+      ["Aesthetische,", "anti-age", "und"],
+      ["regenerative", "Medizin"],
+    ],
+    booking: "Termin buchen",
+  },
+  it: {
+    lines: [
+      ["Medicina", "estetica,", "anti-age"],
+      ["e", "rigenerativa"],
+    ],
+    booking: "Prenota appuntamento",
+  },
+};
 
 function ArrowIcon() {
   return (
@@ -23,6 +50,7 @@ function ArrowIcon() {
 
 export default function Hero() {
   const mobileVideoRef = useRef(null);
+  const { locale, t } = useLocale();
   const { user: currentUser } = useSession();
   const heroContentRef = useRef(null);
   const wordRefs = useRef([]);
@@ -30,6 +58,17 @@ export default function Hero() {
   const founderRef = useRef(null);
   const heroVeilRef = useRef(null);
   const lineRevealRef = useRef(null);
+  const heroCopy = HERO_COPY[locale] || HERO_COPY.sr;
+  const heroTitleLines = useMemo(
+    () =>
+      heroCopy.lines.map((lineWords, lineIndex) =>
+        lineWords.map((word, wordIndex) => ({
+          word,
+          idx: lineIndex * 10 + wordIndex,
+        }))
+      ),
+    [heroCopy.lines]
+  );
 
   useEffect(() => {
     document.body.classList.add("bg-title");
@@ -256,7 +295,7 @@ export default function Hero() {
 
                 {/* Title — line-grouped for consistent mobile layout */}
                 <h1 className="hero-title clinic-hero-title" style={{ color: "#ffffff" }}>
-                  {HERO_TITLE_LINES.map((lineWords, lineIdx) => (
+                  {heroTitleLines.map((lineWords, lineIdx) => (
                     <span key={lineIdx} className="clinic-hero-line">
                       {lineWords.map(({ word, idx }) => (
                         <span key={idx} className="clinic-word-clip">
@@ -281,14 +320,14 @@ export default function Hero() {
                   {!currentUser ? (
                     <GooglePopupButton className="clinic-hero-cta-btn gsap-magnetic" nextPath="/">
                       <span className="clinic-hero-btn-inner">
-                        <span className="clinic-hero-btn-label">Login</span>
+                        <span className="clinic-hero-btn-label">{t("common.login")}</span>
                         <span className="clinic-hero-btn-arrow"><ArrowIcon /></span>
                       </span>
                     </GooglePopupButton>
                   ) : null}
                   <Link scroll={false} className="clinic-hero-cta-btn gsap-magnetic" href="/booking">
                     <span className="clinic-hero-btn-inner">
-                      <span className="clinic-hero-btn-label">Zakazi Termin</span>
+                      <span className="clinic-hero-btn-label">{heroCopy.booking}</span>
                       <span className="clinic-hero-btn-arrow"><ArrowIcon /></span>
                     </span>
                   </Link>

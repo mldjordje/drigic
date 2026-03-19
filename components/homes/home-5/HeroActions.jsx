@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import BookingSection from "@/components/homes/home-5/BookingSection";
+import { useLocale } from "@/components/common/LocaleProvider";
 import BeautyPassSection from "@/components/homes/home-5/BeautyPassSection";
+import { getIntlLocale } from "@/lib/i18n";
 
 async function parseResponse(response) {
   const text = await response.text();
@@ -16,9 +18,9 @@ async function parseResponse(response) {
   }
 }
 
-function formatBookingDateTime(isoString) {
+function formatBookingDateTime(isoString, locale) {
   try {
-    return new Date(isoString).toLocaleString("sr-RS", {
+    return new Date(isoString).toLocaleString(getIntlLocale(locale), {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -50,6 +52,49 @@ function ArrowIcon() {
     </svg>
   );
 }
+
+const HERO_ACTIONS_COPY = {
+  sr: {
+    account: "Moj nalog",
+    confirmed: "Termin je potvrdjen",
+    cancelled: "Termin je otkazan",
+    closeNotice: "Zatvori obavestenje",
+    bookingLabel: "Zakazi termin",
+    bookingSublabel: "Odaberi tretman, datum i termin",
+    passLabel: "Moj Beauty Pass",
+    passSublabel: "Istorija tretmana i benefiti",
+  },
+  en: {
+    account: "My account",
+    confirmed: "Appointment confirmed",
+    cancelled: "Appointment cancelled",
+    closeNotice: "Close notice",
+    bookingLabel: "Book appointment",
+    bookingSublabel: "Choose treatment, date and time",
+    passLabel: "My Beauty Pass",
+    passSublabel: "Treatment history and benefits",
+  },
+  de: {
+    account: "Mein Konto",
+    confirmed: "Termin bestaetigt",
+    cancelled: "Termin storniert",
+    closeNotice: "Hinweis schliessen",
+    bookingLabel: "Termin buchen",
+    bookingSublabel: "Behandlung, Datum und Uhrzeit waehlen",
+    passLabel: "Mein Beauty Pass",
+    passSublabel: "Behandlungshistorie und Vorteile",
+  },
+  it: {
+    account: "Il mio account",
+    confirmed: "Appuntamento confermato",
+    cancelled: "Appuntamento annullato",
+    closeNotice: "Chiudi avviso",
+    bookingLabel: "Prenota appuntamento",
+    bookingSublabel: "Scegli trattamento, data e orario",
+    passLabel: "Il mio Beauty Pass",
+    passSublabel: "Storico trattamenti e vantaggi",
+  },
+};
 
 function CalendarIcon() {
   return (
@@ -160,11 +205,13 @@ function ExpandPanel({ isOpen, children }) {
 }
 
 export default function HeroActions() {
+  const { locale } = useLocale();
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState(null);
   const [statusNotice, setStatusNotice] = useState(null);
   const [showStatusNotice, setShowStatusNotice] = useState(true);
+  const copy = HERO_ACTIONS_COPY[locale] || HERO_ACTIONS_COPY.sr;
 
   useEffect(() => {
     let mounted = true;
@@ -225,7 +272,7 @@ export default function HeroActions() {
         const tone = normalizedStatus === "confirmed" ? "confirmed" : "cancelled";
         setStatusNotice({
           tone,
-          label: tone === "confirmed" ? "Termin je potvrdjen" : "Termin je otkazan",
+          label: tone === "confirmed" ? copy.confirmed : copy.cancelled,
           startsAt: nextStatusBooking.startsAt,
         });
         setShowStatusNotice(true);
@@ -246,7 +293,7 @@ export default function HeroActions() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [copy.cancelled, copy.confirmed]);
 
   if (loading || !currentUser) return null;
 
@@ -264,7 +311,7 @@ export default function HeroActions() {
 
       <div className="container">
         <div className="clinic-hero-actions__header">
-          <p className="clinic-hero-actions__eyebrow">Moj nalog</p>
+          <p className="clinic-hero-actions__eyebrow">{copy.account}</p>
         </div>
 
         {statusNotice && showStatusNotice ? (
@@ -282,14 +329,14 @@ export default function HeroActions() {
               <span className="clinic-action-btn__text">
                 <span className="clinic-action-btn__label">{statusNotice.label}</span>
                 <span className="clinic-action-btn__sublabel">
-                  {formatBookingDateTime(statusNotice.startsAt)}
+                  {formatBookingDateTime(statusNotice.startsAt, locale)}
                 </span>
               </span>
               <button
                 type="button"
                 className="clinic-action-notice__close"
                 onClick={() => setShowStatusNotice(false)}
-                aria-label="Zatvori obavestenje"
+                aria-label={copy.closeNotice}
               >
                 x
               </button>
@@ -299,15 +346,15 @@ export default function HeroActions() {
 
         <div className="clinic-hero-actions__ctas">
           <ActionButton
-            label="Zakazi termin"
-            sublabel="Odaberi tretman, datum i termin"
+            label={copy.bookingLabel}
+            sublabel={copy.bookingSublabel}
             isActive={activeSection === "booking"}
             onClick={() => handleToggle("booking")}
             icon={<CalendarIcon />}
           />
           <ActionButton
-            label="Moj Beauty Pass"
-            sublabel="Istorija tretmana i benefiti"
+            label={copy.passLabel}
+            sublabel={copy.passSublabel}
             isActive={activeSection === "beautypass"}
             onClick={() => handleToggle("beautypass")}
             icon={<PassIcon />}
