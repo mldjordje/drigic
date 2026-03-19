@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from "@/components/common/SessionProvider";
 
 function isIosDevice() {
   if (typeof navigator === "undefined") {
@@ -31,24 +32,12 @@ function toUint8Array(base64String) {
   return outputArray;
 }
 
-async function parseResponse(response) {
-  const text = await response.text();
-  if (!text) {
-    return null;
-  }
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
 export default function PWAMenuActions() {
+  const { isLoggedIn } = useSession();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
 
   const ios = useMemo(() => isIosDevice(), []);
@@ -74,19 +63,6 @@ export default function PWAMenuActions() {
       window.removeEventListener("beforeinstallprompt", installListener);
       window.removeEventListener("appinstalled", installedListener);
     };
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/me/profile")
-      .then(async (res) => {
-        if (!res.ok) {
-          return null;
-        }
-        const data = await parseResponse(res);
-        return data?.user || null;
-      })
-      .then((user) => setIsLoggedIn(Boolean(user)))
-      .catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -2,8 +2,9 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
+import { useSession } from "@/components/common/SessionProvider";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -22,7 +23,7 @@ function ArrowIcon() {
 
 export default function Hero() {
   const mobileVideoRef = useRef(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user: currentUser } = useSession();
   const heroContentRef = useRef(null);
   const wordRefs = useRef([]);
   const ctaGroupRef = useRef(null);
@@ -33,13 +34,6 @@ export default function Hero() {
   useEffect(() => {
     document.body.classList.add("bg-title");
     return () => document.body.classList.remove("bg-title");
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/me/profile")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setCurrentUser(data?.user || null))
-      .catch(() => setCurrentUser(null));
   }, []);
 
   useEffect(() => {

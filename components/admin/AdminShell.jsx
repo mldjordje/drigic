@@ -3,17 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import LocaleSwitcher from "@/components/common/LocaleSwitcher";
+import { useLocale } from "@/components/common/LocaleProvider";
 
 const approvedModules = [
-  { href: "/admin/kalendar", label: "Kalendar", icon: "[CAL]" },
-  { href: "/admin/dashboard", label: "Dashboard", icon: "[DB]" },
-  { href: "/admin/bookings", label: "Termini", icon: "[BK]" },
-  { href: "/admin/klijenti", label: "Klijenti", icon: "[CL]" },
-  { href: "/admin/services", label: "Usluge", icon: "[SV]" },
-  { href: "/admin/preparati", label: "Preparati", icon: "[PR]" },
-  { href: "/admin/announcements", label: "Obavestenja", icon: "[AN]" },
-  { href: "/admin/media", label: "Media", icon: "[MD]" },
-  { href: "/admin/vip", label: "VIP", icon: "[VIP]" },
+  { href: "/admin/kalendar", labelKey: "admin.calendar", icon: "[CAL]" },
+  { href: "/admin/dashboard", labelKey: "admin.dashboard", icon: "[DB]" },
+  { href: "/admin/bookings", labelKey: "admin.bookings", icon: "[BK]" },
+  { href: "/admin/klijenti", labelKey: "admin.clients", icon: "[CL]" },
+  { href: "/admin/services", labelKey: "admin.services", icon: "[SV]" },
+  { href: "/admin/promotions", labelKey: "admin.promotions", icon: "[AC]" },
+  { href: "/admin/packages", labelKey: "admin.packages", icon: "[PK]" },
+  { href: "/admin/preparati", labelKey: "admin.products", icon: "[PR]" },
+  { href: "/admin/announcements", labelKey: "admin.announcements", icon: "[AN]" },
+  { href: "/admin/media", labelKey: "admin.media", icon: "[MD]" },
+  { href: "/admin/vip", labelKey: "admin.vip", icon: "[VIP]" },
 ];
 
 const lockedModules = [
@@ -24,12 +28,13 @@ const lockedModules = [
 ];
 
 const quickLinks = [
-  { href: "/booking", label: "Booking forma", icon: "[GO]" },
-  { href: "/api/auth/google?next=/admin", label: "Promeni nalog", icon: "[AU]" },
+  { href: "/booking", labelKey: "admin.bookingForm", icon: "[GO]" },
+  { href: "/api/auth/google?next=/admin", labelKey: "admin.changeAccount", icon: "[AU]" },
 ];
 
 export default function AdminShell({ children }) {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -48,19 +53,19 @@ export default function AdminShell({ children }) {
     const current = approvedModules.find((item) =>
       pathname === item.href || pathname.startsWith(`${item.href}/`)
     );
-    return current?.label || "Admin";
-  }, [pathname]);
+    return current ? t(current.labelKey) : "Admin";
+  }, [pathname, t]);
 
   return (
     <div className="admin-template-root">
       <aside className={`admin-template-sidebar ${menuOpen ? "is-open" : ""}`}>
         <div className="admin-template-brand">
           <h1>Dr Igic</h1>
-          <p>Control Panel</p>
+          <p>{t("admin.controlPanel")}</p>
         </div>
 
         <div className="admin-template-group">
-          <p className="admin-template-group-title">Odobrene funkcije</p>
+          <p className="admin-template-group-title">{t("admin.approved")}</p>
           <nav className="admin-template-nav">
             {approvedModules.map((item) => {
               const active =
@@ -74,7 +79,7 @@ export default function AdminShell({ children }) {
                   onClick={() => setMenuOpen(false)}
                 >
                   <span>{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </Link>
               );
             })}
@@ -82,7 +87,7 @@ export default function AdminShell({ children }) {
         </div>
 
         <div className="admin-template-group">
-          <p className="admin-template-group-title">Navigacija</p>
+          <p className="admin-template-group-title">{t("admin.navigation")}</p>
           <nav className="admin-template-nav">
             {quickLinks.map((item) =>
               item.href.startsWith("/api/") ? (
@@ -93,7 +98,7 @@ export default function AdminShell({ children }) {
                   onClick={() => setMenuOpen(false)}
                 >
                   <span>{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </a>
               ) : (
                 <Link
@@ -103,7 +108,7 @@ export default function AdminShell({ children }) {
                   onClick={() => setMenuOpen(false)}
                 >
                   <span>{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </Link>
               )
             )}
@@ -111,7 +116,7 @@ export default function AdminShell({ children }) {
         </div>
 
         <div className="admin-template-group">
-          <p className="admin-template-group-title">Zakljucano</p>
+          <p className="admin-template-group-title">{t("admin.locked")}</p>
           <div className="admin-template-nav">
             {lockedModules.map((item) => (
               <button
@@ -152,15 +157,16 @@ export default function AdminShell({ children }) {
             </button>
             <div>
               <h2>{activeModuleTitle}</h2>
-              <p>Klinicki admin panel</p>
+              <p>{t("admin.officeAdmin")}</p>
             </div>
           </div>
           <div className="admin-template-topbar-actions">
+            <LocaleSwitcher compact />
             <Link href="/admin/kalendar" className="admin-template-link-btn">
-              Kalendar
+              {t("admin.calendar")}
             </Link>
             <Link href="/admin/klijenti" className="admin-template-link-btn">
-              Klijenti
+              {t("admin.clients")}
             </Link>
           </div>
         </header>

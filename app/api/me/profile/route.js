@@ -30,9 +30,10 @@ export async function GET(request) {
   const normalizedName = String(profile?.fullName || "").trim();
   const normalizedGender = String(profile?.gender || "").trim();
   const hasBirthDate = Boolean(profile?.birthDate);
+  const normalizedPhone = String(auth.user?.phone || "").trim();
   const needsProfileSetup =
     auth.user.role === "client" &&
-    (!normalizedName || !normalizedGender || !hasBirthDate);
+    (!normalizedName || !normalizedGender || !hasBirthDate || !normalizedPhone);
 
   return ok({
     ok: true,
@@ -61,10 +62,10 @@ export async function PATCH(request) {
     .where(eq(schema.profiles.userId, auth.user.id))
     .limit(1);
 
-  if (parsed.data.phone) {
+  if (parsed.data.phone !== undefined) {
     await db
       .update(schema.users)
-      .set({ phone: parsed.data.phone, updatedAt: new Date() })
+      .set({ phone: parsed.data.phone || null, updatedAt: new Date() })
       .where(eq(schema.users.id, auth.user.id));
   }
 

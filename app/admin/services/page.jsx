@@ -46,6 +46,7 @@ const emptyServiceForm = {
   categoryId: "",
   bodyAreaId: "",
   kind: "single",
+  slug: "",
   name: "",
   description: "",
   colorHex: "#8e939b",
@@ -53,6 +54,8 @@ const emptyServiceForm = {
   durationMin: 30,
   isActive: true,
   isVip: false,
+  reminderEnabled: false,
+  reminderDelayDays: 90,
   supportsMl: false,
   maxMl: 1,
   extraMlDiscountPercent: 0,
@@ -78,6 +81,10 @@ function toPositiveInt(value, fallback = 1) {
 }
 
 export default function AdminServicesPage() {
+  return <AdminCatalogPage mode="services" />;
+}
+
+export function AdminCatalogPage({ mode = "services" }) {
   const [services, setServices] = useState([]);
   const [promotions, setPromotions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -86,8 +93,13 @@ export default function AdminServicesPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [serviceForm, setServiceForm] = useState(emptyServiceForm);
+  const [serviceForm, setServiceForm] = useState(() => ({
+    ...emptyServiceForm,
+    kind: mode === "packages" ? "package" : "single",
+  }));
   const [promotionForm, setPromotionForm] = useState(emptyPromotionForm);
+  const [serviceModalOpen, setServiceModalOpen] = useState(false);
+  const [promotionModalOpen, setPromotionModalOpen] = useState(false);
 
   async function loadAll() {
     setLoading(true);
@@ -132,9 +144,13 @@ export default function AdminServicesPage() {
 
   useEffect(() => {
     if (!serviceForm.categoryId && categories[0]?.id) {
-      setServiceForm((prev) => ({ ...prev, categoryId: categories[0].id }));
+      setServiceForm((prev) => ({
+        ...prev,
+        categoryId: categories[0].id,
+        kind: mode === "packages" ? "package" : prev.kind,
+      }));
     }
-  }, [categories, serviceForm.categoryId]);
+  }, [categories, mode, serviceForm.categoryId]);
 
   const categoriesById = useMemo(
     () => Object.fromEntries(categories.map((item) => [item.id, item.name])),
@@ -191,6 +207,19 @@ export default function AdminServicesPage() {
   ]);
 
   const packageOverLimit = serviceForm.kind === "package" && packageSummary.durationMin > 60;
+  const pageTitle =
+    mode === "promotions"
+      ? "Akcije"
+      : mode === "packages"
+        ? "Paketi"
+        : "Usluge";
+  const visibleServices = useMemo(
+    () =>
+      services.filter((item) =>
+        mode === "packages" ? item.kind === "package" : item.kind === "single"
+      ),
+    [mode, services]
+  );
 
   async function submitService(event) {
     event.preventDefault();
@@ -221,6 +250,7 @@ export default function AdminServicesPage() {
         categoryId: serviceForm.categoryId,
         bodyAreaId: serviceForm.bodyAreaId || null,
         kind: serviceForm.kind,
+        slug: serviceForm.slug || undefined,
         name: serviceForm.name,
         description: serviceForm.description || "",
         colorHex: serviceForm.colorHex || "#8e939b",
@@ -228,6 +258,8 @@ export default function AdminServicesPage() {
         durationMin: computedDuration,
         isActive: Boolean(serviceForm.isActive),
         isVip: Boolean(serviceForm.isVip),
+        reminderEnabled: isPackage ? false : Boolean(serviceForm.reminderEnabled),
+        reminderDelayDays: isPackage ? 90 : toPositiveInt(serviceForm.reminderDelayDays || 90, 90),
         supportsMl: isPackage ? false : Boolean(serviceForm.supportsMl),
         maxMl: isPackage ? 1 : toPositiveInt(serviceForm.maxMl || 1, 1),
         extraMlDiscountPercent: isPackage
@@ -250,8 +282,10 @@ export default function AdminServicesPage() {
       setMessage(isEdit ? "Usluga je azurirana." : "Usluga je dodata.");
       setServiceForm({
         ...emptyServiceForm,
+        kind: mode === "packages" ? "package" : "single",
         categoryId: categories[0]?.id || "",
       });
+      setServiceModalOpen(false);
       await loadAll();
     } catch (saveError) {
       setError(saveError.message || "Greska pri cuvanju usluge.");
@@ -289,12 +323,27 @@ export default function AdminServicesPage() {
 
       setMessage(isEdit ? "Promocija je azurirana." : "Promocija je dodata.");
       setPromotionForm(emptyPromotionForm);
+      setPromotionModalOpen(false);
       await loadAll();
     } catch (saveError) {
       setError(saveError.message || "Greska pri cuvanju promocije.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function resetServiceForm() {
+    setServiceForm({
+      ...emptyServiceForm,
+      kind: mode === "packages" ? "package" : "single",
+      categoryId: categories[0]?.id || "",
+    });
+    setServiceModalOpen(false);
+  }
+
+  function resetPromotionForm() {
+    setPromotionForm(emptyPromotionForm);
+    setPromotionModalOpen(false);
   }
 
   async function toggleServiceActive(service) {
@@ -379,20 +428,26 @@ export default function AdminServicesPage() {
   return (
     <section style={{ display: "grid", gap: 12 }}>
       <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Usluge i promocije</h2>
+        <h2 style={{ marginTop: 0 }}>{pageTitle}</h2>
         <p style={{ color: "#bed0e8" }}>
-          Single/package model, boja usluge, ml opcije i paket builder.
+          {mode === "promotions"
+            ? "Upravljanje akcijama i promo cenama."
+            : mode === "packages"
+              ? "Upravljanje paketima usluga i njihovim stavkama."
+              : "Upravljanje single uslugama, bojama i reminder pravilima."}
         </p>
         {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
         {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
       </div>
 
+      {mode !== "promotions" ? (
       <div className="admin-card admin-card-grid">
         <form onSubmit={submitService} className="admin-card" style={{ display: "grid", gap: 8 }}>
           <h3 style={{ marginTop: 0 }}>
-            {serviceForm.id ? "Izmena usluge" : "Nova usluga"}
+            {mode === "packages" ? "Novi paket" : "Nova usluga"}
           </h3>
 
+          {mode === "services" ? (
           <label>
             Tip usluge
             <select
@@ -411,6 +466,7 @@ export default function AdminServicesPage() {
               <option value="package">package</option>
             </select>
           </label>
+          ) : null}
 
           <label>
             Naziv
@@ -421,6 +477,18 @@ export default function AdminServicesPage() {
                 setServiceForm((prev) => ({ ...prev, name: event.target.value }))
               }
               required
+            />
+          </label>
+
+          <label>
+            Slug (opciono)
+            <input
+              className="admin-inline-input"
+              value={serviceForm.slug}
+              onChange={(event) =>
+                setServiceForm((prev) => ({ ...prev, slug: event.target.value }))
+              }
+              placeholder="automatski se generise iz naziva"
             />
           </label>
 
@@ -568,6 +636,45 @@ export default function AdminServicesPage() {
                   </label>
                 </div>
               ) : null}
+
+              <label
+                className={`admin-toggle-card ${serviceForm.reminderEnabled ? "is-active" : ""}`}
+              >
+                <input
+                  type="checkbox"
+                  className="admin-toggle-card-input"
+                  checked={Boolean(serviceForm.reminderEnabled)}
+                  onChange={(event) =>
+                    setServiceForm((prev) => ({
+                      ...prev,
+                      reminderEnabled: event.target.checked,
+                    }))
+                  }
+                />
+                <span className="admin-toggle-card-title">Automatski reminder za korekciju</span>
+                <small className="admin-toggle-card-subtitle">
+                  Ako je ukljuceno, Beauty Pass zapis racuna datum korekcije automatski.
+                </small>
+              </label>
+
+              {serviceForm.reminderEnabled ? (
+                <label>
+                  Reminder za koliko dana
+                  <input
+                    type="number"
+                    min={1}
+                    max={3650}
+                    className="admin-inline-input"
+                    value={serviceForm.reminderDelayDays || 90}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({
+                        ...prev,
+                        reminderDelayDays: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+              ) : null}
             </>
           ) : (
             <div className="admin-card" style={{ display: "grid", gap: 8 }}>
@@ -667,28 +774,19 @@ export default function AdminServicesPage() {
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button type="submit" className="admin-template-link-btn" disabled={loading || packageOverLimit}>
-              {serviceForm.id ? "Sacuvaj izmene" : "Dodaj uslugu"}
+              {mode === "packages" ? "Dodaj paket" : "Dodaj uslugu"}
             </button>
-            {serviceForm.id ? (
-              <button
-                type="button"
-                className="admin-template-link-btn"
-                onClick={() =>
-                  setServiceForm({
-                    ...emptyServiceForm,
-                    categoryId: categories[0]?.id || "",
-                  })
-                }
-              >
-                Otkazi izmenu
-              </button>
-            ) : null}
           </div>
         </form>
+        {mode === "services" || mode === "packages" ? null : null}
+      </div>
+      ) : null}
 
+      {mode === "promotions" ? (
+      <div className="admin-card admin-card-grid">
         <form onSubmit={submitPromotion} className="admin-card" style={{ display: "grid", gap: 8 }}>
           <h3 style={{ marginTop: 0 }}>
-            {promotionForm.id ? "Izmena promocije" : "Nova promocija"}
+            Nova akcija
           </h3>
           <label>
             Usluga
@@ -769,24 +867,17 @@ export default function AdminServicesPage() {
           </label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button type="submit" className="admin-template-link-btn" disabled={loading}>
-              {promotionForm.id ? "Sacuvaj izmenu" : "Dodaj promociju"}
+              Dodaj akciju
             </button>
-            {promotionForm.id ? (
-              <button
-                type="button"
-                className="admin-template-link-btn"
-                onClick={() => setPromotionForm(emptyPromotionForm)}
-              >
-                Otkazi izmenu
-              </button>
-            ) : null}
           </div>
         </form>
       </div>
+      ) : null}
 
+      {mode !== "promotions" ? (
       <div className="admin-card" style={{ display: "grid", gap: 10 }}>
-        <h3 style={{ marginTop: 0 }}>Lista usluga</h3>
-        {services.map((service) => (
+        <h3 style={{ marginTop: 0 }}>{mode === "packages" ? "Lista paketa" : "Lista usluga"}</h3>
+        {visibleServices.map((service) => (
           <article key={service.id} className="admin-card" style={{ display: "grid", gap: 8 }}>
             <div
               style={{
@@ -819,6 +910,7 @@ export default function AdminServicesPage() {
               <span>{service.durationMin} min</span>
               <span>{service.isActive ? "aktivna" : "neaktivna"}</span>
               <span>{service.isVip ? "VIP" : "regularna"}</span>
+              {service.reminderEnabled ? <span>reminder {service.reminderDelayDays} dana</span> : null}
             </div>
 
             {service.kind === "single" && service.supportsMl ? (
@@ -839,12 +931,13 @@ export default function AdminServicesPage() {
               <button
                 type="button"
                 className="admin-template-link-btn"
-                onClick={() =>
+                onClick={() => {
                   setServiceForm({
                     id: service.id,
                     categoryId: service.categoryId || "",
                     bodyAreaId: service.bodyAreaId || "",
                     kind: service.kind || "single",
+                    slug: service.slug || "",
                     name: service.name || "",
                     description: service.description || "",
                     colorHex: service.colorHex || "#8e939b",
@@ -852,6 +945,8 @@ export default function AdminServicesPage() {
                     durationMin: service.durationMin || 30,
                     isActive: Boolean(service.isActive),
                     isVip: Boolean(service.isVip),
+                    reminderEnabled: Boolean(service.reminderEnabled),
+                    reminderDelayDays: Number(service.reminderDelayDays || 90),
                     supportsMl: Boolean(service.supportsMl),
                     maxMl: Number(service.maxMl || 1),
                     extraMlDiscountPercent: Number(service.extraMlDiscountPercent || 0),
@@ -860,8 +955,9 @@ export default function AdminServicesPage() {
                       quantity: Number(item.quantity || 1),
                       sortOrder: Number(item.sortOrder || index),
                     })),
-                  })
-                }
+                  });
+                  setServiceModalOpen(true);
+                }}
               >
                 Izmeni
               </button>
@@ -877,9 +973,11 @@ export default function AdminServicesPage() {
           </article>
         ))}
       </div>
+      ) : null}
 
+      {mode === "promotions" ? (
       <div className="admin-card" style={{ display: "grid", gap: 10 }}>
-        <h3 style={{ marginTop: 0 }}>Promocije</h3>
+        <h3 style={{ marginTop: 0 }}>Akcije</h3>
         {promotions.map((promotion) => (
           <article key={promotion.id} className="admin-card" style={{ display: "grid", gap: 8 }}>
             <div
@@ -905,7 +1003,7 @@ export default function AdminServicesPage() {
               <button
                 type="button"
                 className="admin-template-link-btn"
-                onClick={() =>
+                onClick={() => {
                   setPromotionForm({
                     id: promotion.id,
                     serviceId: promotion.serviceId,
@@ -914,8 +1012,9 @@ export default function AdminServicesPage() {
                     startsAt: toLocalDateTime(promotion.startsAt),
                     endsAt: toLocalDateTime(promotion.endsAt),
                     isActive: Boolean(promotion.isActive),
-                  })
-                }
+                  });
+                  setPromotionModalOpen(true);
+                }}
               >
                 Izmeni
               </button>
@@ -932,6 +1031,426 @@ export default function AdminServicesPage() {
         ))}
         {!promotions.length ? <p style={{ margin: 0 }}>Nema promocija.</p> : null}
       </div>
+      ) : null}
+
+      {serviceModalOpen ? (
+        <div style={modalOverlayStyle}>
+          <div className="admin-card" style={modalCardStyle}>
+            <form onSubmit={submitService} style={{ display: "grid", gap: 8 }}>
+              <h3 style={{ marginTop: 0 }}>
+                {mode === "packages" ? "Izmena paketa" : "Izmena usluge"}
+              </h3>
+              <p style={{ margin: 0, color: "#bed0e8" }}>
+                Izmena se otvara u zasebnom modal prozoru.
+              </p>
+              <div style={{ display: "grid", gap: 8 }}>
+                <label>
+                  Naziv
+                  <input
+                    className="admin-inline-input"
+                    value={serviceForm.name}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({ ...prev, name: event.target.value }))
+                    }
+                    required
+                  />
+                </label>
+                <label>
+                  Slug (opciono)
+                  <input
+                    className="admin-inline-input"
+                    value={serviceForm.slug}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({ ...prev, slug: event.target.value }))
+                    }
+                    placeholder="automatski se generise iz naziva"
+                  />
+                </label>
+                <label>
+                  Opis
+                  <textarea
+                    className="admin-inline-textarea"
+                    rows={3}
+                    value={serviceForm.description}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({ ...prev, description: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Kategorija
+                  <select
+                    className="admin-inline-input"
+                    value={serviceForm.categoryId}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({ ...prev, categoryId: event.target.value }))
+                    }
+                    required
+                  >
+                    <option value="">Izaberi kategoriju</option>
+                    {categories.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Deo tela (opciono)
+                  <select
+                    className="admin-inline-input"
+                    value={serviceForm.bodyAreaId}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({ ...prev, bodyAreaId: event.target.value }))
+                    }
+                  >
+                    <option value="">Bez dela tela</option>
+                    {bodyAreas.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {serviceForm.kind === "single" ? (
+                  <>
+                    <div className="admin-services-split-grid">
+                      <label>
+                        Cena (EUR)
+                        <input
+                          type="number"
+                          min={0}
+                          className="admin-inline-input"
+                          value={serviceForm.priceRsd}
+                          onChange={(event) =>
+                            setServiceForm((prev) => ({
+                              ...prev,
+                              priceRsd: event.target.value,
+                            }))
+                          }
+                          required
+                        />
+                      </label>
+                      <label>
+                        Trajanje (min)
+                        <input
+                          type="number"
+                          min={5}
+                          max={60}
+                          className="admin-inline-input"
+                          value={serviceForm.durationMin}
+                          onChange={(event) =>
+                            setServiceForm((prev) => ({
+                              ...prev,
+                              durationMin: event.target.value,
+                            }))
+                          }
+                          required
+                        />
+                      </label>
+                    </div>
+                    <label>
+                      Boja usluge (hex)
+                      <div style={{ display: "grid", gap: 8, gridTemplateColumns: "96px 1fr" }}>
+                        <input
+                          type="color"
+                          className="admin-inline-input"
+                          value={serviceForm.colorHex || "#8e939b"}
+                          onChange={(event) =>
+                            setServiceForm((prev) => ({ ...prev, colorHex: event.target.value }))
+                          }
+                        />
+                        <input
+                          className="admin-inline-input"
+                          value={serviceForm.colorHex || "#8e939b"}
+                          onChange={(event) =>
+                            setServiceForm((prev) => ({ ...prev, colorHex: event.target.value }))
+                          }
+                        />
+                      </div>
+                    </label>
+                    <label
+                      className={`admin-toggle-card ${serviceForm.supportsMl ? "is-active" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="admin-toggle-card-input"
+                        checked={serviceForm.supportsMl}
+                        onChange={(event) =>
+                          setServiceForm((prev) => ({
+                            ...prev,
+                            supportsMl: event.target.checked,
+                          }))
+                        }
+                      />
+                      <span className="admin-toggle-card-title">ML usluga</span>
+                    </label>
+                    {serviceForm.supportsMl ? (
+                      <div className="admin-services-split-grid">
+                        <label>
+                          Max ml
+                          <input
+                            type="number"
+                            min={1}
+                            max={20}
+                            className="admin-inline-input"
+                            value={serviceForm.maxMl}
+                            onChange={(event) =>
+                              setServiceForm((prev) => ({
+                                ...prev,
+                                maxMl: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+                        <label>
+                          Popust po dodatnom ml (%)
+                          <input
+                            type="number"
+                            min={0}
+                            max={40}
+                            className="admin-inline-input"
+                            value={serviceForm.extraMlDiscountPercent}
+                            onChange={(event) =>
+                              setServiceForm((prev) => ({
+                                ...prev,
+                                extraMlDiscountPercent: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="admin-card" style={{ display: "grid", gap: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                      <strong>Stavke paketa</strong>
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        onClick={addPackageItem}
+                      >
+                        Dodaj stavku
+                      </button>
+                    </div>
+                    {(serviceForm.packageItems || []).map((item, index) => (
+                      <div key={`${item.serviceId}-${index}`} style={packageItemRowStyle}>
+                        <select
+                          className="admin-inline-input"
+                          value={item.serviceId}
+                          onChange={(event) =>
+                            updatePackageItem(index, { serviceId: event.target.value })
+                          }
+                        >
+                          <option value="">Izaberi single uslugu</option>
+                          {singleServices.map((service) => (
+                            <option key={service.id} value={service.id}>
+                              {service.name}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min={1}
+                          max={20}
+                          className="admin-inline-input"
+                          value={item.quantity}
+                          onChange={(event) =>
+                            updatePackageItem(index, { quantity: event.target.value })
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="admin-template-link-btn"
+                          onClick={() => removePackageItem(index)}
+                        >
+                          Ukloni
+                        </button>
+                      </div>
+                    ))}
+                    <div style={{ color: "#bed0e8", fontSize: 12 }}>
+                      Ukupno: {packageSummary.durationMin} min / {packageSummary.priceRsd} EUR
+                    </div>
+                  </div>
+                )}
+                {mode !== "packages" ? (
+                  <>
+                    <label className={`admin-toggle-card ${serviceForm.reminderEnabled ? "is-active" : ""}`}>
+                      <input
+                        type="checkbox"
+                        className="admin-toggle-card-input"
+                        checked={Boolean(serviceForm.reminderEnabled)}
+                        onChange={(event) =>
+                          setServiceForm((prev) => ({
+                            ...prev,
+                            reminderEnabled: event.target.checked,
+                          }))
+                        }
+                      />
+                      <span className="admin-toggle-card-title">Automatski reminder</span>
+                    </label>
+                    {serviceForm.reminderEnabled ? (
+                      <label>
+                        Reminder za koliko dana
+                        <input
+                          type="number"
+                          min={1}
+                          max={3650}
+                          className="admin-inline-input"
+                          value={serviceForm.reminderDelayDays || 90}
+                          onChange={(event) =>
+                            setServiceForm((prev) => ({
+                              ...prev,
+                              reminderDelayDays: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                    ) : null}
+                  </>
+                ) : null}
+                <div
+                  style={{
+                    display: "grid",
+                    gap: 8,
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  }}
+                >
+                  <label className={`admin-toggle-card ${serviceForm.isActive ? "is-active" : ""}`}>
+                    <input
+                      type="checkbox"
+                      className="admin-toggle-card-input"
+                      checked={serviceForm.isActive}
+                      onChange={(event) =>
+                        setServiceForm((prev) => ({ ...prev, isActive: event.target.checked }))
+                      }
+                    />
+                    <span className="admin-toggle-card-title">Aktivna usluga</span>
+                  </label>
+                  <label className={`admin-toggle-card ${serviceForm.isVip ? "is-active" : ""}`}>
+                    <input
+                      type="checkbox"
+                      className="admin-toggle-card-input"
+                      checked={serviceForm.isVip}
+                      onChange={(event) =>
+                        setServiceForm((prev) => ({ ...prev, isVip: event.target.checked }))
+                      }
+                    />
+                    <span className="admin-toggle-card-title">VIP usluga</span>
+                  </label>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="submit" className="admin-template-link-btn" disabled={loading || packageOverLimit}>
+                  Sacuvaj izmene
+                </button>
+                <button type="button" className="admin-template-link-btn" onClick={resetServiceForm}>
+                  Zatvori
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {promotionModalOpen ? (
+        <div style={modalOverlayStyle}>
+          <div className="admin-card" style={modalCardStyle}>
+            <form onSubmit={submitPromotion} style={{ display: "grid", gap: 8 }}>
+              <h3 style={{ marginTop: 0 }}>Izmena akcije</h3>
+              <label>
+                Usluga
+                <select
+                  className="admin-inline-input"
+                  value={promotionForm.serviceId}
+                  onChange={(event) =>
+                    setPromotionForm((prev) => ({ ...prev, serviceId: event.target.value }))
+                  }
+                  required
+                >
+                  <option value="">Izaberi uslugu</option>
+                  {services.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Naziv promocije
+                <input
+                  className="admin-inline-input"
+                  value={promotionForm.title}
+                  onChange={(event) =>
+                    setPromotionForm((prev) => ({ ...prev, title: event.target.value }))
+                  }
+                  required
+                />
+              </label>
+              <label>
+                Nova cena (EUR)
+                <input
+                  type="number"
+                  min={0}
+                  className="admin-inline-input"
+                  value={promotionForm.promoPriceRsd}
+                  onChange={(event) =>
+                    setPromotionForm((prev) => ({
+                      ...prev,
+                      promoPriceRsd: event.target.value,
+                    }))
+                  }
+                  required
+                />
+              </label>
+              <div className="admin-services-split-grid">
+                <label>
+                  Vazenje od
+                  <input
+                    type="datetime-local"
+                    className="admin-inline-input"
+                    value={promotionForm.startsAt}
+                    onChange={(event) =>
+                      setPromotionForm((prev) => ({ ...prev, startsAt: event.target.value }))
+                    }
+                  />
+                </label>
+                <label>
+                  Vazenje do
+                  <input
+                    type="datetime-local"
+                    className="admin-inline-input"
+                    value={promotionForm.endsAt}
+                    onChange={(event) =>
+                      setPromotionForm((prev) => ({ ...prev, endsAt: event.target.value }))
+                    }
+                  />
+                </label>
+              </div>
+              <label className={`admin-toggle-card ${promotionForm.isActive ? "is-active" : ""}`}>
+                <input
+                  type="checkbox"
+                  className="admin-toggle-card-input"
+                  checked={promotionForm.isActive}
+                  onChange={(event) =>
+                    setPromotionForm((prev) => ({ ...prev, isActive: event.target.checked }))
+                  }
+                />
+                <span className="admin-toggle-card-title">Aktivna akcija</span>
+              </label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <button type="submit" className="admin-template-link-btn" disabled={loading}>
+                  Sacuvaj izmene
+                </button>
+                <button type="button" className="admin-template-link-btn" onClick={resetPromotionForm}>
+                  Zatvori
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -963,4 +1482,21 @@ const badgeStyle = {
   fontSize: 12,
   textTransform: "uppercase",
   alignSelf: "flex-start",
+};
+
+const modalOverlayStyle = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 1000,
+  display: "grid",
+  placeItems: "center",
+  background: "rgba(3, 8, 18, 0.72)",
+  padding: 16,
+};
+
+const modalCardStyle = {
+  width: "100%",
+  maxWidth: 720,
+  maxHeight: "min(90vh, 960px)",
+  overflowY: "auto",
 };

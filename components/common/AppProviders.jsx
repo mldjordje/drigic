@@ -4,12 +4,17 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { ParallaxProvider } from "react-scroll-parallax";
 import Context from "@/context/Context";
+import LocaleProvider from "@/components/common/LocaleProvider";
 import PWARegister from "@/components/common/PWARegister";
 import ProfileSetupGate from "@/components/common/ProfileSetupGate";
+import SessionProvider from "@/components/common/SessionProvider";
 import ScrollTop from "@/components/common/ScrollTop";
-import ScrollTopBehaviour from "@/components/common/ScrollTopBehavier";
 
-export default function AppProviders({ children }) {
+export default function AppProviders({
+  children,
+  initialLocale = "sr",
+  initialSession = null,
+}) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -155,38 +160,29 @@ export default function AppProviders({ children }) {
       }
     };
 
-    fetch("/api/me/profile")
-      .then(async (response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (cancelled) {
-          return;
-        }
+    const role = String(initialSession?.role || "");
+    if (role === "admin") {
+      window.location.replace("/admin/kalendar");
+      return undefined;
+    }
 
-        if (data?.user?.role === "admin") {
-          window.location.replace("/admin/kalendar");
-          return;
-        }
-
-        clearAdminStartPreference();
-      })
-      .catch(() => {
-        if (!cancelled) {
-          clearAdminStartPreference();
-        }
-      });
+    clearAdminStartPreference();
 
     return () => {
       cancelled = true;
     };
-  }, [pathname]);
+  }, [initialSession?.role, pathname]);
 
   return (
-    <Context>
-      <ParallaxProvider>{children}</ParallaxProvider>
-      <PWARegister />
-      <ProfileSetupGate />
-      <ScrollTop />
-      <ScrollTopBehaviour />
-    </Context>
+    <LocaleProvider initialLocale={initialLocale}>
+      <SessionProvider initialSession={initialSession}>
+        <Context>
+          <ParallaxProvider>{children}</ParallaxProvider>
+          <PWARegister />
+          <ProfileSetupGate />
+          <ScrollTop />
+        </Context>
+      </SessionProvider>
+    </LocaleProvider>
   );
 }

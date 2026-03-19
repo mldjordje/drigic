@@ -3,6 +3,7 @@ import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
+import { slugifyServiceName } from "@/lib/services/slug";
 
 export const runtime = "nodejs";
 
@@ -16,12 +17,15 @@ const baseSchema = z.object({
   categoryId: z.string().uuid(),
   bodyAreaId: z.string().uuid().nullable().optional(),
   kind: z.enum(["single", "package"]).optional(),
+  slug: z.string().min(2).max(255).optional(),
   name: z.string().min(2).max(255),
   description: z.string().max(3000).optional(),
   colorHex: z.string().regex(/^#([A-Fa-f0-9]{6})$/).optional(),
   supportsMl: z.boolean().optional(),
   maxMl: z.number().int().min(1).max(20).optional(),
   extraMlDiscountPercent: z.number().int().min(0).max(40).optional(),
+  reminderEnabled: z.boolean().optional(),
+  reminderDelayDays: z.number().int().min(1).max(3650).optional(),
   priceRsd: z.number().int().min(0),
   durationMin: z.number().int().min(5).max(60),
   isActive: z.boolean().optional(),
@@ -127,17 +131,48 @@ function normalizeServicePayload(payload, fallback = null) {
     bodyAreaId:
       payload.bodyAreaId !== undefined ? payload.bodyAreaId : fallback?.bodyAreaId || null,
     kind,
+    slug: payload.slug ?? fallback?.slug ?? slugifyServiceName(payload.name ?? fallback?.name),
     name: payload.name ?? fallback?.name,
     description: payload.description ?? fallback?.description ?? "",
     colorHex: payload.colorHex ?? fallback?.colorHex ?? "#8e939b",
     supportsMl,
     maxMl,
     extraMlDiscountPercent,
+    reminderEnabled:
+      payload.reminderEnabled !== undefined
+        ? Boolean(payload.reminderEnabled)
+        : Boolean(fallback?.reminderEnabled ?? false),
+    reminderDelayDays: Math.min(
+      3650,
+      Math.max(1, Number(payload.reminderDelayDays ?? fallback?.reminderDelayDays ?? 90))
+    ),
     priceRsd: Number(payload.priceRsd ?? fallback?.priceRsd ?? 0),
     durationMin: Number(payload.durationMin ?? fallback?.durationMin ?? 30),
     isActive: payload.isActive !== undefined ? Boolean(payload.isActive) : Boolean(fallback?.isActive ?? true),
     isVip: payload.isVip !== undefined ? Boolean(payload.isVip) : Boolean(fallback?.isVip ?? false),
   };
+}
+
+async function ensureUniqueSlug(db, slug, currentId = null) {
+  const normalizedSlug = slugifyServiceName(slug);
+  let candidate = normalizedSlug;
+  let suffix = 2;
+
+  for (;;) {
+    const rows = await db
+      .select({ id: schema.services.id })
+      .from(schema.services)
+      .where(eq(schema.services.slug, candidate))
+      .limit(5);
+
+    const hasConflict = rows.some((row) => row.id !== currentId);
+    if (!hasConflict) {
+      return candidate;
+    }
+
+    candidate = `${normalizedSlug}-${suffix}`;
+    suffix += 1;
+  }
 }
 
 async function enrichWithPackageItems(db, services) {
@@ -210,6 +245,7 @@ export async function POST(request) {
 
   try {
     const normalized = normalizeServicePayload(parsed.data);
+    normalized.slug = await ensureUniqueSlug(db, normalized.slug);
     const packageItems = normalizePackageItems(parsed.data.packageItems || []);
 
     if (normalized.kind === "package") {
@@ -266,6 +302,7 @@ export async function PATCH(request) {
 
   try {
     const normalized = normalizeServicePayload(updates, existing);
+    normalized.slug = await ensureUniqueSlug(db, normalized.slug, id);
     const shouldReplacePackageItems = incomingPackageItems !== undefined;
     const normalizedItems = normalizePackageItems(incomingPackageItems || []);
     const switchedToPackage = existing.kind !== "package" && normalized.kind === "package";

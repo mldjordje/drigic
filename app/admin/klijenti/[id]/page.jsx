@@ -80,6 +80,7 @@ export default function AdminClientDetailsPage() {
 
   const [recordForm, setRecordForm] = useState({
     bookingId: "",
+    serviceId: "",
     productId: "",
     treatmentDate: "",
     correctionDueDate: "",
@@ -88,6 +89,7 @@ export default function AdminClientDetailsPage() {
   });
 
   const [editRecordForm, setEditRecordForm] = useState({
+    serviceId: "",
     productId: "",
     treatmentDate: "",
     correctionDueDate: "",
@@ -151,6 +153,7 @@ export default function AdminClientDetailsPage() {
   function startEditRecord(record) {
     setEditingRecordId(record.id);
     setEditRecordForm({
+      serviceId: record.service?.id || "",
       productId: record.product?.id || "",
       treatmentDate: toDateTimeInput(record.treatmentDate),
       correctionDueDate: toDateInput(record.correctionDueDate),
@@ -161,6 +164,7 @@ export default function AdminClientDetailsPage() {
   function stopEditRecord() {
     setEditingRecordId("");
     setEditRecordForm({
+      serviceId: "",
       productId: "",
       treatmentDate: "",
       correctionDueDate: "",
@@ -214,6 +218,7 @@ export default function AdminClientDetailsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           bookingId: recordForm.bookingId || null,
+          serviceId: recordForm.serviceId || null,
           productId: recordForm.productId || null,
           treatmentDate: toIsoFromLocalDateTime(recordForm.treatmentDate),
           correctionDueDate: recordForm.correctionDueDate || null,
@@ -228,6 +233,7 @@ export default function AdminClientDetailsPage() {
       setMessage("Beauty Pass zapis je uspesno dodat.");
       setRecordForm({
         bookingId: "",
+        serviceId: "",
         productId: "",
         treatmentDate: "",
         correctionDueDate: "",
@@ -254,6 +260,7 @@ export default function AdminClientDetailsPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          serviceId: editRecordForm.serviceId || null,
           productId: editRecordForm.productId || null,
           treatmentDate: toIsoFromLocalDateTime(editRecordForm.treatmentDate),
           correctionDueDate: editRecordForm.correctionDueDate || null,
@@ -488,6 +495,23 @@ export default function AdminClientDetailsPage() {
             </select>
           </label>
           <label>
+            Usluga
+            <select
+              className="admin-inline-input"
+              value={recordForm.serviceId}
+              onChange={(event) =>
+                setRecordForm((prev) => ({ ...prev, serviceId: event.target.value }))
+              }
+            >
+              <option value="">Bez usluge</option>
+              {(beautyPass?.treatmentServices || []).map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
             Brend preparata (opciono)
             <select
               className="admin-inline-input"
@@ -568,6 +592,7 @@ export default function AdminClientDetailsPage() {
             <tr>
               <th style={thStyle}>Datum</th>
               <th style={thStyle}>Napomena</th>
+              <th style={thStyle}>Usluga</th>
               <th style={thStyle}>Preparat</th>
               <th style={thStyle}>Korekcija</th>
               <th style={thStyle}>Media</th>
@@ -590,6 +615,29 @@ export default function AdminClientDetailsPage() {
                     />
                   ) : (
                     item.notes || "-"
+                  )}
+                </td>
+                <td style={tdStyle}>
+                  {editingRecordId === item.id ? (
+                    <select
+                      className="admin-inline-input"
+                      value={editRecordForm.serviceId}
+                      onChange={(event) =>
+                        setEditRecordForm((prev) => ({
+                          ...prev,
+                          serviceId: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Bez usluge</option>
+                      {(beautyPass?.treatmentServices || []).map((service) => (
+                        <option key={service.id} value={service.id}>
+                          {service.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    item.service?.name || "-"
                   )}
                 </td>
                 <td style={tdStyle}>
@@ -723,7 +771,7 @@ export default function AdminClientDetailsPage() {
             ))}
             {!beautyPass?.treatmentHistory?.length ? (
               <tr>
-                <td style={tdStyle} colSpan={6}>
+                <td style={tdStyle} colSpan={7}>
                   Nema treatment zapisa.
                 </td>
               </tr>

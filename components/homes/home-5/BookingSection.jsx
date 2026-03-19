@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import BookingInlineForm from "@/components/booking/BookingInlineForm";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
+import { useLocale } from "@/components/common/LocaleProvider";
 
 async function parseResponse(response) {
   const text = await response.text();
@@ -17,6 +18,7 @@ async function parseResponse(response) {
 }
 
 export default function BookingSection({ googleNextPath = "/" }) {
+  const { t } = useLocale();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,26 +40,26 @@ export default function BookingSection({ googleNextPath = "/" }) {
       <div className="container">
         <div className="title-area text-center clinic-reveal is-visible">
           <h2 className="sec-title" style={{ color: "var(--clinic-text-strong)" }}>
-            Zakazite termin
+            {t("booking.sectionTitle")}
           </h2>
           <p className="sec-text" style={{ color: "var(--clinic-text-muted)" }}>
-            Izaberite tretmane, datum i termin na posebnoj booking stranici.
+            {t("booking.sectionBody")}
           </p>
         </div>
 
         {loading ? (
           <div style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
-            <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>Ucitavanje...</p>
+            <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>{t("common.loading")}</p>
           </div>
         ) : null}
 
         {!loading && !user ? (
           <div className="clinic-login-lock" style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
             <p style={{ marginTop: 0, color: "var(--clinic-text-muted)" }}>
-              Da biste zakazali termin, prvo se prijavite preko Google naloga.
+              {t("booking.loginRequired")}
             </p>
             <GooglePopupButton className="btn clinic-glow-btn" nextPath={googleNextPath}>
-              LOGIN WITH GOOGLE
+              {t("common.login").toUpperCase()} WITH GOOGLE
             </GooglePopupButton>
           </div>
         ) : null}

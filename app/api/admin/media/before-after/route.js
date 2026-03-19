@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 const OPTIONAL_COLUMN_KEY_MAP = {
   service_category: "serviceCategory",
   collage_image_url: "collageImageUrl",
+  service_id: "serviceId",
 };
 
 const deleteSchema = z.object({
@@ -20,6 +21,7 @@ const updateSchema = z.object({
   id: z.string().uuid(),
   treatmentType: z.string().min(1).max(255).optional(),
   serviceCategory: z.string().max(120).optional(),
+  serviceId: z.string().uuid().nullable().optional(),
   productUsed: z.string().max(255).optional(),
   beforeImageUrl: z.string().min(1).optional(),
   afterImageUrl: z.string().min(1).optional(),
@@ -112,6 +114,7 @@ async function getExistingBeforeAfterCase(db, id) {
         beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
         afterImageUrl: schema.beforeAfterCases.afterImageUrl,
         collageImageUrl: schema.beforeAfterCases.collageImageUrl,
+        serviceId: schema.beforeAfterCases.serviceId,
       })
       .from(schema.beforeAfterCases)
       .where(eq(schema.beforeAfterCases.id, id))
@@ -133,7 +136,7 @@ async function getExistingBeforeAfterCase(db, id) {
       .where(eq(schema.beforeAfterCases.id, id))
       .limit(1);
 
-    return fallbackRow ? { ...fallbackRow, collageImageUrl: null } : null;
+    return fallbackRow ? { ...fallbackRow, collageImageUrl: null, serviceId: null } : null;
   }
 }
 
@@ -146,6 +149,7 @@ export async function POST(request) {
   const formData = await request.formData();
   const treatmentType = String(formData.get("treatmentType") || "").trim();
   const serviceCategory = String(formData.get("serviceCategory") || "").trim();
+  const serviceId = String(formData.get("serviceId") || "").trim();
   const productUsed = String(formData.get("productUsed") || "").trim();
   const beforeUrlInput = String(formData.get("beforeImageUrl") || "").trim();
   const afterUrlInput = String(formData.get("afterImageUrl") || "").trim();
@@ -189,6 +193,7 @@ export async function POST(request) {
   const { record } = await insertBeforeAfterWithFallback(db, {
     treatmentType,
     serviceCategory: serviceCategory || null,
+    serviceId: serviceId || null,
     productUsed: productUsed || null,
     beforeImageUrl,
     afterImageUrl,
@@ -209,6 +214,7 @@ export async function PATCH(request) {
   const id = String(formData.get("id") || "").trim();
   const treatmentType = String(formData.get("treatmentType") || "").trim();
   const serviceCategory = String(formData.get("serviceCategory") || "").trim();
+  const serviceId = String(formData.get("serviceId") || "").trim();
   const productUsed = String(formData.get("productUsed") || "").trim();
   const beforeUrlInput = String(formData.get("beforeImageUrl") || "").trim();
   const afterUrlInput = String(formData.get("afterImageUrl") || "").trim();
@@ -218,6 +224,7 @@ export async function PATCH(request) {
     id,
     ...(treatmentType ? { treatmentType } : {}),
     ...(serviceCategory ? { serviceCategory } : {}),
+    ...(serviceId ? { serviceId } : { ...(formData.get("serviceId") !== null ? { serviceId: null } : {}) }),
     ...(productUsed ? { productUsed } : {}),
     ...(beforeUrlInput ? { beforeImageUrl: beforeUrlInput } : {}),
     ...(afterUrlInput ? { afterImageUrl: afterUrlInput } : {}),
@@ -267,6 +274,9 @@ export async function PATCH(request) {
 
   if (parsed.data.serviceCategory !== undefined) {
     updates.serviceCategory = parsed.data.serviceCategory || null;
+  }
+  if (parsed.data.serviceId !== undefined) {
+    updates.serviceId = parsed.data.serviceId || null;
   }
 
   const { record } = await updateBeforeAfterWithFallback(db, parsed.data.id, updates);

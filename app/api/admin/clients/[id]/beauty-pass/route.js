@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 
 const createRecordSchema = z.object({
   bookingId: z.string().uuid().nullable().optional(),
+  serviceId: z.string().uuid().nullable().optional(),
   productId: z.string().uuid().nullable().optional(),
   treatmentDate: z.string().datetime().optional(),
   notes: z.string().max(3000).optional(),
@@ -46,6 +47,12 @@ async function assertClient(db, id) {
   return client;
 }
 
+function addDays(dateValue, days) {
+  const nextDate = new Date(dateValue);
+  nextDate.setUTCDate(nextDate.getUTCDate() + Number(days || 0));
+  return nextDate.toISOString().slice(0, 10);
+}
+
 export async function GET(request, { params }) {
   const auth = await requireAdmin(request);
   if (auth.error) {
@@ -70,6 +77,9 @@ export async function GET(request, { params }) {
       .select({
         recordId: schema.treatmentRecords.id,
         bookingId: schema.treatmentRecords.bookingId,
+        serviceId: schema.treatmentRecords.serviceId,
+        serviceName: schema.services.name,
+        serviceSlug: schema.services.slug,
         productId: schema.treatmentRecords.productId,
         productName: schema.treatmentProducts.name,
         productLogoUrl: schema.treatmentProducts.logoUrl,
@@ -84,6 +94,10 @@ export async function GET(request, { params }) {
       .leftJoin(
         schema.treatmentRecordMedia,
         eq(schema.treatmentRecordMedia.treatmentRecordId, schema.treatmentRecords.id)
+      )
+      .leftJoin(
+        schema.services,
+        eq(schema.services.id, schema.treatmentRecords.serviceId)
       )
       .leftJoin(
         schema.treatmentProducts,
@@ -128,6 +142,13 @@ export async function GET(request, { params }) {
         treatmentDate: row.treatmentDate,
         notes: row.notes,
         correctionDueDate: row.correctionDueDate,
+        service: row.serviceId
+          ? {
+              id: row.serviceId,
+              name: row.serviceName,
+              slug: row.serviceSlug,
+            }
+          : null,
         product: row.productId
           ? {
               id: row.productId,
@@ -188,6 +209,17 @@ export async function GET(request, { params }) {
     })
     .from(schema.treatmentProducts)
     .orderBy(asc(schema.treatmentProducts.sortOrder), asc(schema.treatmentProducts.name));
+  const treatmentServices = await db
+    .select({
+      id: schema.services.id,
+      name: schema.services.name,
+      slug: schema.services.slug,
+      reminderEnabled: schema.services.reminderEnabled,
+      reminderDelayDays: schema.services.reminderDelayDays,
+    })
+    .from(schema.services)
+    .where(eq(schema.services.isActive, true))
+    .orderBy(asc(schema.services.name));
 
   return ok({
     ok: true,
@@ -203,6 +235,7 @@ export async function GET(request, { params }) {
       })),
     penalties: penaltyRows,
     treatmentProducts,
+    treatmentServices,
   });
 }
 
@@ -262,17 +295,42 @@ export async function POST(request, { params }) {
   }
 
   const treatmentDate = payload.treatmentDate ? new Date(payload.treatmentDate) : new Date();
+  let resolvedService = null;
+
+  if (payload.serviceId) {
+    const [service] = await db
+      .select({
+        id: schema.services.id,
+        reminderEnabled: schema.services.reminderEnabled,
+        reminderDelayDays: schema.services.reminderDelayDays,
+      })
+      .from(schema.services)
+      .where(eq(schema.services.id, payload.serviceId))
+      .limit(1);
+
+    if (!service) {
+      return fail(400, "Usluga nije pronadjena.");
+    }
+
+    resolvedService = service;
+  }
+
+  const correctionDueDate =
+    resolvedService?.reminderEnabled
+      ? addDays(treatmentDate, resolvedService.reminderDelayDays || 90)
+      : payload.correctionDueDate || null;
 
   const [record] = await db
     .insert(schema.treatmentRecords)
     .values({
       userId: client.id,
       bookingId: payload.bookingId || null,
+      serviceId: payload.serviceId || null,
       productId: payload.productId || null,
       employeeId: employee.id,
       treatmentDate,
       notes: payload.notes || null,
-      correctionDueDate: payload.correctionDueDate || null,
+      correctionDueDate,
     })
     .returning();
 

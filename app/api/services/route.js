@@ -14,6 +14,7 @@ export async function GET() {
       categoryName: schema.serviceCategories.name,
       categorySort: schema.serviceCategories.sortOrder,
       serviceId: schema.services.id,
+      serviceSlug: schema.services.slug,
       serviceKind: schema.services.kind,
       serviceName: schema.services.name,
       description: schema.services.description,
@@ -21,6 +22,8 @@ export async function GET() {
       supportsMl: schema.services.supportsMl,
       maxMl: schema.services.maxMl,
       extraMlDiscountPercent: schema.services.extraMlDiscountPercent,
+      reminderEnabled: schema.services.reminderEnabled,
+      reminderDelayDays: schema.services.reminderDelayDays,
       priceRsd: schema.services.priceRsd,
       durationMin: schema.services.durationMin,
       isVip: schema.services.isVip,
@@ -115,6 +118,7 @@ export async function GET() {
 
     acc[row.categoryId].services.push({
       id: row.serviceId,
+      slug: row.serviceSlug,
       kind: row.serviceKind,
       name: row.serviceName,
       description: row.description,
@@ -122,6 +126,8 @@ export async function GET() {
       supportsMl: Boolean(row.supportsMl),
       maxMl: Number(row.maxMl || 1),
       extraMlDiscountPercent: Number(row.extraMlDiscountPercent || 0),
+      reminderEnabled: Boolean(row.reminderEnabled),
+      reminderDelayDays: Number(row.reminderDelayDays || 90),
       priceRsd: row.priceRsd,
       durationMin: row.durationMin,
       isVip: row.isVip,

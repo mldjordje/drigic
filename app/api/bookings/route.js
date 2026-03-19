@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import { sendReminderEmail } from "@/lib/auth/email";
 import {
+  CONSULTATION_SELECTION_ID,
   addMinutes,
   findConflicts,
   isWithinBookingWindow,
@@ -22,7 +23,7 @@ const payloadSchema = z.object({
   serviceSelections: z
     .array(
       z.object({
-        serviceId: z.string().uuid(),
+        serviceId: z.union([z.string().uuid(), z.literal(CONSULTATION_SELECTION_ID)]),
         quantity: z.number().int().min(1).optional(),
         brand: z.string().min(1).max(80).optional(),
       })
@@ -110,8 +111,9 @@ export async function POST(request) {
         })
         .returning();
 
-      await tx.insert(schema.bookingItems).values(
-        quote.items.map((item) => ({
+      const bookingItems = quote.items
+        .filter((item) => item.serviceId !== CONSULTATION_SELECTION_ID)
+        .map((item) => ({
           bookingId: createdBooking.id,
           serviceId: item.serviceId,
           quantity: item.quantity,
@@ -121,8 +123,11 @@ export async function POST(request) {
           priceRsdSnapshot: item.finalPriceRsd,
           serviceColorSnapshot: item.serviceColor,
           sourcePackageServiceId: item.sourcePackageServiceId || null,
-        }))
-      );
+        }));
+
+      if (bookingItems.length) {
+        await tx.insert(schema.bookingItems).values(bookingItems);
+      }
 
       try {
         await tx.insert(schema.bookingStatusLog).values({

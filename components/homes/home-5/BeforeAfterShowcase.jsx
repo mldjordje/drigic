@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useLocale } from "@/components/common/LocaleProvider";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 const CATEGORY_META = SERVICE_CATEGORY_SPECS.map((category) => ({
@@ -72,6 +73,7 @@ export default function BeforeAfterShowcase({
   viewMoreHref = "/rezultati",
   viewMoreLabel = "POGLEDAJ VISE",
 }) {
+  const { t } = useLocale();
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -152,10 +154,10 @@ export default function BeforeAfterShowcase({
     }
 
     return [
-      { slug: "all", label: "Sve", count: normalizedCases.length },
+      { slug: "all", label: t("common.all"), count: normalizedCases.length },
       ...orderedOptions,
     ];
-  }, [normalizedCases]);
+  }, [normalizedCases, t]);
 
   useEffect(() => {
     if (!filterOptions.some((option) => option.slug === activeCategory)) {
@@ -189,9 +191,9 @@ export default function BeforeAfterShowcase({
         <div className="row justify-content-center">
           <div className="col-xl-8 col-lg-10">
             <div className="title-area text-center clinic-reveal">
-              <h2 className="sec-title text-smoke">Rezultati tretmana</h2>
+              <h2 className="sec-title text-smoke">{t("booking.treatmentResults")}</h2>
               <p className="sec-text text-smoke">
-                Realni pre/posle prikazi tretmana iz klinicke prakse.
+                {t("booking.realResults")}
               </p>
             </div>
           </div>
@@ -265,8 +267,8 @@ export default function BeforeAfterShowcase({
                   className="btn bg-theme text-title clinic-glow-btn"
                 >
                   <span className="link-effect">
-                    <span className="effect-1">{viewMoreLabel}</span>
-                    <span className="effect-1">{viewMoreLabel}</span>
+                    <span className="effect-1">{viewMoreLabel || t("common.viewMore").toUpperCase()}</span>
+                    <span className="effect-1">{viewMoreLabel || t("common.viewMore").toUpperCase()}</span>
                   </span>
                 </Link>
               </div>
@@ -275,14 +277,14 @@ export default function BeforeAfterShowcase({
         )}
 
         {showCta ? (
-          <div className="btn-wrap mt-40 justify-content-center">
-            <Link scroll={false} href="/booking" className="btn bg-theme text-title clinic-glow-btn">
-              <span className="link-effect">
-                <span className="effect-1">ZAKAZI TERMIN</span>
-                <span className="effect-1">ZAKAZI TERMIN</span>
-              </span>
-            </Link>
-          </div>
+        <div className="btn-wrap mt-40 justify-content-center">
+          <Link scroll={false} href="/booking" className="btn bg-theme text-title clinic-glow-btn">
+            <span className="link-effect">
+              <span className="effect-1">{t("treatments.schedule")}</span>
+              <span className="effect-1">{t("treatments.schedule")}</span>
+            </span>
+          </Link>
+        </div>
         ) : null}
       </div>
 

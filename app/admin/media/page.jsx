@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
+import { SERVICE_CATEGORY_SPECS, getCategorySlugByName } from "@/lib/services/category-map";
 
 async function compressImage(file, maxSizeMB = 1.5, quality = 0.85) {
   return new Promise((resolve) => {
@@ -39,7 +39,9 @@ async function compressImage(file, maxSizeMB = 1.5, quality = 0.85) {
 const emptyBeforeAfterForm = {
   id: "",
   treatmentType: "",
+  targetType: "category",
   serviceCategory: "",
+  serviceId: "",
   productUsed: "",
   collageImage: null,
   isPublished: true,
@@ -85,6 +87,8 @@ export default function AdminMediaPage() {
   const [beforeAfter, setBeforeAfter] = useState([]);
   const [gallery, setGallery] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [services, setServices] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -102,12 +106,14 @@ export default function AdminMediaPage() {
         fetch("/api/media/gallery"),
         fetch("/api/media/videos"),
       ]);
+      const metaRes = await fetch("/api/admin/service-metadata");
 
       const [baData, gData, vData] = await Promise.all([
         parseResponse(baRes),
         parseResponse(gRes),
         parseResponse(vRes),
       ]);
+      const metaData = await parseResponse(metaRes);
 
       if (!baRes.ok) {
         throw new Error(baData?.message || "Neuspesno ucitavanje pre/posle stavki.");
@@ -122,6 +128,8 @@ export default function AdminMediaPage() {
       setBeforeAfter(baData?.data || []);
       setGallery(gData?.data || []);
       setVideos(vData?.data || []);
+      setCategories(metaData?.categories || []);
+      setServices(metaData?.services || []);
     } catch (loadError) {
       setError(loadError?.message || "Greska pri ucitavanju medija.");
     } finally {
@@ -150,6 +158,9 @@ export default function AdminMediaPage() {
       const formData = new FormData();
       formData.set("treatmentType", beforeAfterForm.treatmentType.trim());
       formData.set("serviceCategory", beforeAfterForm.serviceCategory.trim());
+      if (beforeAfterForm.serviceId) {
+        formData.set("serviceId", beforeAfterForm.serviceId);
+      }
       formData.set("productUsed", beforeAfterForm.productUsed.trim());
       formData.set("isPublished", String(Boolean(beforeAfterForm.isPublished)));
 
@@ -364,18 +375,64 @@ export default function AdminMediaPage() {
           />
           <select
             className="admin-inline-input"
+            value={beforeAfterForm.targetType}
+            onChange={(event) =>
+              setBeforeAfterForm((prev) => ({
+                ...prev,
+                targetType: event.target.value,
+                serviceId: event.target.value === "service" ? prev.serviceId : "",
+              }))
+            }
+          >
+            <option value="category">Kategorija</option>
+            <option value="service">Usluga</option>
+          </select>
+          <select
+            className="admin-inline-input"
             value={beforeAfterForm.serviceCategory}
             onChange={(event) =>
               setBeforeAfterForm((prev) => ({ ...prev, serviceCategory: event.target.value }))
             }
+            disabled={beforeAfterForm.targetType === "service"}
           >
             <option value="">Kategorija usluge (opciono)</option>
-            {SERVICE_CATEGORY_SPECS.map((category) => (
+            {(categories.length
+              ? categories.map((category) => ({
+                  slug: getCategorySlugByName(category.name) || category.name.toLowerCase().replace(/\s+/g, "-"),
+                  name: category.name,
+                }))
+              : SERVICE_CATEGORY_SPECS
+            ).map((category) => (
               <option key={category.slug} value={category.slug}>
                 {category.name}
               </option>
             ))}
           </select>
+          {beforeAfterForm.targetType === "service" ? (
+            <select
+              className="admin-inline-input"
+              value={beforeAfterForm.serviceId}
+              onChange={(event) => {
+                const selectedService = services.find((item) => item.id === event.target.value);
+                setBeforeAfterForm((prev) => ({
+                  ...prev,
+                  serviceId: event.target.value,
+                  serviceCategory: selectedService
+                    ? getCategorySlugByName(
+                        categories.find((category) => category.id === selectedService.categoryId)?.name
+                      ) || prev.serviceCategory
+                    : prev.serviceCategory,
+                }));
+              }}
+            >
+              <option value="">Izaberi uslugu</option>
+              {services.map((service) => (
+                <option key={service.id} value={service.id}>
+                  {service.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
           <input
             className="admin-inline-input"
             placeholder="Preparat (opciono)"
@@ -551,6 +608,9 @@ export default function AdminMediaPage() {
               {item.serviceCategory ? (
                 <small style={{ color: "#e7eef9" }}>{categoryNameFromSlug(item.serviceCategory)}</small>
               ) : null}
+              {item.serviceName ? (
+                <small style={{ color: "#9cb2cf" }}>Usluga: {item.serviceName}</small>
+              ) : null}
               {item.productUsed ? <small style={{ color: "#c8d9ee" }}>{item.productUsed}</small> : null}
               <img
                 src={item.collageImageUrl || item.beforeImageUrl}
@@ -565,7 +625,9 @@ export default function AdminMediaPage() {
                     setBeforeAfterForm({
                       id: item.id,
                       treatmentType: item.treatmentType || "",
+                      targetType: item.serviceId ? "service" : "category",
                       serviceCategory: item.serviceCategory || "",
+                      serviceId: item.serviceId || "",
                       productUsed: item.productUsed || "",
                       collageImage: null,
                       isPublished: Boolean(item.isPublished),

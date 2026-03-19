@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useLocale } from "@/components/common/LocaleProvider";
 
 function parseResponse(response) {
   return response
@@ -74,6 +75,7 @@ function toIsoBirthDate(value) {
 
 export default function ProfileSetupGate() {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -82,6 +84,7 @@ export default function ProfileSetupGate() {
     fullName: "",
     gender: "",
     birthDate: "",
+    phone: "",
   });
 
   useEffect(() => {
@@ -113,6 +116,7 @@ export default function ProfileSetupGate() {
           fullName: String(data.profile?.fullName || "").trim(),
           gender: String(data.profile?.gender || "").trim(),
           birthDate: normalizeBirthDate(data.profile?.birthDate),
+          phone: String(data.user?.phone || "").trim(),
         });
         setVisible(Boolean(data.needsProfileSetup));
       })
@@ -141,13 +145,18 @@ export default function ProfileSetupGate() {
   async function saveProfile(event) {
     event.preventDefault();
     const normalizedBirthDate = normalizeBirthDateInput(form.birthDate);
-    if (!form.fullName.trim() || !form.gender || !normalizedBirthDate) {
-      setError("Popunite ime, pol i datum rodjenja.");
+    const normalizedPhone = String(form.phone || "").replace(/[^\d+]/g, "");
+    if (!form.fullName.trim() || !form.gender || !normalizedBirthDate || !normalizedPhone) {
+      setError(t("profile.requiredError"));
+      return;
+    }
+    if (normalizedPhone.replace(/\D/g, "").length < 6) {
+      setError(t("profile.phoneError"));
       return;
     }
     const isoBirthDate = toIsoBirthDate(normalizedBirthDate);
     if (!isoBirthDate) {
-      setError("Datum rodjenja mora biti validan (DDMMYYYY ili DD/MM/YYYY).");
+      setError(t("profile.birthDateError"));
       return;
     }
 
@@ -161,6 +170,7 @@ export default function ProfileSetupGate() {
           fullName: form.fullName.trim(),
           gender: form.gender,
           birthDate: isoBirthDate,
+          phone: normalizedPhone,
         }),
       });
       const data = await parseResponse(response);
@@ -183,13 +193,13 @@ export default function ProfileSetupGate() {
     <div style={wrapStyle}>
       <div style={backdropStyle} />
       <form style={cardStyle} onSubmit={saveProfile} noValidate>
-        <h3 style={{ marginTop: 0, marginBottom: 6 }}>Dovrsi profil</h3>
+        <h3 style={{ marginTop: 0, marginBottom: 6 }}>{t("profile.title")}</h3>
         <p style={{ marginTop: 0, color: "#c6d8ee" }}>
-          Unesi podatke jednom kako bi admin video tvoje ime u kalendaru.
+          {t("profile.body")}
         </p>
 
         <label style={labelStyle}>
-          Ime i prezime
+          {t("profile.fullName")}
           <input
             style={inputStyle}
             value={form.fullName}
@@ -201,22 +211,22 @@ export default function ProfileSetupGate() {
         </label>
 
         <label style={labelStyle}>
-          Pol
+          {t("profile.gender")}
           <select
             style={inputStyle}
             value={form.gender}
             onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
             required
           >
-            <option value="">Izaberi</option>
-            <option value="musko">Musko</option>
-            <option value="zensko">Zensko</option>
-            <option value="drugo">Drugo</option>
+            <option value="">{t("profile.choose")}</option>
+            <option value="musko">{t("profile.male")}</option>
+            <option value="zensko">{t("profile.female")}</option>
+            <option value="drugo">{t("profile.other")}</option>
           </select>
         </label>
 
         <label style={labelStyle}>
-          Datum rodjenja
+          {t("profile.birthDate")}
           <input
             type="text"
             style={inputStyle}
@@ -235,10 +245,27 @@ export default function ProfileSetupGate() {
           />
         </label>
 
+        <label style={labelStyle}>
+          {t("profile.phone")}
+          <input
+            type="tel"
+            style={inputStyle}
+            value={form.phone}
+            inputMode="tel"
+            onChange={(event) =>
+              setForm((prev) => ({
+                ...prev,
+                phone: event.target.value,
+              }))
+            }
+            required
+          />
+        </label>
+
         {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
 
         <button type="submit" style={buttonStyle} disabled={saving}>
-          {saving ? "Cuvanje..." : "Sacuvaj podatke"}
+          {saving ? t("profile.saving") : t("profile.save")}
         </button>
       </form>
     </div>

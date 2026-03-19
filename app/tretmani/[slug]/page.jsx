@@ -1,9 +1,11 @@
 ﻿import Link from "next/link";
 import { and, asc, eq, gte, isNull, lte, or } from "drizzle-orm";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
 import { getDb, schema } from "@/lib/db/client";
+import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import {
   SERVICE_CATEGORY_SPECS,
   getCategorySpecBySlug,
@@ -91,6 +93,7 @@ async function loadCategoryServices(slug) {
   const rows = await db
     .select({
       id: schema.services.id,
+      slug: schema.services.slug,
       name: schema.services.name,
       description: schema.services.description,
       priceRsd: schema.services.priceRsd,
@@ -123,6 +126,7 @@ async function loadCategoryServices(slug) {
   const dedupedRows = Array.from(new Map(rows.map((row) => [row.id, row])).values());
   const services = dedupedRows.map((row) => ({
     id: row.id,
+    slug: row.slug,
     name: row.name,
     description: row.description || "",
     durationMin: Number(row.durationMin || 0),
@@ -141,6 +145,30 @@ async function loadCategoryServices(slug) {
     category,
     services,
   };
+}
+
+async function loadCategoryBeforeAfter(categorySlug) {
+  const db = getDb();
+  try {
+    return await db
+      .select({
+        id: schema.beforeAfterCases.id,
+        treatmentType: schema.beforeAfterCases.treatmentType,
+        beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
+        afterImageUrl: schema.beforeAfterCases.afterImageUrl,
+        collageImageUrl: schema.beforeAfterCases.collageImageUrl,
+      })
+      .from(schema.beforeAfterCases)
+      .where(
+        and(
+          eq(schema.beforeAfterCases.isPublished, true),
+          eq(schema.beforeAfterCases.serviceCategory, categorySlug)
+        )
+      )
+      .orderBy(asc(schema.beforeAfterCases.createdAt));
+  } catch {
+    return [];
+  }
 }
 
 function buildFaq(categorySpec) {
@@ -170,7 +198,11 @@ export default async function TreatmentCategoryPage({ params }) {
     notFound();
   }
 
+  const cookieStore = await cookies();
+  const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const t = (path, replacements) => translate(locale, path, replacements);
   const { categorySpec, services } = data;
+  const categoryBeforeAfter = await loadCategoryBeforeAfter(resolvedParams?.slug);
   const faq = buildFaq(categorySpec);
 
   const jsonLd = {
@@ -202,25 +234,25 @@ export default async function TreatmentCategoryPage({ params }) {
 
           <div className="clinic-treatment-detail-layout">
             <article className="clinic-treatment-detail-content glass-panel clinic-reveal">
-              <h2>Detaljan opis tretmana</h2>
+              <h2>{t("treatments.detailsTitle")}</h2>
               {categorySpec.detailedOverview.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
 
-              <h3>Ključne prednosti</h3>
+              <h3>{t("treatments.benefits")}</h3>
               <ul>
                 {categorySpec.benefits.map((benefit) => (
                   <li key={benefit}>{benefit}</li>
                 ))}
               </ul>
 
-              <h3>Kome je tretman namenjen</h3>
+              <h3>{t("treatments.candidate")}</h3>
               <p>{categorySpec.candidate}</p>
 
-              <h3>Kako izgleda tretman</h3>
+              <h3>{t("treatments.procedure")}</h3>
               <p>{categorySpec.procedure}</p>
 
-              <h3>Nega nakon tretmana</h3>
+              <h3>{t("treatments.aftercare")}</h3>
               <p>{categorySpec.aftercare}</p>
             </article>
 
@@ -228,22 +260,41 @@ export default async function TreatmentCategoryPage({ params }) {
               className="clinic-treatment-detail-gallery glass-panel clinic-reveal"
               style={{ "--clinic-reveal-delay": "60ms" }}
             >
-              <h3>Prostor za slike tretmana</h3>
-              <p>
-                Ovde je predvidjen prostor za galeriju ove kategorije. Kasnije mozemo povezati
-                stvarne fotografije i before/after prikaze.
-              </p>
-              <div className="clinic-treatment-gallery-grid">
-                {categorySpec.imageSlots.map((slot, slotIndex) => (
-                  <div
-                    key={slot}
-                    className="clinic-treatment-image-slot clinic-reveal"
-                    style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 6) * 45}ms` }}
-                  >
-                    <span>{slot}</span>
+              <h3>{t("treatments.categoryResults")}</h3>
+              {categoryBeforeAfter.length ? (
+                <div className="clinic-treatment-gallery-grid">
+                  {categoryBeforeAfter.map((item, slotIndex) => (
+                    <div
+                      key={item.id}
+                      className="clinic-treatment-image-slot clinic-reveal"
+                      style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 6) * 45}ms` }}
+                    >
+                      <img
+                        src={item.collageImageUrl || item.beforeImageUrl}
+                        alt={item.treatmentType || categorySpec.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <p>
+                    {t("treatments.categoryGalleryFallback")}
+                  </p>
+                  <div className="clinic-treatment-gallery-grid">
+                    {categorySpec.imageSlots.map((slot, slotIndex) => (
+                      <div
+                        key={slot}
+                        className="clinic-treatment-image-slot clinic-reveal"
+                        style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 6) * 45}ms` }}
+                      >
+                        <span>{slot}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
             </aside>
           </div>
 
@@ -254,7 +305,9 @@ export default async function TreatmentCategoryPage({ params }) {
                 className="clinic-treatment-service-card glass-panel clinic-hover-raise clinic-reveal"
                 style={{ "--clinic-reveal-delay": `${Math.min(serviceIndex, 12) * 45}ms` }}
               >
-                <div className="clinic-treatment-service-image-slot">Prostor za sliku usluge</div>
+                <div className="clinic-treatment-service-image-slot">
+                  {t("treatments.serviceImageSpace")}
+                </div>
                 <h3>{service.name}</h3>
                 <p>{service.description || "Individualni tretman."}</p>
                 <div className="clinic-treatment-service-meta">
@@ -269,6 +322,11 @@ export default async function TreatmentCategoryPage({ params }) {
                     )}
                   </span>
                 </div>
+                {service.slug ? (
+                  <Link href={`/tretmani/${resolvedParams.slug}/${service.slug}`} className="clinic-treatment-link">
+                    {t("treatments.serviceDetails")}
+                  </Link>
+                ) : null}
               </article>
             ))}
           </div>
@@ -276,13 +334,13 @@ export default async function TreatmentCategoryPage({ params }) {
           {!services.length ? (
             <div className="admin-card" style={{ marginTop: 18 }}>
               <p style={{ margin: 0, color: "#d9e6f8" }}>
-                Trenutno nema aktivnih usluga u ovoj kategoriji.
+                {t("treatments.noServices")}
               </p>
             </div>
           ) : null}
 
           <div className="clinic-treatment-faq glass-panel clinic-reveal">
-            <h3>Najčešća pitanja</h3>
+            <h3>{t("treatments.faq")}</h3>
             <div className="clinic-treatment-faq-list">
               {faq.map((item, faqIndex) => (
                 <details
@@ -300,14 +358,14 @@ export default async function TreatmentCategoryPage({ params }) {
           <div className="btn-wrap mt-50 justify-content-center" style={{ gap: 12 }}>
             <Link href="/tretmani" className="btn bg-theme text-title clinic-glow-btn">
               <span className="link-effect">
-                <span className="effect-1">SVE KATEGORIJE</span>
-                <span className="effect-1">SVE KATEGORIJE</span>
+                <span className="effect-1">{t("treatments.allCategories")}</span>
+                <span className="effect-1">{t("treatments.allCategories")}</span>
               </span>
             </Link>
             <Link href="/booking" className="btn bg-theme text-title clinic-glow-btn">
               <span className="link-effect">
-                <span className="effect-1">ZAKAZI TERMIN</span>
-                <span className="effect-1">ZAKAZI TERMIN</span>
+                <span className="effect-1">{t("treatments.bookAppointment")}</span>
+                <span className="effect-1">{t("treatments.bookAppointment")}</span>
               </span>
             </Link>
           </div>

@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { ok } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
 
@@ -7,14 +7,30 @@ export const runtime = "nodejs";
 function isMissingOptionalColumn(error) {
   const message = String(error?.message || error?.cause?.message || "").toLowerCase();
   return (
-    (message.includes("service_category") || message.includes("collage_image_url")) &&
+    (
+      message.includes("service_category") ||
+      message.includes("collage_image_url") ||
+      message.includes("service_id")
+    ) &&
     (message.includes("does not exist") || message.includes("column"))
   );
 }
 
-export async function GET() {
+export async function GET(request) {
   const db = getDb();
+  const { searchParams } = new URL(request.url);
+  const serviceCategory = String(searchParams.get("serviceCategory") || "").trim();
+  const serviceId = String(searchParams.get("serviceId") || "").trim();
+  const limit = Math.max(1, Math.min(60, Number(searchParams.get("limit") || 30)));
   let rows;
+  const filters = [eq(schema.beforeAfterCases.isPublished, true)];
+
+  if (serviceCategory) {
+    filters.push(eq(schema.beforeAfterCases.serviceCategory, serviceCategory));
+  }
+  if (serviceId) {
+    filters.push(eq(schema.beforeAfterCases.serviceId, serviceId));
+  }
 
   try {
     rows = await db
@@ -22,6 +38,7 @@ export async function GET() {
         id: schema.beforeAfterCases.id,
         treatmentType: schema.beforeAfterCases.treatmentType,
         serviceCategory: schema.beforeAfterCases.serviceCategory,
+        serviceId: schema.beforeAfterCases.serviceId,
         productUsed: schema.beforeAfterCases.productUsed,
         beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
         afterImageUrl: schema.beforeAfterCases.afterImageUrl,
@@ -29,11 +46,14 @@ export async function GET() {
         isPublished: schema.beforeAfterCases.isPublished,
         createdAt: schema.beforeAfterCases.createdAt,
         updatedAt: schema.beforeAfterCases.updatedAt,
+        serviceName: schema.services.name,
+        serviceSlug: schema.services.slug,
       })
       .from(schema.beforeAfterCases)
-      .where(eq(schema.beforeAfterCases.isPublished, true))
+      .leftJoin(schema.services, eq(schema.services.id, schema.beforeAfterCases.serviceId))
+      .where(and(...filters))
       .orderBy(desc(schema.beforeAfterCases.createdAt))
-      .limit(30);
+      .limit(limit);
   } catch (error) {
     if (!isMissingOptionalColumn(error)) {
       throw error;
@@ -53,11 +73,24 @@ export async function GET() {
           updatedAt: schema.beforeAfterCases.updatedAt,
         })
         .from(schema.beforeAfterCases)
-        .where(eq(schema.beforeAfterCases.isPublished, true))
+        .where(
+          and(
+            eq(schema.beforeAfterCases.isPublished, true),
+            ...(serviceCategory
+              ? [eq(schema.beforeAfterCases.serviceCategory, serviceCategory)]
+              : [])
+          )
+        )
         .orderBy(desc(schema.beforeAfterCases.createdAt))
-        .limit(30);
+        .limit(limit);
 
-      rows = fallbackRowsWithCategory.map((row) => ({ ...row, collageImageUrl: null }));
+      rows = fallbackRowsWithCategory.map((row) => ({
+        ...row,
+        collageImageUrl: null,
+        serviceId: null,
+        serviceName: null,
+        serviceSlug: null,
+      }));
     } catch {
       const fallbackRows = await db
         .select({
@@ -73,12 +106,15 @@ export async function GET() {
         .from(schema.beforeAfterCases)
         .where(eq(schema.beforeAfterCases.isPublished, true))
         .orderBy(desc(schema.beforeAfterCases.createdAt))
-        .limit(30);
+        .limit(limit);
 
       rows = fallbackRows.map((row) => ({
         ...row,
         serviceCategory: null,
         collageImageUrl: null,
+        serviceId: null,
+        serviceName: null,
+        serviceSlug: null,
       }));
     }
   }

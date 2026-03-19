@@ -22,10 +22,22 @@ export async function GET(request) {
     .from(schema.bodyAreas)
     .orderBy(asc(schema.bodyAreas.sortOrder), asc(schema.bodyAreas.name));
 
+  const services = await db
+    .select({
+      id: schema.services.id,
+      name: schema.services.name,
+      slug: schema.services.slug,
+      categoryId: schema.services.categoryId,
+      kind: schema.services.kind,
+      isActive: schema.services.isActive,
+    })
+    .from(schema.services)
+    .orderBy(asc(schema.services.name));
+
   return ok({
     ok: true,
     categories,
     bodyAreas,
+    services,
   });
 }
-

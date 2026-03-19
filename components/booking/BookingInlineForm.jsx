@@ -1,7 +1,9 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useLocale } from "@/components/common/LocaleProvider";
+import { useSession } from "@/components/common/SessionProvider";
 
 const HYALURONIC_BRANDS = [
   { key: "revolax", label: "Revolax", unitPrice: 180 },
@@ -145,18 +147,35 @@ function getMlDurationMin(baseDurationMin, quantity) {
   return Math.min(60, base + 30);
 }
 
-function formatBookingStatus(status) {
+function formatBookingStatus(status, t) {
   const normalized = String(status || "").toLowerCase();
   const labels = {
-    pending: "Na cekanju",
-    confirmed: "Potvrdjen",
-    completed: "Zavrsen",
-    cancelled: "Otkazan",
-    "no-show": "Nije dosao",
-    no_show: "Nije dosao",
-    block: "Blokirano",
+    pending: t("booking.statusPending"),
+    confirmed: t("booking.statusConfirmed"),
+    completed: t("booking.statusCompleted"),
+    cancelled: t("booking.statusCancelled"),
+    "no-show": t("booking.statusNoShow"),
+    no_show: t("booking.statusNoShow"),
+    block: t("booking.statusBlocked"),
   };
-  return labels[normalized] || status || "Nepoznat";
+  return labels[normalized] || status || t("booking.statusUnknown");
+}
+
+function normalizeGroupKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isBodyCategoryGroup(category) {
+  const haystack = normalizeGroupKey(
+    `${category?.name || ""} ${(category?.services || []).map((service) => service.name).join(" ")}`
+  );
+
+  return ["lipoliza", "strija", "dekolte", "vrat", "infuz", "telo", "body"].some((keyword) =>
+    haystack.includes(keyword)
+  );
 }
 
 export default function BookingInlineForm({
@@ -164,10 +183,12 @@ export default function BookingInlineForm({
   cardClassName = "",
   showUpcoming = true,
 }) {
-  const [user, setUser] = useState(null);
+  const { t, intlLocale } = useLocale();
+  const { user } = useSession();
   const [services, setServices] = useState([]);
   const [selectedMap, setSelectedMap] = useState({});
   const [selectedBrandMap, setSelectedBrandMap] = useState({});
+  const [includeConsultation, setIncludeConsultation] = useState(false);
   const [date, setDate] = useState(todayIsoDate());
   const [availability, setAvailability] = useState([]);
   const [monthAvailability, setMonthAvailability] = useState({});
@@ -184,10 +205,11 @@ export default function BookingInlineForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [hideNextDateCta, setHideNextDateCta] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const dateStepRef = useRef(null);
+  const faceSectionRef = useRef(null);
+  const bodySectionRef = useRef(null);
 
   const today = useMemo(() => todayIsoDate(), []);
   const monthKey = useMemo(() => formatMonthKey(calendarMonth), [calendarMonth]);
@@ -197,7 +219,7 @@ export default function BookingInlineForm({
   }, [monthKey, today]);
   const calendarCells = useMemo(() => buildCalendarCells(calendarMonth), [calendarMonth]);
   const weekdayLabels = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat("sr-RS", { weekday: "short" });
+    const formatter = new Intl.DateTimeFormat(intlLocale, { weekday: "short" });
     const monday = new Date(2024, 0, 1);
 
     return Array.from({ length: 7 }, (_, index) => {
@@ -205,7 +227,7 @@ export default function BookingInlineForm({
       item.setDate(monday.getDate() + index);
       return formatter.format(item);
     });
-  }, []);
+  }, [intlLocale]);
 
   const serviceLookup = useMemo(() => {
     const map = new Map();
@@ -245,9 +267,19 @@ export default function BookingInlineForm({
       .filter((category) => category.services.length);
   }, [services]);
 
+  const faceCategoryGroups = useMemo(
+    () => singleCategoryGroups.filter((category) => !isBodyCategoryGroup(category)),
+    [singleCategoryGroups]
+  );
+
+  const bodyCategoryGroups = useMemo(
+    () => singleCategoryGroups.filter((category) => isBodyCategoryGroup(category)),
+    [singleCategoryGroups]
+  );
+
   const serviceSelections = useMemo(
-    () =>
-      Object.entries(selectedMap)
+    () => {
+      const selections = Object.entries(selectedMap)
         .map(([serviceId, quantity]) => {
           const service = serviceLookup.get(serviceId);
           const brand = selectedBrandMap[serviceId] || null;
@@ -261,8 +293,18 @@ export default function BookingInlineForm({
                 : undefined,
           };
         })
-        .filter((item) => item.serviceId),
-    [selectedMap, selectedBrandMap, serviceLookup]
+        .filter((item) => item.serviceId);
+
+      if (includeConsultation) {
+        selections.unshift({
+          serviceId: "consultation",
+          quantity: 1,
+        });
+      }
+
+      return selections;
+    },
+    [includeConsultation, selectedMap, selectedBrandMap, serviceLookup]
   );
 
   const missingHyaluronicBrandSelections = useMemo(
@@ -295,7 +337,7 @@ export default function BookingInlineForm({
 
   const selectedDateLabel = useMemo(() => {
     try {
-      return new Intl.DateTimeFormat("sr-RS", {
+      return new Intl.DateTimeFormat(intlLocale, {
         weekday: "long",
         day: "numeric",
         month: "long",
@@ -303,7 +345,7 @@ export default function BookingInlineForm({
     } catch {
       return date;
     }
-  }, [date]);
+  }, [date, intlLocale]);
 
   const availableSlotsForDay = useMemo(
     () => availability.filter((slot) => slot.available),
@@ -345,24 +387,14 @@ export default function BookingInlineForm({
       .filter(Boolean);
   }, [serviceSelections, serviceLookup]);
 
-  async function loadSession() {
-    const response = await fetch("/api/me/profile");
-    if (!response.ok) {
-      setUser(null);
-      return;
-    }
-    const data = await parseResponse(response);
-    setUser(data.user || null);
-  }
-
-  async function loadServices() {
+  const loadServices = useCallback(async () => {
     const response = await fetch("/api/services");
     const data = await parseResponse(response);
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspesno ucitavanje usluga.");
+      throw new Error(data?.message || "Failed to load services.");
     }
     setServices(data.categories || []);
-  }
+  }, []);
 
   async function loadMyBookings() {
     const response = await fetch("/api/me/bookings");
@@ -451,27 +483,12 @@ export default function BookingInlineForm({
   }, [serviceSelections.length]);
 
   useEffect(() => {
-    let mounted = true;
-    loadSession()
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) {
-          setIsBootstrapping(false);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
     setIsClient(true);
   }, []);
 
   useEffect(() => {
     loadServices().catch((err) => setError(err.message));
-  }, []);
+  }, [loadServices]);
 
   useEffect(() => {
     if (!user) {
@@ -504,13 +521,13 @@ export default function BookingInlineForm({
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspesan izracun ponude.");
+          throw new Error(data?.message || t("booking.quoteFailed"));
         }
         setError("");
         setQuote(data);
       })
       .catch((err) => setError(err.message));
-  }, [serviceSelections, canRequestAvailability]);
+  }, [serviceSelections, canRequestAvailability, t]);
 
   useEffect(() => {
     if (!serviceSelections.length) {
@@ -538,7 +555,7 @@ export default function BookingInlineForm({
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspesno ucitavanje mesecnog kalendara.");
+          throw new Error(data?.message || t("booking.loadMonthFailed"));
         }
 
         const map = {};
@@ -552,7 +569,7 @@ export default function BookingInlineForm({
       })
       .catch((err) => {
         if (!cancelled) {
-          setCalendarError(err.message || "Neuspesno ucitavanje kalendara.");
+          setCalendarError(err.message || t("booking.loadMonthFailed"));
         }
       })
       .finally(() => {
@@ -564,7 +581,7 @@ export default function BookingInlineForm({
     return () => {
       cancelled = true;
     };
-  }, [serviceSelections, monthKey, canRequestAvailability]);
+  }, [serviceSelections, monthKey, canRequestAvailability, t]);
 
   useEffect(() => {
     if (!serviceSelections.length || monthLoading || !canRequestAvailability) {
@@ -603,7 +620,7 @@ export default function BookingInlineForm({
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspesno ucitavanje termina.");
+          throw new Error(data?.message || t("booking.loadSlotsFailed"));
         }
         if (!cancelled) {
           setAvailability(data.slots || []);
@@ -612,14 +629,14 @@ export default function BookingInlineForm({
       })
       .catch((err) => {
         if (!cancelled) {
-          setCalendarError(err.message || "Neuspesno ucitavanje termina.");
+          setCalendarError(err.message || t("booking.loadSlotsFailed"));
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [serviceSelections, date, canRequestAvailability]);
+  }, [serviceSelections, date, canRequestAvailability, t]);
 
   async function handleBook(event) {
     event.preventDefault();
@@ -633,17 +650,17 @@ export default function BookingInlineForm({
     }
 
     if (!serviceSelections.length) {
-      setError("Izaberite barem jednu uslugu.");
+      setError(t("booking.selectAtLeastOne"));
       return;
     }
 
     if (missingHyaluronicBrandSelections.length) {
-      setError("Za Hijaluronski filer morate izabrati i brend i kolicinu.");
+      setError(t("booking.selectBrandAndQty"));
       return;
     }
 
     if (!selectedStartAt) {
-      setError("Izaberite slobodan termin.");
+      setError(t("booking.selectFreeSlot"));
       return;
     }
 
@@ -660,16 +677,16 @@ export default function BookingInlineForm({
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Zakazivanje nije uspelo.");
+        throw new Error(data?.message || t("booking.bookingFailed"));
       }
 
       setError("");
-      setMessage("Termin je poslat i ceka potvrdu admina.");
+      setMessage(t("booking.bookedPending"));
       setSelectedStartAt("");
       setNotes("");
       await loadMyBookings();
     } catch (err) {
-      setError(err.message || "Greska pri zakazivanju.");
+      setError(err.message || t("booking.genericBookingError"));
     } finally {
       setLoading(false);
     }
@@ -697,6 +714,102 @@ export default function BookingInlineForm({
     });
   }
 
+  function scrollToSection(sectionRef) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const targetNode = sectionRef.current;
+    if (!targetNode) {
+      return;
+    }
+
+    const stickyHeader = document.querySelector(".clinic-header .sticky-wrapper");
+    const headerHeight = stickyHeader instanceof HTMLElement ? stickyHeader.offsetHeight : 0;
+    const targetTop =
+      targetNode.getBoundingClientRect().top + window.scrollY - headerHeight - 16;
+
+    window.scrollTo({
+      top: Math.max(0, targetTop),
+      behavior: "smooth",
+    });
+  }
+
+  function renderCategoryGroup(category, categoryIndex, sectionRef = null) {
+    return (
+      <div
+        key={category.id}
+        ref={sectionRef}
+        className="clinic-service-category clinic-reveal"
+        style={{ "--clinic-reveal-delay": `${Math.min(categoryIndex, 7) * 55}ms` }}
+      >
+        <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{category.name}</h4>
+        <div className="clinic-service-grid clinic-service-grid--desktop-2">
+          {(category.services || []).map((service, serviceIndex) => {
+            const selected = Boolean(selectedMap[service.id]);
+            const selectedQuantity = Math.max(1, Number(selectedMap[service.id] || 1));
+            const selectedBrand = selectedBrandMap[service.id] || "";
+            const showBrandPicker =
+              service.supportsMl && isHyaluronicFillerService(service) && selected;
+            return (
+              <div
+                key={service.id}
+                style={{
+                  ...checkboxRowStyle,
+                  "--clinic-reveal-delay": `${Math.min(serviceIndex, 12) * 40}ms`,
+                }}
+                className={`clinic-service-option clinic-reveal ${selected ? "is-selected" : ""}`}
+              >
+                <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={(event) => updateSelectedService(service, event.target.checked)}
+                  />
+                  <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
+                    <strong>{service.name}</strong>
+                    <small>
+                      {service.durationMin} min - {getServicePriceLabel(service, selectedBrand)}
+                    </small>
+                  </span>
+                </label>
+
+                {service.supportsMl && selected ? (
+                  <div className="clinic-ml-presets">
+                    {toMlPresets(service.maxMl).map((mlValue) => (
+                      <button
+                        key={mlValue}
+                        type="button"
+                        className={`clinic-ml-btn ${selectedQuantity === mlValue ? "is-active" : ""}`}
+                        onClick={() => updateSelectedQuantity(service.id, mlValue)}
+                      >
+                        {mlValue} ml
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {showBrandPicker ? (
+                  <div className="clinic-brand-presets">
+                    {HYALURONIC_BRANDS.map((brand) => (
+                      <button
+                        key={brand.key}
+                        type="button"
+                        className={`clinic-brand-btn ${selectedBrand === brand.key ? "is-active" : ""}`}
+                        onClick={() => updateSelectedBrand(service.id, brand.key)}
+                      >
+                        {brand.label} ({brand.unitPrice} EUR/ml)
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   const sectionClassName = ["clinic-booking-form", cardClassName].filter(Boolean).join(" ");
   const shouldShowNextDateCta = serviceSelections.length > 0 && !hideNextDateCta;
   const nextDateButton = shouldShowNextDateCta ? (
@@ -705,7 +818,7 @@ export default function BookingInlineForm({
       className="clinic-glow-btn clinic-next-date-fab"
       style={nextDateFabStyle}
       onClick={scrollToDateStep}
-      aria-label="Nastavi na datum i vreme"
+      aria-label={t("booking.nextDateAria")}
     >
       <span
         className="clinic-next-date-fab-icon"
@@ -714,33 +827,24 @@ export default function BookingInlineForm({
       >
         v
       </span>
-      <span className="clinic-btn-label">Nastavi na datum</span>
+      <span className="clinic-btn-label">{t("booking.nextDate")}</span>
     </button>
   ) : null;
-
-  if (isBootstrapping) {
-    return (
-      <section className={sectionClassName} style={cardStyle}>
-        <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Booking</h2>
-        <p style={{ color: "var(--clinic-text-muted)", marginBottom: 0 }}>Ucitavanje...</p>
-      </section>
-    );
-  }
 
   if (!user) {
     return (
       <section className={sectionClassName} style={cardStyle}>
-        <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Zakazivanje termina</h2>
+        <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>{t("booking.title")}</h2>
         <div className="clinic-login-lock">
           <p style={{ marginTop: 0, color: "var(--clinic-text-muted)" }}>
-            Da biste zakazali termin, prvo se prijavite preko Google naloga.
+            {t("booking.loginRequired")}
           </p>
           <a
             href={`/api/auth/google?next=${encodeURIComponent(googleNextPath || "/")}`}
             className="btn clinic-glow-btn"
             style={{ textTransform: "uppercase", fontWeight: 800 }}
           >
-            Login with Google
+            {t("booking.loginWithGoogle")}
           </a>
         </div>
       </section>
@@ -749,16 +853,60 @@ export default function BookingInlineForm({
 
   return (
     <section className={sectionClassName} style={cardStyle}>
-      <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Zakazivanje termina</h2>
+      <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>{t("booking.title")}</h2>
       <p style={{ color: "var(--clinic-text-muted)" }}>
-        Prijavljeni ste kao <strong>{user.email}</strong>.
+        {t("booking.loggedInAs", { email: user.email })}
       </p>
 
       <form
         onSubmit={handleBook}
         style={shouldShowNextDateCta ? { paddingBottom: 96 } : undefined}
       >
-        <h3 style={{ color: "var(--clinic-text-strong)" }}>1) Izaberite tretmane</h3>
+        <h3 style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseTreatments")}</h3>
+        <label className="clinic-consultation-card clinic-reveal" style={{ cursor: "pointer" }}>
+          <span style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <input
+              type="checkbox"
+              checked={includeConsultation}
+              onChange={(event) => {
+                setIncludeConsultation(event.target.checked);
+                setError("");
+                setMessage("");
+                setSelectedStartAt("");
+              }}
+            />
+            <span style={{ display: "grid", gap: 4 }}>
+              <strong>{t("booking.consultationName")}</strong>
+              <small style={{ color: "var(--clinic-text-strong)" }}>
+                {t("booking.consultationSelectable")}
+              </small>
+            </span>
+          </span>
+          <span>{t("booking.consultationDuration")}</span>
+          <small>{t("booking.consultationInfo")}</small>
+        </label>
+        {(faceCategoryGroups.length || bodyCategoryGroups.length) ? (
+          <div className="clinic-booking-mini-nav">
+            {faceCategoryGroups.length ? (
+              <button
+                type="button"
+                className="clinic-booking-mini-nav__btn"
+                onClick={() => scrollToSection(faceSectionRef)}
+              >
+                {t("booking.face")}
+              </button>
+            ) : null}
+            {bodyCategoryGroups.length ? (
+              <button
+                type="button"
+                className="clinic-booking-mini-nav__btn"
+                onClick={() => scrollToSection(bodySectionRef)}
+              >
+                {t("booking.body")}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         {selectedServiceLabels.length ? (
           <div className="clinic-selected-services">
             {selectedServiceLabels.map((label, labelIndex) => (
@@ -774,13 +922,13 @@ export default function BookingInlineForm({
         ) : null}
         {missingHyaluronicBrandSelections.length ? (
           <p style={{ color: "var(--clinic-danger)", marginBottom: 12 }}>
-            Za uslugu Hijaluronski filer obavezno izaberite brend i kolicinu.
+            {t("booking.selectBrandAndQty")}
           </p>
         ) : null}
 
         {packageServices.length ? (
           <div className="clinic-service-category clinic-reveal">
-            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>Paketi usluga</h4>
+            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{t("booking.packages")}</h4>
             <div className="clinic-service-grid clinic-service-grid--desktop-2">
               {packageServices.map((service, serviceIndex) => {
                 const selected = Boolean(selectedMap[service.id]);
@@ -826,92 +974,30 @@ export default function BookingInlineForm({
           </div>
         ) : null}
 
-        {singleCategoryGroups.map((category, categoryIndex) => (
-          <div
-            key={category.id}
-            className="clinic-service-category clinic-reveal"
-            style={{ "--clinic-reveal-delay": `${Math.min(categoryIndex, 7) * 55}ms` }}
-          >
-            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{category.name}</h4>
-            <div className="clinic-service-grid clinic-service-grid--desktop-2">
-              {(category.services || []).map((service, serviceIndex) => {
-                const selected = Boolean(selectedMap[service.id]);
-                const selectedQuantity = Math.max(1, Number(selectedMap[service.id] || 1));
-                const selectedBrand = selectedBrandMap[service.id] || "";
-                const showBrandPicker =
-                  service.supportsMl && isHyaluronicFillerService(service) && selected;
-                return (
-                  <div
-                    key={service.id}
-                    style={{
-                      ...checkboxRowStyle,
-                      "--clinic-reveal-delay": `${Math.min(serviceIndex, 12) * 40}ms`,
-                    }}
-                    className={`clinic-service-option clinic-reveal ${
-                      selected ? "is-selected" : ""
-                    }`}
-                  >
-                    <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        onChange={(event) => updateSelectedService(service, event.target.checked)}
-                      />
-                      <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
-                        <strong>{service.name}</strong>
-                        <small>
-                          {service.durationMin} min - {getServicePriceLabel(service, selectedBrand)}
-                        </small>
-                      </span>
-                    </label>
-
-                    {service.supportsMl && selected ? (
-                      <div className="clinic-ml-presets">
-                        {toMlPresets(service.maxMl).map((mlValue) => (
-                          <button
-                            key={mlValue}
-                            type="button"
-                            className={`clinic-ml-btn ${
-                              selectedQuantity === mlValue ? "is-active" : ""
-                            }`}
-                            onClick={() => updateSelectedQuantity(service.id, mlValue)}
-                          >
-                            {mlValue} ml
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                    {showBrandPicker ? (
-                      <div className="clinic-brand-presets">
-                        {HYALURONIC_BRANDS.map((brand) => (
-                          <button
-                            key={brand.key}
-                            type="button"
-                            className={`clinic-brand-btn ${
-                              selectedBrand === brand.key ? "is-active" : ""
-                            }`}
-                            onClick={() => updateSelectedBrand(service.id, brand.key)}
-                          >
-                            {brand.label} ({brand.unitPrice} EUR/ml)
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
+        {faceCategoryGroups.map((category, categoryIndex) =>
+          renderCategoryGroup(
+            category,
+            categoryIndex,
+            categoryIndex === 0 ? faceSectionRef : null
+          )
+        )}
+        {bodyCategoryGroups.length ? (
+          <div className="clinic-service-category clinic-reveal" ref={bodySectionRef}>
+            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{t("booking.body")}</h4>
           </div>
-        ))}
-        <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>2) Datum i vreme</h3>
+        ) : null}
+        {bodyCategoryGroups.map((category, categoryIndex) =>
+          renderCategoryGroup(category, categoryIndex + faceCategoryGroups.length)
+        )}
+        <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseDate")}</h3>
 
         {!serviceSelections.length ? (
           <p style={{ color: "var(--clinic-text-muted)" }}>
-            Prvo izaberite uslugu da biste videli slobodne datume.
+            {t("booking.firstChooseService")}
           </p>
         ) : !canRequestAvailability ? (
           <p style={{ color: "var(--clinic-text-muted)" }}>
-            Izaberite brend za Hijaluronski filer da bi se prikazali dostupni termini.
+            {t("booking.chooseBrandToShowSlots")}
           </p>
         ) : (
           <>
@@ -925,9 +1011,9 @@ export default function BookingInlineForm({
                     setCalendarMonth((prev) => addMonths(prev, -1));
                   }}
                 >
-                  Prethodni
+                  {t("booking.previous")}
                 </button>
-                <div className="clinic-cal-title">{formatMonthLabel(calendarMonth, "sr-RS")}</div>
+                <div className="clinic-cal-title">{formatMonthLabel(calendarMonth, intlLocale)}</div>
                 <button
                   type="button"
                   className="clinic-cal-nav"
@@ -935,7 +1021,7 @@ export default function BookingInlineForm({
                     setCalendarMonth((prev) => addMonths(prev, 1));
                   }}
                 >
-                  Sledeci
+                  {t("booking.next")}
                 </button>
               </div>
 
@@ -1004,7 +1090,7 @@ export default function BookingInlineForm({
                       }`}
                       style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 10) * 30}ms` }}
                     >
-                      {new Date(slot.startAt).toLocaleTimeString("sr-RS", {
+                      {new Date(slot.startAt).toLocaleTimeString(intlLocale, {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -1012,7 +1098,7 @@ export default function BookingInlineForm({
                   ))
                 ) : (
                   <p style={{ color: "var(--clinic-text-muted)", marginBottom: 0 }}>
-                    Nema slobodnih termina za izabrani datum/usluge.
+                    {t("booking.noSlots")}
                   </p>
                 )}
               </div>
@@ -1020,36 +1106,38 @@ export default function BookingInlineForm({
           </>
         )}
 
-        <h3 style={{ marginTop: 20, color: "var(--clinic-text-strong)" }}>3) Napomena</h3>
+        <h3 style={{ marginTop: 20, color: "var(--clinic-text-strong)" }}>{t("booking.note")}</h3>
         <textarea
           className="clinic-booking-note-input clinic-glow-field"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={4}
           style={{ ...inputStyle, resize: "vertical" }}
-          placeholder="Opciona napomena za doktora..."
+          placeholder={t("booking.notePlaceholder")}
         />
 
         {quote ? (
           <div className="clinic-reveal" style={summaryStyle}>
-            <strong>Ukupno:</strong> {quote.totalDurationMin} min / {quote.totalPriceRsd} EUR
-            {quote.items?.length ? (
-              <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
-                {quote.items.map((item) => (
-                  <li
-                    key={`${item.serviceId}-${item.brand || "standard"}`}
-                    style={{ color: "var(--clinic-text-secondary)" }}
-                  >
-                    {item.name} - {item.quantity} {item.unitLabel} - {item.finalPriceRsd} EUR
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            <strong>{t("booking.total")}</strong> {quote.totalDurationMin} min / {quote.totalPriceRsd} EUR
+                {quote.items?.length ? (
+                  <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                    {quote.items.map((item) => (
+                      <li
+                        key={`${item.serviceId}-${item.brand || "standard"}`}
+                        style={{ color: "var(--clinic-text-secondary)" }}
+                      >
+                        {item.name} - {item.quantity} {item.unitLabel} -{" "}
+                        {item.finalPriceRsd ? `${item.finalPriceRsd} EUR` : "0 EUR"}
+                        {item.pricingNote ? ` (${item.pricingNote})` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
           </div>
         ) : null}
 
         <button type="submit" className="clinic-reveal" style={primaryButtonStyle} disabled={loading}>
-          {loading ? "Zakazivanje..." : "Potvrdi zakazivanje"}
+          {loading ? t("booking.confirming") : t("booking.confirm")}
         </button>
 
         {message ? <p style={{ color: "var(--clinic-success)" }}>{message}</p> : null}
@@ -1058,7 +1146,7 @@ export default function BookingInlineForm({
 
       {showUpcoming && user ? (
         <section style={{ ...cardStyle, marginTop: 16 }}>
-          <h3 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>Moji naredni termini</h3>
+          <h3 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>{t("booking.upcoming")}</h3>
           {bookings.length ? (
             <ul style={{ paddingLeft: 18, margin: 0 }}>
               {bookings.map((booking, bookingIndex) => (
@@ -1071,13 +1159,13 @@ export default function BookingInlineForm({
                     "--clinic-reveal-delay": `${Math.min(bookingIndex, 12) * 28}ms`,
                   }}
                 >
-                  {new Date(booking.startsAt).toLocaleString("sr-RS")} - {booking.totalDurationMin} min -{" "}
-                  {booking.totalPriceRsd} EUR ({formatBookingStatus(booking.status)})
+                  {new Date(booking.startsAt).toLocaleString(intlLocale)} - {booking.totalDurationMin} min -{" "}
+                  {booking.totalPriceRsd} EUR ({formatBookingStatus(booking.status, t)})
                 </li>
               ))}
             </ul>
           ) : (
-            <p style={{ marginBottom: 0, color: "var(--clinic-text-muted)" }}>Nema zakazanih termina.</p>
+            <p style={{ marginBottom: 0, color: "var(--clinic-text-muted)" }}>{t("booking.noneUpcoming")}</p>
           )}
         </section>
       ) : null}

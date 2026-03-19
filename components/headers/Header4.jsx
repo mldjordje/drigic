@@ -4,47 +4,44 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
+import LocaleSwitcher from "@/components/common/LocaleSwitcher";
+import { useLocale } from "@/components/common/LocaleProvider";
 import PWAMenuActions from "@/components/common/PWAMenuActions";
+import { useSession } from "@/components/common/SessionProvider";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 const THEME_STORAGE_KEY = "clinic-theme-mode";
 
 export default function Header4() {
   const pathname = usePathname();
+  const { t } = useLocale();
+  const { user: currentUser, clearUser } = useSession();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [themeMode, setThemeMode] = useState("light");
   const lastScrollYRef = useRef(0);
 
   const navItems = useMemo(() => {
     const items = [
-      { href: "/", label: "Pocetna" },
-      { href: "/tretmani", label: "Tretmani" },
-      { href: "/nikola-igic", label: "Osnivac" },
-      { href: "/rezultati", label: "Pre/Posle" },
-      { href: "/video-galerija", label: "Video" },
-      { href: "/blog", label: "Aktuelnosti" },
-      { href: "/booking", label: "Zakazi" },
-      { href: "/contact", label: "Kontakt" },
+      { href: "/", label: t("header.home") },
+      { href: "/tretmani", label: t("header.treatments") },
+      { href: "/nikola-igic", label: t("header.founder") },
+      { href: "/rezultati", label: t("header.beforeAfter") },
+      { href: "/video-galerija", label: t("header.videos") },
+      { href: "/blog", label: t("header.news") },
+      { href: "/booking", label: t("header.booking") },
+      { href: "/contact", label: t("header.contact") },
     ];
 
     if (currentUser) {
-      items.splice(5, 0, { href: "/beauty-pass", label: "Beauty Pass" });
+      items.splice(5, 0, { href: "/beauty-pass", label: t("common.beautyPass") });
     }
 
     return items;
-  }, [currentUser]);
-
-  useEffect(() => {
-    fetch("/api/me/profile")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setCurrentUser(data?.user || null))
-      .catch(() => setCurrentUser(null));
-  }, []);
+  }, [currentUser, t]);
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -178,6 +175,7 @@ export default function Header4() {
       return;
     }
     setLogoutBusy(true);
+    clearUser();
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
@@ -229,7 +227,7 @@ export default function Header4() {
               aria-expanded={mobileCategoryOpen}
               onClick={() => setMobileCategoryOpen((prev) => !prev)}
             >
-              Kategorije tretmana
+              {t("header.treatmentCategories")}
             </button>
             {mobileCategoryOpen ? (
               <ul className="mobile-category-list">
@@ -255,15 +253,18 @@ export default function Header4() {
               type="button"
               className={`clinic-theme-switch ${themeMode === "dark" ? "is-dark" : "is-light"}`}
               onClick={toggleThemeMode}
-              aria-label="Promeni temu"
+              aria-label={t("header.changeTheme")}
             >
               <span className="clinic-theme-switch-track">
                 <span className="clinic-theme-switch-knob" />
               </span>
               <span className="clinic-theme-switch-text">
-                {themeMode === "dark" ? "Dark mode" : "Light mode"}
+                {themeMode === "dark"
+                  ? `${t("common.dark")} mode`
+                  : `${t("common.light")} mode`}
               </span>
             </button>
+            <LocaleSwitcher compact />
           </div>
           <div className="mobile-cta-buttons">
             {currentUser ? (
@@ -274,7 +275,7 @@ export default function Header4() {
                 disabled={logoutBusy}
               >
                 <span className="mobile-cta-link-text">
-                  {logoutBusy ? "Odjava..." : "Odjavi me"}
+                  {logoutBusy ? t("header.loggingOut") : t("header.logout")}
                 </span>
               </button>
             ) : (
@@ -283,7 +284,7 @@ export default function Header4() {
                 nextPath="/"
                 onBeforeOpen={() => setMobileMenuOpen(false)}
               >
-                <span className="mobile-cta-link-text">Login</span>
+                <span className="mobile-cta-link-text">{t("common.login")}</span>
               </GooglePopupButton>
             )}
             <Link
@@ -292,7 +293,7 @@ export default function Header4() {
               className="mobile-cta-link clinic-glow-btn"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <span className="mobile-cta-link-text">Zakazi</span>
+              <span className="mobile-cta-link-text">{t("common.booking")}</span>
             </Link>
             {currentUser ? (
               <Link
@@ -301,17 +302,17 @@ export default function Header4() {
                 className="mobile-cta-link clinic-glow-btn"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className="mobile-cta-link-text">Beauty Pass</span>
+                <span className="mobile-cta-link-text">{t("common.beautyPass")}</span>
               </Link>
             ) : null}
           </div>
           <PWAMenuActions />
           <div className="sidebar-wrap">
             <h6>Dr Nikola Igic</h6>
-            <h6>Klinika estetske medicine</h6>
+            <h6>{t("header.office")}</h6>
           </div>
           <div className="sidebar-wrap">
-            <h6>Rezervacije putem kontakt forme</h6>
+            <h6>{t("header.reservations")}</h6>
           </div>
         </div>
       </div>
@@ -370,15 +371,16 @@ export default function Header4() {
                         themeMode === "dark" ? "is-dark" : "is-light"
                       }`}
                       onClick={toggleThemeMode}
-                      aria-label="Promeni temu"
+                      aria-label={t("header.changeTheme")}
                     >
                       <span className="clinic-theme-switch-track">
                         <span className="clinic-theme-switch-knob" />
                       </span>
                       <span className="clinic-theme-switch-text">
-                        {themeMode === "dark" ? "Dark" : "Light"}
+                        {themeMode === "dark" ? t("common.dark") : t("common.light")}
                       </span>
                     </button>
+                    <LocaleSwitcher />
                     {currentUser ? (
                       <>
                         <Link
@@ -387,8 +389,8 @@ export default function Header4() {
                           className="search-btn clinic-glow-btn"
                         >
                           <span className="link-effect">
-                            <span className="effect-1">BEAUTY PASS</span>
-                            <span className="effect-1">BEAUTY PASS</span>
+                            <span className="effect-1">{t("common.beautyPass").toUpperCase()}</span>
+                            <span className="effect-1">{t("common.beautyPass").toUpperCase()}</span>
                           </span>
                         </Link>
                       </>
@@ -403,10 +405,14 @@ export default function Header4() {
                       >
                         <span className="link-effect">
                           <span className="effect-1">
-                            {logoutBusy ? "ODJAVA..." : "ODJAVI ME"}
+                            {logoutBusy
+                              ? t("header.loggingOut").toUpperCase()
+                              : t("header.logout").toUpperCase()}
                           </span>
                           <span className="effect-1">
-                            {logoutBusy ? "ODJAVA..." : "ODJAVI ME"}
+                            {logoutBusy
+                              ? t("header.loggingOut").toUpperCase()
+                              : t("header.logout").toUpperCase()}
                           </span>
                         </span>
                       </button>

@@ -11,6 +11,7 @@ const updateSchema = z.object({
   notes: z.string().max(3000).optional().nullable(),
   correctionDueDate: z.string().optional().nullable(),
   productId: z.string().uuid().optional().nullable(),
+  serviceId: z.string().uuid().optional().nullable(),
 });
 
 export async function PATCH(request, { params }) {
@@ -30,12 +31,13 @@ export async function PATCH(request, { params }) {
     return fail(400, "Invalid payload", parsed.error.flatten());
   }
 
-  const { treatmentDate, notes, correctionDueDate, productId } = parsed.data;
+  const { treatmentDate, notes, correctionDueDate, productId, serviceId } = parsed.data;
   if (
     treatmentDate === undefined &&
     notes === undefined &&
     correctionDueDate === undefined &&
-    productId === undefined
+    productId === undefined &&
+    serviceId === undefined
   ) {
     return fail(400, "No update fields provided.");
   }
@@ -61,13 +63,50 @@ export async function PATCH(request, { params }) {
     }
   }
 
+  let resolvedService = null;
+  if (serviceId) {
+    const [service] = await db
+      .select({
+        id: schema.services.id,
+        reminderEnabled: schema.services.reminderEnabled,
+        reminderDelayDays: schema.services.reminderDelayDays,
+      })
+      .from(schema.services)
+      .where(eq(schema.services.id, serviceId))
+      .limit(1);
+    if (!service) {
+      return fail(400, "Usluga nije pronadjena.");
+    }
+    resolvedService = service;
+  }
+
+  const nextTreatmentDate =
+    treatmentDate !== undefined ? new Date(treatmentDate) : new Date(existing.treatmentDate);
+  const nextCorrectionDueDate =
+    serviceId === null
+      ? correctionDueDate || null
+      : resolvedService?.reminderEnabled
+        ? new Date(
+            Date.UTC(
+              nextTreatmentDate.getUTCFullYear(),
+              nextTreatmentDate.getUTCMonth(),
+              nextTreatmentDate.getUTCDate() + Number(resolvedService.reminderDelayDays || 90)
+            )
+          )
+            .toISOString()
+            .slice(0, 10)
+        : correctionDueDate !== undefined
+          ? correctionDueDate || null
+          : existing.correctionDueDate;
+
   const [updated] = await db
     .update(schema.treatmentRecords)
     .set({
-      ...(treatmentDate !== undefined ? { treatmentDate: new Date(treatmentDate) } : {}),
+      ...(treatmentDate !== undefined ? { treatmentDate: nextTreatmentDate } : {}),
       ...(notes !== undefined ? { notes: notes || null } : {}),
-      ...(correctionDueDate !== undefined
-        ? { correctionDueDate: correctionDueDate || null }
+      ...(serviceId !== undefined ? { serviceId: serviceId || null } : {}),
+      ...(correctionDueDate !== undefined || serviceId !== undefined || treatmentDate !== undefined
+        ? { correctionDueDate: nextCorrectionDueDate }
         : {}),
       ...(productId !== undefined ? { productId: productId || null } : {}),
       updatedAt: new Date(),

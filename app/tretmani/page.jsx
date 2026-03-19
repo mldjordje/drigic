@@ -1,13 +1,19 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
+import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 export const metadata = {
   title: "Tretmani | Dr Igic",
 };
 
-export default function TreatmentsIndexPage() {
+export default async function TreatmentsIndexPage() {
+  const cookieStore = await cookies();
+  const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const t = (path, replacements) => translate(locale, path, replacements);
+
   return (
     <div className="clinic-home5">
       <Header4 />
@@ -15,11 +21,10 @@ export default function TreatmentsIndexPage() {
         <section className="container">
           <div className="title-area text-center clinic-reveal">
             <h1 className="sec-title text-smoke" style={{ marginBottom: 12 }}>
-              Kategorije tretmana
+              {t("treatments.categoriesTitle")}
             </h1>
             <p className="sec-text text-smoke" style={{ maxWidth: 760, margin: "0 auto" }}>
-              Izaberite kategoriju i pogledajte sve aktivne usluge koje su trenutno dostupne za
-              zakazivanje.
+              {t("treatments.categoriesBody")}
             </p>
           </div>
 
@@ -33,7 +38,7 @@ export default function TreatmentsIndexPage() {
                 <h3>{category.name}</h3>
                 <p>{category.shortDescription}</p>
                 <Link href={`/tretmani/${category.slug}`} className="clinic-treatment-link">
-                  Pogledaj usluge
+                  {t("treatments.seeServices")}
                 </Link>
               </article>
             ))}
@@ -42,8 +47,8 @@ export default function TreatmentsIndexPage() {
           <div className="btn-wrap mt-50 justify-content-center">
             <Link href="/booking" className="btn bg-theme text-title clinic-glow-btn">
               <span className="link-effect">
-                <span className="effect-1">ZAKAZI TERMIN</span>
-                <span className="effect-1">ZAKAZI TERMIN</span>
+                <span className="effect-1">{t("treatments.bookAppointment")}</span>
+                <span className="effect-1">{t("treatments.bookAppointment")}</span>
               </span>
             </Link>
           </div>

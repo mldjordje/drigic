@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
-import { resolveQuote } from "@/lib/booking/engine";
+import { CONSULTATION_SELECTION_ID, resolveQuote } from "@/lib/booking/engine";
 
 export const runtime = "nodejs";
 
@@ -9,7 +9,7 @@ const payloadSchema = z.object({
   serviceSelections: z
     .array(
       z.object({
-        serviceId: z.string().uuid(),
+        serviceId: z.union([z.string().uuid(), z.literal(CONSULTATION_SELECTION_ID)]),
         quantity: z.number().int().min(1).optional(),
         brand: z.string().min(1).max(80).optional(),
       })
