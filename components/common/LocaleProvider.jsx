@@ -36,7 +36,12 @@ export default function LocaleProvider({ initialLocale = "sr", children }) {
       return;
     }
 
-    const localStorageValue = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    let localStorageValue = null;
+    try {
+      localStorageValue = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+    } catch {
+      localStorageValue = null;
+    }
     const cookieMatch = document.cookie
       .split("; ")
       .find((entry) => entry.startsWith(`${LOCALE_COOKIE_KEY}=`));

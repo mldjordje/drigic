@@ -52,7 +52,12 @@ export default function Header4() {
     if (typeof window === "undefined") {
       return;
     }
-    const persistedMode = window.localStorage.getItem(THEME_STORAGE_KEY);
+    let persistedMode = null;
+    try {
+      persistedMode = window.localStorage.getItem(THEME_STORAGE_KEY);
+    } catch {
+      persistedMode = null;
+    }
     if (persistedMode === "dark" || persistedMode === "light") {
       setThemeMode(persistedMode);
       return;

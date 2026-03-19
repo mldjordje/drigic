@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { and, asc, eq, gte, isNull, lte, or } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
@@ -16,12 +16,12 @@ export const dynamic = "force-dynamic";
 const FALLBACK_SITE_URL = "https://drigic.rs";
 
 export async function generateStaticParams() {
-  return SERVICE_CATEGORY_SPECS.map((category) => ({ slug: category.slug }));
+  return SERVICE_CATEGORY_SPECS.map((category) => ({ categorySlug: category.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
-  const category = getCategorySpecBySlug(resolvedParams?.slug);
+  const category = getCategorySpecBySlug(resolvedParams?.categorySlug);
 
   if (!category) {
     return {
@@ -57,8 +57,8 @@ export async function generateMetadata({ params }) {
   };
 }
 
-async function loadCategoryServices(slug) {
-  const categorySpec = getCategorySpecBySlug(slug);
+async function loadCategoryServices(categorySlug) {
+  const categorySpec = getCategorySpecBySlug(categorySlug);
   if (!categorySpec) {
     return null;
   }
@@ -193,7 +193,7 @@ function buildFaq(categorySpec) {
 
 export default async function TreatmentCategoryPage({ params }) {
   const resolvedParams = await params;
-  const data = await loadCategoryServices(resolvedParams?.slug);
+  const data = await loadCategoryServices(resolvedParams?.categorySlug);
   if (!data) {
     notFound();
   }
@@ -202,7 +202,7 @@ export default async function TreatmentCategoryPage({ params }) {
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
   const t = (path, replacements) => translate(locale, path, replacements);
   const { categorySpec, services } = data;
-  const categoryBeforeAfter = await loadCategoryBeforeAfter(resolvedParams?.slug);
+  const categoryBeforeAfter = await loadCategoryBeforeAfter(resolvedParams?.categorySlug);
   const faq = buildFaq(categorySpec);
 
   const jsonLd = {
@@ -279,9 +279,7 @@ export default async function TreatmentCategoryPage({ params }) {
                 </div>
               ) : (
                 <>
-                  <p>
-                    {t("treatments.categoryGalleryFallback")}
-                  </p>
+                  <p>{t("treatments.categoryGalleryFallback")}</p>
                   <div className="clinic-treatment-gallery-grid">
                     {categorySpec.imageSlots.map((slot, slotIndex) => (
                       <div
@@ -323,7 +321,10 @@ export default async function TreatmentCategoryPage({ params }) {
                   </span>
                 </div>
                 {service.slug ? (
-                  <Link href={`/tretmani/${resolvedParams.slug}/${service.slug}`} className="clinic-treatment-link">
+                  <Link
+                    href={`/tretmani/${resolvedParams.categorySlug}/${service.slug}`}
+                    className="clinic-treatment-link"
+                  >
                     {t("treatments.serviceDetails")}
                   </Link>
                 ) : null}
@@ -333,9 +334,7 @@ export default async function TreatmentCategoryPage({ params }) {
 
           {!services.length ? (
             <div className="admin-card" style={{ marginTop: 18 }}>
-              <p style={{ margin: 0, color: "#d9e6f8" }}>
-                {t("treatments.noServices")}
-              </p>
+              <p style={{ margin: 0, color: "#d9e6f8" }}>{t("treatments.noServices")}</p>
             </div>
           ) : null}
 
@@ -380,4 +379,3 @@ export default async function TreatmentCategoryPage({ params }) {
     </div>
   );
 }
-
