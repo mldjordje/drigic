@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const SessionContext = createContext(null);
 
@@ -29,6 +29,37 @@ function normalizeSessionUser(value) {
 
 export default function SessionProvider({ initialSession = null, children }) {
   const [user, setUser] = useState(() => normalizeSessionUser(initialSession));
+
+  useEffect(() => {
+    if (user) {
+      return;
+    }
+
+    let active = true;
+
+    fetch("/api/me/profile")
+      .then(async (response) => {
+        if (!response.ok) {
+          return null;
+        }
+        return response.json();
+      })
+      .then((data) => {
+        if (!active) {
+          return;
+        }
+        setUser(normalizeSessionUser(data?.user || null));
+      })
+      .catch(() => {
+        if (active) {
+          setUser(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const value = useMemo(
     () => ({
