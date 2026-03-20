@@ -73,6 +73,13 @@ function toIsoBirthDate(value) {
   return `${match[3]}-${match[2]}-${match[1]}`;
 }
 
+function getProfileSaveError(data, fallbackMessage, t) {
+  if (data?.details?.code === "PHONE_ALREADY_IN_USE") {
+    return t("profile.phoneTakenError");
+  }
+  return data?.message || fallbackMessage;
+}
+
 export default function ProfileSetupGate() {
   const pathname = usePathname();
   const { t } = useLocale();
@@ -175,7 +182,9 @@ export default function ProfileSetupGate() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje profila.");
+        throw new Error(
+          getProfileSaveError(data, "Neuspesno cuvanje profila.", t)
+        );
       }
       setVisible(false);
     } catch (saveError) {

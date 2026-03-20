@@ -6,21 +6,15 @@ import "../public/assets/css/animate.min.css";
 import "../public/assets/css/imageRevealHover.css";
 import "../public/assets/sass/style.scss";
 import "rc-slider/assets/index.css";
-import { Montserrat } from "next/font/google";
+import { Cormorant_Infant } from "next/font/google";
 import { cookies } from "next/headers";
 import AppProviders from "@/components/common/AppProviders";
 import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
 
-const montserratTitle = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+const cormorantInfantTitle = Cormorant_Infant({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
   variable: "--title-font",
-});
-
-const montserratBody = Montserrat({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--body-font",
 });
 
 export const metadata = {
@@ -39,8 +33,12 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale} style={{ overflowX: "hidden", width: "100%" }}>
       <body
-        className={`body clinic-theme-light clinic-app-shell ${montserratBody.variable} ${montserratTitle.variable}`}
-        style={{ overflowX: "hidden", width: "100%" }}
+        className={`body clinic-theme-light clinic-app-shell ${cormorantInfantTitle.variable}`}
+        style={{
+          overflowX: "hidden",
+          width: "100%",
+          "--body-font": '"HelveticaNeueRoman", "Helvetica Neue", Helvetica, Arial, sans-serif',
+        }}
       >
         <AppProviders initialLocale={locale}>
           {children}

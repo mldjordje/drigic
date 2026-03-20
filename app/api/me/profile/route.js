@@ -62,49 +62,59 @@ export async function PATCH(request) {
     .where(eq(schema.profiles.userId, auth.user.id))
     .limit(1);
 
-  if (parsed.data.phone !== undefined) {
-    await db
-      .update(schema.users)
-      .set({ phone: parsed.data.phone || null, updatedAt: new Date() })
-      .where(eq(schema.users.id, auth.user.id));
-  }
-
-  const profilePayload = {
-    updatedAt: new Date(),
-  };
-  if (parsed.data.fullName !== undefined) {
-    profilePayload.fullName = parsed.data.fullName;
-  }
-  if (parsed.data.gender !== undefined) {
-    profilePayload.gender = parsed.data.gender;
-  }
-  if (parsed.data.birthDate !== undefined) {
-    profilePayload.birthDate = parsed.data.birthDate || null;
-  }
-  if (parsed.data.avatarUrl !== undefined) {
-    profilePayload.avatarUrl = parsed.data.avatarUrl;
-  }
-  const hasProfileField =
-    parsed.data.fullName !== undefined ||
-    parsed.data.gender !== undefined ||
-    parsed.data.birthDate !== undefined ||
-    parsed.data.avatarUrl !== undefined;
-
   let profile = existing;
-  if (!existing && hasProfileField) {
-    [profile] = await db
-      .insert(schema.profiles)
-      .values({
-        userId: auth.user.id,
-        ...profilePayload,
-      })
-      .returning();
-  } else if (existing && hasProfileField) {
-    [profile] = await db
-      .update(schema.profiles)
-      .set(profilePayload)
-      .where(eq(schema.profiles.id, existing.id))
-      .returning();
+  try {
+    if (parsed.data.phone !== undefined) {
+      await db
+        .update(schema.users)
+        .set({ phone: parsed.data.phone || null, updatedAt: new Date() })
+        .where(eq(schema.users.id, auth.user.id));
+    }
+
+    const profilePayload = {
+      updatedAt: new Date(),
+    };
+    if (parsed.data.fullName !== undefined) {
+      profilePayload.fullName = parsed.data.fullName;
+    }
+    if (parsed.data.gender !== undefined) {
+      profilePayload.gender = parsed.data.gender;
+    }
+    if (parsed.data.birthDate !== undefined) {
+      profilePayload.birthDate = parsed.data.birthDate || null;
+    }
+    if (parsed.data.avatarUrl !== undefined) {
+      profilePayload.avatarUrl = parsed.data.avatarUrl;
+    }
+    const hasProfileField =
+      parsed.data.fullName !== undefined ||
+      parsed.data.gender !== undefined ||
+      parsed.data.birthDate !== undefined ||
+      parsed.data.avatarUrl !== undefined;
+
+    if (!existing && hasProfileField) {
+      [profile] = await db
+        .insert(schema.profiles)
+        .values({
+          userId: auth.user.id,
+          ...profilePayload,
+        })
+        .returning();
+    } else if (existing && hasProfileField) {
+      [profile] = await db
+        .update(schema.profiles)
+        .set(profilePayload)
+        .where(eq(schema.profiles.id, existing.id))
+        .returning();
+    }
+  } catch (error) {
+    const pgCode = String(error?.code || error?.cause?.code || "");
+    if (pgCode === "23505") {
+      return fail(409, "Phone already in use.", {
+        code: "PHONE_ALREADY_IN_USE",
+      });
+    }
+    throw error;
   }
 
   return ok({
