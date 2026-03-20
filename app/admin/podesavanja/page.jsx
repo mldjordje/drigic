@@ -40,10 +40,10 @@ const emptyBodyAreaForm = {
 };
 
 const usefulLinks = [
-  { href: "/admin/services", title: "Usluge", body: "Detaljno podesavanje pojedinacnih usluga." },
+  { href: "/admin/services", title: "Usluge", body: "Detaljno podešavanje pojedinačnih usluga." },
   { href: "/admin/promotions", title: "Akcije", body: "Promo cene i aktivne kampanje." },
   { href: "/admin/preparati", title: "Preparati", body: "Brendovi i preparati za tretmane." },
-  { href: "/admin/announcements", title: "Obavestenja", body: "Poruke koje se prikazuju klijentima." },
+  { href: "/admin/announcements", title: "Obaveštenja", body: "Poruke koje se prikazuju klijentima." },
 ];
 
 export default function AdminSettingsPage() {
@@ -74,11 +74,11 @@ export default function AdminSettingsPage() {
       ]);
 
       if (!metadataRes.ok || !metadataData?.ok) {
-        throw new Error(metadataData?.message || "Neuspesno ucitavanje servisnih podesavanja.");
+        throw new Error(metadataData?.message || "Neuspešno učitavanje servisnih podešavanja.");
       }
 
       if (!clinicRes.ok || !clinicData?.ok) {
-        throw new Error(clinicData?.message || "Neuspesno ucitavanje booking pravila.");
+        throw new Error(clinicData?.message || "Neuspešno učitavanje booking pravila.");
       }
 
       setCategories(metadataData.categories || []);
@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
         workdayEnd: clinicData.data?.workdayEnd || emptyClinicForm.workdayEnd,
       });
     } catch (loadError) {
-      setError(loadError.message || "Greska pri ucitavanju podesavanja.");
+      setError(loadError.message || "Greška pri učitavanju podešavanja.");
     } finally {
       setLoading(false);
     }
@@ -133,13 +133,13 @@ export default function AdminSettingsPage() {
       const data = await parseResponse(response);
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje booking pravila.");
+        throw new Error(data?.message || "Neuspešno čuvanje booking pravila.");
       }
 
-      setMessage("Booking pravila su sacuvana.");
+      setMessage("Booking pravila su sačuvana.");
       await loadData();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju booking pravila.");
+      setError(saveError.message || "Greška pri čuvanju booking pravila.");
     } finally {
       setBusyKey("");
     }
@@ -168,20 +168,20 @@ export default function AdminSettingsPage() {
       const data = await parseResponse(response);
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje stavke.");
+        throw new Error(data?.message || "Neuspešno čuvanje stavke.");
       }
 
       if (entityType === "category") {
         setCategoryForm(emptyCategoryForm);
-        setMessage(form.id ? "Kategorija je azurirana." : "Kategorija je dodata.");
+        setMessage(form.id ? "Kategorija je ažurirana." : "Kategorija je dodata.");
       } else {
         setBodyAreaForm(emptyBodyAreaForm);
-        setMessage(form.id ? "Deo tela je azuriran." : "Deo tela je dodat.");
+        setMessage(form.id ? "Deo tela je ažuriran." : "Deo tela je dodat.");
       }
 
       await loadData();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju.");
+      setError(saveError.message || "Greška pri čuvanju.");
     } finally {
       setBusyKey("");
     }
@@ -205,13 +205,13 @@ export default function AdminSettingsPage() {
       const data = await parseResponse(response);
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesna promena statusa kategorije.");
+        throw new Error(data?.message || "Neuspešna promena statusa kategorije.");
       }
 
-      setMessage("Status kategorije je azuriran.");
+      setMessage("Status kategorije je ažuriran.");
       await loadData();
     } catch (toggleError) {
-      setError(toggleError.message || "Greska pri promeni statusa kategorije.");
+      setError(toggleError.message || "Greška pri promeni statusa kategorije.");
     } finally {
       setBusyKey("");
     }
@@ -228,7 +228,7 @@ export default function AdminSettingsPage() {
       const missing = defaults.filter((item) => !existing.has(item.toLowerCase()));
 
       if (!missing.length) {
-        setMessage("Osnovni delovi tela su vec dodati.");
+        setMessage("Osnovni delovi tela su već dodati.");
         return;
       }
 
@@ -245,14 +245,14 @@ export default function AdminSettingsPage() {
         const data = await parseResponse(response);
 
         if (!response.ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspesno dodavanje osnovnih delova tela.");
+          throw new Error(data?.message || "Neuspešno dodavanje osnovnih delova tela.");
         }
       }
 
       setMessage("Dodati su osnovni delovi tela: Lice, Vrat i Telo.");
       await loadData();
     } catch (seedError) {
-      setError(seedError.message || "Greska pri dodavanju osnovnih delova tela.");
+      setError(seedError.message || "Greška pri dodavanju osnovnih delova tela.");
     } finally {
       setBusyKey("");
     }
@@ -261,9 +261,9 @@ export default function AdminSettingsPage() {
   return (
     <section style={{ display: "grid", gap: 12 }}>
       <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Podesavanja</h2>
+        <h2 style={{ marginTop: 0 }}>Podešavanja</h2>
         <p style={{ color: "#bed0e8", marginBottom: 0 }}>
-          Ovde admin moze da podesi booking pravila, kategorije usluga i delove tela koji se
+          Ovde admin može da podesi booking pravila, kategorije usluga i delove tela koji se
           pojavljuju na formi za usluge.
         </p>
         {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
@@ -293,7 +293,9 @@ export default function AdminSettingsPage() {
         <form onSubmit={saveClinicSettings} className="admin-card" style={{ display: "grid", gap: 10 }}>
           <div>
             <h3 style={{ marginTop: 0, marginBottom: 6 }}>Booking pravila</h3>
-            <p style={mutedTextStyle}>Osnovne postavke raspolozivosti termina u ordinaciji.</p>
+            <p style={mutedTextStyle}>
+              Osnovne postavke raspoloživosti termina u ordinaciji.
+            </p>
           </div>
 
           <div className="admin-services-split-grid">
@@ -334,9 +336,8 @@ export default function AdminSettingsPage() {
                 type="time"
                 className="admin-inline-input"
                 value={clinicForm.workdayStart}
-                onChange={(event) =>
-                  setClinicForm((prev) => ({ ...prev, workdayStart: event.target.value }))
-                }
+                disabled
+                readOnly
                 required
               />
             </label>
@@ -346,23 +347,26 @@ export default function AdminSettingsPage() {
                 type="time"
                 className="admin-inline-input"
                 value={clinicForm.workdayEnd}
-                onChange={(event) =>
-                  setClinicForm((prev) => ({ ...prev, workdayEnd: event.target.value }))
-                }
+                disabled
+                readOnly
                 required
               />
             </label>
           </div>
 
+          <p style={mutedTextStyle}>Radno vreme je zaključano na 16:00-21:00.</p>
+
           <button type="submit" className="admin-template-link-btn" disabled={busyKey === "clinic"}>
-            {busyKey === "clinic" ? "Cuvanje..." : "Sacuvaj booking pravila"}
+            {busyKey === "clinic" ? "Čuvanje..." : "Sačuvaj booking pravila"}
           </button>
         </form>
 
         <div className="admin-card" style={{ display: "grid", gap: 10 }}>
           <div>
             <h3 style={{ marginTop: 0, marginBottom: 6 }}>Korisni admin linkovi</h3>
-            <p style={mutedTextStyle}>Brzi pristup modulima koji se najcesce koriste uz podesavanja.</p>
+            <p style={mutedTextStyle}>
+              Brzi pristup modulima koji se najčešće koriste uz podešavanja.
+            </p>
           </div>
           <div style={{ display: "grid", gap: 8 }}>
             {usefulLinks.map((item) => (
@@ -434,9 +438,9 @@ export default function AdminSettingsPage() {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button type="submit" className="admin-template-link-btn" disabled={busyKey === "category"}>
                 {busyKey === "category"
-                  ? "Cuvanje..."
+                  ? "Čuvanje..."
                   : categoryForm.id
-                    ? "Sacuvaj kategoriju"
+                    ? "Sačuvaj kategoriju"
                     : "Dodaj kategoriju"}
               </button>
               {categoryForm.id ? (
@@ -445,14 +449,14 @@ export default function AdminSettingsPage() {
                   className="admin-template-link-btn"
                   onClick={() => setCategoryForm(emptyCategoryForm)}
                 >
-                  Otkazi izmenu
+                  Otkaži izmenu
                 </button>
               ) : null}
             </div>
           </form>
 
           <div style={{ display: "grid", gap: 8 }}>
-            {loading ? <p style={mutedTextStyle}>Ucitavanje kategorija...</p> : null}
+            {loading ? <p style={mutedTextStyle}>Učitavanje kategorija...</p> : null}
             {!loading && !categories.length ? (
               <p style={mutedTextStyle}>Nema dodatih kategorija.</p>
             ) : null}
@@ -486,7 +490,7 @@ export default function AdminSettingsPage() {
                     disabled={busyKey === `category-toggle-${item.id}`}
                     onClick={() => toggleCategory(item)}
                   >
-                    {item.isActive ? "Iskljuci" : "Ukljuci"}
+                    {item.isActive ? "Isključi" : "Uključi"}
                   </button>
                 </div>
               </article>
@@ -499,7 +503,7 @@ export default function AdminSettingsPage() {
             <div>
               <h3 style={{ marginTop: 0, marginBottom: 6 }}>Delovi tela</h3>
               <p style={mutedTextStyle}>
-                Ove stavke se pojavljuju u select polju na uslugama. Ako ovde nema nista,
+                Ove stavke se pojavljuju u select polju na uslugama. Ako ovde nema ništa,
                 admin forma za uslugu prikazuje samo opciju "Bez dela tela".
               </p>
             </div>
@@ -534,9 +538,9 @@ export default function AdminSettingsPage() {
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button type="submit" className="admin-template-link-btn" disabled={busyKey === "bodyArea"}>
                 {busyKey === "bodyArea"
-                  ? "Cuvanje..."
+                  ? "Čuvanje..."
                   : bodyAreaForm.id
-                    ? "Sacuvaj deo tela"
+                    ? "Sačuvaj deo tela"
                     : "Dodaj deo tela"}
               </button>
               <button
@@ -555,16 +559,16 @@ export default function AdminSettingsPage() {
                   className="admin-template-link-btn"
                   onClick={() => setBodyAreaForm(emptyBodyAreaForm)}
                 >
-                  Otkazi izmenu
+                  Otkaži izmenu
                 </button>
               ) : null}
             </div>
           </form>
 
           <div style={{ display: "grid", gap: 8 }}>
-            {loading ? <p style={mutedTextStyle}>Ucitavanje delova tela...</p> : null}
+            {loading ? <p style={mutedTextStyle}>Učitavanje delova tela...</p> : null}
             {!loading && !bodyAreas.length ? (
-              <p style={mutedTextStyle}>Jos nema dodatih delova tela.</p>
+              <p style={mutedTextStyle}>Još nema dodatih delova tela.</p>
             ) : null}
             {bodyAreas.map((item) => (
               <article key={item.id} style={listRowStyle}>

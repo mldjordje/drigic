@@ -12,6 +12,8 @@ const updateSchema = z.object({
   workdayStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   workdayEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
 });
+const FIXED_WORKDAY_START = "16:00";
+const FIXED_WORKDAY_END = "21:00";
 
 async function getOrCreateSettings(db) {
   const [settings] = await db
@@ -28,11 +30,19 @@ async function getOrCreateSettings(db) {
     .values({
       slotMinutes: Number(process.env.CLINIC_SLOT_MINUTES || 15),
       bookingWindowDays: Number(process.env.CLINIC_BOOKING_WINDOW_DAYS || 31),
-      workdayStart: process.env.CLINIC_WORKDAY_START || "16:00",
-      workdayEnd: process.env.CLINIC_WORKDAY_END || "21:00",
+      workdayStart: FIXED_WORKDAY_START,
+      workdayEnd: FIXED_WORKDAY_END,
     })
     .returning();
   return created;
+}
+
+function withFixedWorkingHours(settings) {
+  return {
+    ...settings,
+    workdayStart: FIXED_WORKDAY_START,
+    workdayEnd: FIXED_WORKDAY_END,
+  };
 }
 
 export async function GET(request) {
@@ -43,7 +53,23 @@ export async function GET(request) {
 
   const db = getDb();
   const settings = await getOrCreateSettings(db);
-  return ok({ ok: true, data: settings });
+  if (
+    settings.workdayStart !== FIXED_WORKDAY_START ||
+    settings.workdayEnd !== FIXED_WORKDAY_END
+  ) {
+    const [normalized] = await db
+      .update(schema.clinicSettings)
+      .set({
+        workdayStart: FIXED_WORKDAY_START,
+        workdayEnd: FIXED_WORKDAY_END,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.clinicSettings.id, settings.id))
+      .returning();
+    return ok({ ok: true, data: withFixedWorkingHours(normalized) });
+  }
+
+  return ok({ ok: true, data: withFixedWorkingHours(settings) });
 }
 
 export async function PATCH(request) {
@@ -63,11 +89,14 @@ export async function PATCH(request) {
   const [updated] = await db
     .update(schema.clinicSettings)
     .set({
-      ...parsed.data,
+      slotMinutes: parsed.data.slotMinutes ?? settings.slotMinutes,
+      bookingWindowDays: parsed.data.bookingWindowDays ?? settings.bookingWindowDays,
+      workdayStart: FIXED_WORKDAY_START,
+      workdayEnd: FIXED_WORKDAY_END,
       updatedAt: new Date(),
     })
     .where(eq(schema.clinicSettings.id, settings.id))
     .returning();
 
-  return ok({ ok: true, data: updated });
+  return ok({ ok: true, data: withFixedWorkingHours(updated) });
 }

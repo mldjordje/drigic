@@ -7,30 +7,30 @@ import LocaleSwitcher from "@/components/common/LocaleSwitcher";
 import { useLocale } from "@/components/common/LocaleProvider";
 
 const approvedModules = [
-  { href: "/admin/kalendar", labelKey: "admin.calendar", icon: "[CAL]" },
-  { href: "/admin/dashboard", labelKey: "admin.dashboard", icon: "[DB]" },
-  { href: "/admin/podesavanja", labelKey: "admin.settings", icon: "[ST]" },
-  { href: "/admin/bookings", labelKey: "admin.bookings", icon: "[BK]" },
-  { href: "/admin/klijenti", labelKey: "admin.clients", icon: "[CL]" },
-  { href: "/admin/services", labelKey: "admin.services", icon: "[SV]" },
-  { href: "/admin/promotions", labelKey: "admin.promotions", icon: "[AC]" },
-  { href: "/admin/packages", labelKey: "admin.packages", icon: "[PK]" },
-  { href: "/admin/preparati", labelKey: "admin.products", icon: "[PR]" },
-  { href: "/admin/announcements", labelKey: "admin.announcements", icon: "[AN]" },
-  { href: "/admin/media", labelKey: "admin.media", icon: "[MD]" },
-  { href: "/admin/vip", labelKey: "admin.vip", icon: "[VIP]" },
+  { href: "/admin/kalendar", labelKey: "admin.calendar" },
+  { href: "/admin/dashboard", labelKey: "admin.dashboard" },
+  { href: "/admin/podesavanja", labelKey: "admin.settings" },
+  { href: "/admin/bookings", labelKey: "admin.bookings" },
+  { href: "/admin/klijenti", labelKey: "admin.clients" },
+  { href: "/admin/services", labelKey: "admin.services" },
+  { href: "/admin/promotions", labelKey: "admin.promotions" },
+  { href: "/admin/packages", labelKey: "admin.packages" },
+  { href: "/admin/preparati", labelKey: "admin.products" },
+  { href: "/admin/announcements", labelKey: "admin.announcements" },
+  { href: "/admin/media", labelKey: "admin.media" },
+  { href: "/admin/vip", labelKey: "admin.vip" },
 ];
 
 const lockedModules = [
   { label: "Zaposleni", reason: "Nije odobreno" },
   { label: "Finansije", reason: "Nije odobreno" },
-  { label: "Skladiste preparata", reason: "Nije odobreno" },
+  { label: "Skladište preparata", reason: "Nije odobreno" },
   { label: "Napredna analitika", reason: "Nije odobreno" },
 ];
 
 const quickLinks = [
-  { href: "/booking", labelKey: "admin.bookingForm", icon: "[GO]" },
-  { href: "/api/auth/google?next=/admin", labelKey: "admin.changeAccount", icon: "[AU]" },
+  { href: "/booking", labelKey: "admin.bookingForm" },
+  { href: "/api/auth/google?next=/admin", labelKey: "admin.changeAccount" },
 ];
 
 export default function AdminShell({ children }) {
@@ -79,7 +79,6 @@ export default function AdminShell({ children }) {
                   className={`admin-template-nav-item ${active ? "is-active" : ""}`}
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>{item.icon}</span>
                   <span>{t(item.labelKey)}</span>
                 </Link>
               );
@@ -98,7 +97,6 @@ export default function AdminShell({ children }) {
                   className="admin-template-nav-item"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>{item.icon}</span>
                   <span>{t(item.labelKey)}</span>
                 </a>
               ) : (
@@ -108,7 +106,6 @@ export default function AdminShell({ children }) {
                   className="admin-template-nav-item"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>{item.icon}</span>
                   <span>{t(item.labelKey)}</span>
                 </Link>
               )
@@ -127,7 +124,6 @@ export default function AdminShell({ children }) {
                 disabled
                 title={`${item.label} - ${item.reason}`}
               >
-                <span>[LOCK]</span>
                 <span>{item.label}</span>
               </button>
             ))}
