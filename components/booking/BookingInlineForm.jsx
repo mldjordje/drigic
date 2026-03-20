@@ -168,14 +168,41 @@ function normalizeGroupKey(value) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function isBodyCategoryGroup(category) {
+function matchesLegacyBodyKeywords(category, service = null) {
   const haystack = normalizeGroupKey(
-    `${category?.name || ""} ${(category?.services || []).map((service) => service.name).join(" ")}`
+    `${category?.name || ""} ${service?.name || ""} ${(category?.services || [])
+      .map((item) => item.name)
+      .join(" ")}`
   );
 
   return ["lipoliza", "strija", "dekolte", "vrat", "infuz", "telo", "body"].some((keyword) =>
     haystack.includes(keyword)
   );
+}
+
+function serviceMatchesBookingSection(category, service, section) {
+  const showInFaceBooking = Boolean(service?.showInFaceBooking);
+  const showInBodyBooking = Boolean(service?.showInBodyBooking);
+
+  if (showInFaceBooking || showInBodyBooking) {
+    return section === "face" ? showInFaceBooking : showInBodyBooking;
+  }
+
+  return section === "body"
+    ? matchesLegacyBodyKeywords(category, service)
+    : !matchesLegacyBodyKeywords(category, service);
+}
+
+function buildBookingSectionGroups(categories, section) {
+  return categories
+    .map((category) => ({
+      ...category,
+      services: (category.services || []).filter(
+        (service) =>
+          service.kind !== "package" && serviceMatchesBookingSection(category, service, section)
+      ),
+    }))
+    .filter((category) => category.services.length);
 }
 
 export default function BookingInlineForm({
@@ -268,12 +295,12 @@ export default function BookingInlineForm({
   }, [services]);
 
   const faceCategoryGroups = useMemo(
-    () => singleCategoryGroups.filter((category) => !isBodyCategoryGroup(category)),
+    () => buildBookingSectionGroups(singleCategoryGroups, "face"),
     [singleCategoryGroups]
   );
 
   const bodyCategoryGroups = useMemo(
-    () => singleCategoryGroups.filter((category) => isBodyCategoryGroup(category)),
+    () => buildBookingSectionGroups(singleCategoryGroups, "body"),
     [singleCategoryGroups]
   );
 
@@ -735,10 +762,10 @@ export default function BookingInlineForm({
     });
   }
 
-  function renderCategoryGroup(category, categoryIndex, sectionRef = null) {
+  function renderCategoryGroup(category, categoryIndex, sectionRef = null, keyPrefix = "section") {
     return (
       <div
-        key={category.id}
+        key={`${keyPrefix}-${category.id}`}
         ref={sectionRef}
         className="clinic-service-category clinic-reveal"
         style={{ "--clinic-reveal-delay": `${Math.min(categoryIndex, 7) * 55}ms` }}
@@ -978,7 +1005,8 @@ export default function BookingInlineForm({
           renderCategoryGroup(
             category,
             categoryIndex,
-            categoryIndex === 0 ? faceSectionRef : null
+            categoryIndex === 0 ? faceSectionRef : null,
+            "face"
           )
         )}
         {bodyCategoryGroups.length ? (
@@ -987,7 +1015,12 @@ export default function BookingInlineForm({
           </div>
         ) : null}
         {bodyCategoryGroups.map((category, categoryIndex) =>
-          renderCategoryGroup(category, categoryIndex + faceCategoryGroups.length)
+          renderCategoryGroup(
+            category,
+            categoryIndex + faceCategoryGroups.length,
+            null,
+            "body"
+          )
         )}
         <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseDate")}</h3>
 

@@ -56,6 +56,8 @@ const emptyServiceForm = {
   isVip: false,
   reminderEnabled: false,
   reminderDelayDays: 90,
+  showInFaceBooking: true,
+  showInBodyBooking: false,
   supportsMl: false,
   maxMl: 1,
   extraMlDiscountPercent: 0,
@@ -78,6 +80,22 @@ function toPositiveInt(value, fallback = 1) {
     return fallback;
   }
   return Math.max(1, Math.floor(parsed));
+}
+
+function formatBookingPlacement(service) {
+  const inFace = Boolean(service?.showInFaceBooking);
+  const inBody = Boolean(service?.showInBodyBooking);
+
+  if (inFace && inBody) {
+    return "booking: lice + telo";
+  }
+  if (inBody) {
+    return "booking: telo";
+  }
+  if (inFace) {
+    return "booking: lice";
+  }
+  return "booking: skriveno";
 }
 
 export default function AdminServicesPage() {
@@ -260,6 +278,8 @@ export function AdminCatalogPage({ mode = "services" }) {
         isVip: Boolean(serviceForm.isVip),
         reminderEnabled: isPackage ? false : Boolean(serviceForm.reminderEnabled),
         reminderDelayDays: isPackage ? 90 : toPositiveInt(serviceForm.reminderDelayDays || 90, 90),
+        showInFaceBooking: isPackage ? false : Boolean(serviceForm.showInFaceBooking),
+        showInBodyBooking: isPackage ? false : Boolean(serviceForm.showInBodyBooking),
         supportsMl: isPackage ? false : Boolean(serviceForm.supportsMl),
         maxMl: isPackage ? 1 : toPositiveInt(serviceForm.maxMl || 1, 1),
         extraMlDiscountPercent: isPackage
@@ -637,6 +657,48 @@ export function AdminCatalogPage({ mode = "services" }) {
                 </div>
               ) : null}
 
+              <div className="admin-services-split-grid">
+                <label
+                  className={`admin-toggle-card ${serviceForm.showInFaceBooking ? "is-active" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="admin-toggle-card-input"
+                    checked={Boolean(serviceForm.showInFaceBooking)}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({
+                        ...prev,
+                        showInFaceBooking: event.target.checked,
+                      }))
+                    }
+                  />
+                  <span className="admin-toggle-card-title">Prikazi u Lice</span>
+                  <small className="admin-toggle-card-subtitle">
+                    Usluga se prikazuje u face sekciji booking forme.
+                  </small>
+                </label>
+
+                <label
+                  className={`admin-toggle-card ${serviceForm.showInBodyBooking ? "is-active" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    className="admin-toggle-card-input"
+                    checked={Boolean(serviceForm.showInBodyBooking)}
+                    onChange={(event) =>
+                      setServiceForm((prev) => ({
+                        ...prev,
+                        showInBodyBooking: event.target.checked,
+                      }))
+                    }
+                  />
+                  <span className="admin-toggle-card-title">Prikazi u Telo</span>
+                  <small className="admin-toggle-card-subtitle">
+                    Moze biti ukljuceno zajedno sa Lice za usluge koje spadaju u oba.
+                  </small>
+                </label>
+              </div>
+
               <label
                 className={`admin-toggle-card ${serviceForm.reminderEnabled ? "is-active" : ""}`}
               >
@@ -910,6 +972,7 @@ export function AdminCatalogPage({ mode = "services" }) {
               <span>{service.durationMin} min</span>
               <span>{service.isActive ? "aktivna" : "neaktivna"}</span>
               <span>{service.isVip ? "VIP" : "regularna"}</span>
+              <span>{formatBookingPlacement(service)}</span>
               {service.reminderEnabled ? <span>reminder {service.reminderDelayDays} dana</span> : null}
             </div>
 
@@ -947,6 +1010,8 @@ export function AdminCatalogPage({ mode = "services" }) {
                     isVip: Boolean(service.isVip),
                     reminderEnabled: Boolean(service.reminderEnabled),
                     reminderDelayDays: Number(service.reminderDelayDays || 90),
+                    showInFaceBooking: Boolean(service.showInFaceBooking),
+                    showInBodyBooking: Boolean(service.showInBodyBooking),
                     supportsMl: Boolean(service.supportsMl),
                     maxMl: Number(service.maxMl || 1),
                     extraMlDiscountPercent: Number(service.extraMlDiscountPercent || 0),
@@ -1221,6 +1286,40 @@ export function AdminCatalogPage({ mode = "services" }) {
                         </label>
                       </div>
                     ) : null}
+                    <div className="admin-services-split-grid">
+                      <label
+                        className={`admin-toggle-card ${serviceForm.showInFaceBooking ? "is-active" : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="admin-toggle-card-input"
+                          checked={Boolean(serviceForm.showInFaceBooking)}
+                          onChange={(event) =>
+                            setServiceForm((prev) => ({
+                              ...prev,
+                              showInFaceBooking: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span className="admin-toggle-card-title">Prikazi u Lice</span>
+                      </label>
+                      <label
+                        className={`admin-toggle-card ${serviceForm.showInBodyBooking ? "is-active" : ""}`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="admin-toggle-card-input"
+                          checked={Boolean(serviceForm.showInBodyBooking)}
+                          onChange={(event) =>
+                            setServiceForm((prev) => ({
+                              ...prev,
+                              showInBodyBooking: event.target.checked,
+                            }))
+                          }
+                        />
+                        <span className="admin-toggle-card-title">Prikazi u Telo</span>
+                      </label>
+                    </div>
                   </>
                 ) : (
                   <div className="admin-card" style={{ display: "grid", gap: 8 }}>

@@ -26,6 +26,8 @@ const baseSchema = z.object({
   extraMlDiscountPercent: z.number().int().min(0).max(40).optional(),
   reminderEnabled: z.boolean().optional(),
   reminderDelayDays: z.number().int().min(1).max(3650).optional(),
+  showInFaceBooking: z.boolean().optional(),
+  showInBodyBooking: z.boolean().optional(),
   priceRsd: z.number().int().min(0),
   durationMin: z.number().int().min(5).max(60),
   isActive: z.boolean().optional(),
@@ -118,6 +120,18 @@ function normalizeServicePayload(payload, fallback = null) {
       ? Boolean(payload.supportsMl)
       : Boolean(fallback?.supportsMl);
   const supportsMl = kind === "single" ? supportsMlRaw : false;
+  const showInFaceBooking =
+    kind === "single"
+      ? payload.showInFaceBooking !== undefined
+        ? Boolean(payload.showInFaceBooking)
+        : Boolean(fallback?.showInFaceBooking ?? true)
+      : false;
+  const showInBodyBooking =
+    kind === "single"
+      ? payload.showInBodyBooking !== undefined
+        ? Boolean(payload.showInBodyBooking)
+        : Boolean(fallback?.showInBodyBooking ?? false)
+      : false;
 
   const maxMl = supportsMl
     ? Math.max(1, Number(payload.maxMl ?? fallback?.maxMl ?? 1))
@@ -146,6 +160,8 @@ function normalizeServicePayload(payload, fallback = null) {
       3650,
       Math.max(1, Number(payload.reminderDelayDays ?? fallback?.reminderDelayDays ?? 90))
     ),
+    showInFaceBooking,
+    showInBodyBooking,
     priceRsd: Number(payload.priceRsd ?? fallback?.priceRsd ?? 0),
     durationMin: Number(payload.durationMin ?? fallback?.durationMin ?? 30),
     isActive: payload.isActive !== undefined ? Boolean(payload.isActive) : Boolean(fallback?.isActive ?? true),
