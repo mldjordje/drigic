@@ -9,6 +9,7 @@ import { useLocale } from "@/components/common/LocaleProvider";
 const approvedModules = [
   { href: "/admin/kalendar", labelKey: "admin.calendar", icon: "[CAL]" },
   { href: "/admin/dashboard", labelKey: "admin.dashboard", icon: "[DB]" },
+  { href: "/admin/podesavanja", labelKey: "admin.settings", icon: "[ST]" },
   { href: "/admin/bookings", labelKey: "admin.bookings", icon: "[BK]" },
   { href: "/admin/klijenti", labelKey: "admin.clients", icon: "[CL]" },
   { href: "/admin/services", labelKey: "admin.services", icon: "[SV]" },

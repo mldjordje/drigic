@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 function parseResponse(response) {
@@ -547,6 +548,15 @@ export function AdminCatalogPage({ mode = "services" }) {
                 </option>
               ))}
             </select>
+            {!bodyAreas.length ? (
+              <small style={{ color: "#bed0e8" }}>
+                Nema dodatih delova tela. Dodaj ih u{" "}
+                <Link href="/admin/podesavanja" style={{ color: "#f8c96b" }}>
+                  Podesavanja
+                </Link>
+                .
+              </small>
+            ) : null}
           </label>
 
           <div className="admin-services-split-grid">
@@ -1176,6 +1186,15 @@ export function AdminCatalogPage({ mode = "services" }) {
                       </option>
                     ))}
                   </select>
+                  {!bodyAreas.length ? (
+                    <small style={{ color: "#bed0e8" }}>
+                      Nema dodatih delova tela. Dodaj ih u{" "}
+                      <Link href="/admin/podesavanja" style={{ color: "#f8c96b" }}>
+                        Podesavanja
+                      </Link>
+                      .
+                    </small>
+                  ) : null}
                 </label>
                 {serviceForm.kind === "single" ? (
                   <>
