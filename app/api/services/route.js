@@ -1,10 +1,13 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
-import { ok } from "@/lib/api/http";
+import { unstable_cache } from "next/cache";
+import { publicOk } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
 
 export const runtime = "nodejs";
+export const revalidate = 300;
 
-export async function GET() {
+const getCachedServices = unstable_cache(
+  async () => {
   const db = getDb();
   const now = new Date();
 
@@ -151,8 +154,20 @@ export async function GET() {
     return acc;
   }, {});
 
-  return ok({
-    ok: true,
-    categories: Object.values(grouped),
-  });
+    return Object.values(grouped);
+  },
+  ["public-services"],
+  { revalidate }
+);
+
+export async function GET() {
+  const categories = await getCachedServices();
+
+  return publicOk(
+    {
+      ok: true,
+      categories,
+    },
+    { sMaxAge: revalidate, staleWhileRevalidate: 1800 }
+  );
 }

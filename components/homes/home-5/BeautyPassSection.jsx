@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
+import { useSession } from "@/components/common/SessionProvider";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -230,10 +231,10 @@ function UploadZone({ onFileSelected }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function BeautyPassSection({ googleNextPath = "/" }) {
-  const [user, setUser] = useState(null);
+  const { user, isLoading: sessionLoading } = useSession();
   const [beautyPass, setBeautyPass] = useState(null);
   const [bookings, setBookings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => sessionLoading);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -275,15 +276,10 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
     });
   }, []);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const profileRes = await fetch("/api/me/profile");
-      if (!profileRes.ok) { setUser(null); setBeautyPass(null); setBookings(null); return; }
-      const profileData = await parseResponse(profileRes);
-      const sessionUser = profileData?.user || null;
-      setUser(sessionUser);
-      if (!sessionUser) { setBeautyPass(null); setBookings(null); return; }
+      if (!user) { setBeautyPass(null); setBookings(null); return; }
       const [passRes, bookingsRes] = await Promise.all([fetch("/api/me/beauty-pass"), fetch("/api/me/bookings")]);
       const passData = await parseResponse(passRes);
       const bookingsData = await parseResponse(bookingsRes);
@@ -296,9 +292,15 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user]);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    if (sessionLoading) {
+      setLoading(true);
+      return;
+    }
+    loadData();
+  }, [loadData, sessionLoading]);
 
   // Cleanup blob URL on unmount
   useEffect(() => {

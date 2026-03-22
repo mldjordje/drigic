@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import BookingSection from "@/components/homes/home-5/BookingSection";
 import { useLocale } from "@/components/common/LocaleProvider";
+import { useSession } from "@/components/common/SessionProvider";
 import BeautyPassSection from "@/components/homes/home-5/BeautyPassSection";
 import { getIntlLocale } from "@/lib/i18n";
 
@@ -206,8 +207,7 @@ function ExpandPanel({ isOpen, children }) {
 
 export default function HeroActions() {
   const { locale } = useLocale();
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user: currentUser, isLoading: sessionLoading } = useSession();
   const [activeSection, setActiveSection] = useState(null);
   const [statusNotice, setStatusNotice] = useState(null);
   const [showStatusNotice, setShowStatusNotice] = useState(true);
@@ -216,29 +216,16 @@ export default function HeroActions() {
   useEffect(() => {
     let mounted = true;
 
-    async function load() {
+    if (!currentUser) {
+      setStatusNotice(null);
+      setShowStatusNotice(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    async function loadBookings() {
       try {
-        const profileRes = await fetch("/api/me/profile");
-        if (!profileRes.ok) {
-          if (mounted) {
-            setCurrentUser(null);
-            setStatusNotice(null);
-          }
-          return;
-        }
-
-        const profileData = await parseResponse(profileRes);
-        const user = profileData?.user || null;
-        if (!mounted) {
-          return;
-        }
-
-        setCurrentUser(user);
-        if (!user) {
-          setStatusNotice(null);
-          return;
-        }
-
         const bookingsRes = await fetch("/api/me/bookings");
         const bookingsData = await parseResponse(bookingsRes);
         if (!mounted) {
@@ -278,24 +265,19 @@ export default function HeroActions() {
         setShowStatusNotice(true);
       } catch {
         if (mounted) {
-          setCurrentUser(null);
           setStatusNotice(null);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
         }
       }
     }
 
-    load();
+    loadBookings();
 
     return () => {
       mounted = false;
     };
-  }, [copy.cancelled, copy.confirmed]);
+  }, [copy.cancelled, copy.confirmed, currentUser]);
 
-  if (loading || !currentUser) return null;
+  if (sessionLoading || !currentUser) return null;
 
   const handleToggle = (section) => {
     setActiveSection((prev) => (prev === section ? null : section));

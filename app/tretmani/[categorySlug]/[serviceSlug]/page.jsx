@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { and, asc, eq } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Header4 from "@/components/headers/Header4";
@@ -9,80 +10,85 @@ import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import { getCategorySpecBySlug } from "@/lib/services/category-map";
 
 export const dynamic = "force-dynamic";
+const SERVICE_DATA_REVALIDATE = 300;
 
-async function loadServiceDetails(categorySlug, serviceSlug) {
-  const categorySpec = getCategorySpecBySlug(categorySlug);
-  if (!categorySpec) {
-    return null;
-  }
+const loadServiceDetails = unstable_cache(
+  async (categorySlug, serviceSlug) => {
+    const categorySpec = getCategorySpecBySlug(categorySlug);
+    if (!categorySpec) {
+      return null;
+    }
 
-  const db = getDb();
-  const [category] = await db
-    .select({
-      id: schema.serviceCategories.id,
-      name: schema.serviceCategories.name,
-    })
-    .from(schema.serviceCategories)
-    .where(eq(schema.serviceCategories.name, categorySpec.name))
-    .limit(1);
-
-  if (!category) {
-    return null;
-  }
-
-  const [service] = await db
-    .select({
-      id: schema.services.id,
-      slug: schema.services.slug,
-      name: schema.services.name,
-      description: schema.services.description,
-      priceRsd: schema.services.priceRsd,
-      durationMin: schema.services.durationMin,
-      reminderEnabled: schema.services.reminderEnabled,
-      reminderDelayDays: schema.services.reminderDelayDays,
-    })
-    .from(schema.services)
-    .where(
-      and(
-        eq(schema.services.categoryId, category.id),
-        eq(schema.services.slug, serviceSlug),
-        eq(schema.services.isActive, true)
-      )
-    )
-    .limit(1);
-
-  if (!service) {
-    return null;
-  }
-
-  let beforeAfter = [];
-  try {
-    beforeAfter = await db
+    const db = getDb();
+    const [category] = await db
       .select({
-        id: schema.beforeAfterCases.id,
-        treatmentType: schema.beforeAfterCases.treatmentType,
-        beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
-        afterImageUrl: schema.beforeAfterCases.afterImageUrl,
-        collageImageUrl: schema.beforeAfterCases.collageImageUrl,
+        id: schema.serviceCategories.id,
+        name: schema.serviceCategories.name,
       })
-      .from(schema.beforeAfterCases)
+      .from(schema.serviceCategories)
+      .where(eq(schema.serviceCategories.name, categorySpec.name))
+      .limit(1);
+
+    if (!category) {
+      return null;
+    }
+
+    const [service] = await db
+      .select({
+        id: schema.services.id,
+        slug: schema.services.slug,
+        name: schema.services.name,
+        description: schema.services.description,
+        priceRsd: schema.services.priceRsd,
+        durationMin: schema.services.durationMin,
+        reminderEnabled: schema.services.reminderEnabled,
+        reminderDelayDays: schema.services.reminderDelayDays,
+      })
+      .from(schema.services)
       .where(
         and(
-          eq(schema.beforeAfterCases.isPublished, true),
-          eq(schema.beforeAfterCases.serviceId, service.id)
+          eq(schema.services.categoryId, category.id),
+          eq(schema.services.slug, serviceSlug),
+          eq(schema.services.isActive, true)
         )
       )
-      .orderBy(asc(schema.beforeAfterCases.createdAt));
-  } catch {
-    beforeAfter = [];
-  }
+      .limit(1);
 
-  return {
-    categorySpec,
-    service,
-    beforeAfter,
-  };
-}
+    if (!service) {
+      return null;
+    }
+
+    let beforeAfter = [];
+    try {
+      beforeAfter = await db
+        .select({
+          id: schema.beforeAfterCases.id,
+          treatmentType: schema.beforeAfterCases.treatmentType,
+          beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
+          afterImageUrl: schema.beforeAfterCases.afterImageUrl,
+          collageImageUrl: schema.beforeAfterCases.collageImageUrl,
+        })
+        .from(schema.beforeAfterCases)
+        .where(
+          and(
+            eq(schema.beforeAfterCases.isPublished, true),
+            eq(schema.beforeAfterCases.serviceId, service.id)
+          )
+        )
+        .orderBy(asc(schema.beforeAfterCases.createdAt));
+    } catch {
+      beforeAfter = [];
+    }
+
+    return {
+      categorySpec,
+      service,
+      beforeAfter,
+    };
+  },
+  ["treatment-service-details"],
+  { revalidate: SERVICE_DATA_REVALIDATE }
+);
 
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
@@ -163,6 +169,8 @@ export default async function TreatmentServicePage({ params }) {
                       <img
                         src={item.collageImageUrl || item.beforeImageUrl}
                         alt={item.treatmentType || service.name}
+                        loading="lazy"
+                        decoding="async"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     </div>

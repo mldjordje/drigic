@@ -25,7 +25,7 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
       const data = await response.json();
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno slanje OTP koda.");
+        throw new Error(data?.message || "Neuspesno slanje OTP koda.");
       }
 
       setStep("verify");
@@ -35,7 +35,7 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
           : "Kod je poslat na email."
       );
     } catch (err) {
-      setError(err.message || "Greška pri slanju OTP koda.");
+      setError(err.message || "Greska pri slanju OTP koda.");
     } finally {
       setLoading(false);
     }
@@ -59,16 +59,10 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
         throw new Error(data?.message || "Neispravan OTP kod.");
       }
 
-      const profileResponse = await fetch("/api/me/profile");
-      const profileData = await profileResponse.json();
-      if (!profileResponse.ok || !profileData?.ok) {
-        throw new Error("Prijava je uspela, ali profil nije dostupan.");
-      }
-
-      setMessage("Uspešno ste prijavljeni.");
-      onAuthenticated?.(profileData.user);
+      setMessage("Uspesno ste prijavljeni.");
+      onAuthenticated?.(data.user || null);
     } catch (err) {
-      setError(err.message || "Greška pri verifikaciji OTP koda.");
+      setError(err.message || "Greska pri verifikaciji OTP koda.");
     } finally {
       setLoading(false);
     }
@@ -87,7 +81,7 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
     >
       <h2 style={{ marginTop: 0 }}>{title}</h2>
       <p style={{ marginTop: 0, color: "#c7d8ef" }}>
-        Unesite email ili telefon. Kod se šalje na email naloga.
+        Unesite email ili telefon. Kod se salje na email naloga.
       </p>
 
       {step === "request" ? (
@@ -101,7 +95,7 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
             placeholder="npr. admin@drigic.com"
           />
           <button disabled={loading} style={buttonStyle} type="submit">
-            {loading ? "Slanje..." : "Pošalji OTP kod"}
+            {loading ? "Slanje..." : "Posalji OTP kod"}
           </button>
         </form>
       ) : (
@@ -164,4 +158,3 @@ const buttonStyle = {
   fontWeight: 700,
   cursor: "pointer",
 };
-

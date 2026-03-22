@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/common/LocaleProvider";
+import { useSession } from "@/components/common/SessionProvider";
 
 function parseResponse(response) {
   return response
@@ -83,6 +84,7 @@ function getProfileSaveError(data, fallbackMessage, t) {
 export default function ProfileSetupGate() {
   const pathname = usePathname();
   const { t } = useLocale();
+  const { user, isLoading: sessionLoading } = useSession();
   const [loading, setLoading] = useState(true);
   const [visible, setVisible] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -100,6 +102,17 @@ export default function ProfileSetupGate() {
       pathname?.startsWith("/auth") ||
       pathname?.startsWith("/api");
     if (skip) {
+      setVisible(false);
+      setLoading(false);
+      return;
+    }
+
+    if (sessionLoading) {
+      setLoading(true);
+      return;
+    }
+
+    if (!user) {
       setVisible(false);
       setLoading(false);
       return;
@@ -131,7 +144,7 @@ export default function ProfileSetupGate() {
         setVisible(false);
       })
       .finally(() => setLoading(false));
-  }, [pathname]);
+  }, [pathname, sessionLoading, user]);
 
   useEffect(() => {
     if (!visible || typeof document === "undefined") {

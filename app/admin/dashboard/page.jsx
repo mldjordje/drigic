@@ -3,17 +3,21 @@ import { getDb, schema } from "@/lib/db/client";
 
 async function getStats() {
   const db = getDb();
-  const [servicesCount] = await db.select({ value: count() }).from(schema.services);
-  const [bookingsCount] = await db.select({ value: count() }).from(schema.bookings);
-  const [vipCount] = await db.select({ value: count() }).from(schema.vipRequests);
-  const [mediaCount] = await db.select({ value: count() }).from(schema.galleryMedia);
-  const [announcementsCount] = await db
-    .select({ value: count() })
-    .from(schema.homeAnnouncements);
-  const [clientsCount] = await db
-    .select({ value: count() })
-    .from(schema.users)
-    .where(eq(schema.users.role, "client"));
+  const [
+    [servicesCount],
+    [bookingsCount],
+    [vipCount],
+    [mediaCount],
+    [announcementsCount],
+    [clientsCount],
+  ] = await Promise.all([
+    db.select({ value: count() }).from(schema.services),
+    db.select({ value: count() }).from(schema.bookings),
+    db.select({ value: count() }).from(schema.vipRequests),
+    db.select({ value: count() }).from(schema.galleryMedia),
+    db.select({ value: count() }).from(schema.homeAnnouncements),
+    db.select({ value: count() }).from(schema.users).where(eq(schema.users.role, "client")),
+  ]);
 
   return {
     services: servicesCount?.value || 0,

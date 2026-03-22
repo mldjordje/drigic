@@ -1,10 +1,12 @@
-import { fail, ok } from "@/lib/api/http";
+import { unstable_cache } from "next/cache";
+import { fail, ok, publicOk } from "@/lib/api/http";
 import {
   getAvailabilityByDay,
   getAvailabilityByMonth,
 } from "@/lib/booking/engine";
 
 export const runtime = "nodejs";
+const MONTH_REVALIDATE_SECONDS = 60;
 
 function parseServiceIds(queryString = "") {
   return queryString
@@ -41,6 +43,18 @@ function parseServiceSelections(value = "") {
   }
 }
 
+const getCachedMonthAvailability = unstable_cache(
+  async (month, serviceIdsKey, serviceSelectionsKey) =>
+    getAvailabilityByMonth({
+      month,
+      serviceIds: parseServiceIds(serviceIdsKey || ""),
+      serviceSelections: parseServiceSelections(serviceSelectionsKey || ""),
+      requireHyaluronicBrand: true,
+    }),
+  ["booking-availability-month"],
+  { revalidate: MONTH_REVALIDATE_SECONDS }
+);
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const day = searchParams.get("date");
@@ -54,13 +68,21 @@ export async function GET(request) {
 
   try {
     if (month) {
-      const data = await getAvailabilityByMonth({
+      const serviceIdsKey = serviceIds.join(",");
+      const serviceSelectionsKey = JSON.stringify(serviceSelections);
+      const data = await getCachedMonthAvailability(
         month,
-        serviceIds,
-        serviceSelections,
-        requireHyaluronicBrand: true,
-      });
-      return ok({ ok: true, mode: "month", ...data });
+        serviceIdsKey,
+        serviceSelectionsKey
+      );
+
+      return publicOk(
+        { ok: true, mode: "month", ...data },
+        {
+          sMaxAge: MONTH_REVALIDATE_SECONDS,
+          staleWhileRevalidate: 300,
+        }
+      );
     }
 
     const data = await getAvailabilityByDay({

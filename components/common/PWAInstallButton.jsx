@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/common/LocaleProvider";
+import { useSession } from "@/components/common/SessionProvider";
 
 function isIosDevice() {
   if (typeof navigator === "undefined") {
@@ -48,11 +49,11 @@ async function parseResponse(response) {
 export default function PWAInstallButton() {
   const pathname = usePathname();
   const { locale } = useLocale();
+  const { user } = useSession();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -188,19 +189,6 @@ export default function PWAInstallButton() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/me/profile")
-      .then(async (res) => {
-        if (!res.ok) {
-          return null;
-        }
-        const data = await parseResponse(res);
-        return data?.user || null;
-      })
-      .then((user) => setIsLoggedIn(Boolean(user)))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       return;
     }
@@ -247,7 +235,7 @@ export default function PWAInstallButton() {
       return;
     }
 
-    if (!isLoggedIn) {
+    if (!user) {
       setMessage(copy.loginForPush);
       return;
     }
@@ -304,7 +292,7 @@ export default function PWAInstallButton() {
   }
 
   const showInstall = !installed;
-  const showPush = isLoggedIn && !pushEnabled;
+  const showPush = Boolean(user) && !pushEnabled;
   const isAdminRoute = pathname?.startsWith("/admin");
 
   if (isAdminRoute || (!showInstall && !showPush)) {

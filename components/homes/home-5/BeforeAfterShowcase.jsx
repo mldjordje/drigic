@@ -252,6 +252,8 @@ export default function BeforeAfterShowcase({
                     <img
                       src={item.collageImageUrl || item.beforeImageUrl}
                       alt={`${item.treatmentType || "Tretman"} pre i posle`}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <span>Pre / Posle</span>
                   </div>
@@ -309,6 +311,7 @@ export default function BeforeAfterShowcase({
           <img
             src={lightboxImage}
             alt="Pre i posle"
+            decoding="async"
             style={{
               maxWidth: "92vw",
               maxHeight: "90vh",

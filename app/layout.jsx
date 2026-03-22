@@ -9,6 +9,7 @@ import "rc-slider/assets/index.css";
 import { Cormorant_Infant } from "next/font/google";
 import { cookies } from "next/headers";
 import AppProviders from "@/components/common/AppProviders";
+import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
 
 const cormorantInfantTitle = Cormorant_Infant({
@@ -29,6 +30,8 @@ export const metadata = {
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+  const initialSession = sessionToken ? await verifySessionToken(sessionToken) : null;
 
   return (
     <html lang={locale} style={{ overflowX: "hidden", width: "100%" }}>
@@ -40,7 +43,7 @@ export default async function RootLayout({ children }) {
           "--body-font": '"HelveticaNeueRoman", "Helvetica Neue", Helvetica, Arial, sans-serif',
         }}
       >
-        <AppProviders initialLocale={locale}>
+        <AppProviders initialLocale={locale} initialSession={initialSession}>
           {children}
         </AppProviders>
       </body>

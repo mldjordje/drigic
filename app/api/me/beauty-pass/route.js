@@ -14,13 +14,13 @@ export async function GET(request) {
   const db = getDb();
   const now = new Date();
 
-  const [profile] = await db
+  const profilePromise = db
     .select()
     .from(schema.profiles)
     .where(eq(schema.profiles.userId, auth.user.id))
     .limit(1);
 
-  const treatmentRows = await db
+  const treatmentRowsPromise = db
     .select({
       id: schema.treatmentRecords.id,
       bookingId: schema.treatmentRecords.bookingId,
@@ -39,6 +39,49 @@ export async function GET(request) {
     )
     .where(eq(schema.treatmentRecords.userId, auth.user.id))
     .orderBy(desc(schema.treatmentRecords.treatmentDate));
+
+  const upcomingBookingsPromise = db
+    .select()
+    .from(schema.bookings)
+    .where(
+      and(
+        eq(schema.bookings.userId, auth.user.id),
+        gte(schema.bookings.startsAt, now),
+        inArray(schema.bookings.status, ["pending", "confirmed"])
+      )
+    )
+    .orderBy(asc(schema.bookings.startsAt));
+
+  const penaltiesPromise = db
+    .select()
+    .from(schema.penalties)
+    .where(eq(schema.penalties.userId, auth.user.id))
+    .orderBy(desc(schema.penalties.createdAt));
+
+  const productsPromise = db
+    .select({
+      id: schema.treatmentProducts.id,
+      name: schema.treatmentProducts.name,
+      logoUrl: schema.treatmentProducts.logoUrl,
+      sortOrder: schema.treatmentProducts.sortOrder,
+    })
+    .from(schema.treatmentProducts)
+    .where(eq(schema.treatmentProducts.isActive, true))
+    .orderBy(asc(schema.treatmentProducts.sortOrder), asc(schema.treatmentProducts.name));
+
+  const [
+    [profile],
+    treatmentRows,
+    upcomingBookings,
+    penalties,
+    products,
+  ] = await Promise.all([
+    profilePromise,
+    treatmentRowsPromise,
+    upcomingBookingsPromise,
+    penaltiesPromise,
+    productsPromise,
+  ]);
 
   // Fetch media for all treatment records in one query
   const recordIds = treatmentRows.map((r) => r.id);
@@ -81,35 +124,6 @@ export async function GET(request) {
         }
       : null,
   }));
-
-  const upcomingBookings = await db
-    .select()
-    .from(schema.bookings)
-    .where(
-      and(
-        eq(schema.bookings.userId, auth.user.id),
-        gte(schema.bookings.startsAt, now),
-        inArray(schema.bookings.status, ["pending", "confirmed"])
-      )
-    )
-    .orderBy(asc(schema.bookings.startsAt));
-
-  const penalties = await db
-    .select()
-    .from(schema.penalties)
-    .where(eq(schema.penalties.userId, auth.user.id))
-    .orderBy(desc(schema.penalties.createdAt));
-
-  const products = await db
-    .select({
-      id: schema.treatmentProducts.id,
-      name: schema.treatmentProducts.name,
-      logoUrl: schema.treatmentProducts.logoUrl,
-      sortOrder: schema.treatmentProducts.sortOrder,
-    })
-    .from(schema.treatmentProducts)
-    .where(eq(schema.treatmentProducts.isActive, true))
-    .orderBy(asc(schema.treatmentProducts.sortOrder), asc(schema.treatmentProducts.name));
 
   return ok({
     ok: true,

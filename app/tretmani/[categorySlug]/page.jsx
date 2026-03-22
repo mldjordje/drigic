@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { and, asc, eq, gte, isNull, lte, or } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Header4 from "@/components/headers/Header4";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/services/category-map";
 
 export const dynamic = "force-dynamic";
+const CATEGORY_DATA_REVALIDATE = 300;
 
 const FALLBACK_SITE_URL = "https://drigic.rs";
 
@@ -57,119 +59,127 @@ export async function generateMetadata({ params }) {
   };
 }
 
-async function loadCategoryServices(categorySlug) {
-  const categorySpec = getCategorySpecBySlug(categorySlug);
-  if (!categorySpec) {
-    return null;
-  }
+const loadCategoryServices = unstable_cache(
+  async (categorySlug) => {
+    const categorySpec = getCategorySpecBySlug(categorySlug);
+    if (!categorySpec) {
+      return null;
+    }
 
-  const db = getDb();
-  const now = new Date();
+    const db = getDb();
+    const now = new Date();
 
-  const [category] = await db
-    .select({
-      id: schema.serviceCategories.id,
-      name: schema.serviceCategories.name,
-      sortOrder: schema.serviceCategories.sortOrder,
-    })
-    .from(schema.serviceCategories)
-    .where(
-      and(
-        eq(schema.serviceCategories.name, categorySpec.name),
-        eq(schema.serviceCategories.isActive, true)
-      )
-    )
-    .orderBy(asc(schema.serviceCategories.sortOrder))
-    .limit(1);
-
-  if (!category) {
-    return {
-      categorySpec,
-      category: null,
-      services: [],
-    };
-  }
-
-  const rows = await db
-    .select({
-      id: schema.services.id,
-      slug: schema.services.slug,
-      name: schema.services.name,
-      description: schema.services.description,
-      priceRsd: schema.services.priceRsd,
-      durationMin: schema.services.durationMin,
-      promoPriceRsd: schema.servicePromotions.promoPriceRsd,
-      promoStartsAt: schema.servicePromotions.startsAt,
-      promoEndsAt: schema.servicePromotions.endsAt,
-      promoActive: schema.servicePromotions.isActive,
-      promotionTitle: schema.servicePromotions.title,
-    })
-    .from(schema.services)
-    .leftJoin(
-      schema.servicePromotions,
-      and(
-        eq(schema.servicePromotions.serviceId, schema.services.id),
-        eq(schema.servicePromotions.isActive, true),
-        or(isNull(schema.servicePromotions.startsAt), lte(schema.servicePromotions.startsAt, now)),
-        or(isNull(schema.servicePromotions.endsAt), gte(schema.servicePromotions.endsAt, now))
-      )
-    )
-    .where(
-      and(
-        eq(schema.services.categoryId, category.id),
-        eq(schema.services.isActive, true),
-        eq(schema.services.kind, "single")
-      )
-    )
-    .orderBy(asc(schema.services.name));
-
-  const dedupedRows = Array.from(new Map(rows.map((row) => [row.id, row])).values());
-  const services = dedupedRows.map((row) => ({
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    description: row.description || "",
-    durationMin: Number(row.durationMin || 0),
-    price: Number(row.priceRsd || 0),
-    promotion:
-      row.promoPriceRsd !== null && row.promoPriceRsd !== undefined && row.promoActive
-        ? {
-            title: row.promotionTitle || "Promocija",
-            price: Number(row.promoPriceRsd),
-          }
-        : null,
-  }));
-
-  return {
-    categorySpec,
-    category,
-    services,
-  };
-}
-
-async function loadCategoryBeforeAfter(categorySlug) {
-  const db = getDb();
-  try {
-    return await db
+    const [category] = await db
       .select({
-        id: schema.beforeAfterCases.id,
-        treatmentType: schema.beforeAfterCases.treatmentType,
-        beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
-        afterImageUrl: schema.beforeAfterCases.afterImageUrl,
-        collageImageUrl: schema.beforeAfterCases.collageImageUrl,
+        id: schema.serviceCategories.id,
+        name: schema.serviceCategories.name,
+        sortOrder: schema.serviceCategories.sortOrder,
       })
-      .from(schema.beforeAfterCases)
+      .from(schema.serviceCategories)
       .where(
         and(
-          eq(schema.beforeAfterCases.isPublished, true),
-          eq(schema.beforeAfterCases.serviceCategory, categorySlug)
+          eq(schema.serviceCategories.name, categorySpec.name),
+          eq(schema.serviceCategories.isActive, true)
         )
       )
-      .orderBy(asc(schema.beforeAfterCases.createdAt));
-  } catch {
-    return [];
-  }
-}
+      .orderBy(asc(schema.serviceCategories.sortOrder))
+      .limit(1);
+
+    if (!category) {
+      return {
+        categorySpec,
+        category: null,
+        services: [],
+      };
+    }
+
+    const rows = await db
+      .select({
+        id: schema.services.id,
+        slug: schema.services.slug,
+        name: schema.services.name,
+        description: schema.services.description,
+        priceRsd: schema.services.priceRsd,
+        durationMin: schema.services.durationMin,
+        promoPriceRsd: schema.servicePromotions.promoPriceRsd,
+        promoStartsAt: schema.servicePromotions.startsAt,
+        promoEndsAt: schema.servicePromotions.endsAt,
+        promoActive: schema.servicePromotions.isActive,
+        promotionTitle: schema.servicePromotions.title,
+      })
+      .from(schema.services)
+      .leftJoin(
+        schema.servicePromotions,
+        and(
+          eq(schema.servicePromotions.serviceId, schema.services.id),
+          eq(schema.servicePromotions.isActive, true),
+          or(isNull(schema.servicePromotions.startsAt), lte(schema.servicePromotions.startsAt, now)),
+          or(isNull(schema.servicePromotions.endsAt), gte(schema.servicePromotions.endsAt, now))
+        )
+      )
+      .where(
+        and(
+          eq(schema.services.categoryId, category.id),
+          eq(schema.services.isActive, true),
+          eq(schema.services.kind, "single")
+        )
+      )
+      .orderBy(asc(schema.services.name));
+
+    const dedupedRows = Array.from(new Map(rows.map((row) => [row.id, row])).values());
+    const services = dedupedRows.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      description: row.description || "",
+      durationMin: Number(row.durationMin || 0),
+      price: Number(row.priceRsd || 0),
+      promotion:
+        row.promoPriceRsd !== null && row.promoPriceRsd !== undefined && row.promoActive
+          ? {
+              title: row.promotionTitle || "Promocija",
+              price: Number(row.promoPriceRsd),
+            }
+          : null,
+    }));
+
+    return {
+      categorySpec,
+      category,
+      services,
+    };
+  },
+  ["treatment-category-services"],
+  { revalidate: CATEGORY_DATA_REVALIDATE }
+);
+
+const loadCategoryBeforeAfter = unstable_cache(
+  async (categorySlug) => {
+    const db = getDb();
+    try {
+      return await db
+        .select({
+          id: schema.beforeAfterCases.id,
+          treatmentType: schema.beforeAfterCases.treatmentType,
+          beforeImageUrl: schema.beforeAfterCases.beforeImageUrl,
+          afterImageUrl: schema.beforeAfterCases.afterImageUrl,
+          collageImageUrl: schema.beforeAfterCases.collageImageUrl,
+        })
+        .from(schema.beforeAfterCases)
+        .where(
+          and(
+            eq(schema.beforeAfterCases.isPublished, true),
+            eq(schema.beforeAfterCases.serviceCategory, categorySlug)
+          )
+        )
+        .orderBy(asc(schema.beforeAfterCases.createdAt));
+    } catch {
+      return [];
+    }
+  },
+  ["treatment-category-before-after"],
+  { revalidate: CATEGORY_DATA_REVALIDATE }
+);
 
 function buildFaq(categorySpec) {
   return [
@@ -272,6 +282,8 @@ export default async function TreatmentCategoryPage({ params }) {
                       <img
                         src={item.collageImageUrl || item.beforeImageUrl}
                         alt={item.treatmentType || categorySpec.name}
+                        loading="lazy"
+                        decoding="async"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     </div>

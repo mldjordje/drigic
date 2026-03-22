@@ -29,9 +29,11 @@ function normalizeSessionUser(value) {
 
 export default function SessionProvider({ initialSession = null, children }) {
   const [user, setUser] = useState(() => normalizeSessionUser(initialSession));
+  const [isLoading, setIsLoading] = useState(() => !normalizeSessionUser(initialSession));
 
   useEffect(() => {
     if (user) {
+      setIsLoading(false);
       return;
     }
 
@@ -49,10 +51,12 @@ export default function SessionProvider({ initialSession = null, children }) {
           return;
         }
         setUser(normalizeSessionUser(data?.user || null));
+        setIsLoading(false);
       })
       .catch(() => {
         if (active) {
           setUser(null);
+          setIsLoading(false);
         }
       });
 
@@ -64,15 +68,18 @@ export default function SessionProvider({ initialSession = null, children }) {
   const value = useMemo(
     () => ({
       user,
+      isLoading,
       isLoggedIn: Boolean(user),
       setUser(nextUser) {
         setUser(normalizeSessionUser(nextUser));
+        setIsLoading(false);
       },
       clearUser() {
         setUser(null);
+        setIsLoading(false);
       },
     }),
-    [user]
+    [isLoading, user]
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
