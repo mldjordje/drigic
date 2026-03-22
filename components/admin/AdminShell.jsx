@@ -9,6 +9,7 @@ import { useLocale } from "@/components/common/LocaleProvider";
 const approvedModules = [
   { href: "/admin/kalendar", labelKey: "admin.calendar" },
   { href: "/admin/dashboard", labelKey: "admin.dashboard" },
+  { href: "/admin/tutorial", label: "Tutorial" },
   { href: "/admin/podesavanja", labelKey: "admin.settings" },
   { href: "/admin/bookings", labelKey: "admin.bookings" },
   { href: "/admin/klijenti", labelKey: "admin.clients" },
@@ -33,6 +34,13 @@ const quickLinks = [
   { href: "/api/auth/google?next=/admin", labelKey: "admin.changeAccount" },
 ];
 
+function resolveNavLabel(item, t) {
+  if (item.labelKey) {
+    return t(item.labelKey);
+  }
+  return item.label || "";
+}
+
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const { t } = useLocale();
@@ -54,7 +62,7 @@ export default function AdminShell({ children }) {
     const current = approvedModules.find((item) =>
       pathname === item.href || pathname.startsWith(`${item.href}/`)
     );
-    return current ? t(current.labelKey) : "Admin";
+    return current ? resolveNavLabel(current, t) : "Admin";
   }, [pathname, t]);
 
   return (
@@ -79,7 +87,7 @@ export default function AdminShell({ children }) {
                   className={`admin-template-nav-item ${active ? "is-active" : ""}`}
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>{t(item.labelKey)}</span>
+                  <span>{resolveNavLabel(item, t)}</span>
                 </Link>
               );
             })}
@@ -97,7 +105,7 @@ export default function AdminShell({ children }) {
                   className="admin-template-nav-item"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>{t(item.labelKey)}</span>
+                  <span>{resolveNavLabel(item, t)}</span>
                 </a>
               ) : (
                 <Link
@@ -106,7 +114,7 @@ export default function AdminShell({ children }) {
                   className="admin-template-nav-item"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span>{t(item.labelKey)}</span>
+                  <span>{resolveNavLabel(item, t)}</span>
                 </Link>
               )
             )}

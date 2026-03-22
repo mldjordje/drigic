@@ -205,12 +205,76 @@ function buildBookingSectionGroups(categories, section) {
     .filter((category) => category.services.length);
 }
 
+const BOOKING_CATALOG_COPY = {
+  sr: {
+    actions: "Akcije",
+    services: "Usluge",
+    packagesEmpty: "Trenutno nema aktivnih paketa.",
+    actionsEmpty: "Trenutno nema aktivnih akcija.",
+    servicesEmpty: "Trenutno nema aktivnih usluga u ovoj sekciji.",
+  },
+  en: {
+    actions: "Promotions",
+    services: "Services",
+    packagesEmpty: "There are currently no active packages.",
+    actionsEmpty: "There are currently no active promotions.",
+    servicesEmpty: "There are currently no active services in this section.",
+  },
+  de: {
+    actions: "Aktionen",
+    services: "Leistungen",
+    packagesEmpty: "Derzeit gibt es keine aktiven Pakete.",
+    actionsEmpty: "Derzeit gibt es keine aktiven Aktionen.",
+    servicesEmpty: "Derzeit gibt es in diesem Bereich keine aktiven Leistungen.",
+  },
+  it: {
+    actions: "Promozioni",
+    services: "Servizi",
+    packagesEmpty: "Al momento non ci sono pacchetti attivi.",
+    actionsEmpty: "Al momento non ci sono promozioni attive.",
+    servicesEmpty: "Al momento non ci sono servizi attivi in questa sezione.",
+  },
+};
+
+function BookingCatalogToggle({ title, isOpen, onToggle, countLabel }) {
+  return (
+    <button
+      type="button"
+      className={`clinic-action-btn${isOpen ? " is-active" : ""}`}
+      onClick={onToggle}
+      aria-expanded={isOpen}
+      style={bookingCatalogToggleStyle}
+    >
+      <span className="clinic-action-btn__text">
+        <span className="clinic-action-btn__label">{title}</span>
+        {countLabel ? (
+          <span className="clinic-action-btn__sublabel">{countLabel}</span>
+        ) : null}
+      </span>
+      <span
+        className={`clinic-action-btn__arrow${isOpen ? " is-rotated" : ""}`}
+        style={bookingCatalogArrowStyle}
+      >
+        <span aria-hidden="true">›</span>
+      </span>
+    </button>
+  );
+}
+
+function BookingCatalogPanel({ isOpen, children }) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return <div style={bookingCatalogPanelStyle}>{children}</div>;
+}
+
 export default function BookingInlineForm({
   googleNextPath = "/",
   cardClassName = "",
   showUpcoming = true,
 }) {
-  const { t, intlLocale } = useLocale();
+  const { t, intlLocale, locale } = useLocale();
   const { user } = useSession();
   const [services, setServices] = useState([]);
   const [selectedMap, setSelectedMap] = useState({});
@@ -234,9 +298,14 @@ export default function BookingInlineForm({
   const [error, setError] = useState("");
   const [hideNextDateCta, setHideNextDateCta] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [activeCatalogSection, setActiveCatalogSection] = useState("services");
   const dateStepRef = useRef(null);
   const faceSectionRef = useRef(null);
   const bodySectionRef = useRef(null);
+  const bookingCatalogCopy = useMemo(
+    () => BOOKING_CATALOG_COPY[locale] || BOOKING_CATALOG_COPY.sr,
+    [locale]
+  );
 
   const today = useMemo(() => todayIsoDate(), []);
   const monthKey = useMemo(() => formatMonthKey(calendarMonth), [calendarMonth]);
@@ -294,14 +363,32 @@ export default function BookingInlineForm({
       .filter((category) => category.services.length);
   }, [services]);
 
+  const promotionCategoryGroups = useMemo(() => {
+    return singleCategoryGroups
+      .map((category) => ({
+        ...category,
+        services: (category.services || []).filter((service) => Boolean(service.promotion)),
+      }))
+      .filter((category) => category.services.length);
+  }, [singleCategoryGroups]);
+
+  const standardSingleCategoryGroups = useMemo(() => {
+    return singleCategoryGroups
+      .map((category) => ({
+        ...category,
+        services: (category.services || []).filter((service) => !service.promotion),
+      }))
+      .filter((category) => category.services.length);
+  }, [singleCategoryGroups]);
+
   const faceCategoryGroups = useMemo(
-    () => buildBookingSectionGroups(singleCategoryGroups, "face"),
-    [singleCategoryGroups]
+    () => buildBookingSectionGroups(standardSingleCategoryGroups, "face"),
+    [standardSingleCategoryGroups]
   );
 
   const bodyCategoryGroups = useMemo(
-    () => buildBookingSectionGroups(singleCategoryGroups, "body"),
-    [singleCategoryGroups]
+    () => buildBookingSectionGroups(standardSingleCategoryGroups, "body"),
+    [standardSingleCategoryGroups]
   );
 
   const serviceSelections = useMemo(
@@ -953,75 +1040,155 @@ export default function BookingInlineForm({
           </p>
         ) : null}
 
-        {packageServices.length ? (
-          <div className="clinic-service-category clinic-reveal">
-            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{t("booking.packages")}</h4>
-            <div className="clinic-service-grid clinic-service-grid--desktop-2">
-              {packageServices.map((service, serviceIndex) => {
-                const selected = Boolean(selectedMap[service.id]);
-                return (
-                  <div
-                    key={service.id}
-                    style={{
-                      ...checkboxRowStyle,
-                      "--clinic-reveal-delay": `${Math.min(serviceIndex, 10) * 45}ms`,
-                    }}
-                    className={`clinic-service-option clinic-reveal ${
-                      selected ? "is-selected" : ""
-                    }`}
-                  >
-                    <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
-                      <input
-                        type="checkbox"
-                        checked={selected}
-                        onChange={(event) => updateSelectedService(service, event.target.checked)}
-                      />
-                      <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
-                        <strong>{service.name}</strong>
-                        <small>
-                          {service.durationMin} min - {getServicePriceLabel(service)}
-                        </small>
-                        {service.packageItems?.length ? (
-                          <small style={{ color: "#cbd9ee" }}>
-                            Paket:{" "}
-                            {service.packageItems
-                              .map(
-                                (item) =>
-                                  `${item.serviceName} x${Math.max(1, Number(item.quantity || 1))}`
-                              )
-                              .join(", ")}
-                          </small>
-                        ) : null}
-                      </span>
-                    </label>
-                  </div>
-                );
-              })}
-            </div>
+        <div style={bookingCatalogStackStyle}>
+          <div className="clinic-reveal">
+            <BookingCatalogToggle
+              title={t("booking.packages")}
+              isOpen={activeCatalogSection === "packages"}
+              onToggle={() =>
+                setActiveCatalogSection((prev) => (prev === "packages" ? "" : "packages"))
+              }
+              countLabel={packageServices.length ? "" : bookingCatalogCopy.packagesEmpty}
+            />
+            <BookingCatalogPanel isOpen={activeCatalogSection === "packages"}>
+              {packageServices.length ? (
+                <div className="clinic-service-grid clinic-service-grid--desktop-2">
+                  {packageServices.map((service, serviceIndex) => {
+                    const selected = Boolean(selectedMap[service.id]);
+                    return (
+                      <div
+                        key={service.id}
+                        style={{
+                          ...checkboxRowStyle,
+                          "--clinic-reveal-delay": `${Math.min(serviceIndex, 10) * 45}ms`,
+                        }}
+                        className={`clinic-service-option clinic-reveal ${
+                          selected ? "is-selected" : ""
+                        }`}
+                      >
+                        <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(event) => updateSelectedService(service, event.target.checked)}
+                          />
+                          <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
+                            <strong>{service.name}</strong>
+                            <small>
+                              {service.durationMin} min - {getServicePriceLabel(service)}
+                            </small>
+                            {service.packageItems?.length ? (
+                              <small style={{ color: "#cbd9ee" }}>
+                                Paket:{" "}
+                                {service.packageItems
+                                  .map(
+                                    (item) =>
+                                      `${item.serviceName} x${Math.max(1, Number(item.quantity || 1))}`
+                                  )
+                                  .join(", ")}
+                              </small>
+                            ) : null}
+                          </span>
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.packagesEmpty}</p>
+              )}
+            </BookingCatalogPanel>
           </div>
-        ) : null}
 
-        {faceCategoryGroups.map((category, categoryIndex) =>
-          renderCategoryGroup(
-            category,
-            categoryIndex,
-            categoryIndex === 0 ? faceSectionRef : null,
-            "face"
-          )
-        )}
-        {bodyCategoryGroups.length ? (
-          <div className="clinic-service-category clinic-reveal" ref={bodySectionRef}>
-            <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{t("booking.body")}</h4>
+          <div className="clinic-reveal">
+            <BookingCatalogToggle
+              title={bookingCatalogCopy.actions}
+              isOpen={activeCatalogSection === "actions"}
+              onToggle={() =>
+                setActiveCatalogSection((prev) => (prev === "actions" ? "" : "actions"))
+              }
+              countLabel={promotionCategoryGroups.length ? "" : bookingCatalogCopy.actionsEmpty}
+            />
+            <BookingCatalogPanel isOpen={activeCatalogSection === "actions"}>
+              {promotionCategoryGroups.length ? (
+                promotionCategoryGroups.map((category, categoryIndex) =>
+                  renderCategoryGroup(category, categoryIndex, null, "promotion")
+                )
+              ) : (
+                <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.actionsEmpty}</p>
+              )}
+            </BookingCatalogPanel>
           </div>
-        ) : null}
-        {bodyCategoryGroups.map((category, categoryIndex) =>
-          renderCategoryGroup(
-            category,
-            categoryIndex + faceCategoryGroups.length,
-            null,
-            "body"
-          )
-        )}
+
+          <div className="clinic-reveal">
+            <BookingCatalogToggle
+              title={bookingCatalogCopy.services}
+              isOpen={activeCatalogSection === "services"}
+              onToggle={() =>
+                setActiveCatalogSection((prev) => (prev === "services" ? "" : "services"))
+              }
+              countLabel={
+                faceCategoryGroups.length || bodyCategoryGroups.length
+                  ? ""
+                  : bookingCatalogCopy.servicesEmpty
+              }
+            />
+            <BookingCatalogPanel isOpen={activeCatalogSection === "services"}>
+              {(faceCategoryGroups.length || bodyCategoryGroups.length) ? (
+                <>
+                  {(faceCategoryGroups.length || bodyCategoryGroups.length) ? (
+                    <div className="clinic-booking-mini-nav">
+                      {faceCategoryGroups.length ? (
+                        <button
+                          type="button"
+                          className="clinic-booking-mini-nav__btn"
+                          onClick={() => scrollToSection(faceSectionRef)}
+                        >
+                          {t("booking.face")}
+                        </button>
+                      ) : null}
+                      {bodyCategoryGroups.length ? (
+                        <button
+                          type="button"
+                          className="clinic-booking-mini-nav__btn"
+                          onClick={() => scrollToSection(bodySectionRef)}
+                        >
+                          {t("booking.body")}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {faceCategoryGroups.map((category, categoryIndex) =>
+                    renderCategoryGroup(
+                      category,
+                      categoryIndex,
+                      categoryIndex === 0 ? faceSectionRef : null,
+                      "face"
+                    )
+                  )}
+                  {bodyCategoryGroups.length ? (
+                    <div className="clinic-service-category clinic-reveal" ref={bodySectionRef}>
+                      <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>
+                        {t("booking.body")}
+                      </h4>
+                    </div>
+                  ) : null}
+                  {bodyCategoryGroups.map((category, categoryIndex) =>
+                    renderCategoryGroup(
+                      category,
+                      categoryIndex + faceCategoryGroups.length,
+                      null,
+                      "body"
+                    )
+                  )}
+                </>
+              ) : (
+                <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.servicesEmpty}</p>
+              )}
+            </BookingCatalogPanel>
+          </div>
+        </div>
+
         <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseDate")}</h3>
 
         {!serviceSelections.length ? (
@@ -1242,6 +1409,49 @@ const summaryStyle = {
   background: "var(--clinic-summary-bg)",
   border: "1px solid var(--clinic-card-border)",
   color: "var(--clinic-text-strong)",
+};
+
+const bookingCatalogStackStyle = {
+  display: "grid",
+  gap: 14,
+  marginTop: 14,
+  marginBottom: 18,
+};
+
+const bookingCatalogToggleStyle = {
+  width: "100%",
+  justifyContent: "space-between",
+  border: "1px solid var(--clinic-card-border)",
+  background: "rgba(15, 23, 37, 0.72)",
+  borderRadius: 16,
+  padding: "16px 18px",
+  color: "var(--clinic-text-strong)",
+};
+
+const bookingCatalogArrowStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 30,
+  height: 30,
+  borderRadius: "50%",
+  background: "rgba(255,255,255,0.08)",
+  fontSize: 24,
+  lineHeight: 1,
+  transform: "rotate(90deg)",
+};
+
+const bookingCatalogPanelStyle = {
+  marginTop: 12,
+  padding: 16,
+  borderRadius: 16,
+  border: "1px solid var(--clinic-card-border)",
+  background: "rgba(10, 16, 28, 0.55)",
+};
+
+const bookingCatalogEmptyStyle = {
+  margin: 0,
+  color: "var(--clinic-text-muted)",
 };
 
 const primaryButtonStyle = {
