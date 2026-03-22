@@ -1422,7 +1422,8 @@ const bookingCatalogToggleStyle = {
   width: "100%",
   justifyContent: "space-between",
   border: "1px solid var(--clinic-card-border)",
-  background: "rgba(15, 23, 37, 0.72)",
+  background:
+    "linear-gradient(180deg, rgba(18, 20, 25, 0.92), rgba(10, 12, 16, 0.92))",
   borderRadius: 16,
   padding: "16px 18px",
   color: "var(--clinic-text-strong)",
@@ -1446,7 +1447,8 @@ const bookingCatalogPanelStyle = {
   padding: 16,
   borderRadius: 16,
   border: "1px solid var(--clinic-card-border)",
-  background: "rgba(10, 16, 28, 0.55)",
+  background:
+    "linear-gradient(180deg, rgba(12, 14, 19, 0.84), rgba(7, 9, 13, 0.84))",
 };
 
 const bookingCatalogEmptyStyle = {

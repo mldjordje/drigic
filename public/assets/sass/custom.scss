@@ -4543,8 +4543,11 @@ a.clinic-glow-btn {
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-booking-form {
-  background: rgba(0, 0, 0, 0.94) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.03), transparent 38%),
+    linear-gradient(180deg, rgba(11, 13, 18, 0.98), rgba(6, 8, 12, 0.98)) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.34);
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__card,
@@ -4848,6 +4851,60 @@ a.clinic-glow-btn {
   text-shadow: none !important;
 }
 
+.clinic-theme-dark .clinic-home5 .clinic-booking-mini-nav__btn {
+  background: rgba(6, 8, 12, 0.98);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #f7f7f7;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-booking-mini-nav__btn:hover {
+  background: rgba(20, 23, 29, 0.98);
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-service-category h4 {
+  color: #f5f5f5 !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-service-option {
+  background: linear-gradient(180deg, rgba(8, 10, 14, 0.92), rgba(6, 8, 12, 0.92));
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-service-option:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(13, 16, 22, 0.96), rgba(8, 10, 14, 0.96));
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-service-option.is-selected {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: linear-gradient(180deg, rgba(21, 25, 32, 0.98), rgba(10, 12, 17, 0.98));
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-service-option strong,
+.clinic-theme-dark .clinic-home5 .clinic-service-option span,
+.clinic-theme-dark .clinic-home5 .clinic-service-option small {
+  color: #f3f4f6 !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-consultation-card {
+  border-color: rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 45%),
+    linear-gradient(180deg, #181b21 0%, #0e1116 100%);
+  color: #f3f4f6;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-consultation-card small {
+  color: rgba(229, 231, 235, 0.9) !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-consultation-card input {
+  accent-color: #f3f4f6;
+}
+
 @media (max-width: 600px) {
   .clinic-hero-actions__notice-wrap {
     padding: 0 6px;
@@ -5064,6 +5121,13 @@ body,
   border: 1px solid var(--clinic-card-border);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(239, 244, 252, 0.9));
   color: #162132;
+}
+
+.clinic-consultation-card strong,
+.clinic-consultation-card small,
+.clinic-consultation-card span,
+.clinic-consultation-card p {
+  color: inherit;
 }
 
 .clinic-booking-form,
