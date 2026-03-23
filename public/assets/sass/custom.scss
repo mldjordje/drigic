@@ -154,6 +154,11 @@ a.clinic-glow-btn {
   --clinic-button-bg: rgba(20, 38, 61, 0.95);
   --clinic-button-border: rgba(217, 232, 248, 0.6);
   --clinic-button-text: #f4f8ff;
+  --clinic-catalog-toggle-bg:
+    linear-gradient(180deg, rgba(18, 20, 25, 0.92), rgba(10, 12, 16, 0.92));
+  --clinic-catalog-panel-bg:
+    linear-gradient(180deg, rgba(12, 14, 19, 0.84), rgba(7, 9, 13, 0.84));
+  --clinic-catalog-arrow-bg: rgba(255, 255, 255, 0.08);
   background: #0a0c00;
   color: #edf3ff;
 
@@ -977,16 +982,19 @@ a.clinic-glow-btn {
 
   .clinic-reveal {
     opacity: 0;
-    transform: translateY(36px);
-    transition: transform 0.8s ease, opacity 0.8s ease;
+    transform: translate3d(0, 36px, 0) scale(0.985);
+    filter: blur(8px);
+    transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.8s ease,
+      filter 0.8s ease;
     transition-delay: var(--clinic-reveal-delay, 0ms);
-    will-change: transform, opacity;
+    will-change: transform, opacity, filter;
   }
 
   .clinic-reveal.is-visible,
   .clinic-reveal[data-clinic-revealed="1"] {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
   }
 
   .clinic-float-card {
@@ -1048,6 +1056,7 @@ a.clinic-glow-btn {
     transition: border-color 0.22s ease, transform 0.22s ease,
       background-color 0.22s ease;
     cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
   }
 
   .clinic-service-option:hover {
@@ -1065,6 +1074,47 @@ a.clinic-glow-btn {
     background: rgba(28, 28, 28, 0.8);
     box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.34),
       0 8px 22px rgba(7, 14, 22, 0.44);
+  }
+
+  .clinic-service-option__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .clinic-service-option__pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(217, 232, 248, 0.24);
+    background: rgba(7, 11, 17, 0.66);
+    color: #eef4ff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .clinic-service-option__pill.is-price {
+    background: rgba(217, 232, 248, 0.14);
+    border-color: rgba(217, 232, 248, 0.35);
+  }
+
+  .clinic-service-option__package-copy {
+    color: var(--clinic-text-secondary) !important;
+  }
+
+  .clinic-offer-stack,
+  .clinic-offer-group {
+    display: grid;
+    gap: 14px;
+  }
+
+  .clinic-offer-group__title {
+    margin: 0;
+    color: var(--clinic-text-strong);
   }
 
   .clinic-ml-presets {
@@ -1395,7 +1445,42 @@ a.clinic-glow-btn {
     padding: 18px;
     border: 1px solid rgba(217, 232, 248, 0.24);
     display: grid;
+    gap: 12px;
+    text-decoration: none;
+    min-height: 100%;
+    align-content: start;
+  }
+
+  .clinic-treatment-card__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(217, 232, 248, 0.24);
+    background: rgba(10, 18, 29, 0.58);
+    color: #f4f8ff;
+    font-size: 20px;
+  }
+
+  .clinic-treatment-card__body {
+    display: grid;
     gap: 8px;
+    min-height: 100%;
+  }
+
+  .clinic-treatment-card__arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    border: 1px solid rgba(217, 232, 248, 0.22);
+    color: #f4f8ff;
+    margin-left: auto;
+    transition: transform 0.22s ease, border-color 0.22s ease;
   }
 
   .clinic-treatment-card h3 {
@@ -1430,6 +1515,79 @@ a.clinic-glow-btn {
   .clinic-treatment-link:hover {
     border-color: rgba(217, 232, 248, 0.82);
     transform: translateY(-1px);
+  }
+
+  .clinic-treatment-card:hover .clinic-treatment-card__arrow {
+    transform: translateX(3px);
+    border-color: rgba(217, 232, 248, 0.62);
+  }
+
+  .clinic-founder-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(217, 232, 248, 0.24);
+    background: rgba(10, 18, 29, 0.44);
+    color: var(--clinic-text-secondary);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .clinic-founder-copy {
+    position: relative;
+    display: grid;
+    gap: 12px;
+  }
+
+  .clinic-founder-paragraph {
+    margin: 0 !important;
+  }
+
+  .clinic-founder-fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 48px;
+    background: linear-gradient(180deg, rgba(20, 29, 42, 0), rgba(20, 29, 42, 0.94));
+    pointer-events: none;
+    border-radius: 0 0 14px 14px;
+  }
+
+  .clinic-founder-readmore {
+    margin-top: 18px;
+    border: 0;
+    background: transparent;
+    color: #f4f8ff;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0;
+  }
+
+  .clinic-founder-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .clinic-founder-highlight-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(217, 232, 248, 0.24);
+    background: rgba(10, 18, 29, 0.42);
+    color: var(--clinic-text-secondary);
+    font-size: 13px;
+    font-weight: 700;
   }
 
   .clinic-treatment-service-grid {
@@ -2158,6 +2316,42 @@ a.clinic-glow-btn {
   border-color: rgba(15, 23, 42, 0.32) !important;
   box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.14),
     0 8px 20px rgba(15, 23, 42, 0.1) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-service-option {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.clinic-theme-light .clinic-home5 .clinic-service-option__pill {
+  border-color: rgba(15, 23, 42, 0.14);
+  background: rgba(248, 250, 252, 0.98);
+  color: #111827;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-service-option__pill.is-price {
+  background: rgba(226, 232, 240, 0.78);
+  border-color: rgba(15, 23, 42, 0.18);
+}
+
+.clinic-theme-light .clinic-home5 .clinic-offer-group__title,
+.clinic-theme-light .clinic-home5 .clinic-founder-readmore,
+.clinic-theme-light .clinic-home5 .clinic-founder-eyebrow,
+.clinic-theme-light .clinic-home5 .clinic-founder-highlight-chip,
+.clinic-theme-light .clinic-home5 .clinic-treatment-card__arrow,
+.clinic-theme-light .clinic-home5 .clinic-treatment-card__icon {
+  color: #111827 !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-founder-eyebrow,
+.clinic-theme-light .clinic-home5 .clinic-founder-highlight-chip,
+.clinic-theme-light .clinic-home5 .clinic-treatment-card__icon,
+.clinic-theme-light .clinic-home5 .clinic-treatment-card__arrow {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.clinic-theme-light .clinic-home5 .clinic-founder-fade {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.96));
 }
 
 .clinic-theme-light .clinic-home5 .clinic-booking-calendar {
@@ -5064,6 +5258,11 @@ body,
   --clinic-button-bg: #111827;
   --clinic-button-border: #111827;
   --clinic-button-text: #ffffff;
+  --clinic-catalog-toggle-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 247, 251, 0.96));
+  --clinic-catalog-panel-bg:
+    linear-gradient(180deg, rgba(248, 250, 253, 0.96), rgba(240, 244, 249, 0.96));
+  --clinic-catalog-arrow-bg: rgba(15, 23, 42, 0.08);
   background:
     radial-gradient(circle at top right, rgba(223, 232, 247, 0.85), transparent 30%),
     linear-gradient(180deg, #f7f8fb 0%, #eef2f7 100%);
@@ -5165,6 +5364,16 @@ body,
     width: min(100%, calc(100vw - 32px));
   }
 
+  .clinic-founder-highlights {
+    gap: 8px;
+  }
+
+  .clinic-founder-highlight-chip {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
   .clinic-cal-grid {
     gap: 6px;
   }
@@ -5181,5 +5390,19 @@ body,
 
   .clinic-header-actions .clinic-locale-switcher__group {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  .clinic-home5 .clinic-reveal {
+    transform: translate3d(0, 24px, 0) scale(0.992);
+    filter: blur(5px);
+    transition-duration: 0.68s;
+  }
+
+  .clinic-home5 .clinic-treatment-card,
+  .clinic-home5 .clinic-service-option,
+  .clinic-home5 .clinic-before-after-card {
+    border-radius: 20px;
   }
 }

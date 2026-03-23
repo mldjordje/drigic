@@ -25,24 +25,32 @@ export default function Projects() {
             const localizedItem = getLocalizedCategoryCopy(locale, item);
 
             return (
-              <div
+              <Link
                 key={item.slug}
+                href={`/tretmani/${item.slug}`}
                 className={`clinic-treatment-card glass-panel clinic-hover-raise clinic-reveal wow ${
                   index % 2 === 0 ? "img-custom-anim-left" : "img-custom-anim-right"
                 } animated`}
                 data-wow-duration="1.5s"
                 data-wow-delay={`${0.1 + index * 0.06}s`}
+                aria-label={`${localizedItem.name} - ${t("treatments.seeServices")}`}
               >
-                <div className="portfolio-details">
+                <span className="clinic-treatment-card__icon" aria-hidden="true">
+                  <i className={item.iconClass || "fas fa-spa"} />
+                </span>
+                <div className="portfolio-details clinic-treatment-card__body">
                   <h3 className="portfolio-title">{localizedItem.name}</h3>
                   <p className="portfolio-meta" style={{ marginBottom: 10 }}>
                     {localizedItem.shortDescription}
                   </p>
-                  <Link href={`/tretmani/${item.slug}`} className="clinic-treatment-link">
+                  <span className="clinic-treatment-link">
                     {t("treatments.seeServices")}
-                  </Link>
+                  </span>
                 </div>
-              </div>
+                <span className="clinic-treatment-card__arrow" aria-hidden="true">
+                  <i className="fas fa-arrow-right" />
+                </span>
+              </Link>
             );
           })}
         </div>

@@ -36,6 +36,7 @@ export default function AppProviders({
     }
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
     const selector = ".clinic-reveal";
     const observedNodes = new WeakSet();
 
@@ -52,8 +53,8 @@ export default function AppProviders({
           });
         },
         {
-          threshold: 0.2,
-          rootMargin: "0px 0px -8% 0px",
+          threshold: isMobileViewport ? 0.12 : 0.2,
+          rootMargin: isMobileViewport ? "0px 0px -4% 0px" : "0px 0px -8% 0px",
         }
       );
     }

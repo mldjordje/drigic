@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
+import { getLocalizedCategoryCopy } from "@/lib/services/category-copy";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 export const metadata = {
@@ -29,19 +30,31 @@ export default async function TreatmentsIndexPage() {
           </div>
 
           <div className="clinic-treatment-grid">
-            {SERVICE_CATEGORY_SPECS.map((category, index) => (
-              <article
-                key={category.slug}
-                className="clinic-treatment-card glass-panel clinic-hover-raise clinic-reveal"
-                style={{ "--clinic-reveal-delay": `${Math.min(index, 10) * 45}ms` }}
-              >
-                <h3>{category.name}</h3>
-                <p>{category.shortDescription}</p>
-                <Link href={`/tretmani/${category.slug}`} className="clinic-treatment-link">
-                  {t("treatments.seeServices")}
+            {SERVICE_CATEGORY_SPECS.map((category, index) => {
+              const localizedCategory = getLocalizedCategoryCopy(locale, category);
+
+              return (
+                <Link
+                  key={category.slug}
+                  href={`/tretmani/${category.slug}`}
+                  className="clinic-treatment-card glass-panel clinic-hover-raise clinic-reveal"
+                  style={{ "--clinic-reveal-delay": `${Math.min(index, 10) * 45}ms` }}
+                  aria-label={`${localizedCategory.name} - ${t("treatments.seeServices")}`}
+                >
+                  <span className="clinic-treatment-card__icon" aria-hidden="true">
+                    <i className={category.iconClass || "fas fa-spa"} />
+                  </span>
+                  <div className="clinic-treatment-card__body">
+                    <h3>{localizedCategory.name}</h3>
+                    <p>{localizedCategory.shortDescription}</p>
+                    <span className="clinic-treatment-link">{t("treatments.seeServices")}</span>
+                  </div>
+                  <span className="clinic-treatment-card__arrow" aria-hidden="true">
+                    <i className="fas fa-arrow-right" />
+                  </span>
                 </Link>
-              </article>
-            ))}
+              );
+            })}
           </div>
 
           <div className="btn-wrap mt-50 justify-content-center">

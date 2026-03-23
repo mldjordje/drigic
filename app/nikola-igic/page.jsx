@@ -1,11 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { getFounderCopy } from "@/lib/content/founder-copy";
+import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
 
 export const metadata = {
   title: "Dr Nikola Igic | Portfolio",
 };
 
-export default function NikolaIgicPage() {
+export default async function NikolaIgicPage() {
+  const cookieStore = await cookies();
+  const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const copy = getFounderCopy(locale);
+
   return (
     <main
       className="clinic-home5"
@@ -26,12 +33,27 @@ export default function NikolaIgicPage() {
             gap: 18,
           }}
         >
-          <h1 style={{ margin: 0 }}>Dr Nikola Igic</h1>
-          <p style={{ margin: 0, color: "#d3deee" }}>
-            Sertifikovani doktor estetske i anti-age medicine i specijalizant
-            plasticne hirurgije. Fokus je na prirodnim rezultatima, sigurnosti
-            i precizno planiranim tretmanima.
-          </p>
+          <span className="clinic-founder-eyebrow" style={{ width: "fit-content" }}>
+            {copy.eyebrow}
+          </span>
+          <h1 style={{ margin: 0 }}>{copy.title}</h1>
+          <p style={{ margin: 0, color: "var(--clinic-text-secondary)" }}>{copy.summary}</p>
+
+          <div style={{ display: "grid", gap: 12 }}>
+            {copy.paragraphs.map((paragraph) => (
+              <p key={paragraph} style={{ margin: 0, color: "var(--clinic-text-secondary)" }}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
+
+          <div className="clinic-founder-highlights" style={{ marginTop: -4 }}>
+            {copy.highlights.map((highlight) => (
+              <span key={highlight} className="clinic-founder-highlight-chip">
+                {highlight}
+              </span>
+            ))}
+          </div>
 
           <div
             style={{
@@ -41,8 +63,8 @@ export default function NikolaIgicPage() {
             }}
           >
             <Image
-              src="/assets/img/slika1.png"
-              alt="Dr Nikola Igic"
+              src="/assets/img/doctor-about.jpg"
+              alt={copy.imageAlt}
               width={680}
               height={860}
               style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 14 }}
@@ -58,7 +80,7 @@ export default function NikolaIgicPage() {
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <Link href="/booking" className="btn clinic-glow-btn clinic-hero-cta-btn">
-              Zakazi termin
+              {copy.primaryCta}
             </Link>
             <Link href="/#osnivac" className="btn clinic-glow-btn clinic-hero-cta-btn">
               Nazad na pocetnu

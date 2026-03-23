@@ -13,9 +13,9 @@ export default function HomePageSections() {
     <>
       {!isLoggedIn ? <About /> : null}
       <HeroActions />
-      <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
       <Projects />
       {isLoggedIn ? <About /> : null}
+      <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
     </>
   );
 }

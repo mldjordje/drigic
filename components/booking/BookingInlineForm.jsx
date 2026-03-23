@@ -142,9 +142,21 @@ function getMlDurationMin(baseDurationMin, quantity) {
     return base;
   }
   if (quantity === 3) {
-    return Math.min(60, base + 15);
+    return Math.min(60, Math.max(base + 15, 45));
   }
-  return Math.min(60, base + 30);
+  return 60;
+}
+
+function getServiceDurationLabel(service, quantity = 1) {
+  if (!service) {
+    return "0 min";
+  }
+
+  const safeQuantity = Math.max(1, Number(quantity || 1));
+  const durationMin = service.supportsMl
+    ? getMlDurationMin(service.durationMin, safeQuantity)
+    : Number(service.durationMin || 0) * safeQuantity;
+  return `${durationMin} min`;
 }
 
 function formatBookingStatus(status, t) {
@@ -207,29 +219,41 @@ function buildBookingSectionGroups(categories, section) {
 
 const BOOKING_CATALOG_COPY = {
   sr: {
-    actions: "Akcije",
+    offers: "Akcije i paketi",
     services: "Usluge",
+    packagesLabel: "Paketi",
+    actionsLabel: "Akcije",
+    offersEmpty: "Trenutno nema aktivnih akcija ni paketa.",
     packagesEmpty: "Trenutno nema aktivnih paketa.",
     actionsEmpty: "Trenutno nema aktivnih akcija.",
     servicesEmpty: "Trenutno nema aktivnih usluga u ovoj sekciji.",
   },
   en: {
-    actions: "Promotions",
+    offers: "Promotions and packages",
     services: "Services",
+    packagesLabel: "Packages",
+    actionsLabel: "Promotions",
+    offersEmpty: "There are currently no active promotions or packages.",
     packagesEmpty: "There are currently no active packages.",
     actionsEmpty: "There are currently no active promotions.",
     servicesEmpty: "There are currently no active services in this section.",
   },
   de: {
-    actions: "Aktionen",
+    offers: "Aktionen und Pakete",
     services: "Leistungen",
+    packagesLabel: "Pakete",
+    actionsLabel: "Aktionen",
+    offersEmpty: "Derzeit gibt es keine aktiven Aktionen oder Pakete.",
     packagesEmpty: "Derzeit gibt es keine aktiven Pakete.",
     actionsEmpty: "Derzeit gibt es keine aktiven Aktionen.",
     servicesEmpty: "Derzeit gibt es in diesem Bereich keine aktiven Leistungen.",
   },
   it: {
-    actions: "Promozioni",
+    offers: "Promozioni e pacchetti",
     services: "Servizi",
+    packagesLabel: "Pacchetti",
+    actionsLabel: "Promozioni",
+    offersEmpty: "Al momento non ci sono promozioni o pacchetti attivi.",
     packagesEmpty: "Al momento non ci sono pacchetti attivi.",
     actionsEmpty: "Al momento non ci sono promozioni attive.",
     servicesEmpty: "Al momento non ci sono servizi attivi in questa sezione.",
@@ -390,6 +414,8 @@ export default function BookingInlineForm({
     () => buildBookingSectionGroups(standardSingleCategoryGroups, "body"),
     [standardSingleCategoryGroups]
   );
+
+  const hasOffers = packageServices.length > 0 || promotionCategoryGroups.length > 0;
 
   const serviceSelections = useMemo(
     () => {
@@ -880,11 +906,16 @@ export default function BookingInlineForm({
                     checked={selected}
                     onChange={(event) => updateSelectedService(service, event.target.checked)}
                   />
-                  <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
+                  <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 8 }}>
                     <strong>{service.name}</strong>
-                    <small>
-                      {service.durationMin} min - {getServicePriceLabel(service, selectedBrand)}
-                    </small>
+                    <span className="clinic-service-option__meta">
+                      <span className="clinic-service-option__pill">
+                        {getServiceDurationLabel(service, selectedQuantity)}
+                      </span>
+                      <span className="clinic-service-option__pill is-price">
+                        {getServicePriceLabel(service, selectedBrand)}
+                      </span>
+                    </span>
                   </span>
                 </label>
 
@@ -1043,85 +1074,6 @@ export default function BookingInlineForm({
         <div style={bookingCatalogStackStyle}>
           <div className="clinic-reveal">
             <BookingCatalogToggle
-              title={t("booking.packages")}
-              isOpen={activeCatalogSection === "packages"}
-              onToggle={() =>
-                setActiveCatalogSection((prev) => (prev === "packages" ? "" : "packages"))
-              }
-              countLabel={packageServices.length ? "" : bookingCatalogCopy.packagesEmpty}
-            />
-            <BookingCatalogPanel isOpen={activeCatalogSection === "packages"}>
-              {packageServices.length ? (
-                <div className="clinic-service-grid clinic-service-grid--desktop-2">
-                  {packageServices.map((service, serviceIndex) => {
-                    const selected = Boolean(selectedMap[service.id]);
-                    return (
-                      <div
-                        key={service.id}
-                        style={{
-                          ...checkboxRowStyle,
-                          "--clinic-reveal-delay": `${Math.min(serviceIndex, 10) * 45}ms`,
-                        }}
-                        className={`clinic-service-option clinic-reveal ${
-                          selected ? "is-selected" : ""
-                        }`}
-                      >
-                        <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={(event) => updateSelectedService(service, event.target.checked)}
-                          />
-                          <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 4 }}>
-                            <strong>{service.name}</strong>
-                            <small>
-                              {service.durationMin} min - {getServicePriceLabel(service)}
-                            </small>
-                            {service.packageItems?.length ? (
-                              <small style={{ color: "#cbd9ee" }}>
-                                Paket:{" "}
-                                {service.packageItems
-                                  .map(
-                                    (item) =>
-                                      `${item.serviceName} x${Math.max(1, Number(item.quantity || 1))}`
-                                  )
-                                  .join(", ")}
-                              </small>
-                            ) : null}
-                          </span>
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.packagesEmpty}</p>
-              )}
-            </BookingCatalogPanel>
-          </div>
-
-          <div className="clinic-reveal">
-            <BookingCatalogToggle
-              title={bookingCatalogCopy.actions}
-              isOpen={activeCatalogSection === "actions"}
-              onToggle={() =>
-                setActiveCatalogSection((prev) => (prev === "actions" ? "" : "actions"))
-              }
-              countLabel={promotionCategoryGroups.length ? "" : bookingCatalogCopy.actionsEmpty}
-            />
-            <BookingCatalogPanel isOpen={activeCatalogSection === "actions"}>
-              {promotionCategoryGroups.length ? (
-                promotionCategoryGroups.map((category, categoryIndex) =>
-                  renderCategoryGroup(category, categoryIndex, null, "promotion")
-                )
-              ) : (
-                <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.actionsEmpty}</p>
-              )}
-            </BookingCatalogPanel>
-          </div>
-
-          <div className="clinic-reveal">
-            <BookingCatalogToggle
               title={bookingCatalogCopy.services}
               isOpen={activeCatalogSection === "services"}
               onToggle={() =>
@@ -1184,6 +1136,99 @@ export default function BookingInlineForm({
                 </>
               ) : (
                 <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.servicesEmpty}</p>
+              )}
+            </BookingCatalogPanel>
+          </div>
+
+          <div className="clinic-reveal">
+            <BookingCatalogToggle
+              title={bookingCatalogCopy.offers}
+              isOpen={activeCatalogSection === "offers"}
+              onToggle={() =>
+                setActiveCatalogSection((prev) => (prev === "offers" ? "" : "offers"))
+              }
+              countLabel={hasOffers ? "" : bookingCatalogCopy.offersEmpty}
+            />
+            <BookingCatalogPanel isOpen={activeCatalogSection === "offers"}>
+              {hasOffers ? (
+                <div className="clinic-offer-stack">
+                  {packageServices.length ? (
+                    <div className="clinic-offer-group">
+                      <h4 className="clinic-offer-group__title">{bookingCatalogCopy.packagesLabel}</h4>
+                      <div className="clinic-service-grid clinic-service-grid--desktop-2">
+                        {packageServices.map((service, serviceIndex) => {
+                          const selected = Boolean(selectedMap[service.id]);
+                          return (
+                            <div
+                              key={service.id}
+                              style={{
+                                ...checkboxRowStyle,
+                                "--clinic-reveal-delay": `${Math.min(serviceIndex, 10) * 45}ms`,
+                              }}
+                              className={`clinic-service-option clinic-reveal ${
+                                selected ? "is-selected" : ""
+                              }`}
+                            >
+                              <label
+                                style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selected}
+                                  onChange={(event) =>
+                                    updateSelectedService(service, event.target.checked)
+                                  }
+                                />
+                                <span
+                                  style={{
+                                    color: "var(--clinic-text-strong)",
+                                    display: "grid",
+                                    gap: 8,
+                                  }}
+                                >
+                                  <strong>{service.name}</strong>
+                                  <span className="clinic-service-option__meta">
+                                    <span className="clinic-service-option__pill">
+                                      {getServiceDurationLabel(service)}
+                                    </span>
+                                    <span className="clinic-service-option__pill is-price">
+                                      {getServicePriceLabel(service)}
+                                    </span>
+                                  </span>
+                                  {service.packageItems?.length ? (
+                                    <small className="clinic-service-option__package-copy">
+                                      Paket:{" "}
+                                      {service.packageItems
+                                        .map(
+                                          (item) =>
+                                            `${item.serviceName} x${Math.max(
+                                              1,
+                                              Number(item.quantity || 1)
+                                            )}`
+                                        )
+                                        .join(", ")}
+                                    </small>
+                                  ) : null}
+                                </span>
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {promotionCategoryGroups.length ? (
+                    <div className="clinic-offer-group">
+                      <h4 className="clinic-offer-group__title">{bookingCatalogCopy.actionsLabel}</h4>
+                      {promotionCategoryGroups.map((category, categoryIndex) =>
+                        renderCategoryGroup(category, categoryIndex, null, "promotion")
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.offersEmpty}</p>
               )}
             </BookingCatalogPanel>
           </div>
@@ -1422,8 +1467,7 @@ const bookingCatalogToggleStyle = {
   width: "100%",
   justifyContent: "space-between",
   border: "1px solid var(--clinic-card-border)",
-  background:
-    "linear-gradient(180deg, rgba(18, 20, 25, 0.92), rgba(10, 12, 16, 0.92))",
+  background: "var(--clinic-catalog-toggle-bg)",
   borderRadius: 16,
   padding: "16px 18px",
   color: "var(--clinic-text-strong)",
@@ -1436,7 +1480,7 @@ const bookingCatalogArrowStyle = {
   width: 30,
   height: 30,
   borderRadius: "50%",
-  background: "rgba(255,255,255,0.08)",
+  background: "var(--clinic-catalog-arrow-bg)",
   fontSize: 24,
   lineHeight: 1,
   transform: "rotate(90deg)",
@@ -1447,8 +1491,7 @@ const bookingCatalogPanelStyle = {
   padding: 16,
   borderRadius: 16,
   border: "1px solid var(--clinic-card-border)",
-  background:
-    "linear-gradient(180deg, rgba(12, 14, 19, 0.84), rgba(7, 9, 13, 0.84))",
+  background: "var(--clinic-catalog-panel-bg)",
 };
 
 const bookingCatalogEmptyStyle = {

@@ -2,11 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { useLocale } from "@/components/common/LocaleProvider";
+import { getFounderCopy } from "@/lib/content/founder-copy";
 
 export default function About() {
-  const { t } = useLocale();
+  const { locale } = useLocale();
+  const [expanded, setExpanded] = useState(false);
+  const copy = useMemo(() => getFounderCopy(locale), [locale]);
+  const visibleParagraphs = expanded ? copy.paragraphs : copy.paragraphs.slice(0, 2);
 
   return (
     <div
@@ -23,8 +27,8 @@ export default function About() {
         <Image
           width={844}
           height={836}
-          src="/assets/img/before-after1.png"
-          alt="Pre i posle tretmana"
+          src="/assets/img/doctor-about.jpg"
+          alt={copy.imageAlt}
         />
       </div>
       <div className="container">
@@ -33,41 +37,50 @@ export default function About() {
             <div className="overflow-hidden">
               <div className="about-content-wrap fade_right glass-panel clinic-reveal">
                 <div className="title-area mb-0">
+                  <span className="clinic-founder-eyebrow">{copy.eyebrow}</span>
                   <h2
                     className="sec-title text-smoke wow img-custom-anim-right animated"
                     data-wow-delay="0.1s"
                   >
-                    {t("home.aboutTitle")}
+                    {copy.title}
                   </h2>
                   <p
                     className="sec-text mt-35 mb-25 text-smoke wow img-custom-anim-right animated"
                     data-wow-delay="0.2s"
                   >
-                    {t("home.aboutBody")}
+                    {copy.summary}
                   </p>
-                  <h5
-                    className="text-smoke mb-2 wow img-custom-anim-right animated"
-                    data-wow-delay="0.3s"
+                  <div className={`clinic-founder-copy${expanded ? " is-expanded" : ""}`}>
+                    {visibleParagraphs.map((paragraph, index) => (
+                      <p
+                        key={`${index}-${paragraph.slice(0, 24)}`}
+                        className="clinic-founder-paragraph text-smoke wow img-custom-anim-right animated"
+                        data-wow-delay={`${0.25 + index * 0.05}s`}
+                      >
+                        {paragraph}
+                      </p>
+                    ))}
+                    {!expanded ? <div className="clinic-founder-fade" aria-hidden="true" /> : null}
+                  </div>
+                  <button
+                    type="button"
+                    className="clinic-founder-readmore"
+                    onClick={() => setExpanded((prev) => !prev)}
                   >
-                    {t("home.aboutBullet1")}
-                  </h5>
-                  <h5
-                    className="text-smoke mb-2 wow img-custom-anim-right animated"
-                    data-wow-delay="0.35s"
-                  >
-                    {t("home.aboutBullet2")}
-                  </h5>
-                  <h5
-                    className="text-smoke mb-0 wow img-custom-anim-right animated"
-                    data-wow-delay="0.4s"
-                  >
-                    {t("home.aboutBullet3")}
-                  </h5>
+                    {expanded ? copy.readLess : copy.readMore}
+                  </button>
+                  <div className="clinic-founder-highlights">
+                    {copy.highlights.map((highlight) => (
+                      <span key={highlight} className="clinic-founder-highlight-chip">
+                        {highlight}
+                      </span>
+                    ))}
+                  </div>
                   <div className="btn-wrap mt-50 d-flex align-items-center gap-3">
                     <Link scroll={false} href="/booking" className="link-btn text-theme clinic-glow-btn">
                       <span className="link-effect">
-                        <span className="effect-1">{t("home.reserveConsultation")}</span>
-                        <span className="effect-1">{t("home.reserveConsultation")}</span>
+                        <span className="effect-1">{copy.primaryCta}</span>
+                        <span className="effect-1">{copy.primaryCta}</span>
                       </span>
                       <Image
                         width={13}
@@ -76,7 +89,9 @@ export default function About() {
                         alt="icon"
                       />
                     </Link>
-                    <Image width={138} height={55} src="/assets/img/logo.png" alt="Dr Igic logo" />
+                    <Link scroll={false} href="/nikola-igic" className="clinic-treatment-link">
+                      {copy.secondaryCta}
+                    </Link>
                   </div>
                 </div>
               </div>
