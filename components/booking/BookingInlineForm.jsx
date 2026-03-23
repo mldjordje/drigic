@@ -322,7 +322,7 @@ export default function BookingInlineForm({
   const [error, setError] = useState("");
   const [hideNextDateCta, setHideNextDateCta] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [activeCatalogSection, setActiveCatalogSection] = useState("services");
+  const [activeCatalogSection, setActiveCatalogSection] = useState("");
   const dateStepRef = useRef(null);
   const faceSectionRef = useRef(null);
   const bodySectionRef = useRef(null);
