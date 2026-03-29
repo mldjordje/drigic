@@ -661,11 +661,11 @@
 }
 
 .clinic-fc-wrap .fc {
-  --fc-border-color: rgba(217, 232, 248, 0.2);
+  --fc-border-color: rgba(217, 232, 248, 0.34);
   --fc-page-bg-color: transparent;
-  --fc-neutral-bg-color: rgba(217, 232, 248, 0.08);
+  --fc-neutral-bg-color: rgba(217, 232, 248, 0.12);
   --fc-list-event-hover-bg-color: rgba(217, 232, 248, 0.12);
-  --fc-today-bg-color: rgba(217, 232, 248, 0.08);
+  --fc-today-bg-color: rgba(217, 232, 248, 0.12);
   color: #f4f8ff;
 }
 
@@ -708,10 +708,50 @@
   background: rgba(12, 18, 29, 0.88);
 }
 
+.clinic-fc-wrap .fc .fc-scrollgrid {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(217, 232, 248, 0.34);
+}
+
+.clinic-fc-wrap .fc .fc-theme-standard td,
+.clinic-fc-wrap .fc .fc-theme-standard th,
+.clinic-fc-wrap .fc td,
+.clinic-fc-wrap .fc th {
+  border-color: rgba(217, 232, 248, 0.3);
+}
+
+.clinic-fc-wrap .fc .fc-col-header-cell {
+  background:
+    linear-gradient(180deg, rgba(28, 43, 64, 0.96) 0%, rgba(17, 27, 42, 0.96) 100%);
+}
+
+.clinic-fc-wrap .fc .fc-timegrid-axis {
+  background:
+    linear-gradient(180deg, rgba(16, 27, 41, 0.96) 0%, rgba(12, 20, 32, 0.96) 100%);
+}
+
+.clinic-fc-wrap .fc .fc-timegrid-slot {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
+
+.clinic-fc-wrap .fc .fc-timegrid-slot-minor {
+  border-bottom-color: rgba(217, 232, 248, 0.16);
+}
+
+.clinic-fc-wrap .fc .fc-timegrid-slot-lane {
+  transition: background 0.2s ease;
+}
+
+.clinic-fc-wrap .fc .fc-timegrid-slot-lane:hover {
+  background: rgba(217, 232, 248, 0.05);
+}
+
 .clinic-fc-wrap .fc .fc-timegrid-slot-label,
 .clinic-fc-wrap .fc .fc-col-header-cell-cushion,
 .clinic-fc-wrap .fc .fc-timegrid-axis-cushion {
-  color: #c8daef;
+  color: #d8e7f8;
   font-size: 12px;
 }
 
@@ -726,6 +766,46 @@
   padding: 6px 4px;
   white-space: normal;
   text-align: center;
+}
+
+.clinic-fc-header-label {
+  display: grid;
+  gap: 3px;
+  align-items: center;
+  justify-items: center;
+  min-height: 48px;
+}
+
+.clinic-fc-header-label strong {
+  font-size: 13px;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: #f6fbff;
+}
+
+.clinic-fc-header-label span {
+  font-size: 11px;
+  line-height: 1.1;
+  color: #b9cee6;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.clinic-fc-time-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 0 4px;
+}
+
+.clinic-fc-time-label strong {
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  color: #eef6ff;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
 }
 
 .clinic-fc-wrap .fc .fc-timegrid-now-indicator-line {
@@ -754,6 +834,7 @@
   color: #f4f8ff;
   border-left: 4px solid var(--clinic-event-service-edge, rgba(217, 232, 248, 0.35));
   min-width: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .clinic-fc-event.is-pending {
@@ -935,13 +1016,31 @@
 
   .clinic-fc-wrap .fc .fc-timegrid-slot-label,
   .clinic-fc-wrap .fc .fc-timegrid-axis-cushion {
-    font-size: 10px;
+    font-size: 11px;
     padding: 0 2px;
   }
 
   .clinic-fc-wrap .fc .fc-col-header-cell-cushion {
-    font-size: 11px;
+    font-size: 12px;
     padding: 4px 2px;
+  }
+
+  .clinic-fc-header-label {
+    min-height: 44px;
+    gap: 2px;
+  }
+
+  .clinic-fc-header-label strong {
+    font-size: 11px;
+  }
+
+  .clinic-fc-header-label span {
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .clinic-fc-time-label strong {
+    font-size: 11px;
   }
 
   .clinic-fc-wrap .fc .fc-view-harness,
