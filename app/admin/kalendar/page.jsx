@@ -13,6 +13,8 @@ const STATUS_LABEL = {
   no_show: "No-show",
   completed: "Zavrsen",
 };
+const MORNING_SCROLL_TIME = "08:00:00";
+const DEFAULT_AFTERNOON_SCROLL_TIME = "15:45:00";
 
 function parseResponse(response) {
   return response
@@ -534,6 +536,14 @@ export default function AdminKalendarPage() {
     api.prev();
   }
 
+  function scrollCalendarToTime(timeValue) {
+    const api = calendarRef.current?.getApi?.();
+    if (!api?.scrollToTime) {
+      return;
+    }
+    api.scrollToTime(timeValue);
+  }
+
   function handleTouchStart(event) {
     if (!isMobileViewport) {
       return;
@@ -593,6 +603,20 @@ export default function AdminKalendarPage() {
           <button
             type="button"
             className="admin-template-link-btn"
+            onClick={() => scrollCalendarToTime(MORNING_SCROLL_TIME)}
+          >
+            Jutro
+          </button>
+          <button
+            type="button"
+            className="admin-template-link-btn"
+            onClick={() => scrollCalendarToTime(DEFAULT_AFTERNOON_SCROLL_TIME)}
+          >
+            16h
+          </button>
+          <button
+            type="button"
+            className="admin-template-link-btn"
             onClick={() => openCreateModal(new Date().toISOString())}
           >
             Novi termin / blokada
@@ -639,6 +663,8 @@ export default function AdminKalendarPage() {
           }}
           slotMinTime="07:00:00"
           slotMaxTime="21:00:00"
+          scrollTime={DEFAULT_AFTERNOON_SCROLL_TIME}
+          scrollTimeReset={false}
           nowIndicator
           editable={false}
           selectable
@@ -658,7 +684,7 @@ export default function AdminKalendarPage() {
             })
           }
           events={events}
-          height={isMobileViewport ? "100%" : "auto"}
+          height="100%"
           expandRows={isMobileViewport}
           headerToolbar={{
             left: isMobileViewport ? "prev,next" : "prev,next today",

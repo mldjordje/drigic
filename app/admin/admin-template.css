@@ -658,6 +658,7 @@
 .clinic-fc-wrap {
   overflow: hidden;
   max-width: 100%;
+  height: clamp(640px, calc(100vh - 220px), 980px);
 }
 
 .clinic-fc-wrap.is-mobile-stage {
@@ -671,6 +672,7 @@
   --fc-list-event-hover-bg-color: rgba(217, 232, 248, 0.12);
   --fc-today-bg-color: rgba(217, 232, 248, 0.12);
   color: #f4f8ff;
+  height: 100%;
 }
 
 .clinic-fc-wrap .fc .fc-toolbar {
@@ -716,6 +718,14 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid rgba(217, 232, 248, 0.34);
+  height: 100%;
+}
+
+.clinic-fc-wrap .fc .fc-view-harness,
+.clinic-fc-wrap .fc .fc-scroller-harness,
+.clinic-fc-wrap .fc .fc-scroller {
+  height: 100% !important;
+  max-height: 100% !important;
 }
 
 .clinic-fc-wrap .fc .fc-theme-standard td,
