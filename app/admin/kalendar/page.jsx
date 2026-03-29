@@ -72,6 +72,19 @@ function normalizeSlotStart(value) {
   return value;
 }
 
+function getInitialCalendarDate() {
+  const today = new Date();
+
+  if (today.getDay() !== 0) {
+    return today;
+  }
+
+  const nextMonday = new Date(today);
+  nextMonday.setDate(today.getDate() + 1);
+  nextMonday.setHours(12, 0, 0, 0);
+  return nextMonday;
+}
+
 export default function AdminKalendarPage() {
   const calendarRef = useRef(null);
   const touchStartRef = useRef(null);
@@ -145,6 +158,7 @@ export default function AdminKalendarPage() {
   const allServices = useMemo(() => {
     return services.flatMap((category) => category.services || []);
   }, [services]);
+  const initialCalendarDate = useMemo(() => getInitialCalendarDate(), []);
 
   async function loadServices() {
     const response = await fetch("/api/services");
@@ -645,6 +659,7 @@ export default function AdminKalendarPage() {
           key={isMobileViewport ? "mobile" : "desktop"}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
+          initialDate={initialCalendarDate}
           locale="sr"
           firstDay={1}
           hiddenDays={[0]}
