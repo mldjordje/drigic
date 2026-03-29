@@ -7,21 +7,23 @@ export const runtime = "nodejs";
 export const revalidate = 600;
 
 const getCachedVideoLinks = unstable_cache(
-  async () => {
+  async (limit) => {
     const db = getDb();
     return db
       .select()
       .from(schema.videoLinks)
       .where(eq(schema.videoLinks.isPublished, true))
       .orderBy(desc(schema.videoLinks.createdAt))
-      .limit(20);
+      .limit(limit);
   },
   ["public-video-links"],
   { revalidate }
 );
 
-export async function GET() {
-  const data = await getCachedVideoLinks();
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const limit = Math.max(1, Math.min(20, Number(searchParams.get("limit") || 20)));
+  const data = await getCachedVideoLinks(limit);
 
   return publicOk(
     { ok: true, data },

@@ -170,7 +170,7 @@ export default function Header4() {
   }, []);
 
   const headerLogoSrc = "/assets/img/logo.png";
-  const mobileLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.png";
+  const mobileLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.webp";
 
   function handleLogoClick() {
     setMobileMenuOpen(false);
@@ -205,131 +205,135 @@ export default function Header4() {
   return (
     <>
       <div className={`mobile-menu-wrapper ${mobileMenuOpen ? "body-visible" : ""} `}>
-        <div className="mobile-menu-area">
-          <button
-            className="menu-toggle"
-            onClick={() => {
-              setMobileMenuOpen(false);
-              setMobileCategoryOpen(false);
-            }}
-          >
-            <i className="fas fa-times"></i>
-          </button>
-          <div className="mobile-logo">
-            <Link href="/" onClick={handleLogoClick}>
-              <img
-                src={mobileLogoSrc}
-                alt="Dr Igic logo"
-                className="clinic-nav-logo clinic-nav-logo-mobile"
-              />
-            </Link>
-          </div>
-          <div className="mobile-menu">
-            <ul>
-              {navItems.map((item) => (
-                <li key={item.href} onClick={() => setMobileMenuOpen(false)}>
-                  <Link scroll={false} href={item.href}>
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="mobile-category-dropdown">
+        {mobileMenuOpen ? (
+          <div className="mobile-menu-area">
             <button
-              type="button"
-              className="mobile-category-toggle"
-              aria-expanded={mobileCategoryOpen}
-              onClick={() => setMobileCategoryOpen((prev) => !prev)}
+              className="menu-toggle"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setMobileCategoryOpen(false);
+              }}
             >
-              {t("header.treatmentCategories")}
+              <i className="fas fa-times"></i>
             </button>
-            {mobileCategoryOpen ? (
-              <ul className="mobile-category-list">
-                {localizedCategories.map((category) => (
-                  <li key={category.slug}>
-                    <Link
-                      scroll={false}
-                      href={`/tretmani/${category.slug}`}
-                      onClick={() => {
-                        setMobileCategoryOpen(false);
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      {category.name}
+            <div className="mobile-logo">
+              <Link href="/" onClick={handleLogoClick}>
+                <Image
+                  src={mobileLogoSrc}
+                  alt="Dr Igic logo"
+                  width={220}
+                  height={88}
+                  className="clinic-nav-logo clinic-nav-logo-mobile"
+                />
+              </Link>
+            </div>
+            <div className="mobile-menu">
+              <ul>
+                {navItems.map((item) => (
+                  <li key={item.href} onClick={() => setMobileMenuOpen(false)}>
+                    <Link scroll={false} href={item.href}>
+                      {item.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            ) : null}
-          </div>
-          <div className="mobile-theme-toggle-wrap">
-            <button
-              type="button"
-              className={`clinic-theme-switch ${themeMode === "dark" ? "is-dark" : "is-light"}`}
-              onClick={toggleThemeMode}
-              aria-label={t("header.changeTheme")}
-            >
-              <span className="clinic-theme-switch-track">
-                <span className="clinic-theme-switch-knob" />
-              </span>
-              <span className="clinic-theme-switch-text">
-                {themeMode === "dark"
-                  ? `${t("common.dark")} mode`
-                  : `${t("common.light")} mode`}
-              </span>
-            </button>
-            <LocaleSwitcher compact />
-          </div>
-          <div className="mobile-cta-buttons">
-            {currentUser ? (
+            </div>
+            <div className="mobile-category-dropdown">
               <button
                 type="button"
-                className="mobile-cta-link clinic-glow-btn"
-                onClick={handleLogout}
-                disabled={logoutBusy}
+                className="mobile-category-toggle"
+                aria-expanded={mobileCategoryOpen}
+                onClick={() => setMobileCategoryOpen((prev) => !prev)}
               >
-                <span className="mobile-cta-link-text">
-                  {logoutBusy ? t("header.loggingOut") : t("header.logout")}
+                {t("header.treatmentCategories")}
+              </button>
+              {mobileCategoryOpen ? (
+                <ul className="mobile-category-list">
+                  {localizedCategories.map((category) => (
+                    <li key={category.slug}>
+                      <Link
+                        scroll={false}
+                        href={`/tretmani/${category.slug}`}
+                        onClick={() => {
+                          setMobileCategoryOpen(false);
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        {category.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+            <div className="mobile-theme-toggle-wrap">
+              <button
+                type="button"
+                className={`clinic-theme-switch ${themeMode === "dark" ? "is-dark" : "is-light"}`}
+                onClick={toggleThemeMode}
+                aria-label={t("header.changeTheme")}
+              >
+                <span className="clinic-theme-switch-track">
+                  <span className="clinic-theme-switch-knob" />
+                </span>
+                <span className="clinic-theme-switch-text">
+                  {themeMode === "dark"
+                    ? `${t("common.dark")} mode`
+                    : `${t("common.light")} mode`}
                 </span>
               </button>
-            ) : (
-              <GooglePopupButton
-                className="mobile-cta-link clinic-glow-btn"
-                nextPath="/"
-                onBeforeOpen={() => setMobileMenuOpen(false)}
-              >
-                <span className="mobile-cta-link-text">{t("common.login")}</span>
-              </GooglePopupButton>
-            )}
-            <Link
-              scroll={false}
-              href="/booking"
-              className="mobile-cta-link clinic-glow-btn"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span className="mobile-cta-link-text">{t("common.booking")}</span>
-            </Link>
-            {currentUser ? (
+              <LocaleSwitcher compact />
+            </div>
+            <div className="mobile-cta-buttons">
+              {currentUser ? (
+                <button
+                  type="button"
+                  className="mobile-cta-link clinic-glow-btn"
+                  onClick={handleLogout}
+                  disabled={logoutBusy}
+                >
+                  <span className="mobile-cta-link-text">
+                    {logoutBusy ? t("header.loggingOut") : t("header.logout")}
+                  </span>
+                </button>
+              ) : (
+                <GooglePopupButton
+                  className="mobile-cta-link clinic-glow-btn"
+                  nextPath="/"
+                  onBeforeOpen={() => setMobileMenuOpen(false)}
+                >
+                  <span className="mobile-cta-link-text">{t("common.login")}</span>
+                </GooglePopupButton>
+              )}
               <Link
                 scroll={false}
-                href="/beauty-pass"
+                href="/booking"
                 className="mobile-cta-link clinic-glow-btn"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                <span className="mobile-cta-link-text">{t("common.beautyPass")}</span>
+                <span className="mobile-cta-link-text">{t("common.booking")}</span>
               </Link>
-            ) : null}
+              {currentUser ? (
+                <Link
+                  scroll={false}
+                  href="/beauty-pass"
+                  className="mobile-cta-link clinic-glow-btn"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="mobile-cta-link-text">{t("common.beautyPass")}</span>
+                </Link>
+              ) : null}
+            </div>
+            <PWAMenuActions />
+            <div className="sidebar-wrap">
+              <h6>Dr Nikola Igic</h6>
+              <h6>{t("header.office")}</h6>
+            </div>
+            <div className="sidebar-wrap">
+              <h6>{t("header.reservations")}</h6>
+            </div>
           </div>
-          <PWAMenuActions />
-          <div className="sidebar-wrap">
-            <h6>Dr Nikola Igic</h6>
-            <h6>{t("header.office")}</h6>
-          </div>
-          <div className="sidebar-wrap">
-            <h6>{t("header.reservations")}</h6>
-          </div>
-        </div>
+        ) : null}
       </div>
 
       <header className="nav-header header-layout2 clinic-header">

@@ -91,8 +91,15 @@ export default function BeforeAfterShowcase({
 
   useEffect(() => {
     let mounted = true;
+    const requestedLimit =
+      maxItems && Number.isFinite(Number(maxItems))
+        ? Math.max(1, Math.min(12, Number(maxItems)))
+        : null;
+    const requestUrl = requestedLimit
+      ? `/api/media/before-after?limit=${requestedLimit}`
+      : "/api/media/before-after";
 
-    fetch("/api/media/before-after")
+    fetch(requestUrl)
       .then(async (response) => {
         const data = await parseResponse(response);
         if (!response.ok || !data?.ok) {
@@ -116,7 +123,7 @@ export default function BeforeAfterShowcase({
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [maxItems]);
 
   const normalizedCases = useMemo(
     () =>

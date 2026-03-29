@@ -106,6 +106,10 @@ function buildEmbedUrl(youtubeId, autoplay, controls = false) {
   return `https://www.youtube-nocookie.com/embed/${youtubeId}?${params.toString()}`;
 }
 
+function buildThumbnailUrl(youtubeId) {
+  return `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+}
+
 const COPY_BY_LOCALE = {
   sr: {
     loading: "Ucitavanje video galerije...",
@@ -115,6 +119,7 @@ const COPY_BY_LOCALE = {
     inlineTitle: "YouTube video galerija",
     inlineBody: "Najnoviji kratki video snimci i edukativni sadrzaj direktno sa Dr Igic kanala.",
     viewAll: "Pogledaj sve videe",
+    play: "Pusti video",
   },
   en: {
     loading: "Loading video gallery...",
@@ -124,6 +129,7 @@ const COPY_BY_LOCALE = {
     inlineTitle: "YouTube video gallery",
     inlineBody: "Latest short videos and educational content from the Dr Igic channel.",
     viewAll: "View all videos",
+    play: "Play video",
   },
   de: {
     loading: "Videogalerie wird geladen...",
@@ -133,6 +139,7 @@ const COPY_BY_LOCALE = {
     inlineTitle: "YouTube Videogalerie",
     inlineBody: "Neueste Kurzvideos und edukative Inhalte vom Dr Igic Kanal.",
     viewAll: "Alle Videos ansehen",
+    play: "Video abspielen",
   },
   it: {
     loading: "Caricamento galleria video...",
@@ -142,6 +149,7 @@ const COPY_BY_LOCALE = {
     inlineTitle: "Galleria video YouTube",
     inlineBody: "Ultimi video brevi e contenuti educativi dal canale Dr Igic.",
     viewAll: "Vedi tutti i video",
+    play: "Riproduci video",
   },
 };
 
@@ -150,6 +158,7 @@ export default function VideoGalleryFeed({ inline = false, limit = null }) {
   const [apiVideos, setApiVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [activeInlineVideoId, setActiveInlineVideoId] = useState(null);
   const slideRefs = useRef([]);
 
   useEffect(() => {
@@ -157,7 +166,15 @@ export default function VideoGalleryFeed({ inline = false, limit = null }) {
 
     async function loadVideos() {
       try {
-        const response = await fetch("/api/media/videos");
+        const requestedLimit =
+          inline && limit && Number.isFinite(Number(limit))
+            ? Math.max(1, Math.min(12, Number(limit)))
+            : null;
+        const response = await fetch(
+          requestedLimit
+            ? `/api/media/videos?limit=${requestedLimit}`
+            : "/api/media/videos"
+        );
         const text = await response.text();
         const parsed = parseResponseSafe(text);
         const rows = Array.isArray(parsed?.data) ? parsed.data : [];
@@ -179,7 +196,7 @@ export default function VideoGalleryFeed({ inline = false, limit = null }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [inline, limit]);
 
   const videos = useMemo(() => {
     const merged = [];
@@ -276,13 +293,34 @@ export default function VideoGalleryFeed({ inline = false, limit = null }) {
                 style={{ "--clinic-reveal-delay": `${Math.min(index, 8) * 50}ms` }}
               >
                 <div className={styles.inlinePlayerWrap}>
-                  <iframe
-                    title={video.title}
-                    src={buildEmbedUrl(video.youtubeId, false, true)}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    loading={index === 0 ? "eager" : "lazy"}
-                  />
+                  {activeInlineVideoId === video.id ? (
+                    <iframe
+                      title={video.title}
+                      src={buildEmbedUrl(video.youtubeId, true, true)}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.inlinePreviewButton}
+                      onClick={() => setActiveInlineVideoId(video.id)}
+                      aria-label={`${copy.play}: ${video.title}`}
+                    >
+                      <img
+                        src={buildThumbnailUrl(video.youtubeId)}
+                        alt={video.title}
+                        loading={index === 0 ? "eager" : "lazy"}
+                        decoding="async"
+                      />
+                      <span className={styles.inlinePreviewShade} aria-hidden="true" />
+                      <span className={styles.inlinePlayBadge}>
+                        <span className={styles.inlinePlayIcon} aria-hidden="true" />
+                        {copy.play}
+                      </span>
+                    </button>
+                  )}
                 </div>
                 <div className={styles.inlineMeta}>
                   <h3>{video.title}</h3>
@@ -325,13 +363,34 @@ export default function VideoGalleryFeed({ inline = false, limit = null }) {
             className={styles.slide}
           >
             <div className={styles.playerWrap}>
-              <iframe
-                title={video.title}
-                src={buildEmbedUrl(video.youtubeId, index === activeIndex)}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                loading={index === 0 ? "eager" : "lazy"}
-              />
+              {index === activeIndex ? (
+                <iframe
+                  title={video.title}
+                  src={buildEmbedUrl(video.youtubeId, true)}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading={index === 0 ? "eager" : "lazy"}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className={styles.feedPreviewButton}
+                  onClick={() => setActiveIndex(index)}
+                  aria-label={`${copy.play}: ${video.title}`}
+                >
+                  <img
+                    src={buildThumbnailUrl(video.youtubeId)}
+                    alt={video.title}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <span className={styles.inlinePreviewShade} aria-hidden="true" />
+                  <span className={styles.feedPlayBadge}>
+                    <span className={styles.inlinePlayIcon} aria-hidden="true" />
+                    {copy.play}
+                  </span>
+                </button>
+              )}
             </div>
 
             <div className={styles.meta}>

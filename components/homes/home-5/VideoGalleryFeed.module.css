@@ -33,12 +33,72 @@
   background: #000;
 }
 
+.inlinePreviewButton,
+.feedPreviewButton {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: #000;
+}
+
 .inlinePlayerWrap iframe {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.inlinePreviewButton img,
+.feedPreviewButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.inlinePreviewShade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.18) 42%, rgba(0, 0, 0, 0.58) 100%);
+}
+
+.inlinePlayBadge,
+.feedPlayBadge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(10, 15, 10, 0.74);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.feedPlayBadge {
+  top: auto;
+  bottom: max(72px, calc(env(safe-area-inset-bottom) + 32px));
+}
+
+.inlinePlayIcon {
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 11px solid currentColor;
 }
 
 .inlineMeta {
@@ -143,6 +203,10 @@
   display: block;
 }
 
+.feedPreviewButton {
+  overflow: hidden;
+}
+
 .meta {
   position: absolute;
   left: 12px;
@@ -182,6 +246,10 @@
     left: calc(50% - min(56.25vh, 460px) / 2 + 16px);
     right: calc(50% - min(56.25vh, 460px) / 2 + 16px);
     bottom: calc(4vh + 4px);
+  }
+
+  .feedPlayBadge {
+    bottom: calc(4vh + 72px);
   }
 }
 

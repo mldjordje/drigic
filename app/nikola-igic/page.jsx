@@ -63,17 +63,19 @@ export default async function NikolaIgicPage() {
             }}
           >
             <Image
-              src="/assets/img/doctor-about.jpg"
+              src="/assets/img/doctor-about.webp"
               alt={copy.imageAlt}
               width={680}
               height={860}
+              sizes="(max-width: 768px) 92vw, 48vw"
               style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 14 }}
             />
             <Image
-              src="/assets/img/before-after1.png"
+              src="/assets/img/before-after1.webp"
               alt="Pre i posle tretmana"
               width={680}
               height={860}
+              sizes="(max-width: 768px) 92vw, 48vw"
               style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 14 }}
             />
           </div>

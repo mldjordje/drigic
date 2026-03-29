@@ -27,8 +27,9 @@ export default function About() {
         <Image
           width={844}
           height={836}
-          src="/assets/img/doctor-about.jpg"
+          src="/assets/img/doctor-about.webp"
           alt={copy.imageAlt}
+          sizes="(max-width: 991px) 92vw, 42vw"
         />
       </div>
       <div className="container">

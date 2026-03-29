@@ -3,8 +3,11 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const TAGLINE = "Estetska i anti-age medicina";
-const MIN_DISPLAY_MS = 1400;
-const MAX_WAIT_MS = 2200;
+const DEFAULT_MIN_DISPLAY_MS = 700;
+const DEFAULT_MAX_WAIT_MS = 1400;
+const RETURNING_MIN_DISPLAY_MS = 180;
+const RETURNING_MAX_WAIT_MS = 600;
+const PRELOADER_SESSION_KEY = "clinic-preloader-seen";
 
 export default function ClinicPreloader() {
   const [visible, setVisible] = useState(true);
@@ -12,6 +15,21 @@ export default function ClinicPreloader() {
 
   useEffect(() => {
     const start = Date.now();
+    const hasSeenPreloader =
+      typeof window !== "undefined" &&
+      (() => {
+        try {
+          return window.sessionStorage.getItem(PRELOADER_SESSION_KEY) === "1";
+        } catch {
+          return false;
+        }
+      })();
+    const minDisplayMs = hasSeenPreloader
+      ? RETURNING_MIN_DISPLAY_MS
+      : DEFAULT_MIN_DISPLAY_MS;
+    const maxWaitMs = hasSeenPreloader
+      ? RETURNING_MAX_WAIT_MS
+      : DEFAULT_MAX_WAIT_MS;
     let closed = false;
     let finishTimer = null;
     let maxWaitTimer = null;
@@ -22,7 +40,13 @@ export default function ClinicPreloader() {
       }
       closed = true;
       const elapsed = Date.now() - start;
-      const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
+      const remaining = Math.max(0, minDisplayMs - elapsed);
+
+      try {
+        window.sessionStorage.setItem(PRELOADER_SESSION_KEY, "1");
+      } catch {
+        // sessionStorage is optional
+      }
 
       finishTimer = window.setTimeout(() => {
         setFadeOut(true);
@@ -35,7 +59,7 @@ export default function ClinicPreloader() {
       }, remaining);
     };
 
-    maxWaitTimer = window.setTimeout(dismiss, MAX_WAIT_MS);
+    maxWaitTimer = window.setTimeout(dismiss, maxWaitMs);
 
     if (document.readyState === "complete" || document.readyState === "interactive") {
       dismiss();
