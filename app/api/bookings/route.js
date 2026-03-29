@@ -14,6 +14,7 @@ import {
   resolveQuote,
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
+import { WORKING_HOURS_SUMMARY } from "@/lib/booking/schedule";
 
 export const runtime = "nodejs";
 const PRIMARY_ADMIN_NOTIFY_EMAIL = "igic.nikola8397@gmail.com";
@@ -74,10 +75,10 @@ export async function POST(request) {
     const endsAt = addMinutes(startAt, quote.totalDurationMin);
     const employee = await getDefaultEmployee();
 
-    if (!isWithinWorkHours(startAt, quote.totalDurationMin, settings)) {
+    if (!(await isWithinWorkHours(startAt, quote.totalDurationMin, settings))) {
       return fail(
         400,
-        `Clinic working hours are ${settings.workdayStart}-${settings.workdayEnd}.`
+        `Clinic working hours are: ${WORKING_HOURS_SUMMARY}`
       );
     }
 

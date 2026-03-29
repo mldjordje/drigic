@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import { addMinutes, findConflicts, isWithinWorkHours } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
+import { WORKING_HOURS_SUMMARY } from "@/lib/booking/schedule";
 
 export const runtime = "nodejs";
 const SLOT_CONFLICT_ERROR = "Block overlaps with existing booking/block.";
@@ -77,10 +78,10 @@ export async function POST(request) {
     const startsAt = new Date(parsed.data.startsAt);
     const endsAt = addMinutes(startsAt, parsed.data.durationMin);
     const db = getDb();
-    if (!isWithinWorkHours(startsAt, parsed.data.durationMin, settings)) {
+    if (!(await isWithinWorkHours(startsAt, parsed.data.durationMin, settings))) {
       return fail(
         400,
-        `Clinic working hours are ${settings.workdayStart}-${settings.workdayEnd}.`
+        `Clinic working hours are: ${WORKING_HOURS_SUMMARY}`
       );
     }
 

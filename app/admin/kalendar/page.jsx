@@ -69,6 +69,10 @@ function capitalizeLabel(value) {
 
 function normalizeSlotStart(value) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const day = new Date(`${value}T12:00:00Z`).getUTCDay();
+    if (day === 6) {
+      return `${value}T10:00`;
+    }
     return `${value}T16:00`;
   }
   return value;
@@ -654,6 +658,7 @@ export default function AdminKalendarPage() {
           initialView="timeGridWeek"
           locale="sr"
           firstDay={1}
+          hiddenDays={[0]}
           allDaySlot={false}
           slotDuration="00:15:00"
           slotLabelInterval="00:15:00"
@@ -664,7 +669,7 @@ export default function AdminKalendarPage() {
           }}
           dayHeaderContent={renderDayHeaderContent}
           slotLabelContent={renderSlotLabelContent}
-          slotMinTime="16:00:00"
+          slotMinTime="07:00:00"
           slotMaxTime="21:00:00"
           nowIndicator
           editable={false}

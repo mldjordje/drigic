@@ -18,10 +18,10 @@ const HYALURONIC_BRAND_BY_KEY = HYALURONIC_BRANDS.reduce((acc, item) => {
 
 function todayIsoDate() {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  while (now.getDay() === 0) {
+    now.setDate(now.getDate() + 1);
+  }
+  return formatIsoDate(now);
 }
 
 function parseIsoDate(isoDate) {
@@ -61,6 +61,9 @@ function buildCalendarCells(monthDate) {
   for (let index = 0; index < 42; index += 1) {
     const date = new Date(gridStart);
     date.setDate(gridStart.getDate() + index);
+    if (date.getDay() === 0) {
+      continue;
+    }
     cells.push({
       iso: formatIsoDate(date),
       dayNumber: date.getDate(),
@@ -342,7 +345,7 @@ export default function BookingInlineForm({
     const formatter = new Intl.DateTimeFormat(intlLocale, { weekday: "short" });
     const monday = new Date(2024, 0, 1);
 
-    return Array.from({ length: 7 }, (_, index) => {
+    return Array.from({ length: 6 }, (_, index) => {
       const item = new Date(monday);
       item.setDate(monday.getDate() + index);
       return formatter.format(item);

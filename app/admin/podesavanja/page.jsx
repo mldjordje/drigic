@@ -42,6 +42,11 @@ const emptyBodyAreaForm = {
 const usefulLinks = [
   { href: "/admin/services", title: "Usluge", body: "Detaljno podešavanje pojedinačnih usluga." },
   { href: "/admin/promotions", title: "Akcije", body: "Promo cene i aktivne kampanje." },
+  {
+    href: "/admin/prepodnevni-termini",
+    title: "Prepodnevni termini",
+    body: "Aktiviranje dodatnih jutarnjih termina za izabrani period.",
+  },
   { href: "/admin/preparati", title: "Preparati", body: "Brendovi i preparati za tretmane." },
   { href: "/admin/announcements", title: "Obaveštenja", body: "Poruke koje se prikazuju klijentima." },
 ];
@@ -329,32 +334,17 @@ export default function AdminSettingsPage() {
             </label>
           </div>
 
-          <div className="admin-services-split-grid">
-            <label>
-              Radno vreme od
-              <input
-                type="time"
-                className="admin-inline-input"
-                value={clinicForm.workdayStart}
-                disabled
-                readOnly
-                required
-              />
-            </label>
-            <label>
-              Radno vreme do
-              <input
-                type="time"
-                className="admin-inline-input"
-                value={clinicForm.workdayEnd}
-                disabled
-                readOnly
-                required
-              />
-            </label>
+          <div style={listRowStyle}>
+            <div style={{ display: "grid", gap: 4 }}>
+              <strong>Podrazumevano radno vreme</strong>
+              <small style={mutedTextStyle}>
+                Radni dani 16-21h, subota 10-16h, nedelja ne radi.
+              </small>
+            </div>
+            <Link href="/admin/prepodnevni-termini" className="admin-template-link-btn">
+              Prepodnevni termini
+            </Link>
           </div>
-
-          <p style={mutedTextStyle}>Radno vreme je zaključano na 16:00-21:00.</p>
 
           <button type="submit" className="admin-template-link-btn" disabled={busyKey === "clinic"}>
             {busyKey === "clinic" ? "Čuvanje..." : "Sačuvaj booking pravila"}
