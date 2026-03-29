@@ -25,6 +25,14 @@ export const metadata = {
   description:
     "Dr Igic aplikacija za zakazivanje tretmana, pregled raspolozivih termina i pracenje beauty pass istorije.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/icons/apple-touch-icon.png",
+    shortcut: "/favicon.ico",
+  },
   appleWebApp: {
     capable: true,
     title: "Dr Igic",

@@ -96,6 +96,7 @@ export default function AdminShell({ children }) {
 
         <div className="admin-template-group">
           <p className="admin-template-group-title">{t("admin.navigation")}</p>
+          <LocaleSwitcher compact className="admin-template-locale-switcher" />
           <nav className="admin-template-nav">
             {quickLinks.map((item) =>
               item.href.startsWith("/api/") ? (
@@ -166,7 +167,6 @@ export default function AdminShell({ children }) {
             </div>
           </div>
           <div className="admin-template-topbar-actions">
-            <LocaleSwitcher compact />
             <Link href="/admin/kalendar" className="admin-template-link-btn">
               {t("admin.calendar")}
             </Link>
