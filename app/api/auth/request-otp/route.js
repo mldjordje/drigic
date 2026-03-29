@@ -1,8 +1,14 @@
 import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
+import { env } from "@/lib/env";
 import { getDb, schema } from "@/lib/db/client";
-import { generateOtpCode, hashOtpCode, normalizeIdentifier } from "@/lib/auth/otp";
+import {
+  generateOtpCode,
+  hashOtpCode,
+  hasOtpSalt,
+  normalizeIdentifier,
+} from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/auth/email";
 
 export const runtime = "nodejs";
@@ -26,6 +32,9 @@ export async function POST(request) {
   const { type, value } = normalizeIdentifier(parsed.data.identifier);
   if (!type) {
     return fail(400, "Use valid email or phone.");
+  }
+  if (!hasOtpSalt()) {
+    return fail(503, "OTP delivery is temporarily unavailable. Contact the clinic.");
   }
 
   const db = getDb();
@@ -115,7 +124,7 @@ export async function POST(request) {
     code,
   });
 
-  if (!emailResult.sent && process.env.NODE_ENV === "production") {
+  if (!emailResult.sent && env.NODE_ENV === "production") {
     return fail(503, "OTP delivery is temporarily unavailable. Try again shortly.");
   }
 
@@ -124,7 +133,7 @@ export async function POST(request) {
     channel: "email",
     identifierType: type,
     expiresAt: expiresAt.toISOString(),
-    ...(process.env.NODE_ENV !== "production" && !emailResult.sent
+    ...(env.NODE_ENV !== "production" && !emailResult.sent
       ? { devOtp: code, warning: emailResult.reason }
       : {}),
   });

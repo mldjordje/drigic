@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reminders",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/no-show-processor",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

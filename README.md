@@ -1,34 +1,47 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Dr Igic
 
-## Getting Started
+Next.js aplikacija za prezentaciju klinike, online zakazivanje termina, admin kalendar i Beauty Pass.
 
-First, run the development server:
+## Lokalni rad
+
+Pokretanje development servera:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Otvori [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Baza i seed
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```bash
+npm run db:push
+npm run db:seed
+```
 
-## Learn More
+## Produkcija
 
-To learn more about Next.js, take a look at the following resources:
+Za produkcioni deploy obavezno podesiti ove env promenljive:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `POSTGRES_URL` ili `DATABASE_URL`
+- `AUTH_JWT_SECRET` najmanje 32 karaktera
+- `AUTH_OTP_SALT` najmanje 8 karaktera
+- `APP_URL`
+- `NEXT_PUBLIC_APP_URL`
+- `NEXT_PUBLIC_SITE_URL`
+- `CRON_SECRET`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Pocetna osnova za env promenljive postoji u [`.env.example`](./.env.example).
 
-## Deploy on Vercel
+Ako se koristi email login i podsetnici, dodati i:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `RESEND_API_KEY`
+- `RESEND_FROM`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Ako se koristi Google prijava, dodati i:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI`
+
+Cron poslovi su definisani u [vercel.json](./vercel.json) i koriste `CRON_SECRET` za autorizaciju.

@@ -10,7 +10,11 @@ import {
   hasGoogleConfig,
   sanitizeNextPath,
 } from "@/lib/auth/google";
-import { setSessionCookie, signSessionToken } from "@/lib/auth/session";
+import {
+  hasSessionSecret,
+  setSessionCookie,
+  signSessionToken,
+} from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -57,8 +61,12 @@ export async function GET(request) {
     request.cookies.get(GOOGLE_OAUTH_NEXT_COOKIE)?.value || "/"
   );
 
-  if (!hasGoogleConfig()) {
-    return redirectToLogin(request, "google-config-missing", nextPathFromCookie);
+  if (!hasGoogleConfig() || !hasSessionSecret()) {
+    return redirectToLogin(
+      request,
+      hasGoogleConfig() ? "session-config-missing" : "google-config-missing",
+      nextPathFromCookie
+    );
   }
 
   const error = url.searchParams.get("error");

@@ -7,6 +7,7 @@ import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
 import { getDb, schema } from "@/lib/db/client";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
+import { getConfiguredSiteUrl } from "@/lib/site";
 import {
   SERVICE_CATEGORY_SPECS,
   getCategorySpecBySlug,
@@ -14,8 +15,6 @@ import {
 
 export const dynamic = "force-dynamic";
 const CATEGORY_DATA_REVALIDATE = 300;
-
-const FALLBACK_SITE_URL = "https://drigic.rs";
 
 export async function generateStaticParams() {
   return SERVICE_CATEGORY_SPECS.map((category) => ({ categorySlug: category.slug }));
@@ -32,7 +31,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || FALLBACK_SITE_URL;
+  const siteUrl = getConfiguredSiteUrl();
   const canonicalPath = `/tretmani/${category.slug}`;
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
 

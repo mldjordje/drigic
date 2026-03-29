@@ -11,6 +11,7 @@ import { cookies } from "next/headers";
 import AppProviders from "@/components/common/AppProviders";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
+import { getMetadataBase } from "@/lib/site";
 
 const cormorantInfantTitle = Cormorant_Infant({
   subsets: ["latin", "latin-ext"],
@@ -19,6 +20,10 @@ const cormorantInfantTitle = Cormorant_Infant({
 });
 
 export const metadata = {
+  metadataBase: getMetadataBase(),
+  title: "Dr Igic Klinika Estetske Medicine",
+  description:
+    "Dr Igic aplikacija za zakazivanje tretmana, pregled raspolozivih termina i pracenje beauty pass istorije.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

@@ -2,8 +2,9 @@ import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
-import { hashOtpCode, normalizeIdentifier } from "@/lib/auth/otp";
+import { hashOtpCode, hasOtpSalt, normalizeIdentifier } from "@/lib/auth/otp";
 import {
+  hasSessionSecret,
   setSessionCookie,
   signSessionToken,
 } from "@/lib/auth/session";
@@ -26,6 +27,9 @@ export async function POST(request) {
   const { type, value } = normalizeIdentifier(parsed.data.identifier);
   if (!type) {
     return fail(400, "Use valid email or phone.");
+  }
+  if (!hasOtpSalt() || !hasSessionSecret()) {
+    return fail(503, "Prijava je trenutno nedostupna. Pokusajte ponovo kasnije.");
   }
 
   const db = getDb();

@@ -8,6 +8,7 @@ import {
   hasGoogleConfig,
   sanitizeNextPath,
 } from "@/lib/auth/google";
+import { hasSessionSecret } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,9 +17,12 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const nextPath = sanitizeNextPath(searchParams.get("next") || "/");
 
-  if (!hasGoogleConfig()) {
+  if (!hasGoogleConfig() || !hasSessionSecret()) {
     const redirectUrl = new URL("/prijava", request.url);
-    redirectUrl.searchParams.set("reason", "google-config-missing");
+    redirectUrl.searchParams.set(
+      "reason",
+      hasGoogleConfig() ? "session-config-missing" : "google-config-missing"
+    );
     redirectUrl.searchParams.set("next", nextPath);
     return NextResponse.redirect(redirectUrl);
   }
