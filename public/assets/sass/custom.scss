@@ -2141,6 +2141,11 @@ a.clinic-glow-btn {
       max-width: calc(50% - 5px);
     }
 
+    /* Keep hero particles from causing mobile CLS */
+    .clinic-hero-particles {
+      display: none;
+    }
+
     /* Reduce particle count on mobile */
     .clinic-hero-particle--5,
     .clinic-hero-particle--6,

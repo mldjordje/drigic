@@ -52,6 +52,7 @@ export default function Hero() {
   const mobileVideoRef = useRef(null);
   const { locale, t } = useLocale();
   const { user: currentUser } = useSession();
+  const [showMobileVideo, setShowMobileVideo] = useState(false);
   const heroContentRef = useRef(null);
   const wordRefs = useRef([]);
   const ctaGroupRef = useRef(null);
@@ -73,6 +74,26 @@ export default function Hero() {
   useEffect(() => {
     document.body.classList.add("bg-title");
     return () => document.body.classList.remove("bg-title");
+  }, []);
+
+  useEffect(() => {
+    let timerId = null;
+    const revealVideo = () => setShowMobileVideo(true);
+    const hasPreloader = !!document.querySelector(".clinic-preloader");
+
+    if (hasPreloader) {
+      window.addEventListener("clinic:preloader:done", revealVideo, { once: true });
+      timerId = window.setTimeout(revealVideo, 1200);
+    } else {
+      timerId = window.setTimeout(revealVideo, 450);
+    }
+
+    return () => {
+      window.removeEventListener("clinic:preloader:done", revealVideo);
+      if (timerId) {
+        window.clearTimeout(timerId);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -264,15 +285,17 @@ export default function Hero() {
       >
         {/* Mobile video background */}
         <div className="clinic-hero-mobile-video" aria-hidden="true">
-          <iframe
-            ref={mobileVideoRef}
-            src={heroVideoSrc}
-            title="Dr Igic hero background video"
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            loading="eager"
-            onLoad={forcePlayMuted}
-          />
+          {showMobileVideo ? (
+            <iframe
+              ref={mobileVideoRef}
+              src={heroVideoSrc}
+              title="Dr Igic hero background video"
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowFullScreen
+              loading="eager"
+              onLoad={forcePlayMuted}
+            />
+          ) : null}
         </div>
 
         {/* Overlays */}

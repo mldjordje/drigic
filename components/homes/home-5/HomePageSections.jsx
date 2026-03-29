@@ -6,7 +6,7 @@ import Projects from "@/components/homes/home-5/Projects";
 import BeforeAfterShowcase from "@/components/homes/home-5/BeforeAfterShowcase";
 import { useSession } from "@/components/common/SessionProvider";
 
-export default function HomePageSections() {
+export default function HomePageSections({ showResults = true }) {
   const { isLoggedIn } = useSession();
 
   return (
@@ -15,7 +15,9 @@ export default function HomePageSections() {
       <HeroActions />
       <Projects />
       {isLoggedIn ? <About /> : null}
-      <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
+      {showResults ? (
+        <BeforeAfterShowcase withFilter compactFilter maxItems={4} showCta={false} />
+      ) : null}
     </>
   );
 }
