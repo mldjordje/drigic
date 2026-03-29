@@ -59,14 +59,6 @@ function fmtDateTime(value) {
   return new Date(value).toLocaleString("sr-RS");
 }
 
-function capitalizeLabel(value) {
-  const text = String(value || "").trim();
-  if (!text) {
-    return "";
-  }
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 function normalizeSlotStart(value) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const day = new Date(`${value}T12:00:00Z`).getUTCDay();
@@ -587,33 +579,6 @@ export default function AdminKalendarPage() {
     navigateCalendar("prev");
   }
 
-  function renderDayHeaderContent(arg) {
-    const weekdayLabel = capitalizeLabel(
-      arg.date.toLocaleDateString("sr-RS", {
-        weekday: isMobileViewport ? "short" : "long",
-      })
-    );
-    const dateLabel = arg.date.toLocaleDateString("sr-RS", {
-      day: "2-digit",
-      month: isMobileViewport ? "2-digit" : "long",
-    });
-
-    return (
-      <div className="clinic-fc-header-label">
-        <strong>{weekdayLabel}</strong>
-        <span>{dateLabel}</span>
-      </div>
-    );
-  }
-
-  function renderSlotLabelContent(arg) {
-    return (
-      <div className="clinic-fc-time-label">
-        <strong>{arg.text}</strong>
-      </div>
-    );
-  }
-
   return (
     <section className={`admin-calendar-page ${isMobileViewport ? "is-mobile-full" : ""}`}>
       <div className="admin-card admin-calendar-toolbar">
@@ -667,8 +632,11 @@ export default function AdminKalendarPage() {
             minute: "2-digit",
             hour12: false,
           }}
-          dayHeaderContent={renderDayHeaderContent}
-          slotLabelContent={renderSlotLabelContent}
+          dayHeaderFormat={{
+            weekday: isMobileViewport ? "short" : "long",
+            day: "2-digit",
+            month: isMobileViewport ? "2-digit" : "long",
+          }}
           slotMinTime="07:00:00"
           slotMaxTime="21:00:00"
           nowIndicator
@@ -679,9 +647,14 @@ export default function AdminKalendarPage() {
           dateClick={handleDateClick}
           eventClick={handleEventClick}
           datesSet={(info) =>
-            setRange({
-              from: info.start.toISOString(),
-              to: info.end.toISOString(),
+            setRange((prev) => {
+              const nextRange = {
+                from: info.start.toISOString(),
+                to: info.end.toISOString(),
+              };
+              return prev.from === nextRange.from && prev.to === nextRange.to
+                ? prev
+                : nextRange;
             })
           }
           events={events}
