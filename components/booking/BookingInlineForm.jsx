@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
@@ -15,6 +15,14 @@ const HYALURONIC_BRAND_BY_KEY = HYALURONIC_BRANDS.reduce((acc, item) => {
   acc[item.key] = item;
   return acc;
 }, {});
+const SERVICES_CACHE = {
+  data: null,
+  promise: null,
+};
+const USER_BOOKINGS_CACHE = new Map();
+const QUOTE_CACHE = new Map();
+const MONTH_AVAILABILITY_CACHE = new Map();
+const DAY_AVAILABILITY_CACHE = new Map();
 
 function todayIsoDate() {
   const now = new Date();
@@ -102,6 +110,31 @@ async function parseResponse(response) {
   } catch {
     return null;
   }
+}
+
+function isAbortError(error) {
+  return error?.name === "AbortError";
+}
+
+function getUserCacheKey(user) {
+  return String(user?.id || user?.sub || user?.email || "").trim();
+}
+
+function serializeServiceSelections(selections) {
+  return JSON.stringify(
+    [...(Array.isArray(selections) ? selections : [])]
+      .map((selection) => ({
+        serviceId: String(selection?.serviceId || ""),
+        quantity: Math.max(1, Number(selection?.quantity || 1)),
+        brand: selection?.brand ? String(selection.brand) : "",
+      }))
+      .filter((selection) => selection.serviceId)
+      .sort((a, b) => {
+        const left = `${a.serviceId}:${a.brand}:${a.quantity}`;
+        const right = `${b.serviceId}:${b.brand}:${b.quantity}`;
+        return left.localeCompare(right);
+      })
+  );
 }
 
 function toMlPresets(maxMl) {
@@ -326,6 +359,7 @@ export default function BookingInlineForm({
   const [hideNextDateCta, setHideNextDateCta] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [activeCatalogSection, setActiveCatalogSection] = useState("");
+  const [availabilityVersion, setAvailabilityVersion] = useState(0);
   const dateStepRef = useRef(null);
   const faceSectionRef = useRef(null);
   const bodySectionRef = useRef(null);
@@ -466,6 +500,12 @@ export default function BookingInlineForm({
     () => !missingHyaluronicBrandSelections.length,
     [missingHyaluronicBrandSelections.length]
   );
+  const deferredServiceSelections = useDeferredValue(serviceSelections);
+  const deferredSelectionKey = useMemo(
+    () => serializeServiceSelections(deferredServiceSelections),
+    [deferredServiceSelections]
+  );
+  const userCacheKey = useMemo(() => getUserCacheKey(user), [user]);
 
   const maxSlotsInMonth = useMemo(() => {
     const monthEntries = Object.entries(monthAvailability)
@@ -531,22 +571,57 @@ export default function BookingInlineForm({
   }, [serviceSelections, serviceLookup]);
 
   const loadServices = useCallback(async () => {
-    const response = await fetch("/api/services");
-    const data = await parseResponse(response);
-    if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Failed to load services.");
+    if (SERVICES_CACHE.data) {
+      setServices(SERVICES_CACHE.data);
+      return SERVICES_CACHE.data;
     }
-    setServices(data.categories || []);
+
+    if (!SERVICES_CACHE.promise) {
+      SERVICES_CACHE.promise = fetch("/api/services")
+        .then(async (response) => {
+          const data = await parseResponse(response);
+          if (!response.ok || !data?.ok) {
+            throw new Error(data?.message || "Failed to load services.");
+          }
+          const categories = data.categories || [];
+          SERVICES_CACHE.data = categories;
+          return categories;
+        })
+        .finally(() => {
+          SERVICES_CACHE.promise = null;
+        });
+    }
+
+    const categories = await SERVICES_CACHE.promise;
+    setServices(categories);
+    return categories;
   }, []);
 
-  async function loadMyBookings() {
-    const response = await fetch("/api/me/bookings");
-    if (!response.ok) {
-      return;
-    }
-    const data = await parseResponse(response);
-    setBookings(data.upcoming || []);
-  }
+  const loadMyBookings = useCallback(
+    async ({ force = false } = {}) => {
+      if (!userCacheKey) {
+        setBookings([]);
+        return [];
+      }
+
+      if (!force && USER_BOOKINGS_CACHE.has(userCacheKey)) {
+        const cachedBookings = USER_BOOKINGS_CACHE.get(userCacheKey) || [];
+        setBookings(cachedBookings);
+        return cachedBookings;
+      }
+
+      const response = await fetch("/api/me/bookings");
+      if (!response.ok) {
+        return [];
+      }
+      const data = await parseResponse(response);
+      const upcomingBookings = data?.upcoming || [];
+      USER_BOOKINGS_CACHE.set(userCacheKey, upcomingBookings);
+      setBookings(upcomingBookings);
+      return upcomingBookings;
+    },
+    [userCacheKey]
+  );
 
   function updateSelectedService(service, checked) {
     setSelectedMap((prev) => {
@@ -643,7 +718,7 @@ export default function BookingInlineForm({
       return;
     }
     loadMyBookings().catch(() => {});
-  }, [user, showUpcoming]);
+  }, [user, showUpcoming, loadMyBookings]);
 
   useEffect(() => {
     if (!serviceSelections.length) {
@@ -651,26 +726,55 @@ export default function BookingInlineForm({
       return;
     }
 
-    if (!canRequestAvailability) {
+    if (!canRequestAvailability || !deferredSelectionKey || deferredSelectionKey === "[]") {
       setQuote(null);
       return;
     }
 
-    fetch("/api/bookings/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ serviceSelections }),
-    })
-      .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
-      .then(({ ok, data }) => {
-        if (!ok || !data?.ok) {
-          throw new Error(data?.message || t("booking.quoteFailed"));
-        }
-        setError("");
-        setQuote(data);
+    const cachedQuote = QUOTE_CACHE.get(deferredSelectionKey);
+    if (cachedQuote) {
+      setError("");
+      setQuote(cachedQuote);
+      return;
+    }
+
+    setQuote(null);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => {
+      fetch("/api/bookings/quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ serviceSelections: deferredServiceSelections }),
+        signal: controller.signal,
       })
-      .catch((err) => setError(err.message));
-  }, [serviceSelections, canRequestAvailability, t]);
+        .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
+        .then(({ ok, data }) => {
+          if (!ok || !data?.ok) {
+            throw new Error(data?.message || t("booking.quoteFailed"));
+          }
+          QUOTE_CACHE.set(deferredSelectionKey, data);
+          setError("");
+          setQuote(data);
+        })
+        .catch((err) => {
+          if (isAbortError(err)) {
+            return;
+          }
+          setError(err.message);
+        });
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [
+    serviceSelections.length,
+    canRequestAvailability,
+    deferredSelectionKey,
+    deferredServiceSelections,
+    t,
+  ]);
 
   useEffect(() => {
     if (!serviceSelections.length) {
@@ -679,22 +783,33 @@ export default function BookingInlineForm({
       return;
     }
 
-    if (!canRequestAvailability) {
+    if (!canRequestAvailability || !deferredSelectionKey || deferredSelectionKey === "[]") {
       setMonthAvailability({});
       setCalendarError("");
       return;
     }
 
-    let cancelled = false;
+    const cacheKey = `${monthKey}::${deferredSelectionKey}`;
+    const cachedMonthAvailability = MONTH_AVAILABILITY_CACHE.get(cacheKey);
+    if (cachedMonthAvailability) {
+      setMonthAvailability(cachedMonthAvailability);
+      setMonthLoading(false);
+      setCalendarError("");
+      return;
+    }
+
+    const controller = new AbortController();
     setMonthLoading(true);
     setCalendarError("");
 
     const params = new URLSearchParams({
       month: monthKey,
-      serviceSelections: JSON.stringify(serviceSelections),
+      serviceSelections: deferredSelectionKey,
     });
 
-    fetch(`/api/bookings/availability?${params.toString()}`)
+    fetch(`/api/bookings/availability?${params.toString()}`, {
+      signal: controller.signal,
+    })
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
@@ -706,25 +821,30 @@ export default function BookingInlineForm({
           map[day.date] = Number(day.availableSlots) || 0;
         });
 
-        if (!cancelled) {
-          setMonthAvailability(map);
-        }
+        MONTH_AVAILABILITY_CACHE.set(cacheKey, map);
+        setMonthAvailability(map);
       })
       .catch((err) => {
-        if (!cancelled) {
-          setCalendarError(err.message || t("booking.loadMonthFailed"));
+        if (isAbortError(err)) {
+          return;
         }
+        setCalendarError(err.message || t("booking.loadMonthFailed"));
       })
       .finally(() => {
-        if (!cancelled) {
-          setMonthLoading(false);
-        }
+        setMonthLoading(false);
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [serviceSelections, monthKey, canRequestAvailability, t]);
+  }, [
+    serviceSelections.length,
+    monthKey,
+    canRequestAvailability,
+    deferredSelectionKey,
+    availabilityVersion,
+    t,
+  ]);
 
   useEffect(() => {
     if (!serviceSelections.length || monthLoading || !canRequestAvailability) {
@@ -753,33 +873,56 @@ export default function BookingInlineForm({
       return;
     }
 
-    let cancelled = false;
+    if (!deferredSelectionKey || deferredSelectionKey === "[]") {
+      setAvailability([]);
+      return;
+    }
+
+    const cacheKey = `${date}::${deferredSelectionKey}`;
+    const cachedDayAvailability = DAY_AVAILABILITY_CACHE.get(cacheKey);
+    if (cachedDayAvailability) {
+      setAvailability(cachedDayAvailability);
+      setCalendarError("");
+      return;
+    }
+
+    const controller = new AbortController();
     const params = new URLSearchParams({
       date,
-      serviceSelections: JSON.stringify(serviceSelections),
+      serviceSelections: deferredSelectionKey,
     });
 
-    fetch(`/api/bookings/availability?${params.toString()}`)
+    fetch(`/api/bookings/availability?${params.toString()}`, {
+      signal: controller.signal,
+    })
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
         if (!ok || !data?.ok) {
           throw new Error(data?.message || t("booking.loadSlotsFailed"));
         }
-        if (!cancelled) {
-          setAvailability(data.slots || []);
-          setCalendarError("");
-        }
+        const slots = data.slots || [];
+        DAY_AVAILABILITY_CACHE.set(cacheKey, slots);
+        setAvailability(slots);
+        setCalendarError("");
       })
       .catch((err) => {
-        if (!cancelled) {
-          setCalendarError(err.message || t("booking.loadSlotsFailed"));
+        if (isAbortError(err)) {
+          return;
         }
+        setCalendarError(err.message || t("booking.loadSlotsFailed"));
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [serviceSelections, date, canRequestAvailability, t]);
+  }, [
+    serviceSelections.length,
+    date,
+    canRequestAvailability,
+    deferredSelectionKey,
+    availabilityVersion,
+    t,
+  ]);
 
   async function handleBook(event) {
     event.preventDefault();
@@ -827,7 +970,13 @@ export default function BookingInlineForm({
       setMessage(t("booking.bookedPending"));
       setSelectedStartAt("");
       setNotes("");
-      await loadMyBookings();
+      if (userCacheKey) {
+        USER_BOOKINGS_CACHE.delete(userCacheKey);
+      }
+      MONTH_AVAILABILITY_CACHE.clear();
+      DAY_AVAILABILITY_CACHE.clear();
+      setAvailabilityVersion((prev) => prev + 1);
+      await loadMyBookings({ force: true });
     } catch (err) {
       setError(err.message || t("booking.genericBookingError"));
     } finally {

@@ -1,9 +1,27 @@
 "use client";
 
-import BookingInlineForm from "@/components/booking/BookingInlineForm";
+import dynamic from "next/dynamic";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
+
+function BookingFormSkeleton() {
+  const { t } = useLocale();
+
+  return (
+    <div style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
+      <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>{t("common.loading")}</p>
+    </div>
+  );
+}
+
+const BookingInlineForm = dynamic(
+  () => import("@/components/booking/BookingInlineForm"),
+  {
+    ssr: false,
+    loading: () => <BookingFormSkeleton />,
+  }
+);
 
 export default function BookingSection({ googleNextPath = "/" }) {
   const { t } = useLocale();

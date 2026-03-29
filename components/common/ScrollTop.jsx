@@ -5,6 +5,7 @@ export default function ScrollTop() {
   const [scrolled, setScrolled] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(400);
   const [enabled, setEnabled] = useState(true);
+  const frameRef = React.useRef(null);
 
   const scrollToTop = () => {
     if (window) {
@@ -18,13 +19,18 @@ export default function ScrollTop() {
     if (!enabled) {
       return;
     }
-    setScrolled(document.body.scrollTop || document.documentElement.scrollTop);
-    setShowScrollTop(window.scrollY >= window.innerHeight);
-
-    setScrollHeight(
-      document.documentElement.scrollHeight -
-        document.documentElement.clientHeight
-    );
+    if (frameRef.current !== null) {
+      return;
+    }
+    frameRef.current = window.requestAnimationFrame(() => {
+      frameRef.current = null;
+      setScrolled(document.body.scrollTop || document.documentElement.scrollTop);
+      setShowScrollTop(window.scrollY >= window.innerHeight);
+      setScrollHeight(
+        document.documentElement.scrollHeight -
+          document.documentElement.clientHeight
+      );
+    });
   }, [enabled]);
 
   useEffect(() => {
@@ -52,9 +58,14 @@ export default function ScrollTop() {
       setShowScrollTop(false);
       return;
     }
-    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
   }, [enabled, handleScroll]);
 

@@ -18,16 +18,61 @@ export default function AppProviders({
   const pathname = usePathname();
 
   useEffect(() => {
-    import("bootstrap/dist/js/bootstrap.esm").catch(() => {});
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    let timeoutId = null;
+    let idleId = null;
+    let cancelled = false;
+    const loadBootstrap = () => {
+      if (cancelled) {
+        return;
+      }
+      import("bootstrap/dist/js/bootstrap.esm").catch(() => {});
+    };
+
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(loadBootstrap, { timeout: 1500 });
+    } else {
+      timeoutId = window.setTimeout(loadBootstrap, 180);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleId !== null && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   useEffect(() => {
-    const WOW = require("@/utils/wow");
-    const wow = new WOW.default({
-      live: false,
-      mobile: false,
-    });
-    wow.init();
+    if (typeof document === "undefined" || !document.querySelector(".wow")) {
+      return undefined;
+    }
+
+    let active = true;
+    let wowInstance = null;
+
+    import("@/utils/wow")
+      .then((WOW) => {
+        if (!active) {
+          return;
+        }
+        wowInstance = new WOW.default({
+          live: false,
+          mobile: false,
+        });
+        wowInstance.init();
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
   }, [pathname]);
 
   useEffect(() => {
