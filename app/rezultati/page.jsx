@@ -3,7 +3,7 @@ import Footer5 from "@/components/footers/Footer5";
 import BeforeAfterShowcase from "@/components/homes/home-5/BeforeAfterShowcase";
 
 export const metadata = {
-  title: "Rezultati tretmana | Dr Igic",
+  title: "Rezultati tretmana",
 };
 
 export default function ResultsPage() {

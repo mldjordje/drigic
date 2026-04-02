@@ -1,7 +1,7 @@
 {
-  "name": "Dr Igic App",
-  "short_name": "Dr Igic",
-  "description": "Online zakazivanje i upravljanje tretmanima klinike estetske medicine.",
+  "name": "Dr Igić Clinic",
+  "short_name": "Dr Igić",
+  "description": "Ordinacija estetske, anti-age i regenerativne medicine.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

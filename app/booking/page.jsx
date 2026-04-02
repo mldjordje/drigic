@@ -3,7 +3,7 @@ import Footer5 from "@/components/footers/Footer5";
 import BookingSection from "@/components/homes/home-5/BookingSection";
 
 export const metadata = {
-  title: "Booking | Dr Igic",
+  title: "Booking",
 };
 
 export default function BookingPage() {

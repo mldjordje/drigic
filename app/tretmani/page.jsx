@@ -7,7 +7,7 @@ import { getLocalizedCategoryCopy } from "@/lib/services/category-copy";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 export const metadata = {
-  title: "Tretmani | Dr Igic",
+  title: "Tretmani",
 };
 
 export default async function TreatmentsIndexPage() {

@@ -1,8 +1,8 @@
 {
-  "name": "Dr Igic Admin",
-  "short_name": "Admin",
+  "name": "Dr Igić Clinic Admin",
+  "short_name": "Clinic Admin",
   "id": "/admin",
-  "description": "Admin panel za upravljanje klinikom Dr Igic.",
+  "description": "Admin panel za upravljanje sadržajem i terminima klinike.",
   "start_url": "/admin/kalendar",
   "scope": "/admin/",
   "display": "standalone",

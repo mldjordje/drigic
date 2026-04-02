@@ -1,7 +1,7 @@
 import VideoGalleryFeed from "@/components/homes/home-5/VideoGalleryFeed";
 
 export const metadata = {
-  title: "Video galerija | Dr Igic",
+  title: "Video galerija",
 };
 
 export default function VideoGalleryPage() {

@@ -5,7 +5,7 @@ import { getFounderCopy } from "@/lib/content/founder-copy";
 import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
 
 export const metadata = {
-  title: "Dr Nikola Igic | Portfolio",
+  title: "Dr Nikola Igić",
 };
 
 export default async function NikolaIgicPage() {

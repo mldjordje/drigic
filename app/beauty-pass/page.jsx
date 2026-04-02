@@ -3,7 +3,7 @@ import Footer5 from "@/components/footers/Footer5";
 import BeautyPassSection from "@/components/homes/home-5/BeautyPassSection";
 
 export const metadata = {
-  title: "Beauty Pass | Dr Igic",
+  title: "Beauty Pass",
 };
 
 export default function BeautyPassPage() {

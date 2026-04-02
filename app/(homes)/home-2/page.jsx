@@ -5,9 +5,11 @@ import Portfolio from "@/components/homes/home-2/Portfolio";
 import React from "react";
 import Cta from "@/components/homes/home-2/Cta";
 import Footer2 from "@/components/footers/Footer2";
+
 export const metadata = {
-  title: "Dr Igić Klinika Estetske Medicine",
+  title: "Dr Igić Clinic",
 };
+
 export default function HomePage2() {
   return (
     <>

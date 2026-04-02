@@ -7,7 +7,7 @@ import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
 import { getDb, schema } from "@/lib/db/client";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
-import { getConfiguredSiteUrl } from "@/lib/site";
+import { SITE_NAME, getConfiguredSiteUrl } from "@/lib/site";
 import {
   SERVICE_CATEGORY_SPECS,
   getCategorySpecBySlug,
@@ -26,8 +26,8 @@ export async function generateMetadata({ params }) {
 
   if (!category) {
     return {
-      title: "Tretmani | Dr Igic",
-      description: "Detaljne stranice tretmana i kategorija usluga klinike Dr Igic.",
+      title: "Tretmani",
+      description: "Detaljne stranice tretmana i kategorija usluga klinike.",
     };
   }
 
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }) {
       url: canonicalUrl,
       type: "article",
       locale: "sr_RS",
-      siteName: "Dr Igic klinika estetske medicine",
+      siteName: SITE_NAME,
     },
     twitter: {
       card: "summary_large_image",

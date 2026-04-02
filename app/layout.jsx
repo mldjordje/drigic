@@ -11,7 +11,12 @@ import { cookies } from "next/headers";
 import AppProviders from "@/components/common/AppProviders";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
-import { getMetadataBase } from "@/lib/site";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TITLE_TEMPLATE,
+  getMetadataBase,
+} from "@/lib/site";
 
 const cormorantInfantTitle = Cormorant_Infant({
   subsets: ["latin", "latin-ext"],
@@ -21,21 +26,46 @@ const cormorantInfantTitle = Cormorant_Infant({
 
 export const metadata = {
   metadataBase: getMetadataBase(),
-  title: "Dr Igic Klinika Estetske Medicine",
-  description:
-    "Dr Igic aplikacija za zakazivanje tretmana, pregled raspolozivih termina i pracenje beauty pass istorije.",
+  title: {
+    default: SITE_NAME,
+    template: SITE_TITLE_TEMPLATE,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },
       { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
     ],
     apple: "/icons/apple-touch-icon.png",
     shortcut: "/favicon.ico",
   },
+  openGraph: {
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    siteName: SITE_NAME,
+    type: "website",
+    locale: "sr_RS",
+    images: [
+      {
+        url: "/icons/icon-512.png",
+        width: 512,
+        height: 512,
+        alt: SITE_NAME,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: ["/icons/icon-512.png"],
+  },
   appleWebApp: {
     capable: true,
-    title: "Dr Igic",
+    title: SITE_NAME,
     statusBarStyle: "default",
   },
 };

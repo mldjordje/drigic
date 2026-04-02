@@ -5,9 +5,10 @@ import AnnouncementBar from "@/components/homes/home-5/AnnouncementBar";
 import ClinicPreloader from "@/components/homes/home-5/ClinicPreloader";
 import DeferredHomeSections from "@/components/homes/home-5/DeferredHomeSections";
 import Hero from "@/components/homes/home-5/Hero";
+import { SITE_NAME } from "@/lib/site";
 
 export const metadata = {
-  title: "Dr Igic Klinika Estetske Medicine",
+  title: SITE_NAME,
 };
 
 export default async function HomePage5() {

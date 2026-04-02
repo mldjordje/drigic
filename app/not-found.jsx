@@ -4,7 +4,7 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata = {
-  title: "Not Found || Frisk - Creative Agency & Portfolio Nextjs Template",
+  title: "Stranica nije pronađena",
 };
 export default function NotFoundPage() {
   return (

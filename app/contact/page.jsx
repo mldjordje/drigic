@@ -8,7 +8,7 @@ import Header3 from "@/components/headers/Header3";
 import React from "react";
 
 export const metadata = {
-  title: "Contact || Frisk - Creative Agency & Portfolio Nextjs Template",
+  title: "Kontakt",
 };
 
 export default function ContactPage() {

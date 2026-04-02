@@ -24,15 +24,15 @@ self.addEventListener("push", (event) => {
     payload = {};
   }
 
-  const title = payload.title || "Dr Igic";
+  const title = payload.title || "Dr Igić Clinic";
   const body = payload.body || "Imate novo obavestenje.";
   const url = payload.url || "/beauty-pass";
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: "/favicon.ico",
-      badge: "/favicon.ico",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
       data: { url },
     })
   );

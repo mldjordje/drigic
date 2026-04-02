@@ -7,6 +7,7 @@ import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
 import { getDb, schema } from "@/lib/db/client";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
+import { SITE_NAME } from "@/lib/site";
 import { getCategorySpecBySlug } from "@/lib/services/category-map";
 
 export const dynamic = "force-dynamic";
@@ -96,13 +97,19 @@ export async function generateMetadata({ params }) {
 
   if (!data) {
     return {
-      title: "Tretman | Dr Igic",
+      title: "Tretman",
     };
   }
 
   return {
-    title: `${data.service.name} | Dr Igic`,
+    title: data.service.name,
     description: data.service.description || data.categorySpec.seoDescription,
+    openGraph: {
+      title: data.service.name,
+      description: data.service.description || data.categorySpec.seoDescription,
+      siteName: SITE_NAME,
+      type: "article",
+    },
   };
 }
 
