@@ -1,7 +1,8 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
+import { revalidatePublicServicesCatalog } from "@/lib/cache/public-services";
 import { getDb, schema } from "@/lib/db/client";
 
 export const runtime = "nodejs";
@@ -167,6 +168,7 @@ export async function POST(request) {
         })
         .returning();
 
+      revalidatePublicServicesCatalog();
       return created({
         ok: true,
         data: { ...record, serviceCount: 0 },
@@ -181,6 +183,7 @@ export async function POST(request) {
       })
       .returning();
 
+    revalidatePublicServicesCatalog();
     return created({
       ok: true,
       data: { ...record, serviceCount: 0 },
@@ -231,6 +234,7 @@ export async function PATCH(request) {
         .from(schema.services)
         .where(eq(schema.services.categoryId, id));
 
+      revalidatePublicServicesCatalog();
       return ok({
         ok: true,
         data: { ...record, serviceCount: linkedServices.length },
@@ -255,6 +259,7 @@ export async function PATCH(request) {
       .from(schema.services)
       .where(eq(schema.services.bodyAreaId, id));
 
+    revalidatePublicServicesCatalog();
     return ok({
       ok: true,
       data: { ...record, serviceCount: linkedServices.length },
@@ -262,4 +267,48 @@ export async function PATCH(request) {
   } catch (error) {
     return fail(400, error.message || "Neuspesno azuriranje metadata.");
   }
+}
+
+export async function DELETE(request) {
+  const auth = await requireAdmin(request);
+  if (auth.error) {
+    return auth.error;
+  }
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  const entityType = url.searchParams.get("entityType");
+
+  if (entityType !== "bodyArea" || !id) {
+    return fail(400, "Query parametri: entityType=bodyArea i id su obavezni.");
+  }
+
+  const db = getDb();
+
+  const [existing] = await db
+    .select({ id: schema.bodyAreas.id })
+    .from(schema.bodyAreas)
+    .where(eq(schema.bodyAreas.id, id))
+    .limit(1);
+
+  if (!existing) {
+    return fail(404, "Deo tela nije pronadjen.");
+  }
+
+  const [usageRow] = await db
+    .select({ n: count() })
+    .from(schema.services)
+    .where(eq(schema.services.bodyAreaId, id));
+
+  if (Number(usageRow?.n || 0) > 0) {
+    return fail(
+      409,
+      "Ne mozete obrisati deo tela dok postoje usluge koje su na njega vezane. Prvo uklonite mapiranje na uslugama."
+    );
+  }
+
+  await db.delete(schema.bodyAreas).where(eq(schema.bodyAreas.id, id));
+  revalidatePublicServicesCatalog();
+
+  return ok({ ok: true });
 }

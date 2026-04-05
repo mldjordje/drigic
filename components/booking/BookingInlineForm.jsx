@@ -4,6 +4,7 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } f
 import { createPortal } from "react-dom";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
+import { CONSULTATION_SELECTION_ID } from "@/lib/booking/constants";
 
 const HYALURONIC_BRANDS = [
   { key: "revolax", label: "Revolax", unitPrice: 180 },
@@ -339,7 +340,6 @@ export default function BookingInlineForm({
   const [services, setServices] = useState([]);
   const [selectedMap, setSelectedMap] = useState({});
   const [selectedBrandMap, setSelectedBrandMap] = useState({});
-  const [includeConsultation, setIncludeConsultation] = useState(false);
   const [date, setDate] = useState(todayIsoDate());
   const [availability, setAvailability] = useState([]);
   const [monthAvailability, setMonthAvailability] = useState({});
@@ -454,35 +454,35 @@ export default function BookingInlineForm({
 
   const hasOffers = packageServices.length > 0 || promotionCategoryGroups.length > 0;
 
-  const serviceSelections = useMemo(
-    () => {
-      const selections = Object.entries(selectedMap)
-        .map(([serviceId, quantity]) => {
-          const service = serviceLookup.get(serviceId);
-          const brand = selectedBrandMap[serviceId] || null;
+  const serviceSelections = useMemo(() => {
+    const selections = Object.entries(selectedMap)
+      .map(([serviceId, quantity]) => {
+        const service = serviceLookup.get(serviceId);
+        const brand = selectedBrandMap[serviceId] || null;
 
-          return {
-            serviceId,
-            quantity: Math.max(1, Number(quantity || 1)),
-            brand:
-              service?.supportsMl && isHyaluronicFillerService(service) && brand
-                ? brand
-                : undefined,
-          };
-        })
-        .filter((item) => item.serviceId);
+        return {
+          serviceId,
+          quantity: Math.max(1, Number(quantity || 1)),
+          brand:
+            service?.supportsMl && isHyaluronicFillerService(service) && brand
+              ? brand
+              : undefined,
+        };
+      })
+      .filter((item) => item.serviceId);
 
-      if (includeConsultation) {
-        selections.unshift({
-          serviceId: "consultation",
-          quantity: 1,
-        });
+    selections.sort((a, b) => {
+      if (a.serviceId === CONSULTATION_SELECTION_ID) {
+        return -1;
       }
+      if (b.serviceId === CONSULTATION_SELECTION_ID) {
+        return 1;
+      }
+      return 0;
+    });
 
-      return selections;
-    },
-    [includeConsultation, selectedMap, selectedBrandMap, serviceLookup]
-  );
+    return selections;
+  }, [selectedMap, selectedBrandMap, serviceLookup]);
 
   const missingHyaluronicBrandSelections = useMemo(
     () =>
@@ -550,6 +550,9 @@ export default function BookingInlineForm({
 
     return serviceSelections
       .map((selection) => {
+        if (selection.serviceId === CONSULTATION_SELECTION_ID) {
+          return `${t("booking.consultationName")} — ${t("booking.consultationDuration")}`;
+        }
         const service = serviceLookup.get(selection.serviceId);
         if (!service) {
           return null;
@@ -664,6 +667,21 @@ export default function BookingInlineForm({
       ...prev,
       [serviceId]: brandKey,
     }));
+    setError("");
+    setMessage("");
+    setSelectedStartAt("");
+  }
+
+  function updateConsultationSelected(checked) {
+    setSelectedMap((prev) => {
+      const next = { ...prev };
+      if (checked) {
+        next[CONSULTATION_SELECTION_ID] = 1;
+      } else {
+        delete next[CONSULTATION_SELECTION_ID];
+      }
+      return next;
+    });
     setError("");
     setMessage("");
     setSelectedStartAt("");
@@ -1160,28 +1178,6 @@ export default function BookingInlineForm({
         style={shouldShowNextDateCta ? { paddingBottom: 96 } : undefined}
       >
         <h3 style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseTreatments")}</h3>
-        <label className="clinic-consultation-card clinic-reveal" style={{ cursor: "pointer" }}>
-          <span style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <input
-              type="checkbox"
-              checked={includeConsultation}
-              onChange={(event) => {
-                setIncludeConsultation(event.target.checked);
-                setError("");
-                setMessage("");
-                setSelectedStartAt("");
-              }}
-            />
-            <span style={{ display: "grid", gap: 4 }}>
-              <strong>{t("booking.consultationName")}</strong>
-              <small style={{ color: "var(--clinic-text-strong)" }}>
-                {t("booking.consultationSelectable")}
-              </small>
-            </span>
-          </span>
-          <span>{t("booking.consultationDuration")}</span>
-          <small>{t("booking.consultationInfo")}</small>
-        </label>
         {(faceCategoryGroups.length || bodyCategoryGroups.length) ? (
           <div className="clinic-booking-mini-nav">
             {faceCategoryGroups.length ? (
@@ -1238,9 +1234,34 @@ export default function BookingInlineForm({
               }
             />
             <BookingCatalogPanel isOpen={activeCatalogSection === "services"}>
-              {(faceCategoryGroups.length || bodyCategoryGroups.length) ? (
-                <>
-                  {(faceCategoryGroups.length || bodyCategoryGroups.length) ? (
+              <>
+                <div
+                  className={`clinic-service-option clinic-reveal is-consultation-row ${
+                    selectedMap[CONSULTATION_SELECTION_ID] ? "is-selected" : ""
+                  }`}
+                  style={{ ...checkboxRowStyle, marginBottom: 12 }}
+                >
+                  <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(selectedMap[CONSULTATION_SELECTION_ID])}
+                      onChange={(event) => updateConsultationSelected(event.target.checked)}
+                    />
+                    <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 6 }}>
+                      <strong>{t("booking.consultationName")}</strong>
+                      <span className="clinic-service-option__meta">
+                        <span className="clinic-service-option__pill">
+                          {t("booking.consultationDuration")}
+                        </span>
+                      </span>
+                      <small style={{ color: "var(--clinic-text-muted)", maxWidth: "42rem" }}>
+                        {t("booking.consultationInfo")}
+                      </small>
+                    </span>
+                  </label>
+                </div>
+                {faceCategoryGroups.length || bodyCategoryGroups.length ? (
+                  <>
                     <div className="clinic-booking-mini-nav">
                       {faceCategoryGroups.length ? (
                         <button
@@ -1261,34 +1282,34 @@ export default function BookingInlineForm({
                         </button>
                       ) : null}
                     </div>
-                  ) : null}
-                  {faceCategoryGroups.map((category, categoryIndex) =>
-                    renderCategoryGroup(
-                      category,
-                      categoryIndex,
-                      categoryIndex === 0 ? faceSectionRef : null,
-                      "face"
-                    )
-                  )}
-                  {bodyCategoryGroups.length ? (
-                    <div className="clinic-service-category clinic-reveal" ref={bodySectionRef}>
-                      <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>
-                        {t("booking.body")}
-                      </h4>
-                    </div>
-                  ) : null}
-                  {bodyCategoryGroups.map((category, categoryIndex) =>
-                    renderCategoryGroup(
-                      category,
-                      categoryIndex + faceCategoryGroups.length,
-                      null,
-                      "body"
-                    )
-                  )}
-                </>
-              ) : (
-                <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.servicesEmpty}</p>
-              )}
+                    {faceCategoryGroups.map((category, categoryIndex) =>
+                      renderCategoryGroup(
+                        category,
+                        categoryIndex,
+                        categoryIndex === 0 ? faceSectionRef : null,
+                        "face"
+                      )
+                    )}
+                    {bodyCategoryGroups.length ? (
+                      <div className="clinic-service-category clinic-reveal" ref={bodySectionRef}>
+                        <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>
+                          {t("booking.body")}
+                        </h4>
+                      </div>
+                    ) : null}
+                    {bodyCategoryGroups.map((category, categoryIndex) =>
+                      renderCategoryGroup(
+                        category,
+                        categoryIndex + faceCategoryGroups.length,
+                        null,
+                        "body"
+                      )
+                    )}
+                  </>
+                ) : (
+                  <p style={bookingCatalogEmptyStyle}>{bookingCatalogCopy.servicesEmpty}</p>
+                )}
+              </>
             </BookingCatalogPanel>
           </div>
 

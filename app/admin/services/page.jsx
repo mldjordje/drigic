@@ -220,9 +220,9 @@ export function AdminCatalogPage({ mode = "services" }) {
   }, [
     serviceForm.kind,
     serviceForm.packageItems,
+    singleServiceById,
     serviceForm.priceRsd,
     serviceForm.durationMin,
-    singleServiceById,
   ]);
 
   const packageOverLimit = serviceForm.kind === "package" && packageSummary.durationMin > 60;
@@ -256,10 +256,8 @@ export function AdminCatalogPage({ mode = "services" }) {
         }));
 
       const isPackage = serviceForm.kind === "package";
-      const computedDuration = isPackage
-        ? packageSummary.durationMin
-        : Number(serviceForm.durationMin);
-      const computedPrice = isPackage ? packageSummary.priceRsd : Number(serviceForm.priceRsd);
+      const computedDuration = Number(serviceForm.durationMin);
+      const computedPrice = Number(serviceForm.priceRsd);
 
       if (computedDuration > 60) {
         throw new Error("Ukupno trajanje ne sme biti duze od 60 minuta.");
@@ -416,34 +414,86 @@ export function AdminCatalogPage({ mode = "services" }) {
     }
   }
 
+  function packageItemsSuggestedTotals(items) {
+    return (items || []).reduce(
+      (acc, item) => {
+        const ref = singleServiceById[item.serviceId];
+        if (!ref) {
+          return acc;
+        }
+        const quantity = toPositiveInt(item.quantity || 1, 1);
+        acc.priceRsd += Number(ref.priceRsd || 0) * quantity;
+        acc.durationMin += Number(ref.durationMin || 0) * quantity;
+        return acc;
+      },
+      { priceRsd: 0, durationMin: 0 }
+    );
+  }
+
   function addPackageItem() {
-    setServiceForm((prev) => ({
-      ...prev,
-      packageItems: [
+    setServiceForm((prev) => {
+      const packageItems = [
         ...(prev.packageItems || []),
         {
           serviceId: singleServices[0]?.id || "",
           quantity: 1,
           sortOrder: (prev.packageItems || []).length,
         },
-      ],
-    }));
+      ];
+      if (prev.kind !== "package") {
+        return { ...prev, packageItems };
+      }
+      const totals = packageItemsSuggestedTotals(packageItems);
+      return {
+        ...prev,
+        packageItems,
+        priceRsd: totals.priceRsd || prev.priceRsd,
+        durationMin: totals.durationMin
+          ? Math.min(60, Math.max(5, totals.durationMin))
+          : prev.durationMin,
+      };
+    });
   }
 
   function updatePackageItem(index, patch) {
-    setServiceForm((prev) => ({
-      ...prev,
-      packageItems: (prev.packageItems || []).map((item, itemIndex) =>
+    setServiceForm((prev) => {
+      const packageItems = (prev.packageItems || []).map((item, itemIndex) =>
         itemIndex === index ? { ...item, ...patch } : item
-      ),
-    }));
+      );
+      if (prev.kind !== "package") {
+        return { ...prev, packageItems };
+      }
+      const totals = packageItemsSuggestedTotals(packageItems);
+      return {
+        ...prev,
+        packageItems,
+        priceRsd: totals.priceRsd || prev.priceRsd,
+        durationMin: totals.durationMin
+          ? Math.min(60, Math.max(5, totals.durationMin))
+          : prev.durationMin,
+      };
+    });
   }
 
   function removePackageItem(index) {
-    setServiceForm((prev) => ({
-      ...prev,
-      packageItems: (prev.packageItems || []).filter((_, itemIndex) => itemIndex !== index),
-    }));
+    setServiceForm((prev) => {
+      const packageItems = (prev.packageItems || []).filter((_, itemIndex) => itemIndex !== index);
+      if (prev.kind !== "package") {
+        return { ...prev, packageItems };
+      }
+      if (!packageItems.length) {
+        return { ...prev, packageItems, priceRsd: 0, durationMin: 30 };
+      }
+      const totals = packageItemsSuggestedTotals(packageItems);
+      return {
+        ...prev,
+        packageItems,
+        priceRsd: totals.priceRsd || 0,
+        durationMin: totals.durationMin
+          ? Math.min(60, Math.max(5, totals.durationMin))
+          : 30,
+      };
+    });
   }
 
   return (
@@ -566,11 +616,10 @@ export function AdminCatalogPage({ mode = "services" }) {
                 type="number"
                 min={0}
                 className="admin-inline-input"
-                value={serviceForm.kind === "package" ? packageSummary.priceRsd : serviceForm.priceRsd}
+                value={serviceForm.priceRsd}
                 onChange={(event) =>
                   setServiceForm((prev) => ({ ...prev, priceRsd: event.target.value }))
                 }
-                disabled={serviceForm.kind === "package"}
               />
             </label>
             <label>
@@ -580,15 +629,18 @@ export function AdminCatalogPage({ mode = "services" }) {
                 min={5}
                 max={60}
                 className="admin-inline-input"
-                value={
-                  serviceForm.kind === "package" ? packageSummary.durationMin : serviceForm.durationMin
-                }
+                value={serviceForm.durationMin}
                 onChange={(event) =>
                   setServiceForm((prev) => ({ ...prev, durationMin: event.target.value }))
                 }
-                disabled={serviceForm.kind === "package"}
               />
             </label>
+            {serviceForm.kind === "package" ? (
+              <small style={{ color: "#bed0e8", gridColumn: "1 / -1" }}>
+                Predlog na osnovu stavki: {packageSummary.priceRsd} EUR / {packageSummary.durationMin}{" "}
+                min (mozete rucno promeniti polja iznad).
+              </small>
+            ) : null}
           </div>
 
           <label>

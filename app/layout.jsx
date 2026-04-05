@@ -6,7 +6,7 @@ import "../public/assets/css/animate.min.css";
 import "../public/assets/css/imageRevealHover.css";
 import "../public/assets/sass/style.scss";
 import "rc-slider/assets/index.css";
-import { Cormorant_Infant } from "next/font/google";
+import { Cormorant_Infant, Source_Sans_3 } from "next/font/google";
 import { cookies } from "next/headers";
 import AppProviders from "@/components/common/AppProviders";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
@@ -22,6 +22,13 @@ const cormorantInfantTitle = Cormorant_Infant({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
   variable: "--title-font",
+});
+
+const sourceSansBody = Source_Sans_3({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--body-font-loaded",
+  display: "swap",
 });
 
 export const metadata = {
@@ -79,11 +86,12 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale} style={{ overflowX: "hidden", width: "100%" }}>
       <body
-        className={`body clinic-theme-light clinic-app-shell ${cormorantInfantTitle.variable}`}
+        className={`body clinic-theme-light clinic-app-shell ${cormorantInfantTitle.variable} ${sourceSansBody.variable}`}
         style={{
           overflowX: "hidden",
           width: "100%",
-          "--body-font": '"HelveticaNeueRoman", "Helvetica Neue", Helvetica, Arial, sans-serif',
+          fontFamily:
+            "var(--body-font-loaded), 'Helvetica Neue', Helvetica, Arial, sans-serif",
         }}
       >
         <AppProviders initialLocale={locale} initialSession={initialSession}>

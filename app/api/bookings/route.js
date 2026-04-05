@@ -4,6 +4,11 @@ import { created, fail, readJson } from "@/lib/api/http";
 import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import { sendReminderEmail } from "@/lib/auth/email";
+import { env } from "@/lib/env";
+import {
+  deliverBookingNotification,
+  deliverNewBookingAlertToAdmins,
+} from "@/lib/notifications/delivery";
 import {
   CONSULTATION_SELECTION_ID,
   addMinutes,
@@ -17,7 +22,6 @@ import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
 import { WORKING_HOURS_SUMMARY } from "@/lib/booking/schedule";
 
 export const runtime = "nodejs";
-const PRIMARY_ADMIN_NOTIFY_EMAIL = "igic.nikola8397@gmail.com";
 
 const payloadSchema = z.object({
   serviceIds: z.array(z.string().uuid()).optional(),
@@ -150,26 +154,53 @@ export async function POST(request) {
       const serviceSummary = quote.items
         .map((item) => `${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`)
         .join(", ");
-      const notifyResult = await sendReminderEmail({
-        to: PRIMARY_ADMIN_NOTIFY_EMAIL,
-        title: "Novi booking na cekanju",
-        message: [
-          `Stigao je novi booking koji ceka potvrdu admina.`,
-          `Termin: ${startsAtLabel}`,
-          `Klijent: ${auth.user.email || auth.user.id}`,
-          `Usluge: ${serviceSummary || "-"}`,
-          `Trajanje: ${quote.totalDurationMin} min`,
-          `Cena: ${quote.totalPriceRsd} EUR`,
-        ].join("\n"),
-      });
+      const inboxEmail = String(env.ADMIN_BOOKING_NOTIFY_EMAIL || "").trim();
+      const notifyResult = inboxEmail
+        ? await sendReminderEmail({
+            to: inboxEmail,
+            title: "Novi booking na cekanju",
+            message: [
+              `Stigao je novi booking koji ceka potvrdu admina.`,
+              `Termin: ${startsAtLabel}`,
+              `Klijent: ${auth.user.email || auth.user.id}`,
+              `Usluge: ${serviceSummary || "-"}`,
+              `Trajanje: ${quote.totalDurationMin} min`,
+              `Cena: ${quote.totalPriceRsd} EUR`,
+            ].join("\n"),
+          })
+        : { sent: false, reason: "ADMIN_BOOKING_NOTIFY_EMAIL missing" };
       if (!notifyResult?.sent) {
         console.error(
-          "[bookings.create] admin notify email not sent",
+          "[bookings.create] admin inbox email not sent",
           notifyResult?.reason || "unknown reason"
         );
       }
+
+      if (auth.user.email) {
+        await deliverBookingNotification({
+          db,
+          userId: auth.user.id,
+          email: auth.user.email,
+          type: "booking_submitted",
+          title: "Zahtev za termin je poslat",
+          message: `Vas zahtev za termin ${startsAtLabel} je primljen. Uskoro cete dobiti potvrdu klinike. Usluge: ${serviceSummary || "-"}.`,
+          bookingId: createdBooking.id,
+          scheduledFor: createdBooking.startsAt,
+          dedupe: true,
+        });
+      }
+
+      await deliverNewBookingAlertToAdmins({
+        db,
+        bookingId: createdBooking.id,
+        clientEmail: auth.user.email || auth.user.id,
+        startsAtLabel,
+        serviceSummary,
+        durationMin: quote.totalDurationMin,
+        priceRsd: quote.totalPriceRsd,
+      });
     } catch (notifyError) {
-      console.error("[bookings.create] admin notify email failed", notifyError);
+      console.error("[bookings.create] notification pipeline failed", notifyError);
     }
 
     return created({

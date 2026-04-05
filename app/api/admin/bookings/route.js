@@ -98,6 +98,14 @@ function getStatusNotificationPayload(status, startsAt) {
     };
   }
 
+  if (status === "pending") {
+    return {
+      type: "booking_submitted",
+      title: "Zahtev za termin",
+      message: `Kreiran je zahtev za termin ${startsAtLabel}. Cekajte potvrdu klinike.`,
+    };
+  }
+
   return null;
 }
 
@@ -465,6 +473,29 @@ export async function POST(request) {
       return fail(409, SLOT_CONFLICT_ERROR);
     }
     throw error;
+  }
+
+  const clientEmail = String(user.email || "").trim();
+  const isPlaceholderEmail = clientEmail.endsWith("@drigic.local");
+  if (clientEmail && !isPlaceholderEmail) {
+    const statusPayload = getStatusNotificationPayload(finalStatus, createdBooking.startsAt);
+    if (statusPayload) {
+      try {
+        await deliverBookingNotification({
+          db,
+          userId: user.id,
+          email: clientEmail,
+          type: statusPayload.type,
+          title: statusPayload.title,
+          message: statusPayload.message,
+          bookingId: createdBooking.id,
+          scheduledFor: createdBooking.startsAt,
+          dedupe: false,
+        });
+      } catch (notifyError) {
+        console.error("[admin.bookings.create] client notification failed", notifyError);
+      }
+    }
   }
 
   return created({ ok: true, data: createdBooking, quote });

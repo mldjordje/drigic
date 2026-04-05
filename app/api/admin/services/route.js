@@ -3,6 +3,7 @@ import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
+import { revalidatePublicServicesCatalog } from "@/lib/cache/public-services";
 import { slugifyServiceName } from "@/lib/services/slug";
 
 export const runtime = "nodejs";
@@ -266,9 +267,7 @@ export async function POST(request) {
 
     if (normalized.kind === "package") {
       const singleRows = await validatePackageItems(db, packageItems);
-      const totals = calculatePackageTotals(packageItems, singleRows);
-      normalized.durationMin = totals.totalDurationMin;
-      normalized.priceRsd = totals.totalPriceRsd;
+      calculatePackageTotals(packageItems, singleRows);
     }
 
     const [record] = await db.insert(schema.services).values(normalized).returning();
@@ -285,6 +284,7 @@ export async function POST(request) {
     }
 
     const [serviceWithItems] = await enrichWithPackageItems(db, [record]);
+    revalidatePublicServicesCatalog();
     return created({ ok: true, data: serviceWithItems });
   } catch (error) {
     return fail(400, error.message || "Failed to create service.");
@@ -325,9 +325,7 @@ export async function PATCH(request) {
 
     if (normalized.kind === "package" && shouldReplacePackageItems) {
       const singleRows = await validatePackageItems(db, normalizedItems, id);
-      const totals = calculatePackageTotals(normalizedItems, singleRows);
-      normalized.durationMin = totals.totalDurationMin;
-      normalized.priceRsd = totals.totalPriceRsd;
+      calculatePackageTotals(normalizedItems, singleRows);
     }
 
     if (normalized.kind === "package" && switchedToPackage && !shouldReplacePackageItems) {
@@ -362,6 +360,7 @@ export async function PATCH(request) {
     }
 
     const [serviceWithItems] = await enrichWithPackageItems(db, [record]);
+    revalidatePublicServicesCatalog();
     return ok({ ok: true, data: serviceWithItems });
   } catch (error) {
     return fail(400, error.message || "Failed to update service.");

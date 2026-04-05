@@ -2,6 +2,7 @@ import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
+import { revalidatePublicServicesCatalog } from "@/lib/cache/public-services";
 import { getDb, schema } from "@/lib/db/client";
 
 export const runtime = "nodejs";
@@ -79,6 +80,7 @@ export async function POST(request) {
     return [createdPromotion];
   });
 
+  revalidatePublicServicesCatalog();
   return created({ ok: true, data: record });
 }
 
@@ -148,5 +150,6 @@ export async function PATCH(request) {
     return fail(404, "Promotion not found.");
   }
 
+  revalidatePublicServicesCatalog();
   return ok({ ok: true, data: record });
 }

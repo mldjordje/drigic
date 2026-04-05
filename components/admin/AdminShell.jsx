@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import LocaleSwitcher from "@/components/common/LocaleSwitcher";
 import { useLocale } from "@/components/common/LocaleProvider";
+import AdminNotificationsBell from "@/components/admin/AdminNotificationsBell";
 
 const approvedModules = [
   { href: "/admin/kalendar", labelKey: "admin.calendar" },
@@ -168,6 +169,7 @@ export default function AdminShell({ children }) {
             </div>
           </div>
           <div className="admin-template-topbar-actions">
+            <AdminNotificationsBell />
             <Link href="/admin/kalendar" className="admin-template-link-btn">
               {t("admin.calendar")}
             </Link>

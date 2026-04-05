@@ -150,6 +150,34 @@ export default function AdminSettingsPage() {
     }
   }
 
+  async function deleteBodyArea(id) {
+    if (!id || !window.confirm("Obrisati ovaj deo tela? (Moguće samo ako nijedna usluga nije na njega vezana.)")) {
+      return;
+    }
+    setBusyKey(`bodyArea-delete-${id}`);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/admin/service-metadata?entityType=bodyArea&id=${encodeURIComponent(id)}`,
+        { method: "DELETE" }
+      );
+      const data = await parseResponse(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Brisanje nije uspelo.");
+      }
+      setMessage("Deo tela je obrisan.");
+      if (bodyAreaForm.id === id) {
+        setBodyAreaForm(emptyBodyAreaForm);
+      }
+      await loadData();
+    } catch (deleteError) {
+      setError(deleteError.message || "Greška pri brisanju.");
+    } finally {
+      setBusyKey("");
+    }
+  }
+
   async function saveMetadata(event, entityType) {
     event.preventDefault();
     setBusyKey(entityType);
@@ -568,19 +596,34 @@ export default function AdminSettingsPage() {
                     sort: {item.sortOrder} | vezanih usluga: {item.serviceCount}
                   </small>
                 </div>
-                <button
-                  type="button"
-                  className="admin-template-link-btn"
-                  onClick={() =>
-                    setBodyAreaForm({
-                      id: item.id,
-                      name: item.name,
-                      sortOrder: item.sortOrder,
-                    })
-                  }
-                >
-                  Izmeni
-                </button>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="admin-template-link-btn"
+                    onClick={() =>
+                      setBodyAreaForm({
+                        id: item.id,
+                        name: item.name,
+                        sortOrder: item.sortOrder,
+                      })
+                    }
+                  >
+                    Izmeni
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-template-link-btn"
+                    disabled={busyKey === `bodyArea-delete-${item.id}` || Number(item.serviceCount || 0) > 0}
+                    title={
+                      Number(item.serviceCount || 0) > 0
+                        ? "Prvo uklonite deo tela sa usluga koje ga koriste."
+                        : "Trajno obriši deo tela"
+                    }
+                    onClick={() => deleteBodyArea(item.id)}
+                  >
+                    {busyKey === `bodyArea-delete-${item.id}` ? "Brisanje..." : "Obriši"}
+                  </button>
+                </div>
               </article>
             ))}
           </div>

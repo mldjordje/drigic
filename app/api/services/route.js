@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { publicOk } from "@/lib/api/http";
+import { PUBLIC_SERVICES_CACHE_TAG } from "@/lib/cache/public-services";
 import { getDb, schema } from "@/lib/db/client";
 
 export const runtime = "nodejs";
@@ -157,7 +158,7 @@ const getCachedServices = unstable_cache(
     return Object.values(grouped);
   },
   ["public-services"],
-  { revalidate }
+  { revalidate, tags: [PUBLIC_SERVICES_CACHE_TAG] }
 );
 
 export async function GET() {

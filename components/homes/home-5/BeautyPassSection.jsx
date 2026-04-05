@@ -54,6 +54,14 @@ function formatBookingDate(isoString) {
   return new Date(isoString).toLocaleString("sr-RS", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function formatNotificationDate(isoString) {
+  try {
+    return new Date(isoString).toLocaleString("sr-RS", { timeZone: "Europe/Belgrade" });
+  } catch {
+    return "";
+  }
+}
+
 function formatBookingStatus(status) {
   const normalized = String(status || "").toLowerCase();
   const labels = {
@@ -255,6 +263,7 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
 
   // Lightbox
   const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   const pastBookings = useMemo(() => bookings?.past || [], [bookings]);
   const upcomingBookings = useMemo(() => bookings?.upcoming || [], [bookings]);
@@ -279,10 +288,25 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
   const loadData = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      if (!user) { setBeautyPass(null); setBookings(null); return; }
-      const [passRes, bookingsRes] = await Promise.all([fetch("/api/me/beauty-pass"), fetch("/api/me/bookings")]);
+      if (!user) {
+        setBeautyPass(null);
+        setBookings(null);
+        setNotifications([]);
+        return;
+      }
+      const [notifRes, passRes, bookingsRes] = await Promise.all([
+        fetch("/api/me/notifications"),
+        fetch("/api/me/beauty-pass"),
+        fetch("/api/me/bookings"),
+      ]);
+      const notifData = await parseResponse(notifRes);
       const passData = await parseResponse(passRes);
       const bookingsData = await parseResponse(bookingsRes);
+      if (notifRes.ok && notifData?.ok) {
+        setNotifications(Array.isArray(notifData.data) ? notifData.data : []);
+      } else {
+        setNotifications([]);
+      }
       if (!passRes.ok || !passData?.ok) throw new Error(passData?.message || "Greška pri učitavanju beauty pass podataka.");
       if (!bookingsRes.ok || !bookingsData?.ok) throw new Error(bookingsData?.message || "Greška pri učitavanju termina.");
       setBeautyPass(passData);
@@ -418,6 +442,43 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
                   <span className="clinic-bp__next-booking-empty">
                     Trenutno nemate potvrdjen naredni termin.
                   </span>
+                )}
+              </div>
+
+              <div className="clinic-bp__next-booking" style={{ marginTop: 16 }}>
+                <span className="clinic-bp__next-booking-label">Obaveštenja</span>
+                {notifications.length ? (
+                  <ul
+                    style={{
+                      margin: "10px 0 0",
+                      padding: 0,
+                      listStyle: "none",
+                      display: "grid",
+                      gap: 12,
+                      maxHeight: 280,
+                      overflowY: "auto",
+                    }}
+                  >
+                    {notifications.slice(0, 15).map((n) => (
+                      <li
+                        key={n.id}
+                        style={{
+                          paddingBottom: 10,
+                          borderBottom: "1px solid rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        <strong style={{ display: "block", fontSize: 14 }}>{n.title}</strong>
+                        <span style={{ fontSize: 12, opacity: 0.75 }}>
+                          {formatNotificationDate(n.sentAt)}
+                        </span>
+                        <p style={{ margin: "6px 0 0", fontSize: 13, lineHeight: 1.45, opacity: 0.92 }}>
+                          {n.message}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className="clinic-bp__next-booking-empty">Još uvek nemate obaveštenja.</span>
                 )}
               </div>
 
