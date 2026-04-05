@@ -1,6 +1,14 @@
 ﻿"use client";
 
-import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import {
+  isValidElement,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
@@ -264,6 +272,10 @@ const BOOKING_CATALOG_COPY = {
     packagesEmpty: "Trenutno nema aktivnih paketa.",
     actionsEmpty: "Trenutno nema aktivnih akcija.",
     servicesEmpty: "Trenutno nema aktivnih usluga u ovoj sekciji.",
+    priceRegularShort: "Redovna",
+    pricePromoShort: "Akcija",
+    savingsLine: "Ušteda: {{saved}} EUR (−{{pct}}%)",
+    packageListShort: "Pojedinačno: {{amount}} EUR",
   },
   en: {
     offers: "Promotions and packages",
@@ -274,6 +286,10 @@ const BOOKING_CATALOG_COPY = {
     packagesEmpty: "There are currently no active packages.",
     actionsEmpty: "There are currently no active promotions.",
     servicesEmpty: "There are currently no active services in this section.",
+    priceRegularShort: "Regular",
+    pricePromoShort: "Promo",
+    savingsLine: "Save {{saved}} EUR (−{{pct}}%)",
+    packageListShort: "If booked separately: {{amount}} EUR",
   },
   de: {
     offers: "Aktionen und Pakete",
@@ -284,6 +300,10 @@ const BOOKING_CATALOG_COPY = {
     packagesEmpty: "Derzeit gibt es keine aktiven Pakete.",
     actionsEmpty: "Derzeit gibt es keine aktiven Aktionen.",
     servicesEmpty: "Derzeit gibt es in diesem Bereich keine aktiven Leistungen.",
+    priceRegularShort: "Regulär",
+    pricePromoShort: "Aktion",
+    savingsLine: "Ersparnis: {{saved}} EUR (−{{pct}}%)",
+    packageListShort: "Einzeln: {{amount}} EUR",
   },
   it: {
     offers: "Promozioni e pacchetti",
@@ -294,8 +314,29 @@ const BOOKING_CATALOG_COPY = {
     packagesEmpty: "Al momento non ci sono pacchetti attivi.",
     actionsEmpty: "Al momento non ci sono promozioni attive.",
     servicesEmpty: "Al momento non ci sono servizi attivi in questa sezione.",
+    priceRegularShort: "Standard",
+    pricePromoShort: "Promo",
+    savingsLine: "Risparmi {{saved}} EUR (−{{pct}}%)",
+    packageListShort: "Separati: {{amount}} EUR",
   },
 };
+
+function fillCatalogTemplate(template, vars) {
+  return String(template || "").replace(/\{\{(\w+)\}\}/g, (_, key) =>
+    vars[key] !== undefined && vars[key] !== null ? String(vars[key]) : ""
+  );
+}
+
+function sumPackageListPriceEur(service, serviceLookup) {
+  let sum = 0;
+  (service?.packageItems || []).forEach((item) => {
+    const ref = serviceLookup.get(item.serviceId);
+    if (ref) {
+      sum += Number(ref.priceRsd || 0) * Math.max(1, Number(item.quantity || 1));
+    }
+  });
+  return sum;
+}
 
 function BookingCatalogToggle({ title, isOpen, onToggle, countLabel }) {
   return (
@@ -399,6 +440,77 @@ export default function BookingInlineForm({
     });
     return map;
   }, [services]);
+
+  const renderServicePriceContent = useCallback(
+    (service, brandKey, mode = "single") => {
+      if (service?.supportsMl && isHyaluronicFillerService(service)) {
+        return getServicePriceLabel(service, brandKey);
+      }
+
+      if (mode === "package") {
+        const packPrice = Math.max(0, Number(service?.priceRsd || 0));
+        const listValue = sumPackageListPriceEur(service, serviceLookup);
+        if (listValue > packPrice && listValue > 0) {
+          const saved = listValue - packPrice;
+          const pct = Math.min(100, Math.round((saved / listValue) * 100));
+          return (
+            <span style={{ display: "grid", gap: 6, textAlign: "left", width: "100%" }}>
+              <span style={{ display: "block", fontSize: 11, fontWeight: 600, opacity: 0.85 }}>
+                {fillCatalogTemplate(bookingCatalogCopy.packageListShort, { amount: listValue })}
+              </span>
+              <span
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "baseline",
+                  gap: "4px 10px",
+                }}
+              >
+                <del style={{ opacity: 0.7, fontWeight: 600 }}>{listValue} EUR</del>
+                <span style={{ fontWeight: 800 }}>{packPrice} EUR</span>
+              </span>
+              <small style={{ fontWeight: 600, opacity: 0.95, lineHeight: 1.35 }}>
+                {fillCatalogTemplate(bookingCatalogCopy.savingsLine, { saved, pct })}
+              </small>
+            </span>
+          );
+        }
+        return `${packPrice} EUR`;
+      }
+
+      const regular = Math.max(0, Number(service?.priceRsd || 0));
+      const promoRaw = service?.promotion?.promoPriceRsd;
+      const promo =
+        promoRaw !== undefined && promoRaw !== null ? Math.max(0, Number(promoRaw)) : null;
+
+      if (service?.promotion && promo !== null && promo < regular) {
+        const saved = regular - promo;
+        const pct = regular > 0 ? Math.min(100, Math.round((saved / regular) * 100)) : 0;
+        return (
+          <span style={{ display: "grid", gap: 6, textAlign: "left", width: "100%" }}>
+            <span style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "baseline" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85 }}>
+                {bookingCatalogCopy.priceRegularShort}:
+              </span>
+              <del style={{ opacity: 0.7, fontWeight: 600 }}>{regular} EUR</del>
+            </span>
+            <span style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "baseline" }}>
+              <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85 }}>
+                {bookingCatalogCopy.pricePromoShort}:
+              </span>
+              <span style={{ fontWeight: 800 }}>{promo} EUR</span>
+            </span>
+            <small style={{ fontWeight: 600, opacity: 0.95, lineHeight: 1.35 }}>
+              {fillCatalogTemplate(bookingCatalogCopy.savingsLine, { saved, pct })}
+            </small>
+          </span>
+        );
+      }
+
+      return `${Number(service?.priceRsd || 0)} EUR`;
+    },
+    [serviceLookup, bookingCatalogCopy]
+  );
 
   const packageServices = useMemo(() => {
     const list = [];
@@ -1061,6 +1173,7 @@ export default function BookingInlineForm({
             const selectedBrand = selectedBrandMap[service.id] || "";
             const showBrandPicker =
               service.supportsMl && isHyaluronicFillerService(service) && selected;
+            const priceContent = renderServicePriceContent(service, selectedBrand, "single");
             return (
               <div
                 key={service.id}
@@ -1082,8 +1195,12 @@ export default function BookingInlineForm({
                       <span className="clinic-service-option__pill">
                         {getServiceDurationLabel(service, selectedQuantity)}
                       </span>
-                      <span className="clinic-service-option__pill is-price">
-                        {getServicePriceLabel(service, selectedBrand)}
+                      <span
+                        className={`clinic-service-option__pill is-price${
+                          isValidElement(priceContent) ? " is-stack" : ""
+                        }`}
+                      >
+                        {priceContent}
                       </span>
                     </span>
                   </span>
@@ -1331,6 +1448,11 @@ export default function BookingInlineForm({
                       <div className="clinic-service-grid clinic-service-grid--desktop-2">
                         {packageServices.map((service, serviceIndex) => {
                           const selected = Boolean(selectedMap[service.id]);
+                          const priceContent = renderServicePriceContent(
+                            service,
+                            undefined,
+                            "package"
+                          );
                           return (
                             <div
                               key={service.id}
@@ -1364,8 +1486,12 @@ export default function BookingInlineForm({
                                     <span className="clinic-service-option__pill">
                                       {getServiceDurationLabel(service)}
                                     </span>
-                                    <span className="clinic-service-option__pill is-price">
-                                      {getServicePriceLabel(service)}
+                                    <span
+                                      className={`clinic-service-option__pill is-price${
+                                        isValidElement(priceContent) ? " is-stack" : ""
+                                      }`}
+                                    >
+                                      {priceContent}
                                     </span>
                                   </span>
                                   {service.packageItems?.length ? (
