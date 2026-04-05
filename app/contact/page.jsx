@@ -1,8 +1,7 @@
-import MarqueeComponent from "@/components/common/Marquee";
 import Breadcumb from "@/components/contact/Breadcumb";
 import ClinicContactPage from "@/components/contact/ClinicContactPage";
-import Footer8 from "@/components/footers/Footer8";
-import Header3 from "@/components/headers/Header3";
+import Footer5 from "@/components/footers/Footer5";
+import Header4 from "@/components/headers/Header4";
 import React from "react";
 
 export const metadata = {
@@ -12,12 +11,13 @@ export const metadata = {
 
 export default function ContactPage() {
   return (
-    <>
-      <Header3 />
-      <Breadcumb />
-      <ClinicContactPage />
-      <MarqueeComponent />
-      <Footer8 />
-    </>
+    <div className="clinic-home5">
+      <Header4 />
+      <main style={{ paddingBottom: 90 }}>
+        <Breadcumb />
+        <ClinicContactPage />
+      </main>
+      <Footer5 />
+    </div>
   );
 }

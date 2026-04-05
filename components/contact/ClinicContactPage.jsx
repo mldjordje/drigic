@@ -35,7 +35,7 @@ export default function ClinicContactPage() {
             <span className="sub-title text-anime-style-1" style={{ display: "block", marginBottom: 12 }}>
               Kontakt
             </span>
-            <h1 className="sec-title mb-3">Dr Igic Clinic</h1>
+            <h2 className="sec-title mb-3">Dr Igic Clinic</h2>
             <p className="sec-text mb-4" style={{ maxWidth: 520 }}>
               Za zakazivanje, pitanja o tretmanima ili dodatne informacije pozovite ordinaciju ili pišite na
               e-mail. Rado odgovaramo na sve upite.
