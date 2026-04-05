@@ -3252,6 +3252,53 @@ a.clinic-glow-btn {
   stroke: #0a0c00 !important;
 }
 
+/* Sticky poziv ordinacije (iznad scroll-to-top ~50px + razmak) */
+.clinic-call-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 92px;
+  z-index: 10001;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #f4faf7;
+  text-decoration: none;
+  font-size: 22px;
+  line-height: 1;
+  background: linear-gradient(150deg, #1e4d3a 0%, #0f2d22 55%, #0a221a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 10px 28px rgba(2, 12, 8, 0.38), 0 0 0 1px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.clinic-call-fab:hover {
+  color: #ffffff;
+  transform: scale(1.06);
+  box-shadow: 0 12px 32px rgba(2, 12, 8, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.clinic-call-fab:focus-visible {
+  outline: 2px solid rgba(248, 201, 107, 0.95);
+  outline-offset: 3px;
+}
+
+.clinic-theme-light .clinic-call-fab {
+  background: linear-gradient(150deg, #1a5c45 0%, #0d3d2e 100%);
+  box-shadow: 0 10px 26px rgba(10, 40, 30, 0.28), 0 0 0 1px rgba(15, 45, 35, 0.15);
+}
+
+@media (max-width: 575px) {
+  .clinic-call-fab {
+    right: 14px;
+    bottom: 78px;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+}
+
 .clinic-home5 .clinic-before-after-filter-wrap {
   display: flex;
   flex-wrap: wrap;

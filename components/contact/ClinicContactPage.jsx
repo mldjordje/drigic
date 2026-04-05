@@ -2,13 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { CLINIC_EMAIL, CLINIC_PHONE_DISPLAY, CLINIC_PHONE_TEL } from "@/lib/clinicContact";
 
 const MAP_EMBED_SRC =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3639.5122122653975!2d21.905029300000002!3d43.323902!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4755b1b5c3758feb%3A0xe88cb950fc4b45ff!2sDr%20Igic%20Clinic!5e1!3m2!1sen!2srs!4v1775406887149!5m2!1sen!2srs";
-
-const PHONE_DISPLAY = "062 238 888";
-const PHONE_TEL = "062238888";
-const EMAIL = "drigicclinic@gmail.com";
 
 export default function ClinicContactPage() {
   return (
@@ -60,8 +57,8 @@ export default function ClinicContactPage() {
                 </span>
                 <div>
                   <strong className="d-block mb-1">Telefon ordinacije</strong>
-                  <a href={`tel:${PHONE_TEL}`} className="text-body" style={{ fontSize: "1.1rem" }}>
-                    {PHONE_DISPLAY}
+                  <a href={`tel:${CLINIC_PHONE_TEL}`} className="text-body" style={{ fontSize: "1.1rem" }}>
+                    {CLINIC_PHONE_DISPLAY}
                   </a>
                 </div>
               </div>
@@ -84,8 +81,8 @@ export default function ClinicContactPage() {
                 </span>
                 <div>
                   <strong className="d-block mb-1">E-mail</strong>
-                  <a href={`mailto:${EMAIL}`} className="text-body">
-                    {EMAIL}
+                  <a href={`mailto:${CLINIC_EMAIL}`} className="text-body">
+                    {CLINIC_EMAIL}
                   </a>
                 </div>
               </div>
@@ -124,7 +121,7 @@ export default function ClinicContactPage() {
               <Link href="/booking" className="btn btn-primary">
                 Zakaži termin
               </Link>
-              <a href={`tel:${PHONE_TEL}`} className="btn style2">
+              <a href={`tel:${CLINIC_PHONE_TEL}`} className="btn style2">
                 Pozovi kliniku
               </a>
             </div>

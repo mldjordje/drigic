@@ -8,6 +8,7 @@ import LocaleProvider from "@/components/common/LocaleProvider";
 import PWARegister from "@/components/common/PWARegister";
 import ProfileSetupGate from "@/components/common/ProfileSetupGate";
 import SessionProvider from "@/components/common/SessionProvider";
+import ClinicCallFab from "@/components/common/ClinicCallFab";
 import ScrollTop from "@/components/common/ScrollTop";
 
 export default function AppProviders({
@@ -227,6 +228,7 @@ export default function AppProviders({
           <PWARegister />
           <ProfileSetupGate />
           <ScrollTop />
+          <ClinicCallFab />
         </Context>
       </SessionProvider>
     </LocaleProvider>
