@@ -16,7 +16,7 @@ export default function ClinicCallFab() {
       title={`Pozovite: ${CLINIC_PHONE_DISPLAY}`}
       aria-label={`Pozovi ordinaciju, broj ${CLINIC_PHONE_DISPLAY}`}
     >
-      <i className="fa-solid fa-headset" aria-hidden />
+      <i className="fas fa-headset" aria-hidden />
     </a>
   );
 }
