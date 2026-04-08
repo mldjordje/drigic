@@ -72,7 +72,7 @@ export default function AdminShell({ children }) {
     <div className="admin-template-root">
       <aside className={`admin-template-sidebar ${menuOpen ? "is-open" : ""}`}>
         <div className="admin-template-brand">
-          <h1>Dr Igic</h1>
+          <h1>Dr Igić</h1>
           <p>{t("admin.controlPanel")}</p>
         </div>
 

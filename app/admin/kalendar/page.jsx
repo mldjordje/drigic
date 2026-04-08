@@ -7,11 +7,11 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
 const STATUS_LABEL = {
-  pending: "Na cekanju",
-  confirmed: "Potvrdjen",
+  pending: "Na čekanju",
+  confirmed: "Potvrđen",
   cancelled: "Otkazan",
   no_show: "No-show",
-  completed: "Zavrsen",
+  completed: "Završen",
 };
 const MORNING_SCROLL_TIME = "08:00:00";
 const DEFAULT_AFTERNOON_SCROLL_TIME = "15:45:00";
@@ -164,13 +164,13 @@ export default function AdminKalendarPage() {
     const response = await fetch("/api/services");
     const data = await parseResponse(response);
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspesno ucitavanje usluga.");
+      throw new Error(data?.message || "Neuspešno učitavanje usluga.");
     }
     setServices(data.categories || []);
   }
 
   useEffect(() => {
-    loadServices().catch((err) => setError(err.message || "Greska pri ucitavanju usluga."));
+    loadServices().catch((err) => setError(err.message || "Greška pri učitavanju usluga."));
   }, []);
 
   async function loadCalendarData(fromIso, toIso) {
@@ -190,10 +190,10 @@ export default function AdminKalendarPage() {
       const blocksData = await parseResponse(blocksRes);
 
       if (!bookingsRes.ok || !bookingsData?.ok) {
-        throw new Error(bookingsData?.message || "Neuspesno ucitavanje termina.");
+        throw new Error(bookingsData?.message || "Neuspešno učitavanje termina.");
       }
       if (!blocksRes.ok || !blocksData?.ok) {
-        throw new Error(blocksData?.message || "Neuspesno ucitavanje blokada.");
+        throw new Error(blocksData?.message || "Neuspešno učitavanje blokada.");
       }
 
       const bookingsList = bookingsData.data || [];
@@ -231,7 +231,7 @@ export default function AdminKalendarPage() {
 
       setEvents([...bookingEvents, ...blockEvents]);
     } catch (loadError) {
-      setError(loadError.message || "Greska pri ucitavanju kalendara.");
+      setError(loadError.message || "Greška pri učitavanju kalendara.");
     } finally {
       setLoading(false);
     }
@@ -323,14 +323,14 @@ export default function AdminKalendarPage() {
 
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno kreiranje termina.");
+        throw new Error(data?.message || "Neuspešno kreiranje termina.");
       }
 
-      setMessage("Termin je uspesno dodat.");
+      setMessage("Termin je uspešno dodat.");
       setIsCreateModalOpen(false);
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri kreiranju termina.");
+      setError(saveError.message || "Greška pri kreiranju termina.");
     } finally {
       setSaving(false);
     }
@@ -359,14 +359,14 @@ export default function AdminKalendarPage() {
 
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno kreiranje blokade.");
+        throw new Error(data?.message || "Neuspešno kreiranje blokade.");
       }
 
-      setMessage("Blokada je uspesno dodata.");
+      setMessage("Blokada je uspešno dodata.");
       setIsCreateModalOpen(false);
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri kreiranju blokade.");
+      setError(saveError.message || "Greška pri kreiranju blokade.");
     } finally {
       setSaving(false);
     }
@@ -390,12 +390,12 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje izmene.");
+        throw new Error(data?.message || "Neuspešno čuvanje izmene.");
       }
-      setMessage("Termin je azuriran.");
+      setMessage("Termin je ažuriran.");
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju termina.");
+      setError(saveError.message || "Greška pri čuvanju termina.");
     } finally {
       setSaving(false);
     }
@@ -422,13 +422,13 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesna izmena statusa.");
+        throw new Error(data?.message || "Neuspešna izmena statusa.");
       }
       setStatusDraft(nextStatus);
-      setMessage("Status termina je azuriran.");
+      setMessage("Status termina je ažuriran.");
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri izmeni statusa.");
+      setError(saveError.message || "Greška pri izmeni statusa.");
     } finally {
       setSaving(false);
     }
@@ -447,13 +447,13 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno brisanje blokade.");
+        throw new Error(data?.message || "Neuspešno brisanje blokade.");
       }
       setMessage("Blokada je obrisana.");
       setActiveEvent(null);
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri brisanju blokade.");
+      setError(saveError.message || "Greška pri brisanju blokade.");
     } finally {
       setSaving(false);
     }
@@ -488,10 +488,10 @@ export default function AdminKalendarPage() {
       ]);
 
       if (!clientRes.ok || !clientData?.ok) {
-        throw new Error(clientData?.message || "Neuspesno ucitavanje klijenta.");
+        throw new Error(clientData?.message || "Neuspešno učitavanje klijenta.");
       }
       if (!beautyPassRes.ok || !beautyPassData?.ok) {
-        throw new Error(beautyPassData?.message || "Neuspesno ucitavanje beauty pass-a.");
+        throw new Error(beautyPassData?.message || "Neuspešno učitavanje beauty pass-a.");
       }
 
       setClientDetailsPayload({
@@ -499,7 +499,7 @@ export default function AdminKalendarPage() {
         beautyPass: beautyPassData || null,
       });
     } catch (loadError) {
-      setClientDetailsError(loadError.message || "Greska pri ucitavanju klijenta.");
+      setClientDetailsError(loadError.message || "Greška pri učitavanju klijenta.");
     } finally {
       setClientDetailsLoading(false);
     }
@@ -609,8 +609,8 @@ export default function AdminKalendarPage() {
         <div>
           <h2 style={{ margin: 0 }}>Admin kalendar</h2>
           <p style={{ margin: "4px 0 0", color: "#bed0e8" }}>
-            Termini: {stats.totalBookings} | Blokade: {stats.totalBlocks} | Potvrdjeni:{" "}
-            {stats.confirmed} | Na cekanju: {stats.pending}
+            Termini: {stats.totalBookings} | Blokade: {stats.totalBlocks} | Potvrđeni:{" "}
+            {stats.confirmed} | Na čekanju: {stats.pending}
           </p>
         </div>
         <div className="admin-calendar-toolbar-actions">
@@ -641,7 +641,7 @@ export default function AdminKalendarPage() {
             onClick={() => refreshData()}
             disabled={loading}
           >
-            Osvezi
+            Osveži
           </button>
         </div>
       </div>
@@ -750,7 +750,7 @@ export default function AdminKalendarPage() {
                 className={`admin-template-link-btn ${createType === "booking" ? "is-active" : ""}`}
                 onClick={() => setCreateType("booking")}
               >
-                Zakazi termin
+                Zakaži termin
               </button>
               <button
                 type="button"
@@ -816,8 +816,8 @@ export default function AdminKalendarPage() {
                       setBookingForm((prev) => ({ ...prev, status: event.target.value }))
                     }
                   >
-                    <option value="confirmed">Potvrdjen</option>
-                    <option value="pending">Na cekanju</option>
+                    <option value="confirmed">Potvrđen</option>
+                    <option value="pending">Na čekanju</option>
                   </select>
                 </label>
 
@@ -877,7 +877,7 @@ export default function AdminKalendarPage() {
                   disabled={saving || !bookingForm.clientName || !bookingForm.serviceIds.length}
                   onClick={createBooking}
                 >
-                  Sacuvaj termin
+                  Sačuvaj termin
                 </button>
               </div>
             ) : (
@@ -924,7 +924,7 @@ export default function AdminKalendarPage() {
                   disabled={saving}
                   onClick={createBlock}
                 >
-                  Sacuvaj blokadu
+                  Sačuvaj blokadu
                 </button>
               </div>
             )}
@@ -963,7 +963,7 @@ export default function AdminKalendarPage() {
                         onClick={() => openClientDetailsPanel(activeBooking.userId)}
                       >
                         {clientDetailsLoading && showClientDetails
-                          ? "Ucitavanje..."
+                          ? "Učitavanje..."
                           : "Profil + Beauty Pass"}
                       </button>
                     ) : null}
@@ -1019,7 +1019,7 @@ export default function AdminKalendarPage() {
                       disabled={saving}
                       onClick={saveBookingDetails}
                     >
-                      Sacuvaj napomenu
+                      Sačuvaj napomenu
                     </button>
                     <button
                       type="button"
@@ -1048,14 +1048,14 @@ export default function AdminKalendarPage() {
                           </strong>
                         </div>
                         <div>
-                          <span>Pol / datum rodjenja</span>
+                          <span>Pol / datum rođenja</span>
                           <strong>
                             {clientDetailsPayload.client?.profile?.gender || "-"} /{" "}
                             {clientDetailsPayload.client?.profile?.birthDate || "-"}
                           </strong>
                         </div>
                         <div>
-                          <span>Sledeci termini</span>
+                          <span>Sledeći termini</span>
                           <strong>
                             {clientDetailsPayload.beautyPass?.upcomingBookings?.length || 0}
                           </strong>

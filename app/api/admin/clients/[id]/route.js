@@ -152,7 +152,7 @@ export async function PATCH(request, { params }) {
   } catch (error) {
     const pgCode = String(error?.code || error?.cause?.code || "");
     if (pgCode === "23505") {
-      return fail(409, "Email ili telefon je vec zauzet.");
+      return fail(409, "Email ili telefon je već zauzet.");
     }
     throw error;
   }

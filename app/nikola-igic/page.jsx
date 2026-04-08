@@ -85,7 +85,7 @@ export default async function NikolaIgicPage() {
               {copy.primaryCta}
             </Link>
             <Link href="/#osnivac" className="btn clinic-glow-btn clinic-hero-cta-btn">
-              Nazad na pocetnu
+              Nazad na početnu
             </Link>
           </div>
         </div>

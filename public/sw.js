@@ -25,7 +25,7 @@ self.addEventListener("push", (event) => {
   }
 
   const title = payload.title || "Dr Igić Clinic";
-  const body = payload.body || "Imate novo obavestenje.";
+  const body = payload.body || "Imate novo obaveštenje.";
   const url = payload.url || "/beauty-pass";
 
   event.waitUntil(

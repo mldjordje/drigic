@@ -29,7 +29,7 @@ export async function POST(request) {
     return fail(400, "Use valid email or phone.");
   }
   if (!hasOtpSalt() || !hasSessionSecret()) {
-    return fail(503, "Prijava je trenutno nedostupna. Pokusajte ponovo kasnije.");
+    return fail(503, "Prijava je trenutno nedostupna. Pokušajte ponovo kasnije.");
   }
 
   const db = getDb();

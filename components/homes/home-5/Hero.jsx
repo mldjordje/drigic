@@ -15,7 +15,7 @@ const HERO_COPY = {
       ["Estetska,", "anti-age", "i"],
       ["regenerativna", "medicina"],
     ],
-    booking: "Zakazi termin",
+    booking: "Zakaži termin",
   },
   en: {
     lines: [
@@ -289,7 +289,7 @@ export default function Hero() {
             <iframe
               ref={mobileVideoRef}
               src={heroVideoSrc}
-              title="Dr Igic hero background video"
+              title="Dr Igić hero background video"
               allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
               allowFullScreen
               loading="eager"

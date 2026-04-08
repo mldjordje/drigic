@@ -103,7 +103,7 @@ export default function BeforeAfterShowcase({
       .then(async (response) => {
         const data = await parseResponse(response);
         if (!response.ok || !data?.ok) {
-          throw new Error("Neuspesno ucitavanje rezultata.");
+          throw new Error("Neuspešno učitavanje rezultata.");
         }
         if (mounted) {
           setCases(Array.isArray(data.data) ? data.data : []);
@@ -230,7 +230,7 @@ export default function BeforeAfterShowcase({
 
         {loading ? (
           <p className="text-center" style={{ margin: 0 }}>
-            Ucitavanje rezultata...
+            Učitavanje rezultata...
           </p>
         ) : (
           <>

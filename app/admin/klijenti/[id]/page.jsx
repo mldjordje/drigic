@@ -123,10 +123,10 @@ export default function AdminClientDetailsPage() {
       ]);
 
       if (!clientRes.ok || !clientJson?.ok) {
-        throw new Error(clientJson?.message || "Neuspesno ucitavanje klijenta.");
+        throw new Error(clientJson?.message || "Neuspešno učitavanje klijenta.");
       }
       if (!passRes.ok || !passJson?.ok) {
-        throw new Error(passJson?.message || "Neuspesno ucitavanje beauty pass podataka.");
+        throw new Error(passJson?.message || "Neuspešno učitavanje beauty pass podataka.");
       }
 
       setClientData(clientJson.data || null);
@@ -140,7 +140,7 @@ export default function AdminClientDetailsPage() {
         avatarUrl: clientJson.data?.profile?.avatarUrl || "",
       });
     } catch (loadError) {
-      setError(loadError.message || "Greska pri ucitavanju podataka.");
+      setError(loadError.message || "Greška pri učitavanju podataka.");
     } finally {
       setLoading(false);
     }
@@ -191,12 +191,12 @@ export default function AdminClientDetailsPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje klijenta.");
+        throw new Error(data?.message || "Neuspešno čuvanje klijenta.");
       }
-      setMessage("Profil klijenta je sacuvan.");
+      setMessage("Profil klijenta je sačuvan.");
       await loadClient();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju klijenta.");
+      setError(saveError.message || "Greška pri čuvanju klijenta.");
     } finally {
       setSavingProfile(false);
     }
@@ -228,9 +228,9 @@ export default function AdminClientDetailsPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesan unos treatment record-a.");
+        throw new Error(data?.message || "Neuspešan unos treatment record-a.");
       }
-      setMessage("Beauty Pass zapis je uspesno dodat.");
+      setMessage("Beauty Pass zapis je uspešno dodat.");
       setRecordForm({
         bookingId: "",
         serviceId: "",
@@ -242,7 +242,7 @@ export default function AdminClientDetailsPage() {
       });
       await loadClient();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju beauty pass zapisa.");
+      setError(saveError.message || "Greška pri čuvanju beauty pass zapisa.");
     } finally {
       setSavingRecord(false);
     }
@@ -269,13 +269,13 @@ export default function AdminClientDetailsPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje izmene zapisa.");
+        throw new Error(data?.message || "Neuspešno čuvanje izmene zapisa.");
       }
-      setMessage("Beauty Pass zapis je azuriran.");
+      setMessage("Beauty Pass zapis je ažuriran.");
       stopEditRecord();
       await loadClient();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju izmene.");
+      setError(saveError.message || "Greška pri čuvanju izmene.");
     } finally {
       setSavingEditedRecord(false);
     }
@@ -294,7 +294,7 @@ export default function AdminClientDetailsPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno brisanje zapisa.");
+        throw new Error(data?.message || "Neuspešno brisanje zapisa.");
       }
       setMessage("Beauty Pass zapis je obrisan.");
       if (editingRecordId === recordId) {
@@ -302,7 +302,7 @@ export default function AdminClientDetailsPage() {
       }
       await loadClient();
     } catch (deleteError) {
-      setError(deleteError.message || "Greska pri brisanju zapisa.");
+      setError(deleteError.message || "Greška pri brisanju zapisa.");
     }
   }
 
@@ -323,12 +323,12 @@ export default function AdminClientDetailsPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesan upload media fajla.");
+        throw new Error(data?.message || "Neuspešan upload media fajla.");
       }
       setMessage("Media je dodat u treatment zapis.");
       await loadClient();
     } catch (uploadError) {
-      setError(uploadError.message || "Greska pri upload-u media fajla.");
+      setError(uploadError.message || "Greška pri upload-u media fajla.");
     } finally {
       setUploadingRecordId("");
     }
@@ -348,12 +348,12 @@ export default function AdminClientDetailsPage() {
       );
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno brisanje media stavke.");
+        throw new Error(data?.message || "Neuspešno brisanje media stavke.");
       }
       setMessage("Media stavka je obrisana.");
       await loadClient();
     } catch (deleteError) {
-      setError(deleteError.message || "Greska pri brisanju media stavke.");
+      setError(deleteError.message || "Greška pri brisanju media stavke.");
     }
   }
 
@@ -375,7 +375,7 @@ export default function AdminClientDetailsPage() {
 
       {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
       {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
-      {loading ? <p style={{ color: "#c6d8ee", margin: 0 }}>Ucitavanje...</p> : null}
+      {loading ? <p style={{ color: "#c6d8ee", margin: 0 }}>Učitavanje...</p> : null}
 
       <div className="admin-card admin-card-grid">
         <div className="admin-card">
@@ -385,7 +385,7 @@ export default function AdminClientDetailsPage() {
           </p>
         </div>
         <div className="admin-card">
-          <strong>Sledeci termini</strong>
+          <strong>Sledeći termini</strong>
           <p style={{ fontSize: 22, margin: "6px 0 0" }}>
             {beautyPass?.upcomingBookings?.length || 0}
           </p>
@@ -420,7 +420,7 @@ export default function AdminClientDetailsPage() {
             />
           </label>
           <label>
-            Datum rodjenja
+            Datum rođenja
             <input
               type="date"
               className="admin-inline-input"
@@ -469,7 +469,7 @@ export default function AdminClientDetailsPage() {
             onClick={saveProfile}
             disabled={savingProfile}
           >
-            {savingProfile ? "Cuvanje..." : "Sacuvaj profil"}
+            {savingProfile ? "Čuvanje..." : "Sačuvaj profil"}
           </button>
         </div>
       </div>
@@ -580,7 +580,7 @@ export default function AdminClientDetailsPage() {
             onClick={createTreatmentRecord}
             disabled={savingRecord}
           >
-            {savingRecord ? "Cuvanje..." : "Dodaj u Beauty Pass"}
+            {savingRecord ? "Čuvanje..." : "Dodaj u Beauty Pass"}
           </button>
         </div>
       </div>
@@ -739,7 +739,7 @@ export default function AdminClientDetailsPage() {
                           onClick={saveEditedRecord}
                           disabled={savingEditedRecord}
                         >
-                          {savingEditedRecord ? "Cuvanje..." : "Sacuvaj"}
+                          {savingEditedRecord ? "Čuvanje..." : "Sačuvaj"}
                         </button>
                         <button
                           type="button"

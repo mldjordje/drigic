@@ -56,11 +56,11 @@ export default function AdminPreparatiPage() {
       const response = await fetch("/api/admin/treatment-products");
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno ucitavanje preparata.");
+        throw new Error(data?.message || "Neuspešno učitavanje preparata.");
       }
       setProducts(data.data || []);
     } catch (loadError) {
-      setError(loadError.message || "Greska pri ucitavanju preparata.");
+      setError(loadError.message || "Greška pri učitavanju preparata.");
     } finally {
       setLoading(false);
     }
@@ -109,14 +109,14 @@ export default function AdminPreparatiPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje preparata.");
+        throw new Error(data?.message || "Neuspešno čuvanje preparata.");
       }
 
-      setMessage(isEdit ? "Preparat je azuriran." : "Preparat je dodat.");
+      setMessage(isEdit ? "Preparat je ažuriran." : "Preparat je dodat.");
       setForm(emptyForm);
       await loadProducts();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju preparata.");
+      setError(saveError.message || "Greška pri čuvanju preparata.");
     } finally {
       setLoading(false);
     }
@@ -137,12 +137,12 @@ export default function AdminPreparatiPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno azuriranje preparata.");
+        throw new Error(data?.message || "Neuspešno ažuriranje preparata.");
       }
-      setMessage("Status preparata je azuriran.");
+      setMessage("Status preparata je ažuriran.");
       await loadProducts();
     } catch (toggleError) {
-      setError(toggleError.message || "Greska pri azuriranju statusa.");
+      setError(toggleError.message || "Greška pri ažuriranju statusa.");
     } finally {
       setLoading(false);
     }
@@ -191,7 +191,7 @@ export default function AdminPreparatiPage() {
             }
           />
           <small style={{ color: "#9db5d4" }}>
-            Sa telefona mozete izabrati fotografiju iz galerije ili direktno kameru.
+            Sa telefona možete izabrati fotografiju iz galerije ili direktno kameru.
           </small>
         </label>
         <div className="admin-services-split-grid">
@@ -243,7 +243,7 @@ export default function AdminPreparatiPage() {
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="submit" className="admin-template-link-btn" disabled={loading}>
-            {form.id ? "Sacuvaj izmene" : "Dodaj preparat"}
+            {form.id ? "Sačuvaj izmene" : "Dodaj preparat"}
           </button>
           {form.id ? (
             <button

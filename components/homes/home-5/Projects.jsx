@@ -10,7 +10,7 @@ const CATEGORY_SHOWCASE_COPY = {
   sr: {
     eyebrow: "Estetske oblasti",
     lead:
-      "Izdvojene oblasti tretmana su postavljene kao interaktivne kartice, sa jacim fokusom na prirodan rezultat, anatomiju i individualan plan.",
+      "Izdvojene oblasti tretmana su postavljene kao interaktivne kartice, sa jačim fokusom na prirodan rezultat, anatomiju i individualan plan.",
     labels: {
       natural: "Prirodan efekat",
       anatomy: "Prati anatomiju",

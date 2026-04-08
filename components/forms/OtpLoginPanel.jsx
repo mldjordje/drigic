@@ -25,7 +25,7 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
       const data = await response.json();
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno slanje OTP koda.");
+        throw new Error(data?.message || "Neuspešno slanje OTP koda.");
       }
 
       setStep("verify");
@@ -35,7 +35,7 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
           : "Kod je poslat na email."
       );
     } catch (err) {
-      setError(err.message || "Greska pri slanju OTP koda.");
+      setError(err.message || "Greška pri slanju OTP koda.");
     } finally {
       setLoading(false);
     }
@@ -59,10 +59,10 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
         throw new Error(data?.message || "Neispravan OTP kod.");
       }
 
-      setMessage("Uspesno ste prijavljeni.");
+      setMessage("Uspešno ste prijavljeni.");
       onAuthenticated?.(data.user || null);
     } catch (err) {
-      setError(err.message || "Greska pri verifikaciji OTP koda.");
+      setError(err.message || "Greška pri verifikaciji OTP koda.");
     } finally {
       setLoading(false);
     }
@@ -95,7 +95,7 @@ export default function OtpLoginPanel({ onAuthenticated, title = "Prijava" }) {
             placeholder="npr. admin@drigic.com"
           />
           <button disabled={loading} style={buttonStyle} type="submit">
-            {loading ? "Slanje..." : "Posalji OTP kod"}
+            {loading ? "Slanje..." : "Pošalji OTP kod"}
           </button>
         </form>
       ) : (

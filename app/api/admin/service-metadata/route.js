@@ -54,8 +54,8 @@ async function ensureUniqueName(db, entityType, name, currentId = null) {
   if (hasConflict) {
     throw new Error(
       entityType === "category"
-        ? "Kategorija sa tim nazivom vec postoji."
-        : "Deo tela sa tim nazivom vec postoji."
+        ? "Kategorija sa tim nazivom već postoji."
+        : "Deo tela sa tim nazivom već postoji."
     );
   }
 }
@@ -189,7 +189,7 @@ export async function POST(request) {
       data: { ...record, serviceCount: 0 },
     });
   } catch (error) {
-    return fail(400, error.message || "Neuspesno cuvanje metadata.");
+    return fail(400, error.message || "Neuspešno čuvanje metadata.");
   }
 }
 
@@ -212,7 +212,7 @@ export async function PATCH(request) {
     const payload = await getMetadataPayload(db, entityType, input, id);
 
     if (!Object.keys(payload).length) {
-      return fail(400, "Nema izmena za cuvanje.");
+      return fail(400, "Nema izmena za čuvanje.");
     }
 
     if (entityType === "category") {
@@ -265,7 +265,7 @@ export async function PATCH(request) {
       data: { ...record, serviceCount: linkedServices.length },
     });
   } catch (error) {
-    return fail(400, error.message || "Neuspesno azuriranje metadata.");
+    return fail(400, error.message || "Neuspešno ažuriranje metadata.");
   }
 }
 
@@ -303,7 +303,7 @@ export async function DELETE(request) {
   if (Number(usageRow?.n || 0) > 0) {
     return fail(
       409,
-      "Ne mozete obrisati deo tela dok postoje usluge koje su na njega vezane. Prvo uklonite mapiranje na uslugama."
+      "Ne možete obrisati deo tela dok postoje usluge koje su na njega vezane. Prvo uklonite mapiranje na uslugama."
     );
   }
 

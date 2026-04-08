@@ -57,10 +57,10 @@ function ArrowIcon() {
 const HERO_ACTIONS_COPY = {
   sr: {
     account: "Moj nalog",
-    confirmed: "Termin je potvrdjen",
+    confirmed: "Termin je potvrđen",
     cancelled: "Termin je otkazan",
-    closeNotice: "Zatvori obavestenje",
-    bookingLabel: "Zakazi termin",
+    closeNotice: "Zatvori obaveštenje",
+    bookingLabel: "Zakaži termin",
     bookingSublabel: "Odaberi tretman, datum i termin",
     passLabel: "Moj Beauty Pass",
     passSublabel: "Istorija tretmana i benefiti",

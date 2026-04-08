@@ -86,7 +86,7 @@ function getStatusNotificationPayload(status, startsAt) {
     return {
       type: "booking_confirmed",
       title: "Termin je potvrden",
-      message: `Vas termin za ${startsAtLabel} je potvrdjen.`,
+      message: `Vas termin za ${startsAtLabel} je potvrđen.`,
     };
   }
 
@@ -102,7 +102,7 @@ function getStatusNotificationPayload(status, startsAt) {
     return {
       type: "booking_submitted",
       title: "Zahtev za termin",
-      message: `Kreiran je zahtev za termin ${startsAtLabel}. Cekajte potvrdu klinike.`,
+      message: `Kreiran je zahtev za termin ${startsAtLabel}. Čekajte potvrdu klinike.`,
     };
   }
 

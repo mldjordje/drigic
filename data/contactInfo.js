@@ -21,7 +21,7 @@ export const contactInfo2 = [
   {
     iconSrc: "/assets/img/icon/location-pin-alt.svg",
     title: "Ordinacija",
-    address: "Dr Igic Clinic",
+    address: "Dr Igić Clinic",
     city: "Niš, Srbija",
     linkUrl:
       "https://www.google.com/maps?ll=43.323902,21.9050293&z=16&t=m&hl=en&gl=RS&mapclient=embed&cid=16708722205926497279",

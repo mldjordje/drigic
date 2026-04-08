@@ -5,8 +5,8 @@ import Header4 from "@/components/headers/Header4";
 import React from "react";
 
 export const metadata = {
-  title: "Kontakt | Dr Igic Clinic",
-  description: "Kontakt Dr Igic Clinic — telefon, e-mail i mapa ordinacije u Nišu.",
+  title: "Kontakt | Dr Igić Clinic",
+  description: "Kontakt Dr Igić Clinic — telefon, e-mail i mapa ordinacije u Nišu.",
 };
 
 export default function ContactPage() {

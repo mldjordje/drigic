@@ -140,7 +140,7 @@ export async function POST(request) {
   } catch (error) {
     const pgCode = String(error?.code || error?.cause?.code || "");
     if (pgCode === "23505") {
-      return fail(409, "Preparat sa ovim nazivom vec postoji.");
+      return fail(409, "Preparat sa ovim nazivom već postoji.");
     }
     throw error;
   }
@@ -199,7 +199,7 @@ export async function PATCH(request) {
   } catch (error) {
     const pgCode = String(error?.code || error?.cause?.code || "");
     if (pgCode === "23505") {
-      return fail(409, "Preparat sa ovim nazivom vec postoji.");
+      return fail(409, "Preparat sa ovim nazivom već postoji.");
     }
     throw error;
   }

@@ -196,12 +196,12 @@ export default function ProfileSetupGate() {
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
         throw new Error(
-          getProfileSaveError(data, "Neuspesno cuvanje profila.", t)
+          getProfileSaveError(data, "Neuspešno čuvanje profila.", t)
         );
       }
       setVisible(false);
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju profila.");
+      setError(saveError.message || "Greška pri čuvanju profila.");
     } finally {
       setSaving(false);
     }
@@ -241,8 +241,8 @@ export default function ProfileSetupGate() {
             required
           >
             <option value="">{t("profile.choose")}</option>
-            <option value="musko">{t("profile.male")}</option>
-            <option value="zensko">{t("profile.female")}</option>
+            <option value="muško">{t("profile.male")}</option>
+            <option value="žensko">{t("profile.female")}</option>
             <option value="drugo">{t("profile.other")}</option>
           </select>
         </label>

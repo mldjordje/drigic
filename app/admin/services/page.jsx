@@ -137,13 +137,13 @@ export function AdminCatalogPage({ mode = "services" }) {
       ]);
 
       if (!metaRes.ok || !metaData?.ok) {
-        throw new Error(metaData?.message || "Neuspesno ucitavanje metadata.");
+        throw new Error(metaData?.message || "Neuspešno učitavanje metadata.");
       }
       if (!servicesRes.ok || !servicesData?.ok) {
-        throw new Error(servicesData?.message || "Neuspesno ucitavanje usluga.");
+        throw new Error(servicesData?.message || "Neuspešno učitavanje usluga.");
       }
       if (!promotionsRes.ok || !promotionsData?.ok) {
-        throw new Error(promotionsData?.message || "Neuspesno ucitavanje promocija.");
+        throw new Error(promotionsData?.message || "Neuspešno učitavanje promocija.");
       }
 
       setCategories(metaData.categories || []);
@@ -151,7 +151,7 @@ export function AdminCatalogPage({ mode = "services" }) {
       setServices(servicesData.data || []);
       setPromotions(promotionsData.data || []);
     } catch (loadError) {
-      setError(loadError.message || "Greska pri ucitavanju podataka.");
+      setError(loadError.message || "Greška pri učitavanju podataka.");
     } finally {
       setLoading(false);
     }
@@ -295,10 +295,10 @@ export function AdminCatalogPage({ mode = "services" }) {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje usluge.");
+        throw new Error(data?.message || "Neuspešno čuvanje usluge.");
       }
 
-      setMessage(isEdit ? "Usluga je azurirana." : "Usluga je dodata.");
+      setMessage(isEdit ? "Usluga je ažurirana." : "Usluga je dodata.");
       setServiceForm({
         ...emptyServiceForm,
         kind: mode === "packages" ? "package" : "single",
@@ -307,7 +307,7 @@ export function AdminCatalogPage({ mode = "services" }) {
       setServiceModalOpen(false);
       await loadAll();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju usluge.");
+      setError(saveError.message || "Greška pri čuvanju usluge.");
     } finally {
       setLoading(false);
     }
@@ -337,15 +337,15 @@ export function AdminCatalogPage({ mode = "services" }) {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje promocije.");
+        throw new Error(data?.message || "Neuspešno čuvanje promocije.");
       }
 
-      setMessage(isEdit ? "Promocija je azurirana." : "Promocija je dodata.");
+      setMessage(isEdit ? "Promocija je ažurirana." : "Promocija je dodata.");
       setPromotionForm(emptyPromotionForm);
       setPromotionModalOpen(false);
       await loadAll();
     } catch (saveError) {
-      setError(saveError.message || "Greska pri cuvanju promocije.");
+      setError(saveError.message || "Greška pri čuvanju promocije.");
     } finally {
       setLoading(false);
     }
@@ -377,12 +377,12 @@ export function AdminCatalogPage({ mode = "services" }) {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesna izmena statusa.");
+        throw new Error(data?.message || "Neuspešna izmena statusa.");
       }
-      setMessage("Status usluge je azuriran.");
+      setMessage("Status usluge je ažuriran.");
       await loadAll();
     } catch (toggleError) {
-      setError(toggleError.message || "Greska pri azuriranju statusa.");
+      setError(toggleError.message || "Greška pri ažuriranju statusa.");
     } finally {
       setLoading(false);
     }
@@ -403,12 +403,12 @@ export function AdminCatalogPage({ mode = "services" }) {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesna izmena promocije.");
+        throw new Error(data?.message || "Neuspešna izmena promocije.");
       }
-      setMessage("Status promocije je azuriran.");
+      setMessage("Status promocije je ažuriran.");
       await loadAll();
     } catch (toggleError) {
-      setError(toggleError.message || "Greska pri azuriranju promocije.");
+      setError(toggleError.message || "Greška pri ažuriranju promocije.");
     } finally {
       setLoading(false);
     }
@@ -602,7 +602,7 @@ export function AdminCatalogPage({ mode = "services" }) {
               <small style={{ color: "#bed0e8" }}>
                 Nema dodatih delova tela. Dodaj ih u{" "}
                 <Link href="/admin/podesavanja" style={{ color: "#f8c96b" }}>
-                  Podesavanja
+                  Podešavanja
                 </Link>
                 .
               </small>
@@ -638,7 +638,7 @@ export function AdminCatalogPage({ mode = "services" }) {
             {serviceForm.kind === "package" ? (
               <small style={{ color: "#bed0e8", gridColumn: "1 / -1" }}>
                 Predlog na osnovu stavki: {packageSummary.priceRsd} EUR / {packageSummary.durationMin}{" "}
-                min (mozete rucno promeniti polja iznad).
+                min (možete ručno promeniti polja iznad).
               </small>
             ) : null}
           </div>
@@ -678,10 +678,10 @@ export function AdminCatalogPage({ mode = "services" }) {
                   }
                 />
                 <span className="admin-toggle-card-title">
-                  Podrzava ml booking (preset dugmici)
+                  Podržava ml booking (preset dugmici)
                 </span>
                 <small className="admin-toggle-card-subtitle">
-                  Klik za ukljuci/iskljuci ml konfiguraciju.
+                  Klik za uključi/isključi ml konfiguraciju.
                 </small>
               </label>
 
@@ -734,7 +734,7 @@ export function AdminCatalogPage({ mode = "services" }) {
                       }))
                     }
                   />
-                  <span className="admin-toggle-card-title">Prikazi u Lice</span>
+                  <span className="admin-toggle-card-title">Prikaži u Lice</span>
                   <small className="admin-toggle-card-subtitle">
                     Usluga se prikazuje u face sekciji booking forme.
                   </small>
@@ -754,9 +754,9 @@ export function AdminCatalogPage({ mode = "services" }) {
                       }))
                     }
                   />
-                  <span className="admin-toggle-card-title">Prikazi u Telo</span>
+                  <span className="admin-toggle-card-title">Prikaži u Telo</span>
                   <small className="admin-toggle-card-subtitle">
-                    Moze biti ukljuceno zajedno sa Lice za usluge koje spadaju u oba.
+                    Može biti uključeno zajedno sa Lice za usluge koje spadaju u oba.
                   </small>
                 </label>
               </div>
@@ -777,7 +777,7 @@ export function AdminCatalogPage({ mode = "services" }) {
                 />
                 <span className="admin-toggle-card-title">Automatski reminder za korekciju</span>
                 <small className="admin-toggle-card-subtitle">
-                  Ako je ukljuceno, Beauty Pass zapis racuna datum korekcije automatski.
+                  Ako je uključeno, Beauty Pass zapis računa datum korekcije automatski.
                 </small>
               </label>
 
@@ -1242,7 +1242,7 @@ export function AdminCatalogPage({ mode = "services" }) {
                     <small style={{ color: "#bed0e8" }}>
                       Nema dodatih delova tela. Dodaj ih u{" "}
                       <Link href="/admin/podesavanja" style={{ color: "#f8c96b" }}>
-                        Podesavanja
+                        Podešavanja
                       </Link>
                       .
                     </small>
@@ -1372,7 +1372,7 @@ export function AdminCatalogPage({ mode = "services" }) {
                             }))
                           }
                         />
-                        <span className="admin-toggle-card-title">Prikazi u Lice</span>
+                        <span className="admin-toggle-card-title">Prikaži u Lice</span>
                       </label>
                       <label
                         className={`admin-toggle-card ${serviceForm.showInBodyBooking ? "is-active" : ""}`}
@@ -1388,7 +1388,7 @@ export function AdminCatalogPage({ mode = "services" }) {
                             }))
                           }
                         />
-                        <span className="admin-toggle-card-title">Prikazi u Telo</span>
+                        <span className="admin-toggle-card-title">Prikaži u Telo</span>
                       </label>
                     </div>
                   </>
@@ -1513,7 +1513,7 @@ export function AdminCatalogPage({ mode = "services" }) {
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="submit" className="admin-template-link-btn" disabled={loading || packageOverLimit}>
-                  Sacuvaj izmene
+                  Sačuvaj izmene
                 </button>
                 <button type="button" className="admin-template-link-btn" onClick={resetServiceForm}>
                   Zatvori
@@ -1611,7 +1611,7 @@ export function AdminCatalogPage({ mode = "services" }) {
               </label>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button type="submit" className="admin-template-link-btn" disabled={loading}>
-                  Sacuvaj izmene
+                  Sačuvaj izmene
                 </button>
                 <button type="button" className="admin-template-link-btn" onClick={resetPromotionForm}>
                   Zatvori

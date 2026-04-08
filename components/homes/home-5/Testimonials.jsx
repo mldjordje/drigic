@@ -9,17 +9,17 @@ const TESTIMONIALS_COPY = {
     title: "Utisci pacijenata",
     items: [
       {
-        text: "Pristup je vrlo profesionalan, rezultat diskretan i bas prirodan.",
+        text: "Pristup je vrlo profesionalan, rezultat diskretan i baš prirodan.",
         name: "Pacijentkinja",
         designation: "Hijaluronski tretman",
       },
       {
-        text: "Sve je detaljno objasnjeno pre tretmana, osecao sam se potpuno sigurno.",
+        text: "Sve je detaljno objašnjeno pre tretmana, osećao sam se potpuno sigurno.",
         name: "Pacijent",
         designation: "Botox tretman",
       },
       {
-        text: "Najvise mi znaci sto izgledam osvezeno, a i dalje kao ja.",
+        text: "Najviše mi znači što izgledam osveženo, a i dalje kao ja.",
         name: "Pacijentkinja",
         designation: "Anti-age plan",
       },

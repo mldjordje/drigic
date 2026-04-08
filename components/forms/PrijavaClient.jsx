@@ -9,11 +9,11 @@ const reasonMessages = {
   "google-config-missing":
     "Google prijava nije konfigurisana. Dodajte GOOGLE_CLIENT_ID i GOOGLE_CLIENT_SECRET u .env.local i na Vercel.",
   "google-denied": "Google prijava je otkazana.",
-  "google-state-invalid": "Bezbednosna provera nije prosla. Pokusajte ponovo.",
-  "google-token-failed": "Google token nije dobijen. Pokusajte ponovo.",
-  "google-userinfo-failed": "Ne mogu da preuzmem Google profil. Pokusajte ponovo.",
+  "google-state-invalid": "Bezbednosna provera nije prošla. Pokušajte ponovo.",
+  "google-token-failed": "Google token nije dobijen. Pokušajte ponovo.",
+  "google-userinfo-failed": "Ne mogu da preuzmem Google profil. Pokušajte ponovo.",
   "google-email-missing": "Google nalog nema email adresu.",
-  "google-auth-failed": "Google prijava nije uspela. Pokusajte ponovo.",
+  "google-auth-failed": "Google prijava nije uspela. Pokušajte ponovo.",
 };
 
 export default function PrijavaClient({ nextPath = "/", reason = "" }) {

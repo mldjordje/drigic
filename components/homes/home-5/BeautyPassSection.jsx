@@ -65,12 +65,12 @@ function formatNotificationDate(isoString) {
 function formatBookingStatus(status) {
   const normalized = String(status || "").toLowerCase();
   const labels = {
-    pending: "Na cekanju",
-    confirmed: "Potvrdjen",
-    completed: "Zavrsen",
+    pending: "Na čekanju",
+    confirmed: "Potvrđen",
+    completed: "Završen",
     cancelled: "Otkazan",
-    "no-show": "Nije dosao",
-    no_show: "Nije dosao",
+    "no-show": "Nije došao",
+    no_show: "Nije došao",
     block: "Blokirano",
   };
   return labels[normalized] || status || "Nepoznat";
@@ -427,7 +427,7 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
               <div className="clinic-bp__card-label">Istorija nalepnica</div>
 
               <div className="clinic-bp__next-booking">
-                <span className="clinic-bp__next-booking-label">Sledeci potvrdjen termin</span>
+                <span className="clinic-bp__next-booking-label">Sledeći potvrđen termin</span>
                 {nextConfirmedBooking ? (
                   <>
                     <strong className="clinic-bp__next-booking-date">
@@ -440,7 +440,7 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
                   </>
                 ) : (
                   <span className="clinic-bp__next-booking-empty">
-                    Trenutno nemate potvrdjen naredni termin.
+                    Trenutno nemate potvrđen naredni termin.
                   </span>
                 )}
               </div>

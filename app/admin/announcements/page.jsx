@@ -26,7 +26,7 @@ export default function AdminAnnouncementsPage() {
     const response = await fetch("/api/admin/announcements");
     const data = await response.json();
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspesno ucitavanje obavestenja.");
+      throw new Error(data?.message || "Neuspešno učitavanje obaveštenja.");
     }
     setItems(data.data || []);
   }
@@ -55,7 +55,7 @@ export default function AdminAnnouncementsPage() {
       });
       const data = await response.json();
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno kreiranje obavestenja.");
+        throw new Error(data?.message || "Neuspešno kreiranje obaveštenja.");
       }
       setForm({
         title: "",
@@ -64,10 +64,10 @@ export default function AdminAnnouncementsPage() {
         endsAt: "",
         isActive: true,
       });
-      setMessage("Obavestenje je sacuvano.");
+      setMessage("Obaveštenje je sačuvano.");
       await loadAnnouncements();
     } catch (err) {
-      setError(err.message || "Greska pri cuvanju obavestenja.");
+      setError(err.message || "Greška pri čuvanju obaveštenja.");
     } finally {
       setLoading(false);
     }
@@ -76,9 +76,9 @@ export default function AdminAnnouncementsPage() {
   return (
     <section style={{ display: "grid", gap: 16 }}>
       <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Obavestenja na pocetnoj strani</h2>
+        <h2 style={{ marginTop: 0 }}>Obaveštenja na početnoj strani</h2>
         <p style={{ color: "#c7d8ef" }}>
-          Ovo je odobrena funkcija. Objavljena obavestenja vide klijenti na landing stranici.
+          Ovo je odobrena funkcija. Objavljena obaveštenja vide klijenti na landing stranici.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
@@ -140,11 +140,11 @@ export default function AdminAnnouncementsPage() {
                 setForm((prev) => ({ ...prev, isActive: event.target.checked }))
               }
             />
-            Aktivno obavestenje
+            Aktivno obaveštenje
           </label>
 
           <button type="submit" disabled={loading} className="admin-template-link-btn">
-            {loading ? "Cuvanje..." : "Sacuvaj obavestenje"}
+            {loading ? "Čuvanje..." : "Sačuvaj obaveštenje"}
           </button>
         </form>
 
@@ -153,7 +153,7 @@ export default function AdminAnnouncementsPage() {
       </div>
 
       <div className="admin-card">
-        <h3 style={{ marginTop: 0 }}>Lista obavestenja</h3>
+        <h3 style={{ marginTop: 0 }}>Lista obaveštenja</h3>
         {items.length ? (
           <ul style={{ margin: 0, paddingLeft: 18 }}>
             {items.map((item) => (
@@ -163,7 +163,7 @@ export default function AdminAnnouncementsPage() {
             ))}
           </ul>
         ) : (
-          <p>Nema obavestenja.</p>
+          <p>Nema obaveštenja.</p>
         )}
       </div>
     </section>

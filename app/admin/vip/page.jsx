@@ -28,10 +28,10 @@ export default function AdminVipPage() {
     ]);
 
     if (!settingsRes.ok) {
-      throw new Error(await parseError(settingsRes, "Neuspesno ucitavanje VIP settings."));
+      throw new Error(await parseError(settingsRes, "Neuspešno učitavanje VIP settings."));
     }
     if (!requestsRes.ok) {
-      throw new Error(await parseError(requestsRes, "Neuspesno ucitavanje VIP zahteva."));
+      throw new Error(await parseError(requestsRes, "Neuspešno učitavanje VIP zahteva."));
     }
 
     const settingsData = await settingsRes.json();
@@ -74,13 +74,13 @@ export default function AdminVipPage() {
       });
 
       if (!response.ok) {
-        throw new Error(await parseError(response, "Neuspesno cuvanje VIP settings."));
+        throw new Error(await parseError(response, "Neuspešno čuvanje VIP settings."));
       }
 
-      setMessage("VIP settings su sacuvani.");
+      setMessage("VIP settings su sačuvani.");
       await loadVipData();
     } catch (err) {
-      setError(err.message || "Greska pri cuvanju settings.");
+      setError(err.message || "Greška pri čuvanju settings.");
     } finally {
       setLoading(false);
     }
@@ -103,13 +103,13 @@ export default function AdminVipPage() {
       });
 
       if (!response.ok) {
-        throw new Error(await parseError(response, "Neuspesno azuriranje VIP zahteva."));
+        throw new Error(await parseError(response, "Neuspešno ažuriranje VIP zahteva."));
       }
 
-      setMessage("VIP zahtev je azuriran.");
+      setMessage("VIP zahtev je ažuriran.");
       await loadVipData();
     } catch (err) {
-      setError(err.message || "Greska pri azuriranju VIP zahteva.");
+      setError(err.message || "Greška pri ažuriranju VIP zahteva.");
     } finally {
       setLoading(false);
     }
@@ -160,7 +160,7 @@ export default function AdminVipPage() {
             />
           </label>
           <button type="submit" className="admin-template-link-btn" disabled={loading}>
-            Sacuvaj settings
+            Sačuvaj settings
           </button>
         </form>
       </div>
@@ -176,7 +176,7 @@ export default function AdminVipPage() {
             <thead>
               <tr>
                 <th style={thStyle}>Datum zahteva</th>
-                <th style={thStyle}>Trazeni datum</th>
+                <th style={thStyle}>Traženi datum</th>
                 <th style={thStyle}>Korisnik</th>
                 <th style={thStyle}>Poruka</th>
                 <th style={thStyle}>Status</th>
@@ -216,7 +216,7 @@ export default function AdminVipPage() {
                       disabled={loading}
                       onClick={() => updateRequest(item)}
                     >
-                      Sacuvaj
+                      Sačuvaj
                     </button>
                   </td>
                 </tr>

@@ -58,12 +58,12 @@ export default function AdminClientsPage() {
       const response = await fetch(`/api/admin/clients?${params.toString()}`);
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno ucitavanje klijenata.");
+        throw new Error(data?.message || "Neuspešno učitavanje klijenata.");
       }
       setClients(data.data || []);
       setTotal(Number(data.pagination?.total || 0));
     } catch (loadError) {
-      setError(loadError.message || "Greska pri ucitavanju klijenata.");
+      setError(loadError.message || "Greška pri učitavanju klijenata.");
     } finally {
       setLoading(false);
     }
@@ -86,10 +86,10 @@ export default function AdminClientsPage() {
       ]);
 
       if (!clientRes.ok || !clientData?.ok) {
-        throw new Error(clientData?.message || "Neuspesno ucitavanje klijenta.");
+        throw new Error(clientData?.message || "Neuspešno učitavanje klijenta.");
       }
       if (!passRes.ok || !passData?.ok) {
-        throw new Error(passData?.message || "Neuspesno ucitavanje beauty pass podataka.");
+        throw new Error(passData?.message || "Neuspešno učitavanje beauty pass podataka.");
       }
 
       setDetailPayload({
@@ -97,7 +97,7 @@ export default function AdminClientsPage() {
         beautyPass: passData,
       });
     } catch (detailLoadError) {
-      setDetailError(detailLoadError.message || "Greska pri ucitavanju detalja klijenta.");
+      setDetailError(detailLoadError.message || "Greška pri učitavanju detalja klijenta.");
     } finally {
       setDetailLoading(false);
     }
@@ -167,7 +167,7 @@ export default function AdminClientsPage() {
 
             <div className="admin-client-metrics">
               <span>Termini: {client.stats?.totalBookings || 0}</span>
-              <span>Sledeci: {client.stats?.upcomingBookings || 0}</span>
+              <span>Sledeći: {client.stats?.upcomingBookings || 0}</span>
               <span>Beauty pass: {client.stats?.treatmentRecords || 0}</span>
               <span>Dug: {client.stats?.debtRsd || 0} RSD</span>
             </div>
@@ -247,7 +247,7 @@ export default function AdminClientsPage() {
               </button>
             </div>
 
-            {detailLoading ? <p style={{ marginTop: 10 }}>Ucitavanje...</p> : null}
+            {detailLoading ? <p style={{ marginTop: 10 }}>Učitavanje...</p> : null}
             {detailError ? <p style={{ marginTop: 10, color: "#ffabab" }}>{detailError}</p> : null}
 
             {!detailLoading && !detailError && detailPayload ? (
@@ -263,7 +263,7 @@ export default function AdminClientsPage() {
                   </strong>
                 </div>
                 <div>
-                  <span>Sledeci termini</span>
+                  <span>Sledeći termini</span>
                   <strong>{activeBeautyPass?.upcomingBookings?.length || 0}</strong>
                 </div>
                 <div>

@@ -7,19 +7,19 @@ import styles from "./VideoGalleryFeed.module.css";
 
 const FALLBACK_SHORTS = [
   {
-    title: "Dr Igic Shorts 1",
+    title: "Dr Igić Shorts 1",
     youtubeUrl: "https://youtube.com/shorts/mL_8n1JYxb0?si=3p8HSIVdPHZ379tt",
   },
   {
-    title: "Dr Igic Shorts 2",
+    title: "Dr Igić Shorts 2",
     youtubeUrl: "https://youtube.com/shorts/cn9ymegksNc?si=BG9upj_bVNlPsCx3",
   },
   {
-    title: "Dr Igic Shorts 3",
+    title: "Dr Igić Shorts 3",
     youtubeUrl: "https://youtube.com/shorts/ZFXF16v4F_g?si=Blf4-jUatPsPoGkT",
   },
   {
-    title: "Dr Igic Shorts 4",
+    title: "Dr Igić Shorts 4",
     youtubeUrl: "https://youtube.com/shorts/1Khh-ZH9a3Y?si=cELDtq2G1RtdRws4",
   },
 ];
@@ -112,12 +112,12 @@ function buildThumbnailUrl(youtubeId) {
 
 const COPY_BY_LOCALE = {
   sr: {
-    loading: "Ucitavanje video galerije...",
+    loading: "Učitavanje video galerije...",
     empty: "Trenutno nema dostupnih videa.",
     back: "Nazad",
     title: "Video galerija",
     inlineTitle: "YouTube video galerija",
-    inlineBody: "Najnoviji kratki video snimci i edukativni sadrzaj direktno sa Dr Igic kanala.",
+    inlineBody: "Najnoviji kratki video snimci i edukativni sadržaj direktno sa Dr Igić kanala.",
     viewAll: "Pogledaj sve videe",
     play: "Pusti video",
   },
@@ -127,7 +127,7 @@ const COPY_BY_LOCALE = {
     back: "Back",
     title: "Video gallery",
     inlineTitle: "YouTube video gallery",
-    inlineBody: "Latest short videos and educational content from the Dr Igic channel.",
+    inlineBody: "Latest short videos and educational content from the Dr Igić channel.",
     viewAll: "View all videos",
     play: "Play video",
   },
@@ -137,7 +137,7 @@ const COPY_BY_LOCALE = {
     back: "Zurueck",
     title: "Videogalerie",
     inlineTitle: "YouTube Videogalerie",
-    inlineBody: "Neueste Kurzvideos und edukative Inhalte vom Dr Igic Kanal.",
+    inlineBody: "Neueste Kurzvideos und edukative Inhalte vom Dr Igić Kanal.",
     viewAll: "Alle Videos ansehen",
     play: "Video abspielen",
   },
@@ -147,7 +147,7 @@ const COPY_BY_LOCALE = {
     back: "Indietro",
     title: "Galleria video",
     inlineTitle: "Galleria video YouTube",
-    inlineBody: "Ultimi video brevi e contenuti educativi dal canale Dr Igic.",
+    inlineBody: "Ultimi video brevi e contenuti educativi dal canale Dr Igić.",
     viewAll: "Vedi tutti i video",
     play: "Riproduci video",
   },

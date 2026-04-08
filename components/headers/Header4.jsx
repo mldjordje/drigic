@@ -220,7 +220,7 @@ export default function Header4() {
               <Link href="/" onClick={handleLogoClick}>
                 <Image
                   src={mobileLogoSrc}
-                  alt="Dr Igic logo"
+                  alt="Dr Igić logo"
                   width={220}
                   height={88}
                   className="clinic-nav-logo clinic-nav-logo-mobile"
@@ -326,7 +326,7 @@ export default function Header4() {
             </div>
             <PWAMenuActions />
             <div className="sidebar-wrap">
-              <h6>Dr Nikola Igic</h6>
+              <h6>Dr Nikola Igić</h6>
               <h6>{t("header.office")}</h6>
             </div>
             <div className="sidebar-wrap">
@@ -352,7 +352,7 @@ export default function Header4() {
                         width={286}
                         height={84}
                         src={headerLogoSrc}
-                        alt="Dr Igic logo"
+                        alt="Dr Igić logo"
                         className="clinic-nav-logo"
                       />
                     </Link>

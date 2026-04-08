@@ -1,4 +1,4 @@
-## Dr Igic
+## Dr Igić
 
 Next.js aplikacija za prezentaciju klinike, online zakazivanje termina, admin kalendar i Beauty Pass.
 
@@ -31,7 +31,7 @@ Za produkcioni deploy obavezno podesiti ove env promenljive:
 - `NEXT_PUBLIC_SITE_URL`
 - `CRON_SECRET`
 
-Pocetna osnova za env promenljive postoji u [`.env.example`](./.env.example).
+Početna osnova za env promenljive postoji u [`.env.example`](./.env.example).
 
 Ako se koristi email login i podsetnici, dodati i:
 

@@ -19,7 +19,7 @@ export default function ClinicContactPage() {
             >
               <Image
                 src="/assets/img/doctor-about.webp"
-                alt="Dr Igic Clinic"
+                alt="Dr Igić Clinic"
                 width={844}
                 height={836}
                 className="w-100 h-100 object-fit-cover"
@@ -32,7 +32,7 @@ export default function ClinicContactPage() {
             <span className="sub-title text-anime-style-1" style={{ display: "block", marginBottom: 12 }}>
               Kontakt
             </span>
-            <h2 className="sec-title mb-3">Dr Igic Clinic</h2>
+            <h2 className="sec-title mb-3">Dr Igić Clinic</h2>
             <p className="sec-text mb-4" style={{ maxWidth: 520 }}>
               Za zakazivanje, pitanja o tretmanima ili dodatne informacije pozovite ordinaciju ili pišite na
               e-mail. Rado odgovaramo na sve upite.
@@ -105,7 +105,7 @@ export default function ClinicContactPage() {
                 </span>
                 <div>
                   <strong className="d-block mb-1">Lokacija</strong>
-                  <p className="mb-1">Dr Igic Clinic — Niš, Srbija</p>
+                  <p className="mb-1">Dr Igić Clinic — Niš, Srbija</p>
                   <a
                     href="https://www.google.com/maps?ll=43.323902,21.9050293&z=16&t=m&hl=en&gl=RS&mapclient=embed&cid=16708722205926497279"
                     target="_blank"
@@ -135,7 +135,7 @@ export default function ClinicContactPage() {
             style={{ minHeight: 420, borderColor: "rgba(0,0,0,0.08)" }}
           >
             <iframe
-              title="Dr Igic Clinic na mapi"
+              title="Dr Igić Clinic na mapi"
               src={MAP_EMBED_SRC}
               width="100%"
               height="420"

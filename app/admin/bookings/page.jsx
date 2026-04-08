@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 
 const STATUSES = ["pending", "confirmed", "cancelled", "no_show"];
 const STATUS_LABELS = {
-  pending: "Na cekanju",
-  confirmed: "Potvrdjen",
+  pending: "Na čekanju",
+  confirmed: "Potvrđen",
   cancelled: "Otkazan",
   no_show: "No-show",
-  completed: "Zavrsen",
+  completed: "Završen",
 };
 
 async function parseResponse(response) {
@@ -55,7 +55,7 @@ export default function AdminBookingsPage() {
     );
     const data = await parseResponse(response);
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspesno ucitavanje termina.");
+      throw new Error(data?.message || "Neuspešno učitavanje termina.");
     }
 
     const rows = data.data || [];
@@ -91,16 +91,16 @@ export default function AdminBookingsPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno azuriranje termina.");
+        throw new Error(data?.message || "Neuspešno ažuriranje termina.");
       }
-      setMessage("Termin je azuriran.");
+      setMessage("Termin je ažuriran.");
       setStatusById((prev) => ({
         ...prev,
         [bookingId]: data.data?.status || statusToPersist,
       }));
       await loadBookings();
     } catch (err) {
-      setError(err.message || "Greska pri azuriranju.");
+      setError(err.message || "Greška pri ažuriranju.");
     } finally {
       setLoading(false);
     }
@@ -259,7 +259,7 @@ export default function AdminBookingsPage() {
                 disabled={loading}
                 onClick={() => updateBooking(booking.id)}
               >
-                Sacuvaj napomenu
+                Sačuvaj napomenu
               </button>
             </div>
           </article>

@@ -16,17 +16,17 @@ const STEPS_COPY = {
       {
         number: "02",
         title: "Anti-age",
-        text: "Individualni planovi za osvezen izgled bez neprirodnih promena.",
+        text: "Individualni planovi za osvežen izgled bez neprirodnih promena.",
       },
       {
         number: "03",
         title: "Telo",
-        text: "Nehirurske procedure za definiciju i unapredjenje kvaliteta koze.",
+        text: "Nehirurške procedure za definiciju i unapređenje kvaliteta kože.",
       },
       {
         number: "04",
         title: "Muska estetika",
-        text: "Diskretni tretmani prilagodjeni muskoj anatomiji i ocekivanjima.",
+        text: "Diskretni tretmani prilagođeni muškoj anatomiji i ocekivanjima.",
       },
     ],
   },

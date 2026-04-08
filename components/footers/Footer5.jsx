@@ -44,7 +44,7 @@ export default function Footer5() {
           <div className="row justify-content-between">
             <div className="col-md-6 col-xl-5 col-lg-6">
               <div className="widget widget-about footer-widget">
-                <Image width={138} height={55} src="/assets/img/logo.png" alt="Dr Igic logo" />
+                <Image width={138} height={55} src="/assets/img/logo.png" alt="Dr Igić logo" />
                 <h3 className="widget_title mt-30">{t("footer.officeTitle")}</h3>
                 <p className="about-text">{t("footer.officeBody")}</p>
               </div>

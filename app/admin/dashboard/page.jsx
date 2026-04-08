@@ -58,14 +58,14 @@ export default async function AdminDashboardPage() {
             <p style={{ fontSize: 28, marginBottom: 0 }}>{stats.galleryMedia}</p>
           </div>
           <div className="admin-card">
-            <h3 style={{ marginTop: 0 }}>Obavestenja</h3>
+            <h3 style={{ marginTop: 0 }}>Obaveštenja</h3>
             <p style={{ fontSize: 28, marginBottom: 0 }}>{stats.announcements}</p>
           </div>
         </div>
       </div>
 
       <div className="admin-card">
-        <h3 style={{ marginTop: 0 }}>Zakljucane funkcije (cekaju odobrenje klijenta)</h3>
+        <h3 style={{ marginTop: 0 }}>Zaključane funkcije (čekaju odobrenje klijenta)</h3>
         <ul className="admin-locked-list">
           <li>Zaposleni i smene</li>
           <li>Finansije i fakturisanje</li>

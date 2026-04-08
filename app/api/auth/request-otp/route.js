@@ -63,12 +63,12 @@ export async function POST(request) {
   if (latestRequestAt && now.getTime() - latestRequestAt < OTP_REQUEST_COOLDOWN_SECONDS * 1000) {
     return fail(
       429,
-      `Sacekajte ${OTP_REQUEST_COOLDOWN_SECONDS} sekundi pre novog koda.`
+      `Sačekajte ${OTP_REQUEST_COOLDOWN_SECONDS} sekundi pre novog koda.`
     );
   }
 
   if (recentRequests.length >= OTP_MAX_REQUESTS_PER_WINDOW) {
-    return fail(429, "Previse OTP zahteva. Pokusajte ponovo kasnije.");
+    return fail(429, "Previše OTP zahteva. Pokušajte ponovo kasnije.");
   }
 
   if (type === "email") {

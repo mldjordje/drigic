@@ -158,9 +158,9 @@ export async function POST(request) {
       const notifyResult = inboxEmail
         ? await sendReminderEmail({
             to: inboxEmail,
-            title: "Novi booking na cekanju",
+            title: "Novi booking na čekanju",
             message: [
-              `Stigao je novi booking koji ceka potvrdu admina.`,
+              `Stigao je novi booking koji čeka potvrdu admina.`,
               `Termin: ${startsAtLabel}`,
               `Klijent: ${auth.user.email || auth.user.id}`,
               `Usluge: ${serviceSummary || "-"}`,

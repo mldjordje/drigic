@@ -116,13 +116,13 @@ export default function AdminMediaPage() {
       const metaData = await parseResponse(metaRes);
 
       if (!baRes.ok) {
-        throw new Error(baData?.message || "Neuspesno ucitavanje pre/posle stavki.");
+        throw new Error(baData?.message || "Neuspešno učitavanje pre/posle stavki.");
       }
       if (!gRes.ok) {
-        throw new Error(gData?.message || "Neuspesno ucitavanje galerije.");
+        throw new Error(gData?.message || "Neuspešno učitavanje galerije.");
       }
       if (!vRes.ok) {
-        throw new Error(vData?.message || "Neuspesno ucitavanje videa.");
+        throw new Error(vData?.message || "Neuspešno učitavanje videa.");
       }
 
       setBeforeAfter(baData?.data || []);
@@ -131,7 +131,7 @@ export default function AdminMediaPage() {
       setCategories(metaData?.categories || []);
       setServices(metaData?.services || []);
     } catch (loadError) {
-      setError(loadError?.message || "Greska pri ucitavanju medija.");
+      setError(loadError?.message || "Greška pri učitavanju medija.");
     } finally {
       setLoading(false);
     }
@@ -178,14 +178,14 @@ export default function AdminMediaPage() {
         body: formData,
       });
       if (!response.ok) {
-        throw new Error(await toResponseError(response, "Neuspesan upload before/after."));
+        throw new Error(await toResponseError(response, "Neuspešan upload before/after."));
       }
 
       setBeforeAfterForm(emptyBeforeAfterForm);
-      setMessage(isEdit ? "Before/After je azuriran." : "Before/After je sacuvan.");
+      setMessage(isEdit ? "Before/After je ažuriran." : "Before/After je sačuvan.");
       await loadMedia();
     } catch (submitError) {
-      setError(submitError?.message || "Greska pri cuvanju before/after.");
+      setError(submitError?.message || "Greška pri čuvanju before/after.");
     } finally {
       setLoading(false);
     }
@@ -216,14 +216,14 @@ export default function AdminMediaPage() {
         body: formData,
       });
       if (!response.ok) {
-        throw new Error(await toResponseError(response, "Neuspesan upload galerije."));
+        throw new Error(await toResponseError(response, "Neuspešan upload galerije."));
       }
 
       setGalleryForm(emptyGalleryForm);
-      setMessage(isEdit ? "Galerija stavka je azurirana." : "Galerija stavka je sacuvana.");
+      setMessage(isEdit ? "Galerija stavka je ažurirana." : "Galerija stavka je sačuvana.");
       await loadMedia();
     } catch (submitError) {
-      setError(submitError?.message || "Greska pri cuvanju galerije.");
+      setError(submitError?.message || "Greška pri čuvanju galerije.");
     } finally {
       setLoading(false);
     }
@@ -253,14 +253,14 @@ export default function AdminMediaPage() {
         body: JSON.stringify(isEdit ? { ...payload, id: videoForm.id } : payload),
       });
       if (!response.ok) {
-        throw new Error(await toResponseError(response, "Neuspesno cuvanje videa."));
+        throw new Error(await toResponseError(response, "Neuspešno čuvanje videa."));
       }
 
       setVideoForm(emptyVideoForm);
-      setMessage(isEdit ? "Video je azuriran." : "Video link je sacuvan.");
+      setMessage(isEdit ? "Video je ažuriran." : "Video link je sačuvan.");
       await loadMedia();
     } catch (submitError) {
-      setError(submitError?.message || "Greska pri cuvanju videa.");
+      setError(submitError?.message || "Greška pri čuvanju videa.");
     } finally {
       setLoading(false);
     }
@@ -287,7 +287,7 @@ export default function AdminMediaPage() {
       setMessage("Pre/posle stavka je obrisana.");
       await loadMedia();
     } catch (removeError) {
-      setError(removeError?.message || "Greska pri brisanju.");
+      setError(removeError?.message || "Greška pri brisanju.");
     } finally {
       setBusyAction("");
     }
@@ -314,7 +314,7 @@ export default function AdminMediaPage() {
       setMessage("Galerija stavka je obrisana.");
       await loadMedia();
     } catch (removeError) {
-      setError(removeError?.message || "Greska pri brisanju.");
+      setError(removeError?.message || "Greška pri brisanju.");
     } finally {
       setBusyAction("");
     }
@@ -341,7 +341,7 @@ export default function AdminMediaPage() {
       setMessage("Video link je obrisan.");
       await loadMedia();
     } catch (removeError) {
-      setError(removeError?.message || "Greska pri brisanju.");
+      setError(removeError?.message || "Greška pri brisanju.");
     } finally {
       setBusyAction("");
     }
@@ -480,7 +480,7 @@ export default function AdminMediaPage() {
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             <button type="submit" className="admin-template-link-btn" disabled={loading}>
-              {beforeAfterForm.id ? "Sacuvaj izmene" : "Sacuvaj before/after"}
+              {beforeAfterForm.id ? "Sačuvaj izmene" : "Sačuvaj before/after"}
             </button>
             {beforeAfterForm.id ? (
               <button
@@ -526,7 +526,7 @@ export default function AdminMediaPage() {
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             <button type="submit" className="admin-template-link-btn" disabled={loading}>
-              {galleryForm.id ? "Sacuvaj izmene" : "Sacuvaj u galeriju"}
+              {galleryForm.id ? "Sačuvaj izmene" : "Sačuvaj u galeriju"}
             </button>
             {galleryForm.id ? (
               <button
@@ -570,7 +570,7 @@ export default function AdminMediaPage() {
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             <button type="submit" className="admin-template-link-btn" disabled={loading}>
-              {videoForm.id ? "Sacuvaj izmene" : "Sacuvaj video"}
+              {videoForm.id ? "Sačuvaj izmene" : "Sačuvaj video"}
             </button>
             {videoForm.id ? (
               <button
@@ -753,7 +753,7 @@ export default function AdminMediaPage() {
         </div>
       </div>
 
-      {loading ? <p style={{ margin: 0, color: "#9cb2cf" }}>Ucitavanje...</p> : null}
+      {loading ? <p style={{ margin: 0, color: "#9cb2cf" }}>Učitavanje...</p> : null}
     </section>
   );
 }
