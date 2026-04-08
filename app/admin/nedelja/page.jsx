@@ -99,6 +99,19 @@ export default function AdminSundayPage() {
         throw new Error(data?.message || "Čuvanje nije uspelo.");
       }
       setMessage(`Sačuvano: ${formatSundayLabel(sundayDate)}`);
+      // Optimistički potvrdi stanje da UI odmah bude konzistentan.
+      setForms((prev) => ({
+        ...prev,
+        [sundayDate]: {
+          ...prev[sundayDate],
+          startTime: data?.data?.startTime || prev[sundayDate]?.startTime,
+          endTime: data?.data?.endTime || prev[sundayDate]?.endTime,
+          isActive:
+            data?.data?.isActive !== undefined
+              ? Boolean(data.data.isActive)
+              : Boolean(prev[sundayDate]?.isActive),
+        },
+      }));
       await load();
     } catch (e) {
       setError(e.message || "Greška pri čuvanju.");
@@ -159,17 +172,19 @@ export default function AdminSundayPage() {
         ) : null}
 
         {(payload?.weeks || []).map((w) => {
+          const recordActive = w?.record ? Boolean(w.record.isActive) : false;
           const row = forms[w.sundayDate] || {
             ...defaultTimes,
-            isActive: false,
+            isActive: recordActive,
           };
+          const isActive = Boolean(row.isActive);
 
           return (
             <article key={w.sundayDate} style={weekCardStyle}>
               <div style={weekTopRowStyle}>
                 <strong>{formatSundayLabel(w.sundayDate)}</strong>
-                <span style={badgeStyle(Boolean(row.isActive))}>
-                  {row.isActive ? "Aktivno" : "Ne radi"}
+                <span style={badgeStyle(isActive)}>
+                  {isActive ? "Radi" : "Zatvoreno"}
                 </span>
               </div>
 
@@ -180,6 +195,7 @@ export default function AdminSundayPage() {
                     type="time"
                     className="admin-inline-input"
                     value={row.startTime}
+                    disabled={busyKey === w.sundayDate}
                     onChange={(e) =>
                       setForms((prev) => ({
                         ...prev,
@@ -194,6 +210,7 @@ export default function AdminSundayPage() {
                     type="time"
                     className="admin-inline-input"
                     value={row.endTime}
+                    disabled={busyKey === w.sundayDate}
                     onChange={(e) =>
                       setForms((prev) => ({
                         ...prev,
@@ -207,7 +224,8 @@ export default function AdminSundayPage() {
               <label style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <input
                   type="checkbox"
-                  checked={row.isActive}
+                  checked={isActive}
+                  disabled={busyKey === w.sundayDate}
                   onChange={(e) =>
                     setForms((prev) => ({
                       ...prev,
@@ -215,9 +233,11 @@ export default function AdminSundayPage() {
                     }))
                   }
                 />
-                <span style={{ fontWeight: 700 }}>Otvara klijentima (aktivno)</span>
+                <span style={{ fontWeight: 800 }}>
+                  {isActive ? "Nedelja radi (otvoreno za klijente)" : "Nedelja ne radi"}
+                </span>
                 <small style={muted}>
-                  Kada je isključeno, nedelja se ponaša kao zatvorena (nema slotova).
+                  Kada je otvoreno, termini se pojavljuju u booking formi i u admin kalendaru.
                 </small>
               </label>
 
