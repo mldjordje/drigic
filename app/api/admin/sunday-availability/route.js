@@ -68,13 +68,13 @@ export async function GET(request) {
     const byDate = Object.fromEntries(
       rows
         .map((row) => {
-        const key =
-          typeof row.sundayDate === "string"
-            ? row.sundayDate
-            : row.sundayDate instanceof Date
-              ? toBelgradeDateKey(row.sundayDate)
-              : row.sundayDate?.toISOString?.().slice(0, 10) || "";
-        return [key, row];
+          const key =
+            typeof row.sundayDate === "string"
+              ? String(row.sundayDate).slice(0, 10) // pg date može stići kao 'YYYY-MM-DD' ili ISO string
+              : row.sundayDate instanceof Date
+                ? toBelgradeDateKey(row.sundayDate)
+                : row.sundayDate?.toISOString?.().slice(0, 10) || "";
+          return [key, row];
         })
         .filter(([key]) => allowed.has(key))
     );
