@@ -72,7 +72,9 @@ export async function GET(request) {
         const key =
           typeof row.sundayDate === "string"
             ? row.sundayDate
-            : row.sundayDate?.toISOString?.().slice(0, 10) || "";
+            : row.sundayDate instanceof Date
+              ? toBelgradeDateKey(row.sundayDate)
+              : row.sundayDate?.toISOString?.().slice(0, 10) || "";
         return [key, row];
       })
     );
