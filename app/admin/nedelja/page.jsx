@@ -125,14 +125,14 @@ export default function AdminSundayPage() {
 
   const muted = { color: "#bed0e8" };
   const sectionGridStyle = { display: "grid", gap: 12 };
-  const weekCardStyle = {
+  const weekCardStyle = (active) => ({
     display: "grid",
     gap: 12,
     padding: "14px 16px",
     borderRadius: 14,
-    border: "1px solid rgba(190, 208, 232, 0.18)",
-    background: "rgba(7, 18, 35, 0.45)",
-  };
+    border: `1px solid ${active ? "rgba(155, 227, 159, 0.35)" : "rgba(255, 171, 171, 0.22)"}`,
+    background: active ? "rgba(20, 83, 45, 0.22)" : "rgba(7, 18, 35, 0.45)",
+  });
   const weekTopRowStyle = {
     display: "flex",
     flexWrap: "wrap",
@@ -202,7 +202,7 @@ export default function AdminSundayPage() {
           const isActive = Boolean(row.isActive);
 
           return (
-            <article key={w.sundayDate} style={weekCardStyle}>
+            <article key={w.sundayDate} style={weekCardStyle(isActive)}>
               <div style={weekTopRowStyle}>
                 <strong>{formatSundayLabel(w.sundayDate)}</strong>
                 <span style={badgeStyle(isActive)}>

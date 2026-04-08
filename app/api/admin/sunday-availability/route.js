@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -62,7 +62,18 @@ export async function GET(request) {
   const db = getDb();
 
   try {
-    const rows = await db.select().from(schema.sundayAvailability);
+    const rangeStart = sundayKeys[0];
+    const rangeEnd = sundayKeys[sundayKeys.length - 1];
+    const rows = await db
+      .select()
+      .from(schema.sundayAvailability)
+      .where(
+        and(
+          // Stabilno filtriranje date kolone preko to_char
+          sql`to_char(${schema.sundayAvailability.sundayDate}, 'YYYY-MM-DD') >= ${rangeStart}`,
+          sql`to_char(${schema.sundayAvailability.sundayDate}, 'YYYY-MM-DD') <= ${rangeEnd}`
+        )
+      );
 
     const allowed = new Set(sundayKeys);
     const byDate = Object.fromEntries(
