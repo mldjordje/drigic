@@ -79,8 +79,8 @@ export default function AdminSundayPage() {
     load();
   }, [load]);
 
-  async function saveWeek(sundayDate) {
-    const row = forms[sundayDate];
+  async function saveWeek(sundayDate, overrideRow) {
+    const row = overrideRow || forms[sundayDate];
     if (!row) {
       return;
     }
@@ -113,7 +113,7 @@ export default function AdminSundayPage() {
           isActive:
             data?.data?.isActive !== undefined
               ? Boolean(data.data.isActive)
-              : Boolean(prev[sundayDate]?.isActive),
+              : Boolean(row.isActive),
         },
       }));
       await load();
@@ -291,14 +291,26 @@ export default function AdminSundayPage() {
                 </small>
               </label>
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  className="admin-template-link-btn"
+                  disabled={busyKey === w.sundayDate}
+                  onClick={() => saveWeek(w.sundayDate, { ...row, isActive: !isActive })}
+                  style={{
+                    borderColor: isActive ? "rgba(255, 171, 171, 0.42)" : "rgba(155, 227, 159, 0.45)",
+                    color: isActive ? "#ffabab" : "#9be39f",
+                  }}
+                >
+                  {busyKey === w.sundayDate ? "Čuvanje..." : isActive ? "Deaktiviraj" : "Aktiviraj"}
+                </button>
                 <button
                   type="button"
                   className="admin-template-link-btn"
                   disabled={busyKey === w.sundayDate}
                   onClick={() => saveWeek(w.sundayDate)}
                 >
-                  {busyKey === w.sundayDate ? "Čuvanje..." : "Sačuvaj"}
+                  {busyKey === w.sundayDate ? "Čuvanje..." : "Sačuvaj vreme"}
                 </button>
               </div>
             </article>
