@@ -366,12 +366,17 @@ export default function AdminSettingsPage() {
             <div style={{ display: "grid", gap: 4 }}>
               <strong>Podrazumevano radno vreme</strong>
               <small style={mutedTextStyle}>
-                Radni dani 16-21h, subota 10-16h, nedelja ne radi.
+                Radni dani 16-21h, subota 10-16h; nedelja po podešavanju u modulu Nedelja.
               </small>
             </div>
-            <Link href="/admin/prepodnevni-termini" className="admin-template-link-btn">
-              Prepodnevni termini
-            </Link>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <Link href="/admin/prepodnevni-termini" className="admin-template-link-btn">
+                Prepodnevni termini
+              </Link>
+              <Link href="/admin/nedelja" className="admin-template-link-btn">
+                Nedelja
+              </Link>
+            </div>
           </div>
 
           <button type="submit" className="admin-template-link-btn" disabled={busyKey === "clinic"}>

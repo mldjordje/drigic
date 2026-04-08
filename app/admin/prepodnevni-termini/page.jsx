@@ -166,7 +166,8 @@ export default function AdminMorningShiftsPage() {
       <div className="admin-card">
         <h2 style={{ marginTop: 0 }}>Prepodnevni termini</h2>
         <p style={{ color: "#bed0e8", marginBottom: 0 }}>
-          Podrazumevano radno vreme je: radni dani 16-21h, subota 10-16h, nedelja ne radi.
+          Podrazumevano radno vreme je: radni dani 16-21h, subota 10-16h, nedelja ne radi
+          (osim ako je podešena u Admin → Nedelja).
           Ovde uključi dodatni prepodnevni raspon za izabrane datume. Nedelja ostaje zatvorena
           i ako upadne u opseg.
         </p>

@@ -13,6 +13,7 @@ const approvedModules = [
   { href: "/admin/tutorial", label: "Tutorial" },
   { href: "/admin/podesavanja", labelKey: "admin.settings" },
   { href: "/admin/prepodnevni-termini", label: "Prepodnevni termini" },
+  { href: "/admin/nedelja", label: "Nedelja" },
   { href: "/admin/bookings", labelKey: "admin.bookings" },
   { href: "/admin/klijenti", labelKey: "admin.clients" },
   { href: "/admin/services", labelKey: "admin.services" },

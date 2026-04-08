@@ -85,6 +85,13 @@
       "when": 1774771200000,
       "tag": "0011_morning_shift_activations",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775126400000,
+      "tag": "0012_sunday_availability",
+      "breakpoints": true
     }
   ]
 }
