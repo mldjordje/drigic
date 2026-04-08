@@ -15,9 +15,11 @@
   --success-color       : #28a745;
   --error-color         : #dc3545;
   --border-color        : #E3E3E3;
-  --title-font          : 'Montserrat', sans-serif;
-  /* Inherit Next.js fonts from body (--body-font-loaded, --title-font on body); fallbacks for ć č ž š đ */
-  --body-font           : var(--body-font-loaded), "Segoe UI", system-ui, sans-serif;
+  /* Montserrat se ne učitava — samo kao poslednji sistemski fallback */
+  --title-font          : Georgia, ui-serif, "Times New Roman", serif;
+  /* Next: --body-font-loaded, --font-noto-fallback na <html>; per-glyph fallback za č ć ž š đ */
+  --body-font           : var(--body-font-loaded), var(--font-noto-fallback), "Segoe UI", system-ui,
+    sans-serif;
   --icon-font           : "Font Awesome 5 Free";
   --main-container      : 1296px;
   --container-gutters   : 24px;
@@ -47,9 +49,9 @@ $border-color         : var(--border-color);
 // Font Variation
 $icon-font   : var(--icon-font);
 
-// Typography
-$title-font      : var(--title-font);
-$body-font       : var(--body-font);
+// Typography (lista fontova: prvi sa glifom pobedi — važno za srpsku latinicu)
+$title-font      : var(--title-font), Georgia, ui-serif, "Times New Roman", serif;
+$body-font       : var(--body-font-loaded), var(--font-noto-fallback), "Segoe UI", system-ui, sans-serif;
 $body-font-size  : 16px;
 $body-line-Height: 26px;
 $body-font-weight: 400;

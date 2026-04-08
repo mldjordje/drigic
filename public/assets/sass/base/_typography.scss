@@ -33,6 +33,11 @@ body {
     }
 }
 
+/* Bootstrap reboot postavlja body font — mora posle njega da bi č ć ž š đ bili iz webfont/sistemskog fallbacka */
+body.body.clinic-app-shell {
+	font-family: $body-font !important;
+}
+
 iframe {
 	border: none;
 	width: 100%;

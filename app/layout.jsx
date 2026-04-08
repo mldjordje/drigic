@@ -6,7 +6,7 @@ import "../public/assets/css/animate.min.css";
 import "../public/assets/css/imageRevealHover.css";
 import "../public/assets/sass/style.scss";
 import "rc-slider/assets/index.css";
-import { Cormorant_Infant, Source_Sans_3 } from "next/font/google";
+import { Cormorant_Infant, Noto_Sans, Source_Sans_3 } from "next/font/google";
 import { cookies } from "next/headers";
 import AppProviders from "@/components/common/AppProviders";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
@@ -28,6 +28,14 @@ const sourceSansBody = Source_Sans_3({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
   variable: "--body-font-loaded",
+  display: "swap",
+});
+
+/** Pouzdan fallback za srpsku latinicu (č ć ž š đ) ako primarni webfont nema glif */
+const notoSansFallback = Noto_Sans({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-noto-fallback",
   display: "swap",
 });
 
@@ -83,15 +91,21 @@ export default async function RootLayout({ children }) {
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   const initialSession = sessionToken ? await verifySessionToken(sessionToken) : null;
 
+  const fontRootClass = `${cormorantInfantTitle.variable} ${sourceSansBody.variable} ${notoSansFallback.variable}`;
+
   return (
-    <html lang={locale} style={{ overflowX: "hidden", width: "100%" }}>
+    <html
+      lang={locale}
+      className={fontRootClass}
+      style={{ overflowX: "hidden", width: "100%" }}
+    >
       <body
-        className={`body clinic-theme-light clinic-app-shell ${cormorantInfantTitle.variable} ${sourceSansBody.variable}`}
+        className="body clinic-theme-light clinic-app-shell"
         style={{
           overflowX: "hidden",
           width: "100%",
           fontFamily:
-            "var(--body-font-loaded), 'Helvetica Neue', Helvetica, Arial, sans-serif",
+            'var(--body-font-loaded), var(--font-noto-fallback), "Segoe UI", system-ui, sans-serif',
         }}
       >
         <AppProviders initialLocale={locale} initialSession={initialSession}>
