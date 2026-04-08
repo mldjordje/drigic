@@ -914,13 +914,8 @@ export default function BookingInlineForm({
     }
 
     const cacheKey = `${monthKey}::${deferredSelectionKey}`;
-    const cachedMonthAvailability = MONTH_AVAILABILITY_CACHE.get(cacheKey);
-    if (cachedMonthAvailability) {
-      setMonthAvailability(cachedMonthAvailability);
-      setMonthLoading(false);
-      setCalendarError("");
-      return;
-    }
+    // Ne keširamo month dostupnost u memoriji:
+    // admin može uključiti/isključiti nedelju i slotovi moraju odmah da se osveže bez hard refresh-a.
 
     const controller = new AbortController();
     setMonthLoading(true);
@@ -945,7 +940,6 @@ export default function BookingInlineForm({
           map[day.date] = Number(day.availableSlots) || 0;
         });
 
-        MONTH_AVAILABILITY_CACHE.set(cacheKey, map);
         setMonthAvailability(map);
       })
       .catch((err) => {

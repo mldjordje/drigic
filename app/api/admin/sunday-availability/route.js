@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -62,20 +62,12 @@ export async function GET(request) {
   const db = getDb();
 
   try {
-    const rangeStart = sundayKeys[0];
-    const rangeEnd = sundayKeys[sundayKeys.length - 1];
-    const rows = await db
-      .select()
-      .from(schema.sundayAvailability)
-      .where(
-        and(
-          gte(schema.sundayAvailability.sundayDate, rangeStart),
-          lte(schema.sundayAvailability.sundayDate, rangeEnd)
-        )
-      );
+    const rows = await db.select().from(schema.sundayAvailability);
 
+    const allowed = new Set(sundayKeys);
     const byDate = Object.fromEntries(
-      rows.map((row) => {
+      rows
+        .map((row) => {
         const key =
           typeof row.sundayDate === "string"
             ? row.sundayDate
@@ -83,7 +75,8 @@ export async function GET(request) {
               ? toBelgradeDateKey(row.sundayDate)
               : row.sundayDate?.toISOString?.().slice(0, 10) || "";
         return [key, row];
-      })
+        })
+        .filter(([key]) => allowed.has(key))
     );
 
     const weeks = sundayKeys.map((dateKey) => ({
