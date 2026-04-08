@@ -7,10 +7,13 @@ import {
   isSundayDateKey,
   nextSundayDateKeysFrom,
   toBelgradeDateKey,
+  toDateColumnKey,
   toMinutes,
 } from "@/lib/booking/schedule";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const timeRegex = /^\d{2}:\d{2}$/;
 
@@ -79,12 +82,7 @@ export async function GET(request) {
     const byDate = Object.fromEntries(
       rows
         .map((row) => {
-          const key =
-            typeof row.sundayDate === "string"
-              ? String(row.sundayDate).slice(0, 10) // pg date može stići kao 'YYYY-MM-DD' ili ISO string
-              : row.sundayDate instanceof Date
-                ? toBelgradeDateKey(row.sundayDate)
-                : row.sundayDate?.toISOString?.().slice(0, 10) || "";
+          const key = toDateColumnKey(row.sundayDate);
           return [key, row];
         })
         .filter(([key]) => allowed.has(key))

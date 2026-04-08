@@ -5,6 +5,8 @@ import {
 } from "@/lib/booking/engine";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function parseServiceIds(queryString = "") {
   return queryString

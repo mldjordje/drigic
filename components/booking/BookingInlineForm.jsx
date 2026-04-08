@@ -30,8 +30,6 @@ const SERVICES_CACHE = {
 };
 const USER_BOOKINGS_CACHE = new Map();
 const QUOTE_CACHE = new Map();
-const MONTH_AVAILABILITY_CACHE = new Map();
-const DAY_AVAILABILITY_CACHE = new Map();
 
 function todayIsoDate() {
   const now = new Date();
@@ -913,7 +911,6 @@ export default function BookingInlineForm({
       return;
     }
 
-    const cacheKey = `${monthKey}::${deferredSelectionKey}`;
     // Ne keširamo month dostupnost u memoriji:
     // admin može uključiti/isključiti nedelju i slotovi moraju odmah da se osveže bez hard refresh-a.
 
@@ -928,6 +925,7 @@ export default function BookingInlineForm({
 
     fetch(`/api/bookings/availability?${params.toString()}`, {
       signal: controller.signal,
+      cache: "no-store",
     })
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
@@ -996,14 +994,6 @@ export default function BookingInlineForm({
       return;
     }
 
-    const cacheKey = `${date}::${deferredSelectionKey}`;
-    const cachedDayAvailability = DAY_AVAILABILITY_CACHE.get(cacheKey);
-    if (cachedDayAvailability) {
-      setAvailability(cachedDayAvailability);
-      setCalendarError("");
-      return;
-    }
-
     const controller = new AbortController();
     const params = new URLSearchParams({
       date,
@@ -1012,6 +1002,7 @@ export default function BookingInlineForm({
 
     fetch(`/api/bookings/availability?${params.toString()}`, {
       signal: controller.signal,
+      cache: "no-store",
     })
       .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
       .then(({ ok, data }) => {
@@ -1019,7 +1010,6 @@ export default function BookingInlineForm({
           throw new Error(data?.message || t("booking.loadSlotsFailed"));
         }
         const slots = data.slots || [];
-        DAY_AVAILABILITY_CACHE.set(cacheKey, slots);
         setAvailability(slots);
         setCalendarError("");
       })
@@ -1091,8 +1081,6 @@ export default function BookingInlineForm({
       if (userCacheKey) {
         USER_BOOKINGS_CACHE.delete(userCacheKey);
       }
-      MONTH_AVAILABILITY_CACHE.clear();
-      DAY_AVAILABILITY_CACHE.clear();
       setAvailabilityVersion((prev) => prev + 1);
       await loadMyBookings({ force: true });
     } catch (err) {

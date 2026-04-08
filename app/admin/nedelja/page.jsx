@@ -50,7 +50,8 @@ export default function AdminSundayPage() {
     setError("");
     try {
       const response = await fetch(
-        `/api/admin/sunday-availability?upcoming=${encodeURIComponent(String(weeksAhead))}`
+        `/api/admin/sunday-availability?upcoming=${encodeURIComponent(String(weeksAhead))}`,
+        { cache: "no-store" }
       );
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
@@ -154,6 +155,9 @@ export default function AdminSundayPage() {
     background: active ? "rgba(155, 227, 159, 0.12)" : "rgba(255, 171, 171, 0.12)",
     color: active ? "#9be39f" : "#ffabab",
   });
+  const activeWeeks = (payload?.weeks || []).filter((w) =>
+    Boolean(forms[w.sundayDate]?.isActive ?? w.record?.isActive)
+  );
 
   return (
     <section style={sectionGridStyle}>
@@ -183,6 +187,30 @@ export default function AdminSundayPage() {
             Osveži
           </button>
         </div>
+        {!loading ? (
+          <div
+            style={{
+              display: "grid",
+              gap: 6,
+              marginTop: 12,
+              padding: "10px 12px",
+              borderRadius: 8,
+              border: "1px solid rgba(155, 227, 159, 0.28)",
+              background: activeWeeks.length
+                ? "rgba(20, 83, 45, 0.18)"
+                : "rgba(7, 18, 35, 0.38)",
+            }}
+          >
+            <strong style={{ color: activeWeeks.length ? "#9be39f" : "#bed0e8" }}>
+              Aktivne nedelje u prikazu: {activeWeeks.length}
+            </strong>
+            <small style={muted}>
+              {activeWeeks.length
+                ? activeWeeks.map((w) => formatSundayLabel(w.sundayDate)).join(" | ")
+                : "Nema aktivnih nedelja u izabranom periodu."}
+            </small>
+          </div>
+        ) : null}
         {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
         {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
       </div>
