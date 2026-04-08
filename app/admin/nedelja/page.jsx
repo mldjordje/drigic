@@ -39,6 +39,7 @@ const defaultTimes = { startTime: "10:00", endTime: "16:00" };
 export default function AdminSundayPage() {
   const [payload, setPayload] = useState(null);
   const [forms, setForms] = useState({});
+  const [weeksAhead, setWeeksAhead] = useState(8);
   const [loading, setLoading] = useState(true);
   const [busyKey, setBusyKey] = useState("");
   const [error, setError] = useState("");
@@ -48,7 +49,9 @@ export default function AdminSundayPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/admin/sunday-availability?upcoming=3");
+      const response = await fetch(
+        `/api/admin/sunday-availability?upcoming=${encodeURIComponent(String(weeksAhead))}`
+      );
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
         throw new Error(data?.message || "Neuspešno učitavanje.");
@@ -69,7 +72,7 @@ export default function AdminSundayPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [weeksAhead]);
 
   useEffect(() => {
     load();
@@ -157,10 +160,29 @@ export default function AdminSundayPage() {
       <div className="admin-card">
         <h2 style={{ marginTop: 0 }}>Nedeljni termini</h2>
         <p style={{ ...muted, marginBottom: 0 }}>
-          Ovde podešavaš da li klinika radi nedeljom. Prikazane su naredne 3 nedelje (nedeljni
-          dani). Kada je nedelja aktivna, slobodni termini se prikazuju i klijentima i u admin
-          kalendaru.
+          Ovde podešavaš da li klinika radi nedeljom. Kada je nedelja aktivna, slobodni termini se
+          prikazuju i klijentima i u admin kalendaru.
         </p>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 }}>
+          <label style={{ display: "grid", gap: 6 }}>
+            <small style={muted}>Prikaži nedelja unapred</small>
+            <select
+              className="admin-inline-input"
+              value={weeksAhead}
+              onChange={(e) => setWeeksAhead(Math.max(1, Math.min(24, Number(e.target.value) || 8)))}
+              style={{ minWidth: 180 }}
+            >
+              {[3, 6, 8, 12, 16, 24].map((n) => (
+                <option key={n} value={n}>
+                  {n} nedelja
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="admin-template-link-btn" onClick={() => load()} disabled={loading}>
+            Osveži
+          </button>
+        </div>
         {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
         {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
       </div>

@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -49,8 +49,8 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const upcoming = Math.min(
-    12,
-    Math.max(1, Number(searchParams.get("upcoming") || "3") || 3)
+    24,
+    Math.max(1, Number(searchParams.get("upcoming") || "8") || 8)
   );
 
   const todayKey = toBelgradeDateKey(new Date());
@@ -62,10 +62,17 @@ export async function GET(request) {
   const db = getDb();
 
   try {
+    const rangeStart = sundayKeys[0];
+    const rangeEnd = sundayKeys[sundayKeys.length - 1];
     const rows = await db
       .select()
       .from(schema.sundayAvailability)
-      .where(inArray(schema.sundayAvailability.sundayDate, sundayKeys));
+      .where(
+        and(
+          gte(schema.sundayAvailability.sundayDate, rangeStart),
+          lte(schema.sundayAvailability.sundayDate, rangeEnd)
+        )
+      );
 
     const byDate = Object.fromEntries(
       rows.map((row) => {
