@@ -35,9 +35,6 @@ const DAY_AVAILABILITY_CACHE = new Map();
 
 function todayIsoDate() {
   const now = new Date();
-  while (now.getDay() === 0) {
-    now.setDate(now.getDate() + 1);
-  }
   return formatIsoDate(now);
 }
 
@@ -78,9 +75,6 @@ function buildCalendarCells(monthDate) {
   for (let index = 0; index < 42; index += 1) {
     const date = new Date(gridStart);
     date.setDate(gridStart.getDate() + index);
-    if (date.getDay() === 0) {
-      continue;
-    }
     cells.push({
       iso: formatIsoDate(date),
       dayNumber: date.getDate(),
@@ -420,7 +414,7 @@ export default function BookingInlineForm({
     const formatter = new Intl.DateTimeFormat(intlLocale, { weekday: "short" });
     const monday = new Date(2024, 0, 1);
 
-    return Array.from({ length: 6 }, (_, index) => {
+    return Array.from({ length: 7 }, (_, index) => {
       const item = new Date(monday);
       item.setDate(monday.getDate() + index);
       return formatter.format(item);

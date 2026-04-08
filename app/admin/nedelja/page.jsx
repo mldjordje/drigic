@@ -107,123 +107,134 @@ export default function AdminSundayPage() {
     }
   }
 
-  const muted = { color: "rgba(15, 23, 42, 0.55)", fontSize: "0.9rem" };
+  const muted = { color: "#bed0e8" };
+  const sectionGridStyle = { display: "grid", gap: 12 };
+  const weekCardStyle = {
+    display: "grid",
+    gap: 12,
+    padding: "14px 16px",
+    borderRadius: 14,
+    border: "1px solid rgba(190, 208, 232, 0.18)",
+    background: "rgba(7, 18, 35, 0.45)",
+  };
+  const weekTopRowStyle = {
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    gap: 10,
+  };
+  const badgeStyle = (active) => ({
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "6px 10px",
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: 800,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    border: `1px solid ${active ? "rgba(155, 227, 159, 0.35)" : "rgba(255, 171, 171, 0.35)"}`,
+    background: active ? "rgba(155, 227, 159, 0.12)" : "rgba(255, 171, 171, 0.12)",
+    color: active ? "#9be39f" : "#ffabab",
+  });
 
   return (
-    <div className="admin-template-stack" style={{ maxWidth: 720 }}>
-      <header>
-        <h2 style={{ marginBottom: 8 }}>Nedeljni termini</h2>
-        <p style={muted}>
-          Prikazuju se naredne tri nedelje (nedeljni dani). Za svaku nedelju posebno podesite
-          radno vreme ili isključite prikaz termina klijentima. Kada je uključeno, termini se
-          pojavljuju u formi za zakazivanje kao i za ostale dane.
+    <section style={sectionGridStyle}>
+      <div className="admin-card">
+        <h2 style={{ marginTop: 0 }}>Nedeljni termini</h2>
+        <p style={{ ...muted, marginBottom: 0 }}>
+          Ovde podešavaš da li klinika radi nedeljom. Prikazane su naredne 3 nedelje (nedeljni
+          dani). Kada je nedelja aktivna, slobodni termini se prikazuju i klijentima i u admin
+          kalendaru.
         </p>
-      </header>
+        {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
+        {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
+      </div>
 
-      {error ? (
-        <p style={{ color: "#b91c1c", marginTop: 12 }} role="alert">
-          {error}
-        </p>
-      ) : null}
-      {message ? (
-        <p style={{ color: "#15803d", marginTop: 12 }} role="status">
-          {message}
-        </p>
-      ) : null}
+      <div className="admin-card" style={{ display: "grid", gap: 10 }}>
+        {loading ? <p style={muted}>Učitavanje…</p> : null}
+        {!loading && !(payload?.weeks || []).length ? (
+          <p style={muted}>Nema dostupnih nedelja za prikaz.</p>
+        ) : null}
 
-      {loading ? (
-        <p style={{ ...muted, marginTop: 24 }}>Učitavanje…</p>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, marginTop: 24 }}>
-          {(payload?.weeks || []).map((w) => {
-            const row = forms[w.sundayDate] || {
-              ...defaultTimes,
-              isActive: false,
-            };
-            return (
-              <section
-                key={w.sundayDate}
-                style={{
-                  border: "1px solid rgba(15, 23, 42, 0.12)",
-                  borderRadius: 12,
-                  padding: "16px 18px",
-                  background: "rgba(255,255,255,0.6)",
-                }}
-              >
-                <h3 style={{ fontSize: "1.05rem", marginBottom: 12 }}>
-                  {formatSundayLabel(w.sundayDate)}
-                </h3>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 12,
-                    alignItems: "center",
-                    marginBottom: 12,
-                  }}
-                >
-                  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={muted}>Od</span>
-                    <input
-                      type="time"
-                      value={row.startTime}
-                      onChange={(e) =>
-                        setForms((prev) => ({
-                          ...prev,
-                          [w.sundayDate]: { ...row, startTime: e.target.value },
-                        }))
-                      }
-                      className="admin-template-input"
-                    />
-                  </label>
-                  <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={muted}>Do</span>
-                    <input
-                      type="time"
-                      value={row.endTime}
-                      onChange={(e) =>
-                        setForms((prev) => ({
-                          ...prev,
-                          [w.sundayDate]: { ...row, endTime: e.target.value },
-                        }))
-                      }
-                      className="admin-template-input"
-                    />
-                  </label>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      marginTop: 22,
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={row.isActive}
-                      onChange={(e) =>
-                        setForms((prev) => ({
-                          ...prev,
-                          [w.sundayDate]: { ...row, isActive: e.target.checked },
-                        }))
-                      }
-                    />
-                    <span>Otvara klijentima (aktivno)</span>
-                  </label>
-                </div>
+        {(payload?.weeks || []).map((w) => {
+          const row = forms[w.sundayDate] || {
+            ...defaultTimes,
+            isActive: false,
+          };
+
+          return (
+            <article key={w.sundayDate} style={weekCardStyle}>
+              <div style={weekTopRowStyle}>
+                <strong>{formatSundayLabel(w.sundayDate)}</strong>
+                <span style={badgeStyle(Boolean(row.isActive))}>
+                  {row.isActive ? "Aktivno" : "Ne radi"}
+                </span>
+              </div>
+
+              <div className="admin-services-split-grid">
+                <label>
+                  Od
+                  <input
+                    type="time"
+                    className="admin-inline-input"
+                    value={row.startTime}
+                    onChange={(e) =>
+                      setForms((prev) => ({
+                        ...prev,
+                        [w.sundayDate]: { ...row, startTime: e.target.value },
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  Do
+                  <input
+                    type="time"
+                    className="admin-inline-input"
+                    value={row.endTime}
+                    onChange={(e) =>
+                      setForms((prev) => ({
+                        ...prev,
+                        [w.sundayDate]: { ...row, endTime: e.target.value },
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+
+              <label style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                <input
+                  type="checkbox"
+                  checked={row.isActive}
+                  onChange={(e) =>
+                    setForms((prev) => ({
+                      ...prev,
+                      [w.sundayDate]: { ...row, isActive: e.target.checked },
+                    }))
+                  }
+                />
+                <span style={{ fontWeight: 700 }}>Otvara klijentima (aktivno)</span>
+                <small style={muted}>
+                  Kada je isključeno, nedelja se ponaša kao zatvorena (nema slotova).
+                </small>
+              </label>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 <button
                   type="button"
-                  className="admin-template-primary-btn"
+                  className="admin-template-link-btn"
                   disabled={busyKey === w.sundayDate}
                   onClick={() => saveWeek(w.sundayDate)}
                 >
-                  {busyKey === w.sundayDate ? "Čuvanje…" : "Sačuvaj"}
+                  {busyKey === w.sundayDate ? "Čuvanje..." : "Sačuvaj"}
                 </button>
-              </section>
-            );
-          })}
-        </div>
-      )}
-    </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 }

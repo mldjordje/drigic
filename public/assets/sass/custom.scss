@@ -1237,7 +1237,7 @@ a.clinic-glow-btn {
 
   .clinic-cal-weekdays {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -1251,7 +1251,7 @@ a.clinic-glow-btn {
 
   .clinic-cal-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 8px;
   }
 

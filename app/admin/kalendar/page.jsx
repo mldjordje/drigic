@@ -662,7 +662,7 @@ export default function AdminKalendarPage() {
           initialDate={initialCalendarDate}
           locale="sr"
           firstDay={1}
-          hiddenDays={[0]}
+          hiddenDays={[]}
           allDaySlot={false}
           slotDuration="00:15:00"
           slotLabelInterval="00:15:00"
