@@ -1,8 +1,10 @@
 import { fail, ok } from "@/lib/api/http";
+import { getDb } from "@/lib/db/client";
 import {
   getAvailabilityByDay,
   getAvailabilityByMonth,
 } from "@/lib/booking/engine";
+import { maybeRunReminderDispatch } from "@/lib/notifications/reminder-dispatch";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,6 +57,12 @@ export async function GET(request) {
   }
 
   try {
+    try {
+      await maybeRunReminderDispatch({ db: getDb() });
+    } catch {
+      // Reminder fallback must not affect booking availability.
+    }
+
     if (month) {
       const data = await getAvailabilityByMonth({
         month,
