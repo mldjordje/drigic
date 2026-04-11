@@ -1,6 +1,7 @@
 import { and, count, eq, gte } from "drizzle-orm";
 import { unstable_noStore as noStore } from "next/cache";
 import { getDb, schema } from "@/lib/db/client";
+import AdminAnalyticsRefresh from "@/components/admin/AdminAnalyticsRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -488,9 +489,12 @@ export default async function AdminAnalitikaPage() {
     <section style={styles.page}>
       <div style={styles.heroCard}>
         <div style={styles.heroTop}>
-          <div>
-            <span style={styles.eyebrow}>LIVE</span>
-            <h2 style={styles.heroTitle}>Analitika</h2>
+          <div style={styles.heroHeaderRow}>
+            <div>
+              <span style={styles.eyebrow}>LIVE</span>
+              <h2 style={styles.heroTitle}>Analitika</h2>
+            </div>
+            <AdminAnalyticsRefresh updatedAt={analytics.generatedAt.toISOString()} />
           </div>
           <div style={styles.heroMeta}>
             <div style={styles.heroChip}>
@@ -498,15 +502,6 @@ export default async function AdminAnalitikaPage() {
               <strong style={styles.heroChipValue}>
                 {analytics.activityStart.toLocaleDateString("sr-RS")} -{" "}
                 {analytics.generatedAt.toLocaleDateString("sr-RS")}
-              </strong>
-            </div>
-            <div style={styles.heroChip}>
-              <span style={styles.heroChipLabel}>Osvezeno</span>
-              <strong style={styles.heroChipValue}>
-                {analytics.generatedAt.toLocaleString("sr-RS", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
               </strong>
             </div>
           </div>
@@ -679,6 +674,12 @@ const styles = {
     display: "grid",
     gap: 10,
   },
+  heroHeaderRow: {
+    display: "grid",
+    gap: 12,
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    alignItems: "center",
+  },
   eyebrow: {
     fontSize: 11,
     letterSpacing: "0.14em",
@@ -695,7 +696,7 @@ const styles = {
   heroMeta: {
     display: "grid",
     gap: 10,
-    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
   },
   heroChip: {
     display: "grid",
