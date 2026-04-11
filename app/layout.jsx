@@ -7,7 +7,10 @@ import "../public/assets/css/imageRevealHover.css";
 import "../public/assets/sass/style.scss";
 import "rc-slider/assets/index.css";
 import { Cormorant_Infant, Noto_Sans, Source_Sans_3 } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { cookies } from "next/headers";
+import SitePageTracker from "@/components/analytics/SitePageTracker";
 import AppProviders from "@/components/common/AppProviders";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
@@ -109,7 +112,10 @@ export default async function RootLayout({ children }) {
         }}
       >
         <AppProviders initialLocale={locale} initialSession={initialSession}>
+          <SitePageTracker />
           {children}
+          <Analytics />
+          <SpeedInsights />
         </AppProviders>
       </body>
     </html>

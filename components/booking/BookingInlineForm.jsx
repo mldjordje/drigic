@@ -1551,6 +1551,21 @@ export default function BookingInlineForm({
                 ))}
               </div>
 
+              <div className="clinic-cal-legend" aria-label="Legenda dostupnosti termina">
+                <span>
+                  <span className="calendar-indicator is-high" />
+                  Vise slobodnih termina
+                </span>
+                <span>
+                  <span className="calendar-indicator is-medium" />
+                  Ogranicena dostupnost
+                </span>
+                <span>
+                  <span className="calendar-indicator is-none" />
+                  Nema slobodnih termina
+                </span>
+              </div>
+
               <div className="clinic-cal-grid">
                 {calendarCells.map((cell) => {
                   const availableCount = monthAvailability[cell.iso];

@@ -92,6 +92,13 @@
       "when": 1775126400000,
       "tag": "0012_sunday_availability",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775867832444,
+      "tag": "0013_slow_sphinx",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte, lte, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
+import { sendTransactionalEmail } from "@/lib/auth/email";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import {
@@ -13,11 +14,26 @@ import {
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
 import { WORKING_HOURS_SUMMARY } from "@/lib/booking/schedule";
-import { deliverBookingNotification } from "@/lib/notifications/delivery";
+import {
+  deliverBookingAlertToAdmins,
+  deliverBookingNotification,
+} from "@/lib/notifications/delivery";
+import {
+  buildAdminBookingEmail,
+  buildClientBookingEmail,
+} from "@/lib/notifications/booking-email";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 
 const STATUS_VALUES = ["pending", "confirmed", "completed", "cancelled", "no_show"];
+const STATUS_LABELS = {
+  pending: "Na cekanju",
+  confirmed: "Potvrdjen",
+  completed: "Zavrsen",
+  cancelled: "Otkazan",
+  no_show: "No-show",
+};
 
 const updateSchema = z.object({
   id: z.string().uuid(),
@@ -85,8 +101,8 @@ function getStatusNotificationPayload(status, startsAt) {
   if (status === "confirmed") {
     return {
       type: "booking_confirmed",
-      title: "Termin je potvrden",
-      message: `Vas termin za ${startsAtLabel} je potvrđen.`,
+      title: "Termin je potvrdjen",
+      message: `Vas termin za ${startsAtLabel} je potvrdjen.`,
     };
   }
 
@@ -102,11 +118,104 @@ function getStatusNotificationPayload(status, startsAt) {
     return {
       type: "booking_submitted",
       title: "Zahtev za termin",
-      message: `Kreiran je zahtev za termin ${startsAtLabel}. Čekajte potvrdu klinike.`,
+      message: `Kreiran je zahtev za termin ${startsAtLabel}. Sacekajte potvrdu klinike.`,
     };
   }
 
   return null;
+}
+
+function isPlaceholderEmail(email) {
+  return String(email || "")
+    .trim()
+    .toLowerCase()
+    .endsWith("@drigic.local");
+}
+
+function buildStatusEmailPayload(status, context) {
+  const base = {
+    startsAt: context.startsAt,
+    serviceSummary: context.serviceSummary,
+    durationMin: context.totalDurationMin,
+    priceRsd: context.totalPriceRsd,
+    statusLabel: STATUS_LABELS[status] || status,
+    notes: context.notes,
+    cancellationReason: context.cancellationReason,
+  };
+
+  if (status === "confirmed") {
+    return buildClientBookingEmail({
+      subject: "Termin je potvrdjen",
+      previewText: "Vas termin je uspesno potvrdjen",
+      heading: "Termin je potvrdjen",
+      intro:
+        "Vas termin je potvrdjen od strane klinike. Ako vam bude trebala izmena, javite nam se blagovremeno.",
+      ...base,
+    });
+  }
+
+  if (status === "cancelled") {
+    return buildClientBookingEmail({
+      subject: "Termin je otkazan",
+      previewText: "Obavestenje o otkazivanju termina",
+      heading: "Termin je otkazan",
+      intro:
+        "Termin je otkazan od strane klinike. Molimo vas da odaberete novi termin ili odgovorite na ovu poruku za pomoc.",
+      ...base,
+    });
+  }
+
+  if (status === "pending") {
+    return buildClientBookingEmail({
+      subject: "Zahtev za termin je evidentiran",
+      previewText: "Termin je vracen u status cekanja",
+      heading: "Zahtev za termin je evidentiran",
+      intro:
+        "Termin je evidentiran u statusu cekanja. Poslacemo vam novo obavestenje cim obrada bude zavrsena.",
+      ...base,
+    });
+  }
+
+  return null;
+}
+
+async function loadBookingNotificationContext(db, bookingId) {
+  const rows = await db
+    .select({
+      booking: schema.bookings,
+      userEmail: schema.users.email,
+      userPhone: schema.users.phone,
+      profileName: schema.profiles.fullName,
+      serviceName: schema.bookingItems.serviceNameSnapshot,
+      quantity: schema.bookingItems.quantity,
+      unitLabel: schema.bookingItems.unitLabel,
+    })
+    .from(schema.bookings)
+    .leftJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
+    .leftJoin(schema.profiles, eq(schema.profiles.userId, schema.bookings.userId))
+    .leftJoin(schema.bookingItems, eq(schema.bookingItems.bookingId, schema.bookings.id))
+    .where(eq(schema.bookings.id, bookingId));
+
+  if (!rows.length) {
+    return null;
+  }
+
+  const first = rows[0];
+  const services = rows
+    .filter((row) => row.serviceName)
+    .map((row) => formatServiceSummaryItem(row));
+
+  return {
+    ...first.booking,
+    clientName:
+      String(first.profileName || "").trim() ||
+      String(first.userPhone || "").trim() ||
+      String(first.userEmail || "").trim() ||
+      "Klijent",
+    clientEmail: String(first.userEmail || "").trim(),
+    clientPhone: String(first.userPhone || "").trim(),
+    serviceSummary: services.join(", "),
+  };
 }
 
 export async function GET(request) {
@@ -261,35 +370,80 @@ export async function PATCH(request) {
     });
 
     const statusNotification = getStatusNotificationPayload(nextStatus, current.startsAt);
-    if (statusNotification) {
-      const [user] = await db
-        .select({
-          id: schema.users.id,
-          email: schema.users.email,
-        })
-        .from(schema.users)
-        .where(eq(schema.users.id, current.userId))
-        .limit(1);
+    const context = await loadBookingNotificationContext(db, current.id);
 
-      if (user) {
-        const deliveryResult = await deliverBookingNotification({
-          db,
-          userId: user.id,
-          email: user.email,
-          type: statusNotification.type,
-          title: statusNotification.title,
-          message: statusNotification.message,
-          bookingId: current.id,
-          scheduledFor: current.startsAt,
-          dedupe: false,
+    if (
+      statusNotification &&
+      context?.clientEmail &&
+      !isPlaceholderEmail(context.clientEmail)
+    ) {
+      const deliveryResult = await deliverBookingNotification({
+        db,
+        userId: context.userId,
+        email: context.clientEmail,
+        type: statusNotification.type,
+        title: statusNotification.title,
+        message: statusNotification.message,
+        bookingId: current.id,
+        scheduledFor: current.startsAt,
+        dedupe: false,
+        emailPayload: buildStatusEmailPayload(nextStatus, context),
+      });
+      if (!deliveryResult?.sentEmail) {
+        console.error(
+          "[admin.bookings.patch] client status email not sent",
+          deliveryResult?.emailReason || "unknown reason"
+        );
+      }
+    }
+
+    if (nextStatus === "cancelled" && context) {
+      const startsAtLabel = new Date(context.startsAt).toLocaleString("sr-RS", {
+        timeZone: "Europe/Belgrade",
+      });
+      const inboxEmail = String(env.ADMIN_BOOKING_NOTIFY_EMAIL || "").trim();
+      const adminEmailPayload = buildAdminBookingEmail({
+        subject: "Termin je otkazan",
+        previewText: "Termin je otkazan iz admin panela",
+        heading: "Termin je otkazan",
+        intro:
+          "Termin je oznacen kao otkazan iz admin panela i automatski je uklonjen iz operativnog kalendara.",
+        startsAt: context.startsAt,
+        serviceSummary: context.serviceSummary,
+        durationMin: context.totalDurationMin,
+        priceRsd: context.totalPriceRsd,
+        statusLabel: "Otkazan",
+        notes: context.notes,
+        cancellationReason: context.cancellationReason,
+        clientName: context.clientName,
+        clientEmail: context.clientEmail,
+        clientPhone: context.clientPhone,
+        actorLabel: "Admin panel",
+      });
+
+      if (inboxEmail) {
+        const inboxResult = await sendTransactionalEmail({
+          to: inboxEmail,
+          ...adminEmailPayload,
         });
-        if (!deliveryResult?.sentEmail) {
+        if (!inboxResult?.sent) {
           console.error(
-            "[admin.bookings.patch] client status email not sent",
-            deliveryResult?.emailReason || "unknown reason"
+            "[admin.bookings.patch] admin inbox cancellation email not sent",
+            inboxResult?.reason || "unknown reason"
           );
         }
       }
+
+      await deliverBookingAlertToAdmins({
+        db,
+        bookingId: current.id,
+        type: "admin_booking_cancelled",
+        title: "Termin je otkazan",
+        message: `Termin ${startsAtLabel} za ${context.clientName} je otkazan iz admin panela.`,
+        url: "/admin/kalendar",
+        dedupe: true,
+        emailPayload: adminEmailPayload,
+      });
     }
   }
 
@@ -332,10 +486,7 @@ export async function POST(request) {
   const finalStatus = payload.status || "confirmed";
 
   if (!(await isWithinWorkHours(startAt, quote.totalDurationMin, settings))) {
-    return fail(
-      400,
-      `Clinic working hours are: ${WORKING_HOURS_SUMMARY}`
-    );
+    return fail(400, `Clinic working hours are: ${WORKING_HOURS_SUMMARY}`);
   }
 
   const conflicts = await findConflicts({
@@ -475,9 +626,12 @@ export async function POST(request) {
     throw error;
   }
 
+  const serviceSummary = quote.items
+    .map((item) => `${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`)
+    .join(", ");
   const clientEmail = String(user.email || "").trim();
-  const isPlaceholderEmail = clientEmail.endsWith("@drigic.local");
-  if (clientEmail && !isPlaceholderEmail) {
+
+  if (clientEmail && !isPlaceholderEmail(clientEmail)) {
     const statusPayload = getStatusNotificationPayload(finalStatus, createdBooking.startsAt);
     if (statusPayload) {
       try {
@@ -491,6 +645,13 @@ export async function POST(request) {
           bookingId: createdBooking.id,
           scheduledFor: createdBooking.startsAt,
           dedupe: false,
+          emailPayload: buildStatusEmailPayload(finalStatus, {
+            ...createdBooking,
+            clientName: payload.clientName,
+            clientEmail,
+            clientPhone: phone,
+            serviceSummary,
+          }),
         });
       } catch (notifyError) {
         console.error("[admin.bookings.create] client notification failed", notifyError);

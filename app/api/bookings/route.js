@@ -2,13 +2,17 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { created, fail, readJson } from "@/lib/api/http";
 import { requireUser } from "@/lib/auth/guards";
+import { sendTransactionalEmail } from "@/lib/auth/email";
 import { getDb, schema } from "@/lib/db/client";
-import { sendReminderEmail } from "@/lib/auth/email";
 import { env } from "@/lib/env";
 import {
   deliverBookingNotification,
   deliverNewBookingAlertToAdmins,
 } from "@/lib/notifications/delivery";
+import {
+  buildAdminBookingEmail,
+  buildClientBookingEmail,
+} from "@/lib/notifications/booking-email";
 import {
   CONSULTATION_SELECTION_ID,
   addMinutes,
@@ -80,10 +84,7 @@ export async function POST(request) {
     const employee = await getDefaultEmployee();
 
     if (!(await isWithinWorkHours(startAt, quote.totalDurationMin, settings))) {
-      return fail(
-        400,
-        `Clinic working hours are: ${WORKING_HOURS_SUMMARY}`
-      );
+      return fail(400, `Clinic working hours are: ${WORKING_HOURS_SUMMARY}`);
     }
 
     let createdBooking = null;
@@ -93,7 +94,7 @@ export async function POST(request) {
       const conflicts = await findConflicts({
         employeeId: employee.id,
         startsAt: startAt,
-        endsAt: endsAt,
+        endsAt,
         tx,
       });
 
@@ -155,20 +156,45 @@ export async function POST(request) {
         .map((item) => `${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`)
         .join(", ");
       const inboxEmail = String(env.ADMIN_BOOKING_NOTIFY_EMAIL || "").trim();
+      const clientDisplay = auth.user.email || auth.user.id;
+      const clientEmailPayload = auth.user.email
+        ? buildClientBookingEmail({
+            subject: "Zahtev za termin je primljen",
+            previewText: "Vas zahtev je uspesno evidentiran",
+            heading: "Zahtev za termin je primljen",
+            intro:
+              "Poslali ste zahtev za termin i nas tim ce ga uskoro pregledati. Kada termin bude potvrdjen, dobicete novo obavestenje.",
+            startsAt: createdBooking.startsAt,
+            serviceSummary,
+            durationMin: quote.totalDurationMin,
+            priceRsd: quote.totalPriceRsd,
+            statusLabel: "Na cekanju",
+            notes: parsed.data.notes || null,
+          })
+        : null;
+
       const notifyResult = inboxEmail
-        ? await sendReminderEmail({
+        ? await sendTransactionalEmail({
             to: inboxEmail,
-            title: "Novi booking na čekanju",
-            message: [
-              `Stigao je novi booking koji čeka potvrdu admina.`,
-              `Termin: ${startsAtLabel}`,
-              `Klijent: ${auth.user.email || auth.user.id}`,
-              `Usluge: ${serviceSummary || "-"}`,
-              `Trajanje: ${quote.totalDurationMin} min`,
-              `Cena: ${quote.totalPriceRsd} EUR`,
-            ].join("\n"),
+            ...buildAdminBookingEmail({
+              subject: "Novi zahtev za termin",
+              previewText: "Stigao je novi zahtev koji ceka obradu",
+              heading: "Novi zahtev za termin",
+              intro:
+                "Stigao je novi zahtev preko booking forme. Pregledajte detalje i potvrdite termin iz admin kalendara.",
+              startsAt: createdBooking.startsAt,
+              serviceSummary,
+              durationMin: quote.totalDurationMin,
+              priceRsd: quote.totalPriceRsd,
+              statusLabel: "Na cekanju",
+              notes: parsed.data.notes || null,
+              clientName: clientDisplay,
+              clientEmail: auth.user.email || null,
+              clientPhone: null,
+            }),
           })
         : { sent: false, reason: "ADMIN_BOOKING_NOTIFY_EMAIL missing" };
+
       if (!notifyResult?.sent) {
         console.error(
           "[bookings.create] admin inbox email not sent",
@@ -187,17 +213,22 @@ export async function POST(request) {
           bookingId: createdBooking.id,
           scheduledFor: createdBooking.startsAt,
           dedupe: true,
+          emailPayload: clientEmailPayload,
         });
       }
 
       await deliverNewBookingAlertToAdmins({
         db,
         bookingId: createdBooking.id,
+        clientName: clientDisplay,
         clientEmail: auth.user.email || auth.user.id,
+        clientPhone: null,
         startsAtLabel,
+        startsAt: createdBooking.startsAt,
         serviceSummary,
         durationMin: quote.totalDurationMin,
         priceRsd: quote.totalPriceRsd,
+        notes: parsed.data.notes || null,
       });
     } catch (notifyError) {
       console.error("[bookings.create] notification pipeline failed", notifyError);

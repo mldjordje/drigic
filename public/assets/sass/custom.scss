@@ -1292,6 +1292,21 @@ a.clinic-glow-btn {
     transform: none;
   }
 
+  .clinic-cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin: 10px 0 2px;
+    color: #64748b;
+    font-size: 12px;
+  }
+
+  .clinic-cal-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .calendar-indicator {
     width: 62%;
     height: 3px;
@@ -1305,13 +1320,13 @@ a.clinic-glow-btn {
   }
 
   .calendar-indicator.is-medium {
-    background: #d9e8f8;
-    box-shadow: 0 0 8px rgba(217, 232, 248, 0.45);
+    background: #e7b96d;
+    box-shadow: 0 0 8px rgba(231, 185, 109, 0.36);
   }
 
   .calendar-indicator.is-none {
-    background: #ca5d5d;
-    box-shadow: 0 0 8px rgba(202, 93, 93, 0.45);
+    background: #d46a6a;
+    box-shadow: 0 0 8px rgba(212, 106, 106, 0.34);
   }
 
   .calendar-indicator.is-loading {
@@ -2655,8 +2670,8 @@ a.clinic-glow-btn {
 }
 
 .clinic-theme-light .clinic-home5 .calendar-indicator.is-medium {
-  background: #1f2937;
-  box-shadow: 0 0 6px rgba(31, 41, 55, 0.28);
+  background: #d6a24a;
+  box-shadow: 0 0 6px rgba(214, 162, 74, 0.28);
 }
 
 .clinic-theme-light .clinic-home5 .footer-top.bg-theme {

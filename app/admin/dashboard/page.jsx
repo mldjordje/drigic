@@ -70,7 +70,6 @@ export default async function AdminDashboardPage() {
           <li>Zaposleni i smene</li>
           <li>Finansije i fakturisanje</li>
           <li>Skladiste preparata</li>
-          <li>Napredna analitika i BI izvestaji</li>
         </ul>
       </div>
     </section>

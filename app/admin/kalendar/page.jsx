@@ -155,6 +155,12 @@ export default function AdminKalendarPage() {
     return map;
   }, [blocks]);
 
+  useEffect(() => {
+    if (activeEvent?.kind === "booking" && !bookingById.has(activeEvent.refId)) {
+      setActiveEvent(null);
+    }
+  }, [activeEvent, bookingById]);
+
   const allServices = useMemo(() => {
     return services.flatMap((category) => category.services || []);
   }, [services]);
@@ -196,7 +202,9 @@ export default function AdminKalendarPage() {
         throw new Error(blocksData?.message || "Neuspešno učitavanje blokada.");
       }
 
-      const bookingsList = bookingsData.data || [];
+      const bookingsList = (bookingsData.data || []).filter(
+        (item) => item.status !== "cancelled"
+      );
       const blocksList = blocksData.data || [];
       setBookings(bookingsList);
       setBlocks(blocksList);
@@ -329,6 +337,9 @@ export default function AdminKalendarPage() {
       setMessage("Termin je uspešno dodat.");
       setIsCreateModalOpen(false);
       await refreshData();
+      if (nextStatus === "cancelled") {
+        closeActiveEvent();
+      }
     } catch (saveError) {
       setError(saveError.message || "Greška pri kreiranju termina.");
     } finally {

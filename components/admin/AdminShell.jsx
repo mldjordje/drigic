@@ -10,6 +10,7 @@ import AdminNotificationsBell from "@/components/admin/AdminNotificationsBell";
 const approvedModules = [
   { href: "/admin/kalendar", labelKey: "admin.calendar" },
   { href: "/admin/dashboard", labelKey: "admin.dashboard" },
+  { href: "/admin/analitika", label: "Analitika" },
   { href: "/admin/tutorial", label: "Tutorial" },
   { href: "/admin/podesavanja", labelKey: "admin.settings" },
   { href: "/admin/prepodnevni-termini", label: "Prepodnevni termini" },
@@ -29,7 +30,6 @@ const lockedModules = [
   { label: "Zaposleni", reason: "Nije odobreno" },
   { label: "Finansije", reason: "Nije odobreno" },
   { label: "Skladište preparata", reason: "Nije odobreno" },
-  { label: "Napredna analitika", reason: "Nije odobreno" },
 ];
 
 const quickLinks = [
