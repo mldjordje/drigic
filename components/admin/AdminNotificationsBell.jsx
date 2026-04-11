@@ -33,6 +33,26 @@ function getTypeLabel(type) {
   return labels[String(type || "").toLowerCase()] || "Obavestenje";
 }
 
+function summarizeMessage(message) {
+  const normalized = String(message || "").replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "Bez dodatnog opisa.";
+  }
+
+  const firstSentence = normalized.split(/(?<=[.!?])\s+/)[0] || normalized;
+  const compact = firstSentence.length > 140 ? `${firstSentence.slice(0, 137).trim()}...` : firstSentence;
+
+  if (compact.length >= 72) {
+    return compact;
+  }
+
+  if (normalized.length <= 140) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 137).trim()}...`;
+}
+
 export default function AdminNotificationsBell() {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
@@ -147,7 +167,7 @@ export default function AdminNotificationsBell() {
                   <span className="admin-notif-date">{formatNotifDate(item.sentAt)}</span>
                 </div>
                 <strong>{item.title}</strong>
-                <p>{item.message}</p>
+                <p title={item.message}>{summarizeMessage(item.message)}</p>
               </li>
             ))}
           </ul>
