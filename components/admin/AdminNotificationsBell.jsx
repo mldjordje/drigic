@@ -21,8 +21,8 @@ function getTypeLabel(type) {
   const labels = {
     admin_new_booking: "Novi zahtev",
     booking_submitted: "Zahtev poslat",
-    booking_confirmed: "Potvrdjen termin",
-    booking_pending: "Termin na cekanju",
+    booking_confirmed: "Potvrđen termin",
+    booking_pending: "Termin na čekanju",
     booking_cancelled: "Otkazan termin",
     client_booking_cancelled: "Klijent otkazao",
     admin_booking_cancelled: "Admin otkazao",
@@ -30,7 +30,7 @@ function getTypeLabel(type) {
     post_treatment_care: "Nega nakon tretmana",
   };
 
-  return labels[String(type || "").toLowerCase()] || "Obavestenje";
+  return labels[String(type || "").toLowerCase()] || "Obaveštenje";
 }
 
 function summarizeMessage(message) {
@@ -129,7 +129,7 @@ export default function AdminNotificationsBell() {
     <div className={`admin-notif-surface ${mobile ? "is-mobile" : "is-desktop"}`}>
       <div className="admin-notif-head">
         <div>
-          <strong>Obavestenja</strong>
+          <strong>Obaveštenja</strong>
           <span>{items.length ? `${items.length} poslednjih stavki` : "Nema novih stavki"}</span>
         </div>
         <div className="admin-notif-head-actions">
@@ -138,7 +138,7 @@ export default function AdminNotificationsBell() {
             className="admin-template-link-btn"
             onClick={() => load()}
           >
-            Osvezi
+            Osveži
           </button>
           <button
             type="button"
@@ -153,8 +153,8 @@ export default function AdminNotificationsBell() {
       <div className="admin-notif-body">
         {!items.length ? (
           <div className="admin-notif-empty">
-            <strong>Nema obavestenja.</strong>
-            <span>Kada stignu novi booking ili statusi, videces ih ovde.</span>
+            <strong>Nema obaveštenja.</strong>
+            <span>Kada stignu novi booking ili statusi, videćeš ih ovde.</span>
           </div>
         ) : (
           <ul className="admin-notif-list">
@@ -187,7 +187,7 @@ export default function AdminNotificationsBell() {
         }}
         aria-expanded={open}
       >
-        <span>Obavestenja</span>
+        <span>Obaveštenja</span>
         {items.length ? <span className="admin-notif-count">{items.length}</span> : null}
       </button>
 
@@ -196,7 +196,7 @@ export default function AdminNotificationsBell() {
           <button
             type="button"
             className="admin-notif-mobile-backdrop"
-            aria-label="Zatvori obavestenja"
+            aria-label="Zatvori obaveštenja"
             onClick={() => setOpen(false)}
           />
           {list}

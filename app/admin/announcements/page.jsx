@@ -33,7 +33,7 @@ function resolveAnnouncementState(item, now = new Date()) {
     return {
       key: "inactive",
       label: "Pauzirano",
-      description: "Obavestenje je sacuvano, ali trenutno nije prikazano klijentima.",
+      description: "Obaveštenje je sačuvano, ali trenutno nije prikazano klijentima.",
     };
   }
 
@@ -41,7 +41,7 @@ function resolveAnnouncementState(item, now = new Date()) {
     return {
       key: "scheduled",
       label: "Zakazano",
-      description: "Obavestenje ce postati vidljivo kada dodje vreme pocetka.",
+      description: "Obaveštenje će postati vidljivo kada dođe vreme početka.",
     };
   }
 
@@ -49,14 +49,14 @@ function resolveAnnouncementState(item, now = new Date()) {
     return {
       key: "expired",
       label: "Isteklo",
-      description: "Rok prikaza je prosao i poruka vise nije aktivna.",
+      description: "Rok prikaza je prošao i poruka više nije aktivna.",
     };
   }
 
   return {
     key: "live",
     label: "Aktivno",
-    description: "Obavestenje je trenutno vidljivo klijentima na sajtu.",
+    description: "Obaveštenje je trenutno vidljivo klijentima na sajtu.",
   };
 }
 
@@ -92,14 +92,14 @@ export default function AdminAnnouncementsPage() {
     const response = await fetch("/api/admin/announcements");
     const data = await response.json();
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspesno ucitavanje obavestenja.");
+      throw new Error(data?.message || "Neuspešno učitavanje obaveštenja.");
     }
     setItems(Array.isArray(data.data) ? data.data : []);
   }
 
   useEffect(() => {
     loadAnnouncements()
-      .catch((err) => setError(err.message || "Greska pri ucitavanju obavestenja."))
+      .catch((err) => setError(err.message || "Greška pri učitavanju obaveštenja."))
       .finally(() => setBooting(false));
   }, []);
 
@@ -123,7 +123,7 @@ export default function AdminAnnouncementsPage() {
       });
       const data = await response.json();
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspesno cuvanje obavestenja.");
+        throw new Error(data?.message || "Neuspešno čuvanje obaveštenja.");
       }
 
       setForm({
@@ -133,10 +133,10 @@ export default function AdminAnnouncementsPage() {
         endsAt: "",
         isActive: true,
       });
-      setMessage("Obavestenje je sacuvano i osvezeno u listi.");
+      setMessage("Obaveštenje je sačuvano i osveženo u listi.");
       await loadAnnouncements();
     } catch (err) {
-      setError(err.message || "Greska pri cuvanju obavestenja.");
+      setError(err.message || "Greška pri čuvanju obaveštenja.");
     } finally {
       setLoading(false);
     }
@@ -166,9 +166,9 @@ export default function AdminAnnouncementsPage() {
       <div className="admin-card">
         <div className="admin-announcements-head">
           <div>
-            <h2 style={{ margin: 0 }}>Obavestenja na pocetnoj strani</h2>
+            <h2 style={{ margin: 0 }}>Obaveštenja na početnoj strani</h2>
             <p className="admin-announcements-subtitle">
-              Ovde kreiras poruke koje klijenti vide na landing strani. Stranica sada prikazuje
+              Ovde kreiraš poruke koje klijenti vide na landing strani. Stranica sada prikazuje
               status, prozor objave i detalje svake poruke na jednom mestu.
             </p>
           </div>
@@ -183,9 +183,9 @@ export default function AdminAnnouncementsPage() {
 
         <div className="admin-announcements-summary">
           <article className="admin-announcement-stat-card">
-            <span>Ukupno obavestenja</span>
+            <span>Ukupno obaveštenja</span>
             <strong>{stats.total}</strong>
-            <small>Sve poruke sacuvane u sistemu.</small>
+            <small>Sve poruke sačuvane u sistemu.</small>
           </article>
           <article className="admin-announcement-stat-card">
             <span>Trenutno aktivna</span>
@@ -195,7 +195,7 @@ export default function AdminAnnouncementsPage() {
           <article className="admin-announcement-stat-card">
             <span>Zakazana</span>
             <strong>{stats.scheduled}</strong>
-            <small>Cekaju svoj pocetak prikaza.</small>
+            <small>Čekaju svoj početak prikaza.</small>
           </article>
           <article className="admin-announcement-stat-card">
             <span>Pauzirana ili istekla</span>
@@ -209,7 +209,7 @@ export default function AdminAnnouncementsPage() {
         <div className="admin-card">
           <div className="admin-announcements-section-head">
             <div>
-              <h3 style={{ margin: 0 }}>Novo obavestenje</h3>
+              <h3 style={{ margin: 0 }}>Novo obaveštenje</h3>
               <p className="admin-announcements-subtitle">
                 Unesi naslov, poruku i opcioni vremenski prozor prikaza.
               </p>
@@ -226,7 +226,7 @@ export default function AdminAnnouncementsPage() {
                   setForm((prev) => ({ ...prev, title: event.target.value }))
                 }
                 className="admin-inline-input"
-                placeholder="Kratak naslov koji ce odmah privuci paznju"
+                placeholder="Kratak naslov koji će odmah privući pažnju"
               />
             </label>
 
@@ -240,14 +240,14 @@ export default function AdminAnnouncementsPage() {
                 }
                 rows={6}
                 className="admin-inline-textarea"
-                placeholder="Naprimer: Novi termini za konsultacije su otvoreni od ponedeljka."
+                placeholder="Na primer: Novi termini za konsultacije su otvoreni od ponedeljka."
               />
               <small>{form.message.length} / 5000 karaktera</small>
             </label>
 
             <div className="admin-announcement-grid">
               <label className="admin-announcement-field">
-                <span>Pocetak prikaza</span>
+                <span>Početak prikaza</span>
                 <input
                   type="datetime-local"
                   value={form.startsAt}
@@ -280,16 +280,16 @@ export default function AdminAnnouncementsPage() {
                 }
               />
               <span>
-                <strong>Aktivno odmah nakon cuvanja</strong>
+                <strong>Aktivno odmah nakon čuvanja</strong>
                 <small>
-                  Ako je iskljuceno, poruka ostaje sacuvana ali nije vidljiva klijentima.
+                  Ako je isključeno, poruka ostaje sačuvana ali nije vidljiva klijentima.
                 </small>
               </span>
             </label>
 
             <div className="admin-announcement-actions">
               <button type="submit" disabled={loading} className="admin-template-link-btn">
-                {loading ? "Cuvanje..." : "Sacuvaj obavestenje"}
+                {loading ? "Čuvanje..." : "Sačuvaj obaveštenje"}
               </button>
               <button
                 type="button"
@@ -318,7 +318,7 @@ export default function AdminAnnouncementsPage() {
             <div>
               <h3 style={{ margin: 0 }}>Pregled pre objave</h3>
               <p className="admin-announcements-subtitle">
-                Ovako ce poruka izgledati u administraciji i kroz status prikaza.
+                Ovako će poruka izgledati u administraciji i kroz status prikaza.
               </p>
             </div>
           </div>
@@ -326,8 +326,8 @@ export default function AdminAnnouncementsPage() {
           <article className="admin-announcement-card is-preview">
             <div className="admin-announcement-card-head">
               <div>
-                <h4>{previewItem.title || "Naslov obavestenja"}</h4>
-                <p>{previewItem.message || "Ovde ce se pojaviti tekst poruke za klijente."}</p>
+                <h4>{previewItem.title || "Naslov obaveštenja"}</h4>
+                <p>{previewItem.message || "Ovde će se pojaviti tekst poruke za klijente."}</p>
               </div>
               <span
                 className={`admin-announcement-badge is-${
@@ -349,7 +349,7 @@ export default function AdminAnnouncementsPage() {
               </div>
               <div>
                 <span>Vidljivost</span>
-                <strong>{previewItem.isActive ? "Objava ukljucena" : "Sacuvano kao pauzirano"}</strong>
+                <strong>{previewItem.isActive ? "Objava uključena" : "Sačuvano kao pauzirano"}</strong>
               </div>
             </div>
           </article>
@@ -359,7 +359,7 @@ export default function AdminAnnouncementsPage() {
       <div className="admin-card">
         <div className="admin-announcements-section-head">
           <div>
-            <h3 style={{ margin: 0 }}>Lista obavestenja</h3>
+            <h3 style={{ margin: 0 }}>Lista obaveštenja</h3>
             <p className="admin-announcements-subtitle">
               Detaljan pregled svih poruka, njihovog statusa i trajanja prikaza.
             </p>
@@ -367,7 +367,7 @@ export default function AdminAnnouncementsPage() {
         </div>
 
         {booting ? (
-          <p className="admin-announcements-empty">Ucitavanje obavestenja...</p>
+          <p className="admin-announcements-empty">Učitavanje obaveštenja...</p>
         ) : items.length ? (
           <div className="admin-announcement-list">
             {items.map((item) => {
@@ -399,8 +399,8 @@ export default function AdminAnnouncementsPage() {
                       <strong>{getAnnouncementWindowLabel(item)}</strong>
                     </div>
                     <div>
-                      <span>Rucno ukljucenje</span>
-                      <strong>{item.isActive ? "Ukljuceno" : "Iskljuceno"}</strong>
+                      <span>Ručno uključenje</span>
+                      <strong>{item.isActive ? "Uključeno" : "Isključeno"}</strong>
                     </div>
                     <div>
                       <span>ID zapisa</span>
@@ -413,7 +413,7 @@ export default function AdminAnnouncementsPage() {
           </div>
         ) : (
           <p className="admin-announcements-empty">
-            Nema sacuvanih obavestenja. Napravi prvo obavestenje iz forme iznad.
+            Nema sačuvanih obaveštenja. Napravi prvo obaveštenje iz forme iznad.
           </p>
         )}
       </div>
