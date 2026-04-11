@@ -33,12 +33,25 @@ function toUint8Array(base64String) {
   return outputArray;
 }
 
+async function parseResponse(response) {
+  const text = await response.text();
+  if (!text) {
+    return null;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export default function PWAMenuActions() {
   const { locale } = useLocale();
   const { isLoggedIn } = useSession();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState("info");
   const [busy, setBusy] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
 
@@ -47,20 +60,20 @@ export default function PWAMenuActions() {
   const copy =
     {
       sr: {
-        appInstalled: "Aplikacija je već instalirana.",
+        appInstalled: "Aplikacija je vec instalirana.",
         installStarted: "Instalacija je pokrenuta.",
         installCancelled: "Instalacija je otkazana.",
         iosInstall: "Na iOS: Share > Add to Home Screen.",
         promptUnavailable: "Install prompt trenutno nije dostupan.",
-        loginForPush: "Prijavite se da biste uključili notifikacije.",
-        pushUnsupported: "Push notifikacije nisu podržane na ovom uređaju.",
+        loginForPush: "Prijavite se da biste ukljucili notifikacije.",
+        pushUnsupported: "Push notifikacije nisu podrzane na ovom uredjaju.",
         pushKeysMissing: "Push kljucevi nisu podeseni.",
         pushDenied: "Dozvola za notifikacije nije odobrena.",
-        pushEnabled: "Push notifikacije su uključene.",
-        pushEnableFailed: "Neuspešna aktivacija push notifikacija.",
-        pushGenericError: "Greška pri uključivanju notifikacija.",
+        pushEnabled: "Push notifikacije su ukljucene.",
+        pushEnableFailed: "Neuspesna aktivacija push notifikacija.",
+        pushGenericError: "Greska pri ukljucivanju notifikacija.",
         installApp: "Instaliraj app",
-        enablePush: "Uključi notifikacije",
+        enablePush: "Ukljuci notifikacije",
         enabling: "Aktivacija...",
       },
       en: {
@@ -116,22 +129,39 @@ export default function PWAMenuActions() {
       },
     }[locale] ||
     {
-      appInstalled: "Aplikacija je već instalirana.",
+      appInstalled: "Aplikacija je vec instalirana.",
       installStarted: "Instalacija je pokrenuta.",
       installCancelled: "Instalacija je otkazana.",
       iosInstall: "Na iOS: Share > Add to Home Screen.",
       promptUnavailable: "Install prompt trenutno nije dostupan.",
-      loginForPush: "Prijavite se da biste uključili notifikacije.",
-      pushUnsupported: "Push notifikacije nisu podržane na ovom uređaju.",
+      loginForPush: "Prijavite se da biste ukljucili notifikacije.",
+      pushUnsupported: "Push notifikacije nisu podrzane na ovom uredjaju.",
       pushKeysMissing: "Push kljucevi nisu podeseni.",
       pushDenied: "Dozvola za notifikacije nije odobrena.",
-      pushEnabled: "Push notifikacije su uključene.",
-      pushEnableFailed: "Neuspešna aktivacija push notifikacija.",
-      pushGenericError: "Greška pri uključivanju notifikacija.",
+      pushEnabled: "Push notifikacije su ukljucene.",
+      pushEnableFailed: "Neuspesna aktivacija push notifikacija.",
+      pushGenericError: "Greska pri ukljucivanju notifikacija.",
       installApp: "Instaliraj app",
-      enablePush: "Uključi notifikacije",
+      enablePush: "Ukljuci notifikacije",
       enabling: "Aktivacija...",
     };
+
+  function showFeedback(nextMessage, tone = "info") {
+    setMessage(nextMessage);
+    setMessageTone(tone);
+  }
+
+  useEffect(() => {
+    if (!message) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setMessage("");
+    }, 4200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [message]);
 
   useEffect(() => {
     setInstalled(isStandaloneMode());
@@ -171,9 +201,8 @@ export default function PWAMenuActions() {
   }, []);
 
   async function handleInstall() {
-    setMessage("");
     if (installed) {
-      setMessage(copy.appInstalled);
+      showFeedback(copy.appInstalled, "info");
       return;
     }
 
@@ -181,20 +210,20 @@ export default function PWAMenuActions() {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice?.outcome === "accepted") {
-        setMessage(copy.installStarted);
+        showFeedback(copy.installStarted, "success");
       } else {
-        setMessage(copy.installCancelled);
+        showFeedback(copy.installCancelled, "error");
       }
       setDeferredPrompt(null);
       return;
     }
 
     if (ios) {
-      setMessage(copy.iosInstall);
+      showFeedback(copy.iosInstall, "info");
       return;
     }
 
-    setMessage(copy.promptUnavailable);
+    showFeedback(copy.promptUnavailable, "error");
   }
 
   async function handleEnablePush() {
@@ -203,17 +232,17 @@ export default function PWAMenuActions() {
     }
 
     if (!isLoggedIn) {
-      setMessage(copy.loginForPush);
+      showFeedback(copy.loginForPush, "error");
       return;
     }
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setMessage(copy.pushUnsupported);
+      showFeedback(copy.pushUnsupported, "error");
       return;
     }
 
     if (!webPushPublicKey) {
-      setMessage(copy.pushKeysMissing);
+      showFeedback(copy.pushKeysMissing, "error");
       return;
     }
 
@@ -222,7 +251,7 @@ export default function PWAMenuActions() {
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setMessage(copy.pushDenied);
+        showFeedback(copy.pushDenied, "error");
         return;
       }
 
@@ -250,9 +279,9 @@ export default function PWAMenuActions() {
       }
 
       setPushEnabled(true);
-      setMessage(copy.pushEnabled);
+      showFeedback(copy.pushEnabled, "success");
     } catch (error) {
-      setMessage(error?.message || copy.pushGenericError);
+      showFeedback(error?.message || copy.pushGenericError, "error");
     } finally {
       setBusy(false);
     }
@@ -286,7 +315,11 @@ export default function PWAMenuActions() {
           </button>
         ) : null}
       </div>
-      {message ? <p className="mobile-pwa-message">{message}</p> : null}
+      {message ? (
+        <div className={`mobile-pwa-toast is-${messageTone}`} role="status" aria-live="polite">
+          {message}
+        </div>
+      ) : null}
     </div>
   );
 }

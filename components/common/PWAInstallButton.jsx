@@ -53,6 +53,7 @@ export default function PWAInstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState("info");
   const [busy, setBusy] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -62,20 +63,20 @@ export default function PWAInstallButton() {
   const copy =
     {
       sr: {
-        appInstalled: "Aplikacija je već instalirana.",
+        appInstalled: "Aplikacija je vec instalirana.",
         installStarted: "Instalacija je pokrenuta.",
         installCancelled: "Instalacija je otkazana.",
         iosInstall: "Na iOS otvorite Share pa Add to Home Screen.",
         promptUnavailable: "Install prompt trenutno nije dostupan.",
-        loginForPush: "Prijavite se da biste uključili push notifikacije.",
-        pushUnsupported: "Push notifikacije nisu podržane na ovom uređaju.",
+        loginForPush: "Prijavite se da biste ukljucili push notifikacije.",
+        pushUnsupported: "Push notifikacije nisu podrzane na ovom uredjaju.",
         pushKeysMissing: "Push kljucevi nisu podeseni.",
         pushDenied: "Dozvola za notifikacije nije odobrena.",
-        pushEnabled: "Push notifikacije su uključene.",
-        pushEnableFailed: "Neuspešna aktivacija push notifikacija.",
-        pushGenericError: "Greška pri uključivanju push notifikacija.",
+        pushEnabled: "Push notifikacije su ukljucene.",
+        pushEnableFailed: "Neuspesna aktivacija push notifikacija.",
+        pushGenericError: "Greska pri ukljucivanju push notifikacija.",
         installApp: "Instaliraj app",
-        enablePush: "Uključi notifikacije",
+        enablePush: "Ukljuci notifikacije",
         enabling: "Aktivacija...",
       },
       en: {
@@ -99,7 +100,7 @@ export default function PWAInstallButton() {
         appInstalled: "Die App ist bereits installiert.",
         installStarted: "Installation gestartet.",
         installCancelled: "Installation abgebrochen.",
-        iosInstall: "Auf iOS: Teilen und dann Zum Home-Bildschirm.",
+        iosInstall: "Auf iOS offnen Sie Teilen und dann Zum Home-Bildschirm.",
         promptUnavailable: "Der Installationsdialog ist derzeit nicht verfuegbar.",
         loginForPush: "Melden Sie sich an, um Push-Benachrichtigungen zu aktivieren.",
         pushUnsupported: "Push-Benachrichtigungen werden auf diesem Geraet nicht unterstuetzt.",
@@ -131,22 +132,27 @@ export default function PWAInstallButton() {
       },
     }[locale] ||
     {
-      appInstalled: "Aplikacija je već instalirana.",
+      appInstalled: "Aplikacija je vec instalirana.",
       installStarted: "Instalacija je pokrenuta.",
       installCancelled: "Instalacija je otkazana.",
       iosInstall: "Na iOS otvorite Share pa Add to Home Screen.",
       promptUnavailable: "Install prompt trenutno nije dostupan.",
-      loginForPush: "Prijavite se da biste uključili push notifikacije.",
-      pushUnsupported: "Push notifikacije nisu podržane na ovom uređaju.",
+      loginForPush: "Prijavite se da biste ukljucili push notifikacije.",
+      pushUnsupported: "Push notifikacije nisu podrzane na ovom uredjaju.",
       pushKeysMissing: "Push kljucevi nisu podeseni.",
       pushDenied: "Dozvola za notifikacije nije odobrena.",
-      pushEnabled: "Push notifikacije su uključene.",
-      pushEnableFailed: "Neuspešna aktivacija push notifikacija.",
-      pushGenericError: "Greška pri uključivanju push notifikacija.",
+      pushEnabled: "Push notifikacije su ukljucene.",
+      pushEnableFailed: "Neuspesna aktivacija push notifikacija.",
+      pushGenericError: "Greska pri ukljucivanju push notifikacija.",
       installApp: "Instaliraj app",
-      enablePush: "Uključi notifikacije",
+      enablePush: "Ukljuci notifikacije",
       enabling: "Aktivacija...",
     };
+
+  function showFeedback(nextMessage, tone = "info") {
+    setMessage(nextMessage);
+    setMessageTone(tone);
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -165,6 +171,15 @@ export default function PWAInstallButton() {
     media.addListener(update);
     return () => media.removeListener(update);
   }, []);
+
+  useEffect(() => {
+    if (!message) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => setMessage(""), 4200);
+    return () => window.clearTimeout(timeoutId);
+  }, [message]);
 
   useEffect(() => {
     setInstalled(isStandaloneMode());
@@ -204,9 +219,8 @@ export default function PWAInstallButton() {
   }, []);
 
   async function handleInstall() {
-    setMessage("");
     if (installed) {
-      setMessage(copy.appInstalled);
+      showFeedback(copy.appInstalled, "info");
       return;
     }
 
@@ -214,20 +228,20 @@ export default function PWAInstallButton() {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice?.outcome === "accepted") {
-        setMessage(copy.installStarted);
+        showFeedback(copy.installStarted, "success");
       } else {
-        setMessage(copy.installCancelled);
+        showFeedback(copy.installCancelled, "error");
       }
       setDeferredPrompt(null);
       return;
     }
 
     if (ios) {
-      setMessage(copy.iosInstall);
+      showFeedback(copy.iosInstall, "info");
       return;
     }
 
-    setMessage(copy.promptUnavailable);
+    showFeedback(copy.promptUnavailable, "error");
   }
 
   async function handleEnablePush() {
@@ -236,17 +250,17 @@ export default function PWAInstallButton() {
     }
 
     if (!user) {
-      setMessage(copy.loginForPush);
+      showFeedback(copy.loginForPush, "error");
       return;
     }
 
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      setMessage(copy.pushUnsupported);
+      showFeedback(copy.pushUnsupported, "error");
       return;
     }
 
     if (!webPushPublicKey) {
-      setMessage(copy.pushKeysMissing);
+      showFeedback(copy.pushKeysMissing, "error");
       return;
     }
 
@@ -255,7 +269,7 @@ export default function PWAInstallButton() {
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
-        setMessage(copy.pushDenied);
+        showFeedback(copy.pushDenied, "error");
         return;
       }
 
@@ -283,9 +297,9 @@ export default function PWAInstallButton() {
       }
 
       setPushEnabled(true);
-      setMessage(copy.pushEnabled);
+      showFeedback(copy.pushEnabled, "success");
     } catch (error) {
-      setMessage(error?.message || copy.pushGenericError);
+      showFeedback(error?.message || copy.pushGenericError, "error");
     } finally {
       setBusy(false);
     }
@@ -339,7 +353,23 @@ export default function PWAInstallButton() {
         </div>
       )}
 
-      {message ? <p style={messageStyle}>{message}</p> : null}
+      {message ? (
+        <p
+          style={{
+            ...messageStyle,
+            ...(isMobile ? mobileMessageStyle : desktopMessageStyle),
+            ...(messageTone === "success"
+              ? successMessageStyle
+              : messageTone === "error"
+                ? errorMessageStyle
+                : infoMessageStyle),
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </p>
+      ) : null}
     </>
   );
 }
@@ -357,7 +387,7 @@ const mobileStickyWrapStyle = {
   position: "fixed",
   left: 12,
   right: 12,
-  bottom: 12,
+  bottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)",
   display: "grid",
   gap: 8,
   zIndex: 1200,
@@ -385,14 +415,42 @@ const buttonStyle = {
 
 const messageStyle = {
   position: "fixed",
-  right: 16,
-  bottom: 72,
   margin: 0,
   zIndex: 1200,
-  borderRadius: 10,
+  borderRadius: 16,
   border: "1px solid rgba(217,232,248,0.4)",
+  padding: "12px 14px",
+  boxShadow: "0 18px 36px rgba(5, 10, 18, 0.42)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+};
+
+const desktopMessageStyle = {
+  right: 16,
+  bottom: 72,
+  maxWidth: 320,
+};
+
+const mobileMessageStyle = {
+  left: 12,
+  right: 12,
+  bottom: "calc(env(safe-area-inset-bottom, 0px) + 124px)",
+  maxWidth: "none",
+};
+
+const infoMessageStyle = {
   background: "rgba(8, 14, 24, 0.94)",
   color: "#dfefff",
-  padding: "8px 10px",
-  maxWidth: 320,
+};
+
+const successMessageStyle = {
+  background: "rgba(20, 61, 43, 0.96)",
+  borderColor: "rgba(120, 227, 173, 0.5)",
+  color: "#e8fff2",
+};
+
+const errorMessageStyle = {
+  background: "rgba(70, 28, 28, 0.96)",
+  borderColor: "rgba(255, 171, 171, 0.46)",
+  color: "#ffe9e9",
 };
