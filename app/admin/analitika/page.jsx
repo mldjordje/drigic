@@ -33,7 +33,7 @@ function routeLabel(pathname) {
     return "Tretmani";
   }
   if (pathname.startsWith("/project")) {
-    return "Rezultati / projekti";
+    return "Rezultati";
   }
   return pathname;
 }
@@ -66,16 +66,16 @@ function diffDays(from, to) {
 
 function buildTrend(current, previous) {
   if (!previous && !current) {
-    return { label: "Bez promene", tone: "neutral" };
+    return { label: "0%", tone: "neutral" };
   }
 
   if (!previous) {
-    return { label: `+${formatPercent(100)}`, tone: "positive" };
+    return { label: "+100%", tone: "positive" };
   }
 
   const delta = ((current - previous) / previous) * 100;
   if (Math.abs(delta) < 0.1) {
-    return { label: "Bez promene", tone: "neutral" };
+    return { label: "0%", tone: "neutral" };
   }
 
   return {
@@ -84,7 +84,7 @@ function buildTrend(current, previous) {
   };
 }
 
-function getWindowBounds(now, days) {
+function getWindowStart(now, days) {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }
 
@@ -93,11 +93,11 @@ async function getAnalyticsData() {
 
   const db = getDb();
   const now = new Date();
-  const currentMonthKey = monthKey(startOfMonth(now));
-  const currentMonthStart = startOfMonth(now);
-  const last7dStart = getWindowBounds(now, 7);
-  const last30dStart = getWindowBounds(now, 30);
-  const prev30dStart = getWindowBounds(now, 60);
+  const currentMonth = startOfMonth(now);
+  const currentMonthKey = monthKey(currentMonth);
+  const last7dStart = getWindowStart(now, 7);
+  const last30dStart = getWindowStart(now, 30);
+  const prev30dStart = getWindowStart(now, 60);
 
   const [
     [clientsCount],
@@ -106,46 +106,43 @@ async function getAnalyticsData() {
     [completedBookings],
     bookings,
     pageViews,
-  ] =
-    await Promise.all([
-      db.select({ value: count() }).from(schema.users).where(eq(schema.users.role, "client")),
-      db
-        .select({ value: count() })
-        .from(schema.users)
-        .where(and(eq(schema.users.role, "client"), gte(schema.users.createdAt, last30dStart))),
-      db.select({ value: count() }).from(schema.bookings),
-      db
-        .select({ value: count() })
-        .from(schema.bookings)
-        .where(eq(schema.bookings.status, "completed")),
-      db
-        .select({
-          id: schema.bookings.id,
-          startsAt: schema.bookings.startsAt,
-          createdAt: schema.bookings.createdAt,
-          status: schema.bookings.status,
-          totalPriceRsd: schema.bookings.totalPriceRsd,
-        })
-        .from(schema.bookings),
-      db
-        .select({
-          pathname: schema.sitePageViews.pathname,
-          sessionId: schema.sitePageViews.sessionId,
-          createdAt: schema.sitePageViews.createdAt,
-        })
-        .from(schema.sitePageViews),
-    ]);
+  ] = await Promise.all([
+    db.select({ value: count() }).from(schema.users).where(eq(schema.users.role, "client")),
+    db
+      .select({ value: count() })
+      .from(schema.users)
+      .where(and(eq(schema.users.role, "client"), gte(schema.users.createdAt, last30dStart))),
+    db.select({ value: count() }).from(schema.bookings),
+    db
+      .select({ value: count() })
+      .from(schema.bookings)
+      .where(eq(schema.bookings.status, "completed")),
+    db
+      .select({
+        startsAt: schema.bookings.startsAt,
+        status: schema.bookings.status,
+        totalPriceRsd: schema.bookings.totalPriceRsd,
+      })
+      .from(schema.bookings),
+    db
+      .select({
+        pathname: schema.sitePageViews.pathname,
+        sessionId: schema.sitePageViews.sessionId,
+        createdAt: schema.sitePageViews.createdAt,
+      })
+      .from(schema.sitePageViews),
+  ]);
 
   const monthBuckets = new Map();
   const activityDates = [];
-  const lastRelevantMonth = startOfMonth(now);
-  let maxDataMonth = lastRelevantMonth;
+  let maxDataMonth = currentMonth;
 
   let plannedRevenue = 0;
   let plannedBookings = 0;
   let thisMonthRevenue = 0;
   let thisMonthPlannedRevenue = 0;
   let thisMonthCancelled = 0;
+  let currentMonthBookings = 0;
   let next7dRevenue = 0;
   let next7dBookings = 0;
   let noShowCount = 0;
@@ -154,7 +151,6 @@ async function getAnalyticsData() {
   let completedPrev30dRevenue = 0;
   let completedLast30dBookings = 0;
   let completedPrev30dBookings = 0;
-  let currentMonthBookings = 0;
 
   for (const booking of bookings) {
     const startsAt = new Date(booking.startsAt);
@@ -252,14 +248,9 @@ async function getAnalyticsData() {
     ? activityDates.reduce((min, date) => (date < min ? date : min), activityDates[0])
     : now;
   const firstMonth = startOfMonth(earliestActivity);
-  const lastMonth = maxDataMonth > lastRelevantMonth ? maxDataMonth : lastRelevantMonth;
 
   const months = [];
-  for (
-    let cursor = new Date(firstMonth);
-    cursor <= lastMonth;
-    cursor = addMonths(cursor, 1)
-  ) {
+  for (let cursor = new Date(firstMonth); cursor <= maxDataMonth; cursor = addMonths(cursor, 1)) {
     const key = monthKey(cursor);
     const bucket = monthBuckets.get(key) || {
       key,
@@ -289,15 +280,18 @@ async function getAnalyticsData() {
     ...months.map((month) => month.realizedRevenue + month.plannedRevenue)
   );
 
+  const uniqueVisitors30d = new Set(pageViews30d.map((view) => view.sessionId)).size;
+  const uniqueVisitors7d = new Set(pageViews7d.map((view) => view.sessionId)).size;
+  const pagesPerSession30d = uniqueVisitors30d ? pageViews30d.length / uniqueVisitors30d : 0;
+
   const topPagesMap = new Map();
-  pageViews30d.forEach((view) => {
-    const current = topPagesMap.get(view.pathname) || 0;
-    topPagesMap.set(view.pathname, current + 1);
-  });
+  for (const view of pageViews30d) {
+    topPagesMap.set(view.pathname, (topPagesMap.get(view.pathname) || 0) + 1);
+  }
 
   const topPages = Array.from(topPagesMap.entries())
     .sort((left, right) => right[1] - left[1])
-    .slice(0, 8)
+    .slice(0, 6)
     .map(([pathname, views]) => ({
       pathname,
       label: routeLabel(pathname),
@@ -305,9 +299,6 @@ async function getAnalyticsData() {
       share: pageViews30d.length ? (views / pageViews30d.length) * 100 : 0,
     }));
 
-  const uniqueVisitors30d = new Set(pageViews30d.map((view) => view.sessionId)).size;
-  const uniqueVisitors7d = new Set(pageViews7d.map((view) => view.sessionId)).size;
-  const pagesPerSession30d = uniqueVisitors30d ? pageViews30d.length / uniqueVisitors30d : 0;
   const avgCompletedTicket = completedBookings?.value
     ? completedRevenue / Number(completedBookings.value)
     : 0;
@@ -316,8 +307,7 @@ async function getAnalyticsData() {
     : 0;
   const cancellationRate =
     totalBookings?.value && Number(totalBookings.value) > 0
-      ? ((bookings.filter((item) => item.status === "cancelled").length || 0) /
-          Number(totalBookings.value)) *
+      ? (bookings.filter((item) => item.status === "cancelled").length / Number(totalBookings.value)) *
         100
       : 0;
   const completionRate =
@@ -332,13 +322,6 @@ async function getAnalyticsData() {
   const avgMonthlyRevenue = realizedMonths.length
     ? realizedMonths.reduce((sum, month) => sum + month.realizedRevenue, 0) / realizedMonths.length
     : 0;
-  const activeMonthCount = months.filter(
-    (month) =>
-      month.realizedRevenue ||
-      month.plannedRevenue ||
-      month.cancelledBookings ||
-      month.noShows
-  ).length;
 
   return {
     generatedAt: now,
@@ -379,7 +362,6 @@ async function getAnalyticsData() {
       cancelledBookings: bookings.filter((item) => item.status === "cancelled").length,
       bestMonth,
       avgMonthlyRevenue,
-      activeMonthCount,
     },
   };
 }
@@ -418,59 +400,6 @@ function StatCard({ title, value, hint, trend }) {
   );
 }
 
-function SectionCard({ title, subtitle, children }) {
-  return (
-    <div style={styles.sectionCard}>
-      <div style={styles.sectionHeader}>
-        <div>
-          <h3 style={styles.sectionTitle}>{title}</h3>
-          {subtitle ? <p style={styles.sectionSubtitle}>{subtitle}</p> : null}
-        </div>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function MonthRow({ month, maxRevenue }) {
-  const realizedWidth = `${Math.max(
-    6,
-    ((month.realizedRevenue || 0) / maxRevenue) * 100
-  )}%`;
-  const plannedWidth = `${Math.max(
-    month.plannedRevenue ? 6 : 0,
-    ((month.plannedRevenue || 0) / maxRevenue) * 100
-  )}%`;
-
-  return (
-    <div style={styles.monthRow}>
-      <div style={styles.monthMeta}>
-        <strong style={styles.monthLabel}>{month.label}</strong>
-        <span style={styles.monthNumbers}>
-          {formatMoney(month.realizedRevenue)} realizovano
-          {month.plannedRevenue ? ` | ${formatMoney(month.plannedRevenue)} planirano` : ""}
-        </span>
-      </div>
-      <div style={styles.monthBarWrap}>
-        {month.realizedRevenue ? (
-          <div
-            style={{ ...styles.monthBar, width: realizedWidth, background: styles.realizedBar }}
-          />
-        ) : null}
-        {month.plannedRevenue ? (
-          <div style={{ ...styles.monthBar, width: plannedWidth, background: styles.plannedBar }} />
-        ) : null}
-      </div>
-      <div style={styles.monthFoot}>
-        <span>{formatNumber(month.realizedBookings)} zavrsenih</span>
-        <span>{formatNumber(month.plannedBookings)} planiranih</span>
-        <span>{formatNumber(month.cancelledBookings)} otkazanih</span>
-        <span>{formatNumber(month.noShows)} no-show</span>
-      </div>
-    </div>
-  );
-}
-
 function InsightCard({ label, value, caption, tone = "default" }) {
   return (
     <div
@@ -492,135 +421,189 @@ function InsightCard({ label, value, caption, tone = "default" }) {
   );
 }
 
+function MiniStat({ label, value }) {
+  return (
+    <div style={styles.miniStat}>
+      <span style={styles.miniStatLabel}>{label}</span>
+      <strong style={styles.miniStatValue}>{value}</strong>
+    </div>
+  );
+}
+
+function SectionCard({ title, children, aside }) {
+  return (
+    <div style={styles.sectionCard}>
+      <div style={styles.sectionHeader}>
+        <h3 style={styles.sectionTitle}>{title}</h3>
+        {aside ? <div>{aside}</div> : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function MonthRow({ month, maxRevenue }) {
+  const realizedWidth = `${Math.max(
+    month.realizedRevenue ? 8 : 0,
+    ((month.realizedRevenue || 0) / maxRevenue) * 100
+  )}%`;
+  const plannedWidth = `${Math.max(
+    month.plannedRevenue ? 8 : 0,
+    ((month.plannedRevenue || 0) / maxRevenue) * 100
+  )}%`;
+
+  return (
+    <div style={styles.monthRow}>
+      <div style={styles.monthMeta}>
+        <strong style={styles.monthLabel}>{month.label}</strong>
+        <span style={styles.monthNumbers}>
+          {formatMoney(month.realizedRevenue)}
+          {month.plannedRevenue ? ` | ${formatMoney(month.plannedRevenue)}` : ""}
+        </span>
+      </div>
+      <div style={styles.monthBarWrap}>
+        {month.realizedRevenue ? (
+          <div
+            style={{ ...styles.monthBar, width: realizedWidth, background: styles.realizedBar }}
+          />
+        ) : null}
+        {month.plannedRevenue ? (
+          <div style={{ ...styles.monthBar, width: plannedWidth, background: styles.plannedBar }} />
+        ) : null}
+      </div>
+      <div style={styles.monthFoot}>
+        <span>{formatNumber(month.realizedBookings)} zav.</span>
+        <span>{formatNumber(month.plannedBookings)} plan.</span>
+        <span>{formatNumber(month.cancelledBookings)} otk.</span>
+        <span>{formatNumber(month.noShows)} no-show</span>
+      </div>
+    </div>
+  );
+}
+
 export default async function AdminAnalitikaPage() {
   const analytics = await getAnalyticsData();
 
   return (
     <section style={styles.page}>
       <div style={styles.heroCard}>
-        <div style={styles.heroText}>
-          <span style={styles.eyebrow}>LIVE ADMIN ANALITIKA</span>
-          <h2 style={styles.heroTitle}>Tacan pregled poslovanja i sajta u ovom trenutku</h2>
-          <p style={styles.heroSubtitle}>
-            Podaci se citaju direktno iz baze pri svakom otvaranju strane. Meseci pre prvog
-            stvarnog podatka nisu prikazani, tako da tabela i trendovi pocinju tek od realnog
-            starta aplikacije.
-          </p>
-        </div>
-        <div style={styles.heroMeta}>
-          <div style={styles.heroMetaCard}>
-            <span style={styles.heroMetaLabel}>Obuhvat podataka</span>
-            <strong style={styles.heroMetaValue}>
-              {analytics.activityStart.toLocaleDateString("sr-RS")} -{" "}
-              {analytics.generatedAt.toLocaleDateString("sr-RS")}
-            </strong>
+        <div style={styles.heroTop}>
+          <div>
+            <span style={styles.eyebrow}>LIVE</span>
+            <h2 style={styles.heroTitle}>Analitika</h2>
           </div>
-          <div style={styles.heroMetaCard}>
-            <span style={styles.heroMetaLabel}>Osvezeno</span>
-            <strong style={styles.heroMetaValue}>
-              {analytics.generatedAt.toLocaleString("sr-RS", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </strong>
+          <div style={styles.heroMeta}>
+            <div style={styles.heroChip}>
+              <span style={styles.heroChipLabel}>Period</span>
+              <strong style={styles.heroChipValue}>
+                {analytics.activityStart.toLocaleDateString("sr-RS")} -{" "}
+                {analytics.generatedAt.toLocaleDateString("sr-RS")}
+              </strong>
+            </div>
+            <div style={styles.heroChip}>
+              <span style={styles.heroChipLabel}>Osvezeno</span>
+              <strong style={styles.heroChipValue}>
+                {analytics.generatedAt.toLocaleString("sr-RS", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </strong>
+            </div>
           </div>
         </div>
       </div>
 
       <div style={styles.insightsGrid}>
         <InsightCard
-          label="Najjaci mesec"
+          label="Top mesec"
           value={
             analytics.totals.bestMonth
               ? formatMoney(analytics.totals.bestMonth.realizedRevenue)
               : "Nema jos"
           }
-          caption={
-            analytics.totals.bestMonth
-              ? analytics.totals.bestMonth.label
-              : "Ceka se prvi realizovan prihod"
-          }
+          caption={analytics.totals.bestMonth ? analytics.totals.bestMonth.label : "Bez prihoda"}
           tone="accent"
         />
         <InsightCard
-          label="Prosek po aktivnom mesecu"
+          label="Mesecni prosek"
           value={formatMoney(analytics.totals.avgMonthlyRevenue)}
-          caption={`${formatNumber(analytics.totals.activeMonthCount)} meseci sa aktivnoscu`}
+          caption="po aktivnim mesecima"
         />
         <InsightCard
-          label="Prosecna vrednost zavrsenog termina"
+          label="Prosecna vrednost"
           value={formatMoney(analytics.totals.avgCompletedTicket)}
-          caption={`${formatMoney(analytics.totals.avgCompletedTicket30d)} u poslednjih 30 dana`}
+          caption={`${formatMoney(analytics.totals.avgCompletedTicket30d)} u 30d`}
           tone="success"
         />
         <InsightCard
-          label="Rast baze klijenata"
+          label="Novi klijenti"
           value={formatNumber(analytics.totals.newClients30d)}
-          caption="novih klijenata u poslednjih 30 dana"
+          caption="u poslednjih 30 dana"
           tone="warning"
         />
       </div>
 
       <div style={styles.statsGrid}>
         <StatCard
-          title="Ukupna realizovana zarada"
+          title="Realizovano"
           value={formatMoney(analytics.totals.completedRevenue)}
-          hint={`${formatNumber(analytics.totals.completedBookings)} zavrsenih termina ukupno`}
+          hint={`${formatNumber(analytics.totals.completedBookings)} zavrsenih`}
           trend={analytics.trends.revenue30d}
         />
         <StatCard
-          title="Planirana buduca zarada"
+          title="Planirano"
           value={formatMoney(analytics.totals.plannedRevenue)}
-          hint={`${formatNumber(analytics.totals.plannedBookings)} buducih pending/confirmed termina`}
+          hint={`${formatNumber(analytics.totals.plannedBookings)} buducih`}
         />
         <StatCard
           title="Ovaj mesec"
           value={formatMoney(analytics.totals.thisMonthRevenue)}
-          hint={`${formatMoney(analytics.totals.thisMonthPlannedRevenue)} jos planirano ovog meseca`}
+          hint={`${formatMoney(analytics.totals.thisMonthPlannedRevenue)} jos u planu`}
         />
         <StatCard
-          title="Pregledi sajta 30d"
+          title="Pregledi 30d"
           value={formatNumber(analytics.totals.pageViews30d)}
-          hint={`${formatNumber(analytics.totals.uniqueVisitors30d)} jedinstvenih sesija`}
+          hint={`${formatNumber(analytics.totals.uniqueVisitors30d)} sesija`}
           trend={analytics.trends.views30d}
         />
         <StatCard
-          title="Termini u narednih 7 dana"
+          title="Narednih 7d"
           value={formatNumber(analytics.totals.next7dBookings)}
-          hint={`${formatMoney(analytics.totals.next7dRevenue)} planiranog prihoda`}
+          hint={formatMoney(analytics.totals.next7dRevenue)}
         />
         <StatCard
-          title="Stopa otkazivanja"
+          title="Otkazivanja"
           value={formatPercent(analytics.totals.cancellationRate)}
-          hint={`${formatNumber(analytics.totals.cancelledBookings)} otkazanih, ${formatNumber(
+          hint={`${formatNumber(analytics.totals.cancelledBookings)} otk. / ${formatNumber(
             analytics.totals.noShowCount
           )} no-show`}
         />
         <StatCard
-          title="Stopa realizacije"
+          title="Realizacija"
           value={formatPercent(analytics.totals.completionRate)}
-          hint={`${formatNumber(analytics.totals.completedBookings)} od ${formatNumber(
+          hint={`${formatNumber(analytics.totals.completedBookings)} / ${formatNumber(
             analytics.totals.bookings
-          )} termina je zavrseno`}
+          )}`}
           trend={analytics.trends.bookings30d}
         />
       </div>
 
-      <div style={styles.twoColumn}>
+      <div style={styles.dashboardGrid}>
         <SectionCard
-          title="Mesecni tok prihoda"
-          subtitle="Realizovano i planirano po mesecima, bez praznih meseci pre nastanka aplikacije."
+          title="Meseci"
+          aside={
+            <div style={styles.legendRow}>
+              <span style={styles.legendItem}>
+                <span style={{ ...styles.legendDot, background: styles.realizedBar }} />
+                Real.
+              </span>
+              <span style={styles.legendItem}>
+                <span style={{ ...styles.legendDot, background: styles.plannedBar }} />
+                Plan
+              </span>
+            </div>
+          }
         >
-          <div style={styles.legendRow}>
-            <span style={styles.legendItem}>
-              <span style={{ ...styles.legendDot, background: styles.realizedBar }} />
-              Realizovano
-            </span>
-            <span style={styles.legendItem}>
-              <span style={{ ...styles.legendDot, background: styles.plannedBar }} />
-              Planirano
-            </span>
-          </div>
           <div style={styles.monthsWrap}>
             {analytics.months.map((month) => (
               <MonthRow key={month.key} month={month} maxRevenue={analytics.maxRevenue} />
@@ -628,106 +611,53 @@ export default async function AdminAnalitikaPage() {
           </div>
         </SectionCard>
 
-        <SectionCard
-          title="Operativni pregled"
-          subtitle="Kratak pregled prometa, aktivnosti klijenata i kvaliteta zakazivanja."
-        >
-          <div style={styles.metricStack}>
-            <div style={styles.metricRow}>
-              <span>Ukupno termina ovog meseca</span>
-              <strong>{formatNumber(analytics.totals.currentMonthBookings)}</strong>
-            </div>
-            <div style={styles.metricRow}>
-              <span>Ukupno klijenata</span>
-              <strong>{formatNumber(analytics.totals.clients)}</strong>
-            </div>
-            <div style={styles.metricRow}>
-              <span>Novi klijenti poslednjih 30 dana</span>
-              <strong>{formatNumber(analytics.totals.newClients30d)}</strong>
-            </div>
-            <div style={styles.metricRow}>
-              <span>Ukupno termina</span>
-              <strong>{formatNumber(analytics.totals.bookings)}</strong>
-            </div>
-            <div style={styles.metricRow}>
-              <span>Zavrseni termini u poslednjih 30 dana</span>
-              <strong>{formatNumber(analytics.totals.completedLast30dBookings)}</strong>
-            </div>
-            <div style={styles.metricRow}>
-              <span>Otkazani ovog meseca</span>
-              <strong>{formatNumber(analytics.totals.thisMonthCancelled)}</strong>
-            </div>
-            <div style={styles.metricRow}>
-              <span>Pregledi sajta 7d</span>
-              <strong>
-                {formatNumber(analytics.totals.pageViews7d)} / {formatNumber(analytics.totals.uniqueVisitors7d)} sesija
-              </strong>
-            </div>
-            <div style={styles.metricRow}>
-              <span>Prosecno stranica po sesiji 30d</span>
-              <strong>{formatRatio(analytics.totals.pagesPerSession30d)}</strong>
-            </div>
+        <SectionCard title="Pregled">
+          <div style={styles.miniStatsGrid}>
+            <MiniStat label="Termini mesec" value={formatNumber(analytics.totals.currentMonthBookings)} />
+            <MiniStat label="Klijenti" value={formatNumber(analytics.totals.clients)} />
+            <MiniStat label="Ukupno termina" value={formatNumber(analytics.totals.bookings)} />
+            <MiniStat label="Zavrseni 30d" value={formatNumber(analytics.totals.completedLast30dBookings)} />
+            <MiniStat label="Otkazani mesec" value={formatNumber(analytics.totals.thisMonthCancelled)} />
+            <MiniStat
+              label="Pregledi 7d"
+              value={`${formatNumber(analytics.totals.pageViews7d)} / ${formatNumber(
+                analytics.totals.uniqueVisitors7d
+              )}`}
+            />
+            <MiniStat label="Str./sesija" value={formatRatio(analytics.totals.pagesPerSession30d)} />
+            <MiniStat label="No-show" value={formatNumber(analytics.totals.noShowCount)} />
           </div>
         </SectionCard>
       </div>
 
-      <div style={styles.twoColumn}>
-        <SectionCard
-          title="Najgledanije stranice u poslednjih 30 dana"
-          subtitle="Samo interni tracking iz baze, bez procena i bez Vercel dashboard aproksimacija."
-        >
-          {analytics.topPages.length ? (
-            <div style={styles.pageList}>
-              {analytics.topPages.map((page) => (
-                <div key={page.pathname} style={styles.pageRow}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <strong style={styles.pageLabel}>{page.label}</strong>
-                    <div style={styles.pagePath}>{page.pathname}</div>
-                    <div style={styles.pageBarTrack}>
-                      <div
-                        style={{
-                          ...styles.pageBarFill,
-                          width: `${Math.max(10, page.share)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div style={styles.pageViews}>
-                    <strong>{formatNumber(page.views)}</strong>
-                    <span>{formatPercent(page.share)}</span>
+      <SectionCard title="Top stranice 30d">
+        {analytics.topPages.length ? (
+          <div style={styles.pageList}>
+            {analytics.topPages.map((page) => (
+              <div key={page.pathname} style={styles.pageRow}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <strong style={styles.pageLabel}>{page.label}</strong>
+                  <div style={styles.pagePath}>{page.pathname}</div>
+                  <div style={styles.pageBarTrack}>
+                    <div
+                      style={{
+                        ...styles.pageBarFill,
+                        width: `${Math.max(10, page.share)}%`,
+                      }}
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p style={styles.emptyState}>
-              Jos nema dovoljno internih pageview podataka. Ovaj blok ce se sam popuniti kako
-              sajt prima posete.
-            </p>
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title="Napomene o tacnosti"
-          subtitle="Sta ova strana meri, a sta namerno ne procenjuje."
-        >
-          <div style={styles.notesList}>
-            <p style={styles.noteItem}>
-              Prihod se racuna iz vrednosti termina u bazi. Zavrseni termini ulaze u realizovano,
-              a buduci `pending` i `confirmed` ulaze u plan.
-            </p>
-            <p style={styles.noteItem}>
-              Meseci pre prvog stvarnog booking ili analytics zapisa nisu prikazani, pa nema
-              laznih nula za period kada aplikacija nije bila aktivna.
-            </p>
-            <p style={styles.noteItem}>
-              Interne metrike sajta dolaze iz `site_page_views` tabele. Vercel Analytics ostaje
-              koristan za dodatnu spoljasnju verifikaciju, ali ova strana prikazuje samo ono sto
-              je trenutno u bazi.
-            </p>
+                <div style={styles.pageViews}>
+                  <strong>{formatNumber(page.views)}</strong>
+                  <span>{formatPercent(page.share)}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        </SectionCard>
-      </div>
+        ) : (
+          <p style={styles.emptyState}>Jos nema dovoljno pageview podataka.</p>
+        )}
+      </SectionCard>
     </section>
   );
 }
@@ -735,84 +665,70 @@ export default async function AdminAnalitikaPage() {
 const styles = {
   page: {
     display: "grid",
-    gap: 18,
+    gap: 12,
   },
   heroCard: {
-    display: "grid",
-    gap: 16,
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    padding: 24,
-    borderRadius: 28,
+    padding: 16,
+    borderRadius: 20,
     background:
       "linear-gradient(135deg, rgba(15,24,38,0.98) 0%, rgba(20,42,70,0.96) 55%, rgba(14,28,44,0.96) 100%)",
     border: "1px solid rgba(143, 182, 224, 0.22)",
-    boxShadow: "0 22px 50px rgba(4, 10, 18, 0.28)",
+    boxShadow: "0 14px 24px rgba(4, 10, 18, 0.18)",
   },
-  heroText: {
+  heroTop: {
     display: "grid",
     gap: 10,
   },
   eyebrow: {
-    fontSize: 12,
-    letterSpacing: "0.18em",
+    fontSize: 11,
+    letterSpacing: "0.14em",
     textTransform: "uppercase",
     color: "#8bb8e7",
     fontWeight: 700,
   },
   heroTitle: {
-    margin: 0,
-    fontSize: 34,
-    lineHeight: 1.08,
+    margin: "4px 0 0",
+    fontSize: 24,
+    lineHeight: 1.05,
     color: "#f4f8ff",
-  },
-  heroSubtitle: {
-    margin: 0,
-    color: "#c0d2e8",
-    maxWidth: 760,
-    lineHeight: 1.7,
   },
   heroMeta: {
     display: "grid",
-    gap: 12,
-    alignContent: "start",
+    gap: 10,
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
   },
-  heroMetaCard: {
+  heroChip: {
     display: "grid",
-    gap: 6,
-    padding: 16,
-    borderRadius: 20,
+    gap: 4,
+    padding: 12,
+    borderRadius: 14,
     background: "rgba(8, 16, 28, 0.42)",
     border: "1px solid rgba(167, 198, 230, 0.16)",
   },
-  heroMetaLabel: {
-    fontSize: 12,
+  heroChipLabel: {
+    fontSize: 11,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
     color: "#8aa9c8",
   },
-  heroMetaValue: {
+  heroChipValue: {
     color: "#f5f8fd",
-    fontSize: 16,
-    lineHeight: 1.4,
-  },
-  statsGrid: {
-    display: "grid",
-    gap: 14,
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    fontSize: 14,
+    lineHeight: 1.35,
   },
   insightsGrid: {
     display: "grid",
-    gap: 14,
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 10,
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
   },
   insightCard: {
     display: "grid",
-    gap: 8,
-    padding: 18,
-    borderRadius: 22,
+    gap: 6,
+    padding: 14,
+    borderRadius: 16,
     background: "linear-gradient(180deg, rgba(15,25,39,0.96) 0%, rgba(11,19,30,0.96) 100%)",
     border: "1px solid rgba(143, 179, 214, 0.12)",
-    boxShadow: "0 14px 28px rgba(4, 10, 18, 0.14)",
+    boxShadow: "0 10px 18px rgba(4, 10, 18, 0.12)",
   },
   insightCardAccent: {
     background:
@@ -827,128 +743,149 @@ const styles = {
       "linear-gradient(180deg, rgba(57,42,18,0.96) 0%, rgba(37,27,12,0.96) 100%)",
   },
   insightLabel: {
-    fontSize: 12,
+    fontSize: 11,
     letterSpacing: "0.08em",
     textTransform: "uppercase",
     color: "#9fb8d6",
   },
   insightValue: {
-    fontSize: 28,
+    fontSize: 22,
     lineHeight: 1.05,
     color: "#f5f9ff",
   },
   insightCaption: {
     color: "#c4d4e5",
-    fontSize: 13,
-    lineHeight: 1.6,
+    fontSize: 12,
+    lineHeight: 1.35,
+  },
+  statsGrid: {
+    display: "grid",
+    gap: 10,
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
   },
   statCard: {
     display: "grid",
-    gap: 10,
-    padding: 18,
-    borderRadius: 24,
+    gap: 8,
+    padding: 14,
+    borderRadius: 16,
     background:
       "linear-gradient(180deg, rgba(18,30,46,0.92) 0%, rgba(13,22,34,0.92) 100%)",
     border: "1px solid rgba(141, 177, 214, 0.16)",
-    boxShadow: "0 14px 28px rgba(4, 10, 18, 0.16)",
+    boxShadow: "0 10px 18px rgba(4, 10, 18, 0.12)",
   },
   statTopRow: {
     display: "flex",
     justifyContent: "space-between",
-    gap: 10,
+    gap: 8,
     alignItems: "center",
   },
   statTitle: {
     color: "#9db8d6",
-    fontSize: 13,
+    fontSize: 12,
   },
   statValue: {
-    fontSize: 30,
+    fontSize: 24,
     lineHeight: 1.05,
     color: "#f3f8ff",
   },
   statHint: {
     color: "#c2d4e8",
-    fontSize: 13,
-    lineHeight: 1.6,
+    fontSize: 12,
+    lineHeight: 1.35,
   },
   trendBadge: {
-    fontSize: 12,
-    padding: "6px 10px",
+    fontSize: 11,
+    padding: "4px 8px",
     borderRadius: 999,
     border: "1px solid rgba(255,255,255,0.08)",
     whiteSpace: "nowrap",
   },
-  twoColumn: {
+  dashboardGrid: {
     display: "grid",
-    gap: 16,
-    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+    gap: 12,
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
   },
   sectionCard: {
-    padding: 22,
-    borderRadius: 26,
+    padding: 16,
+    borderRadius: 18,
     background: "linear-gradient(180deg, rgba(14,21,33,0.96) 0%, rgba(11,18,28,0.96) 100%)",
     border: "1px solid rgba(142, 176, 212, 0.14)",
-    boxShadow: "0 18px 34px rgba(4, 10, 18, 0.18)",
+    boxShadow: "0 12px 20px rgba(4, 10, 18, 0.14)",
   },
   sectionHeader: {
     display: "flex",
     justifyContent: "space-between",
-    gap: 16,
-    alignItems: "start",
-    marginBottom: 18,
+    gap: 10,
+    alignItems: "center",
+    marginBottom: 12,
   },
   sectionTitle: {
     margin: 0,
-    fontSize: 22,
+    fontSize: 17,
     color: "#f4f8ff",
-  },
-  sectionSubtitle: {
-    margin: "6px 0 0",
-    color: "#aebfd4",
-    lineHeight: 1.6,
   },
   legendRow: {
     display: "flex",
+    gap: 10,
     flexWrap: "wrap",
-    gap: 16,
-    marginBottom: 18,
   },
   legendItem: {
     display: "inline-flex",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     color: "#b5c7dc",
-    fontSize: 13,
+    fontSize: 11,
   },
   legendDot: {
-    width: 10,
-    height: 10,
+    width: 8,
+    height: 8,
     borderRadius: 999,
+  },
+  miniStatsGrid: {
+    display: "grid",
+    gap: 10,
+    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+  },
+  miniStat: {
+    display: "grid",
+    gap: 4,
+    padding: 12,
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.025)",
+    border: "1px solid rgba(143, 179, 214, 0.1)",
+  },
+  miniStatLabel: {
+    color: "#95aec9",
+    fontSize: 11,
+  },
+  miniStatValue: {
+    color: "#f3f8ff",
+    fontSize: 17,
+    lineHeight: 1.1,
   },
   monthsWrap: {
     display: "grid",
-    gap: 14,
+    gap: 10,
   },
   monthRow: {
     display: "grid",
-    gap: 8,
-    padding: 14,
-    borderRadius: 18,
+    gap: 6,
+    padding: 12,
+    borderRadius: 12,
     background: "rgba(255,255,255,0.02)",
     border: "1px solid rgba(146, 181, 214, 0.1)",
   },
   monthMeta: {
     display: "grid",
-    gap: 4,
+    gap: 3,
   },
   monthLabel: {
     color: "#f2f7ff",
-    fontSize: 16,
+    fontSize: 14,
   },
   monthNumbers: {
     color: "#b1c5dc",
-    fontSize: 13,
+    fontSize: 12,
   },
   monthBarWrap: {
     display: "flex",
@@ -965,36 +902,21 @@ const styles = {
   monthFoot: {
     display: "flex",
     flexWrap: "wrap",
-    gap: 14,
+    gap: 10,
     color: "#8fa8c4",
-    fontSize: 12,
-  },
-  metricStack: {
-    display: "grid",
-    gap: 12,
-  },
-  metricRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 16,
-    alignItems: "center",
-    padding: "14px 16px",
-    borderRadius: 16,
-    background: "rgba(255,255,255,0.025)",
-    border: "1px solid rgba(143, 179, 214, 0.1)",
-    color: "#d7e5f4",
+    fontSize: 11,
   },
   pageList: {
     display: "grid",
-    gap: 12,
+    gap: 10,
   },
   pageRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 16,
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    gap: 12,
     alignItems: "center",
-    padding: "14px 16px",
-    borderRadius: 18,
+    padding: "12px 14px",
+    borderRadius: 12,
     background: "rgba(255,255,255,0.025)",
     border: "1px solid rgba(143, 179, 214, 0.1)",
   },
@@ -1002,6 +924,7 @@ const styles = {
     display: "block",
     color: "#f3f8ff",
     marginBottom: 4,
+    fontSize: 14,
   },
   pagePath: {
     color: "#8ea6c2",
@@ -1027,22 +950,10 @@ const styles = {
     fontSize: 12,
     whiteSpace: "nowrap",
   },
-  notesList: {
-    display: "grid",
-    gap: 12,
-  },
-  noteItem: {
-    margin: 0,
-    padding: "14px 16px",
-    borderRadius: 16,
-    background: "rgba(255,255,255,0.025)",
-    border: "1px solid rgba(143, 179, 214, 0.1)",
-    color: "#c7d7e8",
-    lineHeight: 1.7,
-  },
   emptyState: {
     margin: 0,
     color: "#b2c7de",
-    lineHeight: 1.7,
+    lineHeight: 1.5,
+    fontSize: 13,
   },
 };
