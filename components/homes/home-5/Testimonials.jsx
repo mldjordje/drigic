@@ -7,6 +7,7 @@ import { useLocale } from "@/components/common/LocaleProvider";
 const TESTIMONIALS_COPY = {
   sr: {
     title: "Utisci pacijenata",
+    cta: "Ostavi recenziju na Google-u",
     items: [
       {
         text: "Pristup je vrlo profesionalan, rezultat diskretan i baš prirodan.",
@@ -27,6 +28,7 @@ const TESTIMONIALS_COPY = {
   },
   en: {
     title: "Patient feedback",
+    cta: "Leave a Google review",
     items: [
       {
         text: "The approach was highly professional and the result subtle and natural.",
@@ -47,6 +49,7 @@ const TESTIMONIALS_COPY = {
   },
   de: {
     title: "Patientenstimmen",
+    cta: "Google-Bewertung schreiben",
     items: [
       {
         text: "Der Ansatz war sehr professionell und das Ergebnis dezent und natuerlich.",
@@ -67,6 +70,7 @@ const TESTIMONIALS_COPY = {
   },
   it: {
     title: "Recensioni dei pazienti",
+    cta: "Lascia una recensione su Google",
     items: [
       {
         text: "L'approccio e stato molto professionale e il risultato discreto e naturale.",
@@ -90,6 +94,8 @@ const TESTIMONIALS_COPY = {
 export default function Testimonials() {
   const { locale } = useLocale();
   const copy = TESTIMONIALS_COPY[locale] || TESTIMONIALS_COPY.sr;
+  const googleReviewUrl =
+    "https://search.google.com/local/writereview?placeid=ChIJ6491w7WxVUcR_0VL_FC5jOg";
 
   const slickSettings = {
     slidesToShow: 1,
@@ -130,6 +136,17 @@ export default function Testimonials() {
       <div className="container">
         <div className="title-area text-center clinic-reveal">
           <h2 className="sec-title text-smoke">{copy.title}</h2>
+          <div className="btn-wrap mt-25 justify-content-center">
+            <a
+              href={googleReviewUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="btn bg-theme text-title clinic-glow-btn"
+              aria-label={`${copy.cta} — Dr Igić Clinic`}
+            >
+              {copy.cta}
+            </a>
+          </div>
         </div>
       </div>
       <div className="container-fluid p-0">
