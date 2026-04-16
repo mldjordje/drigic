@@ -39,6 +39,17 @@ const updateSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(STATUS_VALUES).optional(),
   notes: z.string().max(1000).optional(),
+  startAt: z.string().datetime().optional(),
+  serviceIds: z.array(z.string().uuid()).optional(),
+  serviceSelections: z
+    .array(
+      z.object({
+        serviceId: z.string().uuid(),
+        quantity: z.number().int().min(1).optional(),
+        brand: z.string().min(1).max(80).optional(),
+      })
+    )
+    .optional(),
 });
 
 const createSchema = z.object({
@@ -218,6 +229,36 @@ async function loadBookingNotificationContext(db, bookingId) {
   };
 }
 
+async function loadBookingItemsAsSelections(db, bookingId) {
+  const rows = await db
+    .select({
+      serviceId: schema.bookingItems.serviceId,
+      quantity: schema.bookingItems.quantity,
+    })
+    .from(schema.bookingItems)
+    .where(eq(schema.bookingItems.bookingId, bookingId));
+  return rows.map((row) => ({
+    serviceId: row.serviceId,
+    quantity: Number(row.quantity || 1),
+  }));
+}
+
+function buildRescheduleEmailPayload(context) {
+  return buildClientBookingEmail({
+    subject: "Izmenjen termin (na čekanju)",
+    previewText: "Klinika je izmenila detalje vašeg termina",
+    heading: "Termin je izmenjen",
+    intro:
+      "Klinika je izmenila datum, vreme ili usluge vašeg termina koji je još uvek na čekanju. Pregledajte nove detalje ispod.",
+    startsAt: context.startsAt,
+    serviceSummary: context.serviceSummary,
+    durationMin: context.totalDurationMin,
+    priceRsd: context.totalPriceRsd,
+    statusLabel: STATUS_LABELS.pending,
+    notes: context.notes,
+  });
+}
+
 export async function GET(request) {
   const auth = await requireAdmin(request);
   if (auth.error) {
@@ -237,6 +278,7 @@ export async function GET(request) {
         userEmail: schema.users.email,
         userPhone: schema.users.phone,
         profileName: schema.profiles.fullName,
+        serviceId: schema.bookingItems.serviceId,
         serviceName: schema.bookingItems.serviceNameSnapshot,
         quantity: schema.bookingItems.quantity,
         unitLabel: schema.bookingItems.unitLabel,
@@ -259,6 +301,7 @@ export async function GET(request) {
         userEmail: schema.users.email,
         userPhone: schema.users.phone,
         profileName: schema.profiles.fullName,
+        serviceId: schema.bookingItems.serviceId,
         serviceName: schema.bookingItems.serviceNameSnapshot,
         quantity: schema.bookingItems.quantity,
         unitLabel: schema.bookingItems.unitLabel,
@@ -282,6 +325,7 @@ export async function GET(request) {
         clientEmail: row.userEmail || "",
         clientPhone: row.userPhone || "",
         services: [],
+        serviceIds: [],
       });
     }
 
@@ -290,6 +334,9 @@ export async function GET(request) {
       const item = formatServiceSummaryItem(row);
       if (!current.services.includes(item)) {
         current.services.push(item);
+      }
+      if (row.serviceId && !current.serviceIds.includes(row.serviceId)) {
+        current.serviceIds.push(row.serviceId);
       }
     }
   }
@@ -323,6 +370,159 @@ export async function PATCH(request) {
 
   if (!current) {
     return fail(404, "Booking not found.");
+  }
+
+  const wantsReschedule =
+    Boolean(parsed.data.startAt) ||
+    Boolean(parsed.data.serviceSelections?.length) ||
+    parsed.data.serviceIds !== undefined;
+
+  if (parsed.data.serviceIds !== undefined && !parsed.data.serviceIds.length) {
+    return fail(400, "Izaberite bar jednu uslugu.");
+  }
+
+  if (wantsReschedule) {
+    if (current.status !== "pending") {
+      return fail(
+        400,
+        "Samo nepotvrđeni termini (na čekanju) mogu da se izmene na ovaj način."
+      );
+    }
+    if (parsed.data.status != null && parsed.data.status !== current.status) {
+      return fail(
+        400,
+        "Sačuvajte izmenu termina odvojeno od promene statusa (prvo izmenite termin, zatim status)."
+      );
+    }
+
+    const normalizedSelections =
+      parsed.data.serviceSelections?.length || parsed.data.serviceIds?.length
+        ? normalizeServiceSelections(
+            parsed.data.serviceSelections || [],
+            parsed.data.serviceIds || []
+          )
+        : await loadBookingItemsAsSelections(db, current.id);
+
+    if (!normalizedSelections.length) {
+      return fail(400, "Mora postojati bar jedna usluga.");
+    }
+
+    const startAt = parsed.data.startAt
+      ? new Date(parsed.data.startAt)
+      : new Date(current.startsAt);
+
+    const quote = await resolveQuote(normalizedSelections, {
+      requireHyaluronicBrand: false,
+    });
+    const endsAt = addMinutes(startAt, quote.totalDurationMin);
+    const settings = await getClinicSettings();
+
+    if (!(await isWithinWorkHours(startAt, quote.totalDurationMin, settings))) {
+      return fail(400, `Radno vreme klinike: ${WORKING_HOURS_SUMMARY}`);
+    }
+
+    const prevRows = await loadBookingItemsAsSelections(db, current.id);
+    const prevFp = prevRows
+      .map((r) => `${r.serviceId}:${r.quantity}`)
+      .sort()
+      .join("|");
+    const nextFp = quote.items
+      .map((i) => `${i.serviceId}:${i.quantity}`)
+      .sort()
+      .join("|");
+    const prevStartMs = new Date(current.startsAt).getTime();
+    const timeChanged = prevStartMs !== startAt.getTime();
+    const servicesChanged = prevFp !== nextFp;
+
+    let updated = null;
+    try {
+      await db.transaction(async (tx) => {
+        await lockEmployeeSchedule(tx, current.employeeId);
+
+        const conflictsInTx = await findConflicts({
+          employeeId: current.employeeId,
+          startsAt: startAt,
+          endsAt,
+          tx,
+          excludeBookingId: current.id,
+        });
+        if (conflictsInTx.length) {
+          throw new Error(SLOT_CONFLICT_ERROR);
+        }
+
+        await tx
+          .delete(schema.bookingItems)
+          .where(eq(schema.bookingItems.bookingId, current.id));
+
+        await tx.insert(schema.bookingItems).values(
+          quote.items.map((item) => ({
+            bookingId: current.id,
+            serviceId: item.serviceId,
+            quantity: item.quantity,
+            unitLabel: item.unitLabel,
+            serviceNameSnapshot: item.name,
+            durationMinSnapshot: item.durationMin,
+            priceRsdSnapshot: item.finalPriceRsd,
+            serviceColorSnapshot: item.serviceColor,
+            sourcePackageServiceId: item.sourcePackageServiceId || null,
+          }))
+        );
+
+        const bookingUpdates = {
+          startsAt: startAt,
+          endsAt,
+          totalDurationMin: quote.totalDurationMin,
+          totalPriceRsd: quote.totalPriceRsd,
+          primaryServiceColor: quote.primaryServiceColor,
+          updatedAt: new Date(),
+        };
+
+        if (typeof parsed.data.notes === "string") {
+          bookingUpdates.notes = parsed.data.notes;
+        }
+
+        const [row] = await tx
+          .update(schema.bookings)
+          .set(bookingUpdates)
+          .where(eq(schema.bookings.id, current.id))
+          .returning();
+        updated = row;
+      });
+    } catch (error) {
+      if (String(error?.message || "").includes(SLOT_CONFLICT_ERROR)) {
+        return fail(409, SLOT_CONFLICT_ERROR);
+      }
+      throw error;
+    }
+
+    if (timeChanged || servicesChanged) {
+      const context = await loadBookingNotificationContext(db, current.id);
+      if (context?.clientEmail && !isPlaceholderEmail(context.clientEmail)) {
+        const startsAtLabel = new Date(context.startsAt).toLocaleString("sr-RS", {
+          timeZone: "Europe/Belgrade",
+        });
+        const deliveryResult = await deliverBookingNotification({
+          db,
+          userId: context.userId,
+          email: context.clientEmail,
+          type: "booking_rescheduled",
+          title: "Termin je izmenjen",
+          message: `Izmenjeni su detalji vašeg termina (${startsAtLabel}).`,
+          bookingId: current.id,
+          scheduledFor: context.startsAt,
+          dedupe: false,
+          emailPayload: buildRescheduleEmailPayload(context),
+        });
+        if (!deliveryResult?.sentEmail) {
+          console.error(
+            "[admin.bookings.patch] reschedule client email not sent",
+            deliveryResult?.emailReason || "unknown reason"
+          );
+        }
+      }
+    }
+
+    return ok({ ok: true, data: updated });
   }
 
   const nextStatus = parsed.data.status || current.status;

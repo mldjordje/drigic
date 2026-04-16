@@ -20,6 +20,7 @@ function formatNotifDate(iso) {
 function getTypeLabel(type) {
   const labels = {
     admin_new_booking: "Novi zahtev",
+    booking_rescheduled: "Termin izmenjen",
     booking_submitted: "Zahtev poslat",
     booking_confirmed: "Potvrđen termin",
     booking_pending: "Termin na čekanju",

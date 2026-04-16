@@ -120,6 +120,8 @@ export default function AdminKalendarPage() {
   const [activeEvent, setActiveEvent] = useState(null);
   const [statusDraft, setStatusDraft] = useState("pending");
   const [notesDraft, setNotesDraft] = useState("");
+  const [pendingEditStartLocal, setPendingEditStartLocal] = useState("");
+  const [pendingEditServiceIds, setPendingEditServiceIds] = useState([]);
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [clientDetailsLoading, setClientDetailsLoading] = useState(false);
   const [clientDetailsError, setClientDetailsError] = useState("");
@@ -337,9 +339,6 @@ export default function AdminKalendarPage() {
       setMessage("Termin je uspešno dodat.");
       setIsCreateModalOpen(false);
       await refreshData();
-      if (nextStatus === "cancelled") {
-        closeActiveEvent();
-      }
     } catch (saveError) {
       setError(saveError.message || "Greška pri kreiranju termina.");
     } finally {
@@ -407,6 +406,47 @@ export default function AdminKalendarPage() {
       await refreshData();
     } catch (saveError) {
       setError(saveError.message || "Greška pri čuvanju termina.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function savePendingBookingReschedule() {
+    if (!activeEvent || activeEvent.kind !== "booking") {
+      return;
+    }
+    const startAt = toIsoFromLocalInput(pendingEditStartLocal);
+    if (!startAt) {
+      setError("Datum i vreme termina nisu validni.");
+      return;
+    }
+    if (!pendingEditServiceIds.length) {
+      setError("Izaberite barem jednu uslugu.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetch("/api/admin/bookings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: activeEvent.refId,
+          startAt,
+          serviceIds: pendingEditServiceIds,
+          notes: notesDraft,
+        }),
+      });
+      const data = await parseResponse(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Neuspešna izmena termina.");
+      }
+      setMessage("Termin je ažuriran. Klijent dobija mejl kada se promene datum, vreme ili usluge.");
+      await refreshData();
+    } catch (saveError) {
+      setError(saveError.message || "Greška pri izmeni termina.");
     } finally {
       setSaving(false);
     }
@@ -519,6 +559,32 @@ export default function AdminKalendarPage() {
   const activeBooking =
     activeEvent?.kind === "booking" ? bookingById.get(activeEvent.refId) : null;
   const activeBlock = activeEvent?.kind === "block" ? blockById.get(activeEvent.refId) : null;
+
+  const pendingBookingServerKey = useMemo(() => {
+    if (!activeBooking || activeBooking.status !== "pending") {
+      return "";
+    }
+    return `${activeBooking.id}|${activeBooking.startsAt}|${(activeBooking.serviceIds || []).join(",")}`;
+  }, [activeBooking]);
+
+  useEffect(() => {
+    if (activeEvent?.kind !== "booking" || !activeBooking || activeBooking.status !== "pending") {
+      return;
+    }
+    setPendingEditStartLocal(toLocalInputValue(activeBooking.startsAt));
+    setPendingEditServiceIds(activeBooking.serviceIds || []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when server data changes (pendingBookingServerKey), not on every activeBooking ref
+  }, [activeEvent?.kind, activeEvent?.refId, pendingBookingServerKey]);
+
+  const pendingEditDurationMin = useMemo(() => {
+    if (!pendingEditServiceIds.length) {
+      return 0;
+    }
+    return pendingEditServiceIds.reduce((sum, id) => {
+      const svc = allServices.find((s) => s.id === id);
+      return sum + (svc?.durationMin || 0);
+    }, 0);
+  }, [pendingEditServiceIds, allServices]);
 
   const stats = useMemo(() => {
     const pending = bookings.filter((item) => item.status === "pending").length;
@@ -978,6 +1044,16 @@ export default function AdminKalendarPage() {
                           : "Profil + Beauty Pass"}
                       </button>
                     ) : null}
+                    {activeBooking.clientPhone ? (
+                      <a
+                        className="admin-template-link-btn"
+                        href={`tel:${String(activeBooking.clientPhone).replace(/\s/g, "")}`}
+                      >
+                        Pozovi klijenta
+                      </a>
+                    ) : (
+                      <span style={{ color: "#9fb8d8", fontSize: 13 }}>Bez telefona u profilu</span>
+                    )}
                   </div>
                 </div>
                 <div>
@@ -1007,6 +1083,81 @@ export default function AdminKalendarPage() {
                     onChange={(event) => setNotesDraft(event.target.value)}
                   />
                 </label>
+
+                {statusDraft === "pending" ? (
+                  <div
+                    className="admin-calendar-details"
+                    style={{
+                      marginTop: 12,
+                      paddingTop: 12,
+                      borderTop: "1px solid rgba(217,232,248,0.15)",
+                    }}
+                  >
+                    <p style={{ margin: "0 0 8px", color: "#bed0e8", fontSize: 14 }}>
+                      Izmena nepotvrđenog termina: datum, vreme, usluge (trajanje i cena se računaju iz
+                      usluga). Posle izmene klijent dobija mejl ako su se promenili termin ili usluge.
+                    </p>
+                    <label>
+                      Novi datum i vreme
+                      <input
+                        type="datetime-local"
+                        className="admin-inline-input"
+                        value={pendingEditStartLocal}
+                        onChange={(event) => setPendingEditStartLocal(event.target.value)}
+                      />
+                    </label>
+                    <div>
+                      <span style={{ display: "block", marginBottom: 6 }}>Usluge</span>
+                      <div className="admin-calendar-service-list">
+                        {services.map((category) => (
+                          <div key={category.id} className="admin-calendar-service-group">
+                            <strong>{category.name}</strong>
+                            {(category.services || []).map((service) => (
+                              <label
+                                key={service.id}
+                                className={`admin-calendar-service-option ${
+                                  pendingEditServiceIds.includes(service.id) ? "is-selected" : ""
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={pendingEditServiceIds.includes(service.id)}
+                                  onChange={(event) => {
+                                    if (event.target.checked) {
+                                      setPendingEditServiceIds((prev) =>
+                                        prev.includes(service.id) ? prev : [...prev, service.id]
+                                      );
+                                    } else {
+                                      setPendingEditServiceIds((prev) =>
+                                        prev.filter((id) => id !== service.id)
+                                      );
+                                    }
+                                  }}
+                                />
+                                <span>
+                                  {service.name} ({service.durationMin}m)
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <p style={{ margin: "8px 0 0", color: "#9fb8d8", fontSize: 13 }}>
+                      Procenjeno trajanje (iz usluga, max 60 min u sistemu):{" "}
+                      <strong>{pendingEditDurationMin} min</strong>
+                    </p>
+                    <button
+                      type="button"
+                      className="admin-template-link-btn"
+                      disabled={saving}
+                      onClick={savePendingBookingReschedule}
+                    >
+                      Sačuvaj izmenu termina i usluga
+                    </button>
+                  </div>
+                ) : null}
+
                 <div className="admin-calendar-detail-actions">
                   {(quickStatusActionsByStatus[statusDraft] || []).length ? (
                     <div className="admin-calendar-quick-actions">
