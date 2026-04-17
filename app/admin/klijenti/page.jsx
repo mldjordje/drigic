@@ -107,6 +107,24 @@ export default function AdminClientsPage() {
     loadClients();
   }, [page]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+    if (!activeClientId) {
+      return undefined;
+    }
+    const html = document.documentElement;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, [activeClientId]);
+
   function onSearchSubmit(event) {
     event.preventDefault();
     setPage(1);

@@ -145,6 +145,25 @@ export default function AdminKalendarPage() {
     return () => media.removeListener(update);
   }, []);
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+    const lockScroll = isCreateModalOpen || Boolean(activeEvent);
+    if (!lockScroll) {
+      return undefined;
+    }
+    const html = document.documentElement;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, [isCreateModalOpen, activeEvent]);
+
   const bookingById = useMemo(() => {
     const map = new Map();
     bookings.forEach((item) => map.set(item.id, item));
