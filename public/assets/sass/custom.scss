@@ -733,6 +733,27 @@ a.clinic-glow-btn {
     color: #d9e8f8;
   }
 
+  /* When page background is light, keep header readable */
+  .clinic-theme-light .header-layout2 .main-menu > ul > li > a,
+  .clinic-theme-light .header-layout2 .search-btn,
+  .clinic-theme-light .header-layout2 .header-button .search-btn {
+    color: #0b1020 !important;
+  }
+
+  .clinic-theme-light .header-layout2 .main-menu > ul > li > a:hover,
+  .clinic-theme-light .header-layout2 .search-btn:hover {
+    color: #0b1020 !important;
+    opacity: 0.82;
+  }
+
+  .clinic-theme-light .header-layout2 .sidebar-btn {
+    border-color: rgba(11, 16, 32, 0.72);
+  }
+
+  .clinic-theme-light .header-layout2 .sidebar-btn .line {
+    background: rgba(11, 16, 32, 0.9);
+  }
+
   .header-layout2 .header-logo img {
     filter: none;
   }

@@ -170,7 +170,7 @@ export default function Header4() {
     };
   }, []);
 
-  const headerLogoSrc = "/assets/img/logo.png";
+  const headerLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.webp";
   const mobileLogoSrc = themeMode === "dark" ? "/assets/img/logo.png" : "/assets/img/logo-dark.webp";
 
   function handleLogoClick() {

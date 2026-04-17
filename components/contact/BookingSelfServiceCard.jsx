@@ -38,6 +38,71 @@ function todayIsoDate() {
   return `${year}-${month}-${day}`;
 }
 
+function parseIsoDate(isoDate) {
+  const [year, month, day] = String(isoDate || "")
+    .split("-")
+    .map((part) => Number(part));
+  return new Date(year, (month || 1) - 1, day || 1);
+}
+
+function formatIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatMonthKey(date) {
+  return formatIsoDate(new Date(date.getFullYear(), date.getMonth(), 1)).slice(0, 7);
+}
+
+function addMonths(date, amount) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function formatMonthLabel(date, locale = "sr-RS") {
+  return new Intl.DateTimeFormat(locale, {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function buildCalendarCells(monthDate) {
+  const firstDayOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const gridStart = new Date(firstDayOfMonth);
+  const dayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+  gridStart.setDate(firstDayOfMonth.getDate() - dayOfWeek);
+
+  const cells = [];
+  for (let index = 0; index < 42; index += 1) {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + index);
+    cells.push({
+      iso: formatIsoDate(date),
+      dayNumber: date.getDate(),
+      inCurrentMonth: date.getMonth() === monthDate.getMonth(),
+    });
+  }
+  return cells;
+}
+
+function availabilityClass(availableCount, maxCount, loading) {
+  if (loading && availableCount === undefined) {
+    return "is-loading";
+  }
+  if (availableCount === undefined) {
+    return "is-loading";
+  }
+  if (availableCount <= 0) {
+    return "is-none";
+  }
+  if (!maxCount || maxCount <= 0) {
+    return "is-medium";
+  }
+  const ratio = availableCount / maxCount;
+  return ratio >= 0.55 ? "is-high" : "is-medium";
+}
+
 function defaultIsoTimeLabel(iso) {
   try {
     return new Date(iso).toLocaleString("sr-RS", {
@@ -67,11 +132,61 @@ export default function BookingSelfServiceCard() {
     [bookings, activeBookingId]
   );
 
+  const today = useMemo(() => todayIsoDate(), []);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const base = parseIsoDate(todayIsoDate());
+    return new Date(base.getFullYear(), base.getMonth(), 1);
+  });
+  const monthKey = useMemo(() => formatMonthKey(calendarMonth), [calendarMonth]);
+  const canGoPrevMonth = useMemo(() => {
+    const todayMonth = today.slice(0, 7);
+    return monthKey > todayMonth;
+  }, [monthKey, today]);
+  const calendarCells = useMemo(() => buildCalendarCells(calendarMonth), [calendarMonth]);
+  const weekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(intlLocale, { weekday: "short" });
+    const monday = new Date(2024, 0, 1);
+    return Array.from({ length: 7 }, (_, index) => {
+      const item = new Date(monday);
+      item.setDate(monday.getDate() + index);
+      return formatter.format(item);
+    });
+  }, [intlLocale]);
+
   const [rescheduleDate, setRescheduleDate] = useState(() => todayIsoDate());
+  const [monthAvailability, setMonthAvailability] = useState({});
+  const [monthLoading, setMonthLoading] = useState(false);
+  const [calendarError, setCalendarError] = useState("");
   const [slots, setSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [selectedStartAt, setSelectedStartAt] = useState("");
   const [reason, setReason] = useState("");
+  const durationMin = useMemo(
+    () => Math.max(5, Number(activeBooking?.totalDurationMin || 15)),
+    [activeBooking?.totalDurationMin]
+  );
+
+  const maxSlotsInMonth = useMemo(() => {
+    const monthEntries = Object.entries(monthAvailability)
+      .filter(([day]) => day.startsWith(monthKey))
+      .map(([, count]) => Number(count) || 0);
+    if (!monthEntries.length) {
+      return 0;
+    }
+    return Math.max(...monthEntries);
+  }, [monthAvailability, monthKey]);
+
+  const selectedDateLabel = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(intlLocale, {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      }).format(parseIsoDate(rescheduleDate));
+    } catch {
+      return rescheduleDate;
+    }
+  }, [rescheduleDate, intlLocale]);
 
   async function loadBookings() {
     if (!user) {
@@ -100,6 +215,71 @@ export default function BookingSelfServiceCard() {
   }, [user?.id]);
 
   useEffect(() => {
+    if (!activeBooking) {
+      setMonthAvailability({});
+      setCalendarError("");
+      return;
+    }
+
+    const controller = new AbortController();
+    setMonthLoading(true);
+    setCalendarError("");
+
+    const params = new URLSearchParams({
+      month: monthKey,
+      durationMin: String(durationMin),
+    });
+
+    fetch(`/api/bookings/availability?${params.toString()}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then(async (res) => ({ ok: res.ok, data: await parseResponse(res) }))
+      .then(({ ok, data }) => {
+        if (!ok || !data?.ok) {
+          throw new Error(data?.message || "Ne mogu da učitam dostupnost.");
+        }
+        const map = {};
+        (data.days || []).forEach((day) => {
+          map[day.date] = Number(day.availableSlots) || 0;
+        });
+        setMonthAvailability(map);
+      })
+      .catch((err) => {
+        if (err?.name === "AbortError") {
+          return;
+        }
+        setCalendarError(err?.message || "Ne mogu da učitam dostupnost.");
+      })
+      .finally(() => {
+        setMonthLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [activeBookingId, activeBooking, monthKey, durationMin]);
+
+  useEffect(() => {
+    if (!activeBooking || monthLoading) {
+      return;
+    }
+
+    const availableDates = Object.entries(monthAvailability)
+      .filter(([day, count]) => day.startsWith(monthKey) && Number(count) > 0 && day >= today)
+      .map(([day]) => day)
+      .sort();
+
+    if (!availableDates.length) {
+      return;
+    }
+
+    const selectedDateCount = Number(monthAvailability[rescheduleDate] || 0);
+    if (!rescheduleDate.startsWith(monthKey) || selectedDateCount <= 0) {
+      setRescheduleDate(availableDates[0]);
+      setSelectedStartAt("");
+    }
+  }, [activeBooking, monthAvailability, monthKey, rescheduleDate, monthLoading, today]);
+
+  useEffect(() => {
     async function loadSlots() {
       if (!activeBooking || !rescheduleDate) {
         setSlots([]);
@@ -110,7 +290,7 @@ export default function BookingSelfServiceCard() {
       try {
         const params = new URLSearchParams({
           date: rescheduleDate,
-          durationMin: String(Math.max(5, Number(activeBooking.totalDurationMin || 15))),
+          durationMin: String(durationMin),
         });
         const response = await fetch(`/api/bookings/availability?${params.toString()}`, {
           cache: "no-store",
@@ -131,7 +311,7 @@ export default function BookingSelfServiceCard() {
 
     setSelectedStartAt("");
     loadSlots().catch(() => {});
-  }, [activeBooking, activeBookingId, rescheduleDate]);
+  }, [activeBooking, activeBookingId, rescheduleDate, durationMin]);
 
   async function handleCancel() {
     if (!activeBooking) {
@@ -269,31 +449,93 @@ export default function BookingSelfServiceCard() {
 
           {activeBooking ? (
             <>
-              <label style={{ display: "grid", gap: 6, marginBottom: 12 }}>
-                <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>
-                  Izaberite novi datum
-                </span>
-                <input
-                  type="date"
-                  value={rescheduleDate}
-                  min={todayIsoDate()}
-                  onChange={(e) => setRescheduleDate(e.target.value)}
-                  className="clinic-glow-field"
-                  style={{
-                    width: "100%",
-                    borderRadius: 10,
-                    border: "1px solid var(--clinic-field-border)",
-                    padding: "10px 12px",
-                    background: "var(--clinic-field-bg)",
-                    color: "var(--clinic-text-strong)",
-                  }}
-                />
-              </label>
+              <div className="clinic-booking-calendar" style={{ marginBottom: 14 }}>
+                <div className="clinic-cal-header">
+                  <button
+                    type="button"
+                    className="clinic-cal-nav"
+                    disabled={!canGoPrevMonth}
+                    onClick={() => setCalendarMonth((prev) => addMonths(prev, -1))}
+                  >
+                    {t?.("booking.previous") || "Prethodni"}
+                  </button>
+                  <div className="clinic-cal-title">{formatMonthLabel(calendarMonth, intlLocale)}</div>
+                  <button
+                    type="button"
+                    className="clinic-cal-nav"
+                    onClick={() => setCalendarMonth((prev) => addMonths(prev, 1))}
+                  >
+                    {t?.("booking.next") || "Sledeći"}
+                  </button>
+                </div>
+
+                <div className="clinic-cal-weekdays">
+                  {weekdayLabels.map((label) => (
+                    <span key={label}>{label}</span>
+                  ))}
+                </div>
+
+                <div className="clinic-cal-legend" aria-label="Legenda dostupnosti termina">
+                  <span>
+                    <span className="calendar-indicator is-high" />
+                    Više slobodnih termina
+                  </span>
+                  <span>
+                    <span className="calendar-indicator is-medium" />
+                    Ograničena dostupnost
+                  </span>
+                  <span>
+                    <span className="calendar-indicator is-none" />
+                    Nema slobodnih termina
+                  </span>
+                </div>
+
+                <div className="clinic-cal-grid">
+                  {calendarCells.map((cell) => {
+                    const availableCount = monthAvailability[cell.iso];
+                    const isPast = cell.iso < today;
+                    const isActive = cell.iso === rescheduleDate;
+                    const isDisabled =
+                      !cell.inCurrentMonth ||
+                      isPast ||
+                      (availableCount !== undefined && Number(availableCount) <= 0);
+
+                    return (
+                      <button
+                        key={cell.iso}
+                        type="button"
+                        className={`clinic-cal-day ${isActive ? "is-active" : ""} ${
+                          !cell.inCurrentMonth ? "is-out" : ""
+                        }`}
+                        disabled={isDisabled}
+                        onClick={() => {
+                          setError("");
+                          setMessage("");
+                          setSelectedStartAt("");
+                          setRescheduleDate(cell.iso);
+                        }}
+                      >
+                        <span>{cell.dayNumber}</span>
+                        {cell.inCurrentMonth ? (
+                          <span
+                            className={`calendar-indicator ${availabilityClass(
+                              availableCount,
+                              maxSlotsInMonth,
+                              monthLoading
+                            )}`}
+                          />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
-                <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>
-                  Slobodni slotovi
-                </span>
+                <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>Slobodni slotovi</span>
+                <small style={{ color: "var(--clinic-text-muted)" }}>
+                  {calendarError ? calendarError : selectedDateLabel}
+                </small>
                 {slotsLoading ? (
                   <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>{t("common.loading")}</p>
                 ) : slots.length ? (
@@ -303,18 +545,12 @@ export default function BookingSelfServiceCard() {
                         key={slot.startAt}
                         type="button"
                         onClick={() => setSelectedStartAt(slot.startAt)}
-                        className="clinic-slot-button"
+                        className={`clinic-slot-button ${selectedStartAt === slot.startAt ? "is-active" : ""}`}
                         style={{
                           borderRadius: 10,
                           border: "1px solid var(--clinic-card-border)",
                           padding: "8px 10px",
-                          background:
-                            selectedStartAt === slot.startAt ? "var(--clinic-button-bg)" : "transparent",
-                          color:
-                            selectedStartAt === slot.startAt
-                              ? "var(--clinic-button-text)"
-                              : "var(--clinic-text-strong)",
-                          fontWeight: 800,
+                          fontWeight: 900,
                         }}
                       >
                         {new Date(slot.startAt).toLocaleTimeString(intlLocale, {
@@ -356,7 +592,7 @@ export default function BookingSelfServiceCard() {
                   disabled={loading || !selectedStartAt}
                   className="btn clinic-glow-btn"
                 >
-                  Izmeni termin
+                  Sačuvaj izmenu termina
                 </button>
                 <button
                   type="button"
