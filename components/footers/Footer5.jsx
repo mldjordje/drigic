@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useLocale } from "@/components/common/LocaleProvider";
+import { CLINIC_ADDRESS } from "@/lib/clinicContact";
 
 export default function Footer5() {
   const { t } = useLocale();
@@ -47,6 +48,9 @@ export default function Footer5() {
                 <Image width={138} height={55} src="/assets/img/logo.png" alt="Dr Igić logo" />
                 <h3 className="widget_title mt-30">{t("footer.officeTitle")}</h3>
                 <p className="about-text">{t("footer.officeBody")}</p>
+                <p className="about-text" style={{ marginTop: 10, marginBottom: 0 }}>
+                  <strong>Adresa:</strong> {CLINIC_ADDRESS}
+                </p>
               </div>
             </div>
             <div className="col-md-6 col-xl-3 col-lg-4">

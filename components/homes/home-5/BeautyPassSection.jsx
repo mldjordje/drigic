@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Cropper from "react-easy-crop";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useSession } from "@/components/common/SessionProvider";
+import BookingSelfServiceCard from "@/components/contact/BookingSelfServiceCard";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -538,6 +539,11 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
                   </ul>
                 </>
               )}
+
+              <div className="clinic-bp__card-label" style={{ marginTop: 28 }}>
+                Izmena / otkazivanje termina
+              </div>
+              <BookingSelfServiceCard />
 
               {/* Past bookings */}
               {pastBookings.length > 0 && (

@@ -2,7 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CLINIC_EMAIL, CLINIC_PHONE_DISPLAY, CLINIC_PHONE_TEL } from "@/lib/clinicContact";
+import {
+  CLINIC_ADDRESS,
+  CLINIC_EMAIL,
+  CLINIC_PHONE_DISPLAY,
+  CLINIC_PHONE_TEL,
+} from "@/lib/clinicContact";
 
 const MAP_EMBED_SRC =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3639.5122122653975!2d21.905029300000002!3d43.323902!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x4755b1b5c3758feb%3A0xe88cb950fc4b45ff!2sDr%20Igic%20Clinic!5e1!3m2!1sen!2srs!4v1775406887149!5m2!1sen!2srs";
@@ -105,7 +110,9 @@ export default function ClinicContactPage() {
                 </span>
                 <div>
                   <strong className="d-block mb-1">Lokacija</strong>
-                  <p className="mb-1">Dr Igić Clinic — Niš, Srbija</p>
+                  <p className="mb-1">
+                    Dr Igić Clinic — {CLINIC_ADDRESS}, Niš, Srbija
+                  </p>
                   <a
                     href="https://www.google.com/maps?ll=43.323902,21.9050293&z=16&t=m&hl=en&gl=RS&mapclient=embed&cid=16708722205926497279"
                     target="_blank"

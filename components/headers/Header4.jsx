@@ -38,6 +38,7 @@ export default function Header4() {
     ];
 
     if (currentUser) {
+      items.splice(5, 0, { href: "/moji-termini", label: "Moji termini" });
       items.splice(5, 0, { href: "/beauty-pass", label: t("common.beautyPass") });
     }
 
