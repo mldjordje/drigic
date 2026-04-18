@@ -26,6 +26,11 @@
 /admintemplate-demo/
 /doctorbarber/
 
+# Auto Delić / drugi projekti — lokalni bootstrap paketi (nikad ne commitovati u drigic)
+/auto-delic-admin-panel-bootstrap/
+/auto-delic-tehnicki-bootstrap/
+/auto-delic-vercel-neon-paket/
+
 # debug
 npm-debug.log*
 yarn-debug.log*
