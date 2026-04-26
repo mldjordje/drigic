@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
-import { sendTransactionalEmail } from "@/lib/auth/email";
 import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import { hasCancelWindow } from "@/lib/booking/engine";
@@ -184,20 +183,6 @@ export async function PATCH(request, { params }) {
         actorLabel: "Klijent",
       });
 
-      const inboxEmail = String(env.ADMIN_BOOKING_NOTIFY_EMAIL || "").trim();
-      if (inboxEmail) {
-        const inboxResult = await sendTransactionalEmail({
-          to: inboxEmail,
-          ...adminEmailPayload,
-        });
-        if (!inboxResult?.sent) {
-          console.error(
-            "[bookings.cancel] admin inbox email not sent",
-            inboxResult?.reason || "unknown reason"
-          );
-        }
-      }
-
       await deliverBookingAlertToAdmins({
         db,
         bookingId: context.id,
@@ -207,6 +192,7 @@ export async function PATCH(request, { params }) {
         url: "/admin/kalendar",
         dedupe: true,
         emailPayload: adminEmailPayload,
+        inboxEmail: String(env.ADMIN_BOOKING_NOTIFY_EMAIL || "").trim() || null,
       });
     }
   } catch (notifyError) {

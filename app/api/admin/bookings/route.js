@@ -2,7 +2,6 @@ import { and, asc, desc, eq, gte, lte, or } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { created, fail, ok, readJson } from "@/lib/api/http";
-import { sendTransactionalEmail } from "@/lib/auth/email";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import {
@@ -621,19 +620,6 @@ export async function PATCH(request) {
         actorLabel: "Admin panel",
       });
 
-      if (inboxEmail) {
-        const inboxResult = await sendTransactionalEmail({
-          to: inboxEmail,
-          ...adminEmailPayload,
-        });
-        if (!inboxResult?.sent) {
-          console.error(
-            "[admin.bookings.patch] admin inbox cancellation email not sent",
-            inboxResult?.reason || "unknown reason"
-          );
-        }
-      }
-
       await deliverBookingAlertToAdmins({
         db,
         bookingId: current.id,
@@ -643,6 +629,7 @@ export async function PATCH(request) {
         url: "/admin/kalendar",
         dedupe: true,
         emailPayload: adminEmailPayload,
+        inboxEmail: inboxEmail || null,
       });
     }
   }

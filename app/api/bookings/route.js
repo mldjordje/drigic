@@ -2,17 +2,13 @@ import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { created, fail, readJson } from "@/lib/api/http";
 import { requireUser } from "@/lib/auth/guards";
-import { sendTransactionalEmail } from "@/lib/auth/email";
 import { getDb, schema } from "@/lib/db/client";
 import { env } from "@/lib/env";
 import {
   deliverBookingNotification,
   deliverNewBookingAlertToAdmins,
 } from "@/lib/notifications/delivery";
-import {
-  buildAdminBookingEmail,
-  buildClientBookingEmail,
-} from "@/lib/notifications/booking-email";
+import { buildClientBookingEmail } from "@/lib/notifications/booking-email";
 import {
   CONSULTATION_SELECTION_ID,
   addMinutes,
@@ -173,35 +169,6 @@ export async function POST(request) {
           })
         : null;
 
-      const notifyResult = inboxEmail
-        ? await sendTransactionalEmail({
-            to: inboxEmail,
-            ...buildAdminBookingEmail({
-              subject: "Novi zahtev za termin",
-              previewText: "Stigao je novi zahtev koji ceka obradu",
-              heading: "Novi zahtev za termin",
-              intro:
-                "Stigao je novi zahtev preko booking forme. Pregledajte detalje i potvrdite termin iz admin kalendara.",
-              startsAt: createdBooking.startsAt,
-              serviceSummary,
-              durationMin: quote.totalDurationMin,
-              priceRsd: quote.totalPriceRsd,
-              statusLabel: "Na cekanju",
-              notes: parsed.data.notes || null,
-              clientName: clientDisplay,
-              clientEmail: auth.user.email || null,
-              clientPhone: null,
-            }),
-          })
-        : { sent: false, reason: "ADMIN_BOOKING_NOTIFY_EMAIL missing" };
-
-      if (!notifyResult?.sent) {
-        console.error(
-          "[bookings.create] admin inbox email not sent",
-          notifyResult?.reason || "unknown reason"
-        );
-      }
-
       if (auth.user.email) {
         await deliverBookingNotification({
           db,
@@ -229,6 +196,7 @@ export async function POST(request) {
         durationMin: quote.totalDurationMin,
         priceRsd: quote.totalPriceRsd,
         notes: parsed.data.notes || null,
+        inboxEmail: inboxEmail || null,
       });
     } catch (notifyError) {
       console.error("[bookings.create] notification pipeline failed", notifyError);
