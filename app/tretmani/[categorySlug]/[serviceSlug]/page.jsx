@@ -7,7 +7,7 @@ import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
 import { getDb, schema } from "@/lib/db/client";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME, getConfiguredSiteUrl } from "@/lib/site";
 import { getCategorySpecBySlug } from "@/lib/services/category-map";
 
 export const dynamic = "force-dynamic";
@@ -101,13 +101,21 @@ export async function generateMetadata({ params }) {
     };
   }
 
+  const siteUrl = getConfiguredSiteUrl();
+  const canonical = `${siteUrl}/tretmani/${resolvedParams.categorySlug}/${resolvedParams.serviceSlug}`;
+
   return {
     title: data.service.name,
     description: data.service.description || data.categorySpec.seoDescription,
+    keywords: data.categorySpec.seoKeywords,
+    alternates: {
+      canonical,
+    },
     openGraph: {
       title: data.service.name,
       description: data.service.description || data.categorySpec.seoDescription,
       siteName: SITE_NAME,
+      url: canonical,
       type: "article",
     },
   };

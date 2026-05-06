@@ -88,6 +88,43 @@ export const metadata = {
   },
 };
 
+const CLINIC_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "MedicalClinic",
+  name: "Dr Igić Clinic",
+  url: "https://drigic.rs",
+  telephone: "+381 62 238 888",
+  email: "drigicclinic@gmail.com",
+  image: "https://drigic.rs/icons/icon-512.png",
+  description: "Ordinacija estetske, anti-age i regenerativne medicine u Nišu.",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "Cvijićeva 31/3",
+    addressLocality: "Niš",
+    addressRegion: "Nišavski okrug",
+    postalCode: "18000",
+    addressCountry: "RS",
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 43.323902,
+    longitude: 21.905029,
+  },
+  medicalSpecialty: [
+    "Estetska medicina",
+    "Anti-age medicina",
+    "Regenerativna medicina",
+  ],
+  hasMap: "https://maps.google.com/?cid=drigic",
+  priceRange: "$$",
+  currenciesAccepted: "RSD, EUR",
+  paymentAccepted: "Cash, Card",
+  areaServed: {
+    "@type": "City",
+    name: "Niš",
+  },
+};
+
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
@@ -111,6 +148,10 @@ export default async function RootLayout({ children }) {
             'var(--body-font-loaded), var(--font-noto-fallback), "Segoe UI", system-ui, sans-serif',
         }}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(CLINIC_JSON_LD) }}
+        />
         <AppProviders initialLocale={locale} initialSession={initialSession}>
           <SitePageTracker />
           {children}

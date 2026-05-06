@@ -8,6 +8,27 @@ export default function robots() {
       {
         userAgent: "*",
         allow: "/",
+        disallow: ["/admin", "/api/", "/_next/", "/admin/"],
+      },
+      {
+        userAgent: "GPTBot",
+        allow: "/",
+        disallow: ["/admin", "/api/", "/_next/"],
+      },
+      {
+        userAgent: "ClaudeBot",
+        allow: "/",
+        disallow: ["/admin", "/api/", "/_next/"],
+      },
+      {
+        userAgent: "anthropic-ai",
+        allow: "/",
+        disallow: ["/admin", "/api/", "/_next/"],
+      },
+      {
+        userAgent: "PerplexityBot",
+        allow: "/",
+        disallow: ["/admin", "/api/", "/_next/"],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,

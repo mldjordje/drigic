@@ -1,0 +1,83 @@
+# Dr Igić Clinic
+
+> Ordinacija estetske, anti-age i regenerativne medicine u Nišu, Srbija.
+> Dr Nikola Igić — specijalista estetske i regenerativne medicine.
+> Kontakt: drigicclinic@gmail.com | +381 62 238 888 | Cvijićeva 31/3, Niš 18000, Srbija
+
+## O ordinaciji
+
+Dr Igić Clinic je privatna ordinacija estetske medicine u Nišu koja nudi tretmane podmlađivanja, korekcije i regeneracije kože uz individualni pristup svakom pacijentu. Ordinacija pruža nehirurške estetske zahvate sa medicinskim standardima sigurnosti i kvaliteta.
+
+## Tretmani
+
+### Hijaluronski fileri
+Injekcioni tretmani za volumen, konture i hidrataciju kože. Primena: usne, podočnjaci, jagodice, vilica, brada, nazolabijalne bore.
+- [Hijaluronski fileri](https://drigic.rs/tretmani/hijaluronski-fileri)
+
+### Botox
+Tretmani botulinum toksinom tipa A za mimične bore (čelo, mrstilice, crow's feet), podizanje obrva i preventivni anti-age protokol.
+- [Botox](https://drigic.rs/tretmani/botox)
+
+### Skinbusteri
+Dubinska hidratacija kože kroz mikroinjekcije stabilizovane hijaluronske kiseline. Poboljšava teksturu, tonus i elastičnost kože.
+- [Skinbusteri](https://drigic.rs/tretmani/skinbusteri)
+
+### Kolagen stimulatori
+Tretmani koji aktiviraju prirodnu proizvodnju kolagena. Postepen i dugotrajniji efekat zatezanja i čvrstine kože.
+- [Kolagen stimulatori](https://drigic.rs/tretmani/kolagen-stimulatori)
+
+### Polinukleotidi i Egzozomi
+Regenerativni protokoli za obnovu kože i stimulaciju rasta kose. Koriste biološki aktivne molekule za ćelijsku regeneraciju.
+- [Polinukleotidi i Egzozomi](https://drigic.rs/tretmani/polinukleotidi-i-egzozomi)
+
+### Lipoliza
+Injekciona lipoliza za nehirurško uklanjanje lokalizovanih masnih naslaga (stomak, butine, bokovi, brada).
+- [Lipoliza](https://drigic.rs/tretmani/lipoliza)
+
+### Hemijski piling
+Kontrolisana hemijska obnova kože za finije bore, ožiljke od akni, hiperpigmentacije i poboljšanje teksture tena.
+- [Hemijski piling](https://drigic.rs/tretmani/hemijski-piling)
+
+### Dermapen
+Mikroiglična stimulacija kože za poboljšanje teksture, tonusa i prirodne regeneracije.
+- [Dermapen](https://drigic.rs/tretmani/dermapen)
+
+### PRP (Platelet-Rich Plasma)
+Autologni tretman sopstvenom plazmom bogatom trombocitima za regeneraciju kože i podršku rastu kose.
+- [PRP](https://drigic.rs/tretmani/prp)
+
+### Mezoterapija
+Minimalno invazivna procedura sa kokteli aktivnih supstanci (hijaluronska kiselina, vitamini, aminokiseline) za hidrataciju i revitalizaciju kože, vlasišta i body regija.
+- [Mezoterapija](https://drigic.rs/tretmani/mezoterapija)
+
+## Online zakazivanje
+
+Pacijenti mogu zakazati termin online direktno na sajtu.
+- [Zakažite termin](https://drigic.rs/booking)
+
+## Cenovnik
+
+Pregled cena svih tretmana dostupan je na sajtu.
+- [Cenovnik](https://drigic.rs/pricing)
+
+## Rezultati
+
+Galerija pre i posle fotografija tretmana.
+- [Rezultati](https://drigic.rs/rezultati)
+
+## Najčešća pitanja
+
+- [FAQ](https://drigic.rs/faq)
+
+## Kontakt
+
+- Adresa: Cvijićeva 31/3, 18000 Niš, Srbija
+- Telefon: +381 62 238 888
+- Email: drigicclinic@gmail.com
+- [Kontakt stranica](https://drigic.rs/contact)
+
+## Disallow za AI crawlere
+
+- /admin
+- /api/
+- /_next/
