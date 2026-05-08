@@ -382,10 +382,10 @@ export async function PATCH(request) {
   }
 
   if (wantsReschedule) {
-    if (current.status !== "pending") {
+    if (!["pending", "confirmed"].includes(current.status)) {
       return fail(
         400,
-        "Samo nepotvrđeni termini (na čekanju) mogu da se izmene na ovaj način."
+        "Samo aktivni termini (na čekanju ili potvrđeni) mogu da se prezakažu."
       );
     }
     if (parsed.data.status != null && parsed.data.status !== current.status) {

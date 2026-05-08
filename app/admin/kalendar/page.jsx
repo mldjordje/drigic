@@ -13,6 +13,7 @@ const STATUS_LABEL = {
   no_show: "No-show",
   completed: "Završen",
 };
+const RESCHEDULABLE_STATUSES = ["pending", "confirmed"];
 const MORNING_SCROLL_TIME = "08:00:00";
 const DEFAULT_AFTERNOON_SCROLL_TIME = "15:45:00";
 
@@ -122,6 +123,7 @@ export default function AdminKalendarPage() {
   const [notesDraft, setNotesDraft] = useState("");
   const [pendingEditStartLocal, setPendingEditStartLocal] = useState("");
   const [pendingEditServiceIds, setPendingEditServiceIds] = useState([]);
+  const [showReschedulePanel, setShowReschedulePanel] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [clientDetailsLoading, setClientDetailsLoading] = useState(false);
   const [clientDetailsError, setClientDetailsError] = useState("");
@@ -304,6 +306,7 @@ export default function AdminKalendarPage() {
     setMessage("");
     setError("");
     setShowClientDetails(false);
+    setShowReschedulePanel(false);
     setClientDetailsLoading(false);
     setClientDetailsError("");
     setClientDetailsPayload(null);
@@ -532,6 +535,7 @@ export default function AdminKalendarPage() {
   function closeActiveEvent() {
     setActiveEvent(null);
     setShowClientDetails(false);
+    setShowReschedulePanel(false);
     setClientDetailsLoading(false);
     setClientDetailsError("");
     setClientDetailsPayload(null);
@@ -580,14 +584,18 @@ export default function AdminKalendarPage() {
   const activeBlock = activeEvent?.kind === "block" ? blockById.get(activeEvent.refId) : null;
 
   const pendingBookingServerKey = useMemo(() => {
-    if (!activeBooking || activeBooking.status !== "pending") {
+    if (!activeBooking || !RESCHEDULABLE_STATUSES.includes(activeBooking.status)) {
       return "";
     }
     return `${activeBooking.id}|${activeBooking.startsAt}|${(activeBooking.serviceIds || []).join(",")}`;
   }, [activeBooking]);
 
   useEffect(() => {
-    if (activeEvent?.kind !== "booking" || !activeBooking || activeBooking.status !== "pending") {
+    if (
+      activeEvent?.kind !== "booking" ||
+      !activeBooking ||
+      !RESCHEDULABLE_STATUSES.includes(activeBooking.status)
+    ) {
       return;
     }
     setPendingEditStartLocal(toLocalInputValue(activeBooking.startsAt));
@@ -1103,7 +1111,7 @@ export default function AdminKalendarPage() {
                   />
                 </label>
 
-                {statusDraft === "pending" ? (
+                {RESCHEDULABLE_STATUSES.includes(statusDraft) && showReschedulePanel ? (
                   <div
                     className="admin-calendar-details"
                     style={{
@@ -1113,8 +1121,7 @@ export default function AdminKalendarPage() {
                     }}
                   >
                     <p style={{ margin: "0 0 8px", color: "#bed0e8", fontSize: 14 }}>
-                      Izmena nepotvrđenog termina: datum, vreme, usluge (trajanje i cena se računaju iz
-                      usluga). Posle izmene klijent dobija mejl ako su se promenili termin ili usluge.
+                      Izaberite novi datum, vreme i usluge. Klijent dobija mejl ako se promene termin ili usluge. Status se resetuje na "Na čekanju".
                     </p>
                     <label>
                       Novi datum i vreme
@@ -1166,14 +1173,23 @@ export default function AdminKalendarPage() {
                       Procenjeno trajanje (iz usluga, max 60 min u sistemu):{" "}
                       <strong>{pendingEditDurationMin} min</strong>
                     </p>
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      disabled={saving}
-                      onClick={savePendingBookingReschedule}
-                    >
-                      Sačuvaj izmenu termina i usluga
-                    </button>
+                    <div className="admin-calendar-quick-actions" style={{ marginTop: 10 }}>
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        disabled={saving || !pendingEditServiceIds.length}
+                        onClick={savePendingBookingReschedule}
+                      >
+                        Potvrdi prezakazivanje
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        onClick={() => setShowReschedulePanel(false)}
+                      >
+                        Odustani
+                      </button>
+                    </div>
                   </div>
                 ) : null}
 
@@ -1191,6 +1207,16 @@ export default function AdminKalendarPage() {
                           {action.label}
                         </button>
                       ))}
+                      {RESCHEDULABLE_STATUSES.includes(statusDraft) ? (
+                        <button
+                          type="button"
+                          className="admin-template-link-btn"
+                          disabled={saving}
+                          onClick={() => setShowReschedulePanel((prev) => !prev)}
+                        >
+                          {showReschedulePanel ? "Zatvori prezakazivanje" : "Prezakazi"}
+                        </button>
+                      ) : null}
                     </div>
                   ) : null}
                   <div className="admin-calendar-quick-actions">

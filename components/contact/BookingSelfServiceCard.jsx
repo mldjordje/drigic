@@ -313,15 +313,15 @@ export default function BookingSelfServiceCard() {
     loadSlots().catch(() => {});
   }, [activeBooking, activeBookingId, rescheduleDate, durationMin]);
 
-  async function handleCancel() {
-    if (!activeBooking) {
+  async function handleCancelById(bookingId) {
+    if (!bookingId) {
       return;
     }
     setLoading(true);
     setError("");
     setMessage("");
     try {
-      const response = await fetch(`/api/bookings/${activeBooking.id}/cancel`, {
+      const response = await fetch(`/api/bookings/${bookingId}/cancel`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: reason || undefined }),
@@ -386,10 +386,10 @@ export default function BookingSelfServiceCard() {
         }}
       >
         <strong style={{ display: "block", color: "var(--clinic-text-strong)" }}>
-          Izmeni ili otkaži svoj termin
+          Prezakazi ili otkaži termin
         </strong>
         <p style={{ margin: "8px 0 12px", color: "var(--clinic-text-muted)" }}>
-          Ulogujte se kako biste videli svoje termine i mogli da ih izmenite ili otkažete.
+          Ulogujte se kako biste videli svoje termine i mogli da ih prezakazujete ili otkažete.
         </p>
         <GooglePopupButton className="btn clinic-glow-btn" nextPath="/contact">
           {(t?.("common.login") || "Uloguj se").toUpperCase()} WITH GOOGLE
@@ -410,10 +410,10 @@ export default function BookingSelfServiceCard() {
       }}
     >
       <strong style={{ display: "block", color: "var(--clinic-text-strong)" }}>
-        Izmeni ili otkaži svoj termin
+        Prezakazi ili otkaži termin
       </strong>
       <p style={{ margin: "8px 0 12px", color: "var(--clinic-text-muted)" }}>
-        Ako imate zakazan termin, ovde možete da ga otkažete ili izaberete novi slot.
+        Izaberite termin koji želite da prezakazujete ili otkažete.
       </p>
 
       {loading ? (
@@ -421,191 +421,214 @@ export default function BookingSelfServiceCard() {
       ) : null}
 
       {!loading && bookings.length ? (
-        <>
-          <label style={{ display: "grid", gap: 6, marginBottom: 12 }}>
-            <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>Vaši termini</span>
-            <select
-              value={activeBookingId}
-              onChange={(e) => setActiveBookingId(e.target.value)}
-              className="clinic-glow-field"
-              style={{
-                width: "100%",
-                borderRadius: 10,
-                border: "1px solid var(--clinic-field-border)",
-                padding: "10px 12px",
-                background: "var(--clinic-field-bg)",
-                color: "var(--clinic-text-strong)",
-              }}
-            >
-              <option value="">Izaberite termin…</option>
-              {bookings.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {defaultIsoTimeLabel(b.startsAt)} • {b.totalDurationMin} min • {b.totalPriceRsd} EUR •{" "}
-                  {formatBookingStatus(b.status)}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {activeBooking ? (
-            <>
-              <div className="clinic-booking-calendar" style={{ marginBottom: 14 }}>
-                <div className="clinic-cal-header">
-                  <button
-                    type="button"
-                    className="clinic-cal-nav"
-                    disabled={!canGoPrevMonth}
-                    onClick={() => setCalendarMonth((prev) => addMonths(prev, -1))}
-                  >
-                    {t?.("booking.previous") || "Prethodni"}
-                  </button>
-                  <div className="clinic-cal-title">{formatMonthLabel(calendarMonth, intlLocale)}</div>
-                  <button
-                    type="button"
-                    className="clinic-cal-nav"
-                    onClick={() => setCalendarMonth((prev) => addMonths(prev, 1))}
-                  >
-                    {t?.("booking.next") || "Sledeći"}
-                  </button>
-                </div>
-
-                <div className="clinic-cal-weekdays">
-                  {weekdayLabels.map((label) => (
-                    <span key={label}>{label}</span>
-                  ))}
-                </div>
-
-                <div className="clinic-cal-legend" aria-label="Legenda dostupnosti termina">
-                  <span>
-                    <span className="calendar-indicator is-high" />
-                    Više slobodnih termina
-                  </span>
-                  <span>
-                    <span className="calendar-indicator is-medium" />
-                    Ograničena dostupnost
-                  </span>
-                  <span>
-                    <span className="calendar-indicator is-none" />
-                    Nema slobodnih termina
-                  </span>
-                </div>
-
-                <div className="clinic-cal-grid">
-                  {calendarCells.map((cell) => {
-                    const availableCount = monthAvailability[cell.iso];
-                    const isPast = cell.iso < today;
-                    const isActive = cell.iso === rescheduleDate;
-                    const isDisabled =
-                      !cell.inCurrentMonth ||
-                      isPast ||
-                      (availableCount !== undefined && Number(availableCount) <= 0);
-
-                    return (
-                      <button
-                        key={cell.iso}
-                        type="button"
-                        className={`clinic-cal-day ${isActive ? "is-active" : ""} ${
-                          !cell.inCurrentMonth ? "is-out" : ""
-                        }`}
-                        disabled={isDisabled}
-                        onClick={() => {
-                          setError("");
-                          setMessage("");
-                          setSelectedStartAt("");
-                          setRescheduleDate(cell.iso);
-                        }}
-                      >
-                        <span>{cell.dayNumber}</span>
-                        {cell.inCurrentMonth ? (
-                          <span
-                            className={`calendar-indicator ${availabilityClass(
-                              availableCount,
-                              maxSlotsInMonth,
-                              monthLoading
-                            )}`}
-                          />
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
-                <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>Slobodni slotovi</span>
-                <small style={{ color: "var(--clinic-text-muted)" }}>
-                  {calendarError ? calendarError : selectedDateLabel}
-                </small>
-                {slotsLoading ? (
-                  <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>{t("common.loading")}</p>
-                ) : slots.length ? (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                    {slots.map((slot) => (
-                      <button
-                        key={slot.startAt}
-                        type="button"
-                        onClick={() => setSelectedStartAt(slot.startAt)}
-                        className={`clinic-slot-button ${selectedStartAt === slot.startAt ? "is-active" : ""}`}
-                        style={{
-                          borderRadius: 10,
-                          border: "1px solid var(--clinic-card-border)",
-                          padding: "8px 10px",
-                          fontWeight: 900,
-                        }}
-                      >
-                        {new Date(slot.startAt).toLocaleTimeString(intlLocale, {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </button>
-                    ))}
+        <div style={{ display: "grid", gap: 10 }}>
+          {bookings.map((b) => {
+            const isActive = activeBookingId === b.id;
+            return (
+              <div
+                key={b.id}
+                style={{
+                  border: `1px solid ${isActive ? "var(--clinic-accent, #6c7ee1)" : "var(--clinic-card-border)"}`,
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                  background: isActive ? "var(--clinic-field-bg)" : "transparent",
+                  transition: "border-color 0.15s",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+                  <div>
+                    <strong style={{ display: "block", color: "var(--clinic-text-strong)", fontSize: 15 }}>
+                      {defaultIsoTimeLabel(b.startsAt)}
+                    </strong>
+                    <span style={{ color: "var(--clinic-text-muted)", fontSize: 13 }}>
+                      {b.totalDurationMin} min · {b.totalPriceRsd} EUR · {formatBookingStatus(b.status)}
+                    </span>
                   </div>
-                ) : (
-                  <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>Nema slobodnih slotova za ovaj datum.</p>
-                )}
-              </div>
+                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      className="btn clinic-glow-btn"
+                      style={{ padding: "6px 14px", fontSize: 13 }}
+                      onClick={() => {
+                        setError("");
+                        setMessage("");
+                        setReason("");
+                        setSelectedStartAt("");
+                        setActiveBookingId(isActive ? "" : b.id);
+                      }}
+                    >
+                      {isActive ? "Zatvori" : "Prezakazi"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn style2"
+                      style={{ padding: "6px 14px", fontSize: 13 }}
+                      disabled={loading}
+                      onClick={() => {
+                        setError("");
+                        setMessage("");
+                        setReason("");
+                        setActiveBookingId("");
+                        handleCancelById(b.id);
+                      }}
+                    >
+                      Otkaži
+                    </button>
+                  </div>
+                </div>
 
-              <label style={{ display: "grid", gap: 6, marginBottom: 12 }}>
-                <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>
-                  Napomena (opciono)
-                </span>
-                <input
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Npr. razlog otkazivanja ili napomena za izmenu"
-                  className="clinic-glow-field"
-                  style={{
-                    width: "100%",
-                    borderRadius: 10,
-                    border: "1px solid var(--clinic-field-border)",
-                    padding: "10px 12px",
-                    background: "var(--clinic-field-bg)",
-                    color: "var(--clinic-text-strong)",
-                  }}
-                />
-              </label>
+                {isActive ? (
+                  <div style={{ marginTop: 14 }}>
+                    <div className="clinic-booking-calendar" style={{ marginBottom: 14 }}>
+                      <div className="clinic-cal-header">
+                        <button
+                          type="button"
+                          className="clinic-cal-nav"
+                          disabled={!canGoPrevMonth}
+                          onClick={() => setCalendarMonth((prev) => addMonths(prev, -1))}
+                        >
+                          {t?.("booking.previous") || "Prethodni"}
+                        </button>
+                        <div className="clinic-cal-title">{formatMonthLabel(calendarMonth, intlLocale)}</div>
+                        <button
+                          type="button"
+                          className="clinic-cal-nav"
+                          onClick={() => setCalendarMonth((prev) => addMonths(prev, 1))}
+                        >
+                          {t?.("booking.next") || "Sledeći"}
+                        </button>
+                      </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                <button
-                  type="button"
-                  onClick={handleReschedule}
-                  disabled={loading || !selectedStartAt}
-                  className="btn clinic-glow-btn"
-                >
-                  Sačuvaj izmenu termina
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  disabled={loading}
-                  className="btn style2"
-                >
-                  Otkaži termin
-                </button>
+                      <div className="clinic-cal-weekdays">
+                        {weekdayLabels.map((label) => (
+                          <span key={label}>{label}</span>
+                        ))}
+                      </div>
+
+                      <div className="clinic-cal-legend" aria-label="Legenda dostupnosti termina">
+                        <span>
+                          <span className="calendar-indicator is-high" />
+                          Više slobodnih termina
+                        </span>
+                        <span>
+                          <span className="calendar-indicator is-medium" />
+                          Ograničena dostupnost
+                        </span>
+                        <span>
+                          <span className="calendar-indicator is-none" />
+                          Nema slobodnih termina
+                        </span>
+                      </div>
+
+                      <div className="clinic-cal-grid">
+                        {calendarCells.map((cell) => {
+                          const availableCount = monthAvailability[cell.iso];
+                          const isPast = cell.iso < today;
+                          const isActiveDay = cell.iso === rescheduleDate;
+                          const isDisabled =
+                            !cell.inCurrentMonth ||
+                            isPast ||
+                            (availableCount !== undefined && Number(availableCount) <= 0);
+
+                          return (
+                            <button
+                              key={cell.iso}
+                              type="button"
+                              className={`clinic-cal-day ${isActiveDay ? "is-active" : ""} ${
+                                !cell.inCurrentMonth ? "is-out" : ""
+                              }`}
+                              disabled={isDisabled}
+                              onClick={() => {
+                                setError("");
+                                setMessage("");
+                                setSelectedStartAt("");
+                                setRescheduleDate(cell.iso);
+                              }}
+                            >
+                              <span>{cell.dayNumber}</span>
+                              {cell.inCurrentMonth ? (
+                                <span
+                                  className={`calendar-indicator ${availabilityClass(
+                                    availableCount,
+                                    maxSlotsInMonth,
+                                    monthLoading
+                                  )}`}
+                                />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
+                      <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>Slobodni slotovi</span>
+                      <small style={{ color: "var(--clinic-text-muted)" }}>
+                        {calendarError ? calendarError : selectedDateLabel}
+                      </small>
+                      {slotsLoading ? (
+                        <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>{t("common.loading")}</p>
+                      ) : slots.length ? (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                          {slots.map((slot) => (
+                            <button
+                              key={slot.startAt}
+                              type="button"
+                              onClick={() => setSelectedStartAt(slot.startAt)}
+                              className={`clinic-slot-button ${selectedStartAt === slot.startAt ? "is-active" : ""}`}
+                              style={{
+                                borderRadius: 10,
+                                border: "1px solid var(--clinic-card-border)",
+                                padding: "8px 10px",
+                                fontWeight: 900,
+                              }}
+                            >
+                              {new Date(slot.startAt).toLocaleTimeString(intlLocale, {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>Nema slobodnih slotova za ovaj datum.</p>
+                      )}
+                    </div>
+
+                    <label style={{ display: "grid", gap: 6, marginBottom: 12 }}>
+                      <span style={{ fontWeight: 700, color: "var(--clinic-text-strong)" }}>
+                        Napomena (opciono)
+                      </span>
+                      <input
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Npr. razlog izmene termina"
+                        className="clinic-glow-field"
+                        style={{
+                          width: "100%",
+                          borderRadius: 10,
+                          border: "1px solid var(--clinic-field-border)",
+                          padding: "10px 12px",
+                          background: "var(--clinic-field-bg)",
+                          color: "var(--clinic-text-strong)",
+                        }}
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={handleReschedule}
+                      disabled={loading || !selectedStartAt}
+                      className="btn clinic-glow-btn"
+                    >
+                      Potvrdi prezakazivanje
+                    </button>
+                  </div>
+                ) : null}
               </div>
-            </>
-          ) : null}
-        </>
+            );
+          })}
+        </div>
       ) : !loading ? (
         <p style={{ margin: 0, color: "var(--clinic-text-muted)" }}>Trenutno nemate predstojeći termin.</p>
       ) : null}
