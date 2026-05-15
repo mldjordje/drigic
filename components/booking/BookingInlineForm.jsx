@@ -440,7 +440,36 @@ export default function BookingInlineForm({
       }
 
       if (mode === "package") {
-        const packPrice = Math.max(0, Number(service?.priceRsd || 0));
+        const regular = Math.max(0, Number(service?.priceRsd || 0));
+        const promoRaw = service?.promotion?.promoPriceRsd;
+        const promo =
+          promoRaw !== undefined && promoRaw !== null ? Math.max(0, Number(promoRaw)) : null;
+
+        if (service?.promotion && promo !== null && promo < regular) {
+          const saved = regular - promo;
+          const pct = regular > 0 ? Math.min(100, Math.round((saved / regular) * 100)) : 0;
+          return (
+            <span style={{ display: "grid", gap: 6, textAlign: "left", width: "100%" }}>
+              <span style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "baseline" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85 }}>
+                  {bookingCatalogCopy.priceRegularShort}:
+                </span>
+                <del style={{ opacity: 0.7, fontWeight: 600 }}>{regular} EUR</del>
+              </span>
+              <span style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "baseline" }}>
+                <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.85 }}>
+                  {bookingCatalogCopy.pricePromoShort}:
+                </span>
+                <span style={{ fontWeight: 800 }}>{promo} EUR</span>
+              </span>
+              <small style={{ fontWeight: 600, opacity: 0.95, lineHeight: 1.35 }}>
+                {fillCatalogTemplate(bookingCatalogCopy.savingsLine, { saved, pct })}
+              </small>
+            </span>
+          );
+        }
+
+        const packPrice = regular;
         const listValue = sumPackageListPriceEur(service, serviceLookup);
         if (listValue > packPrice && listValue > 0) {
           const saved = listValue - packPrice;
