@@ -5814,7 +5814,7 @@ body,
   gap: 14px;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--clinic-card-border-soft, rgba(217, 232, 248, 0.2));
 }
 
 .clinic-pricing-category-icon {
@@ -5824,8 +5824,8 @@ body,
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: rgba(var(--theme-color-rgb, 212, 175, 55), 0.12);
-  color: var(--theme-color, #d4af37);
+  background: rgba(217, 232, 248, 0.1);
+  color: #d9e8f8;
   font-size: 18px;
   flex-shrink: 0;
 }
@@ -5834,7 +5834,7 @@ body,
   font-size: 20px;
   font-weight: 600;
   margin: 0;
-  color: var(--smoke-color, #d9e6f8);
+  color: #f2f5fb;
 
   a {
     color: inherit;
@@ -5842,7 +5842,7 @@ body,
     transition: color 0.2s;
 
     &:hover {
-      color: var(--theme-color, #d4af37);
+      opacity: 0.75;
     }
   }
 }
@@ -5859,64 +5859,48 @@ body,
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(217, 230, 248, 0.5);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    color: rgba(217, 232, 248, 0.45);
+    border-bottom: 1px solid rgba(217, 232, 248, 0.08);
 
-    &.text-center {
-      text-align: center;
-    }
-    &.text-end {
-      text-align: right;
-    }
+    &.text-center { text-align: center; }
+    &.text-end    { text-align: right; }
   }
 
   tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(217, 232, 248, 0.06);
     transition: background 0.15s;
 
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    &.has-promo {
-      background: rgba(var(--theme-color-rgb, 212, 175, 55), 0.04);
-    }
+    &:last-child { border-bottom: none; }
+    &:hover      { background: rgba(217, 232, 248, 0.03); }
+    &.has-promo  { background: rgba(217, 232, 248, 0.04); }
   }
 
   tbody td {
-    padding: 12px 12px;
+    padding: 12px;
     vertical-align: top;
 
-    &.text-center {
-      text-align: center;
-    }
-    &.text-end {
-      text-align: right;
-    }
+    &.text-center { text-align: center; }
+    &.text-end    { text-align: right; }
   }
 }
 
 .clinic-pricing-service-name {
   display: block;
   font-weight: 500;
-  color: var(--smoke-color, #d9e6f8);
+  color: #dfe9f8;
   line-height: 1.4;
 }
 
 .clinic-pricing-service-desc {
   display: block;
   font-size: 13px;
-  color: rgba(217, 230, 248, 0.55);
+  color: rgba(217, 232, 248, 0.5);
   margin-top: 3px;
   line-height: 1.4;
 }
 
 .clinic-pricing-duration {
-  color: rgba(217, 230, 248, 0.6);
+  color: rgba(217, 232, 248, 0.55);
   font-size: 13px;
   white-space: nowrap;
 }
@@ -5925,7 +5909,7 @@ body,
   white-space: nowrap;
 
   strong {
-    color: var(--smoke-color, #d9e6f8);
+    color: #dfe9f8;
     font-weight: 600;
   }
 }
@@ -5943,20 +5927,20 @@ body,
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--theme-color, #d4af37);
-  background: rgba(var(--theme-color-rgb, 212, 175, 55), 0.12);
+  color: #d9e8f8;
+  background: rgba(217, 232, 248, 0.14);
   border-radius: 4px;
-  padding: 2px 6px;
+  padding: 2px 7px;
 }
 
 .clinic-pricing-old-price {
-  color: rgba(217, 230, 248, 0.4);
+  color: rgba(217, 232, 248, 0.38);
   font-size: 13px;
   text-decoration: line-through;
 }
 
 .clinic-pricing-new-price {
-  color: var(--theme-color, #d4af37);
+  color: #d9e8f8;
   font-weight: 700;
   font-size: 16px;
 }
@@ -5964,17 +5948,89 @@ body,
 .clinic-pricing-category-footer {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(217, 232, 248, 0.08);
   text-align: right;
 }
 
 .clinic-pricing-note {
   text-align: center;
   font-size: 13px;
-  color: rgba(217, 230, 248, 0.45);
+  color: rgba(217, 232, 248, 0.4);
   margin-top: 4px;
   margin-bottom: 0;
 }
+
+// ── Light theme overrides ────────────────────────────────────────────────────
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-category-icon {
+  background: rgba(15, 23, 42, 0.07) !important;
+  color: #0f172a !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-category-header {
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-category-title,
+.clinic-theme-light .clinic-home5 .clinic-pricing-category-title a {
+  color: #111827 !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-table thead th {
+  color: rgba(15, 23, 42, 0.45) !important;
+  border-bottom-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-table tbody tr {
+  border-bottom-color: rgba(15, 23, 42, 0.07) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-table tbody tr:hover {
+  background: rgba(15, 23, 42, 0.03) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-table tbody tr.has-promo {
+  background: rgba(15, 23, 42, 0.025) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-service-name {
+  color: #1e293b !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-service-desc {
+  color: rgba(30, 41, 59, 0.58) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-duration {
+  color: rgba(15, 23, 42, 0.5) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-price strong {
+  color: #1e293b !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-promo-badge {
+  color: #0f172a !important;
+  background: rgba(15, 23, 42, 0.09) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-old-price {
+  color: rgba(15, 23, 42, 0.35) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-new-price {
+  color: #0f172a !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-category-footer {
+  border-top-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-note {
+  color: rgba(15, 23, 42, 0.4) !important;
+}
+
+// ── Responsive ───────────────────────────────────────────────────────────────
 
 @media (max-width: 767px) {
   .clinic-pricing-category {
@@ -5984,13 +6040,8 @@ body,
   .clinic-pricing-table {
     font-size: 14px;
 
-    thead th {
-      padding: 6px 8px;
-    }
-
-    tbody td {
-      padding: 10px 8px;
-    }
+    thead th { padding: 6px 8px; }
+    tbody td { padding: 10px 8px; }
   }
 
   .clinic-pricing-category-title {
