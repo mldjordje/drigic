@@ -5793,3 +5793,207 @@ body,
     flex-wrap: wrap;
   }
 }
+
+// ─── Cenovnik / Pricing page ────────────────────────────────────────────────
+
+.clinic-pricing-page {
+  margin-top: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.clinic-pricing-category {
+  padding: 32px 36px;
+  border-radius: 16px;
+}
+
+.clinic-pricing-category-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.clinic-pricing-category-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: rgba(var(--theme-color-rgb, 212, 175, 55), 0.12);
+  color: var(--theme-color, #d4af37);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.clinic-pricing-category-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--smoke-color, #d9e6f8);
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+
+    &:hover {
+      color: var(--theme-color, #d4af37);
+    }
+  }
+}
+
+.clinic-pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+
+  thead th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(217, 230, 248, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    &.text-center {
+      text-align: center;
+    }
+    &.text-end {
+      text-align: right;
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.15s;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    &.has-promo {
+      background: rgba(var(--theme-color-rgb, 212, 175, 55), 0.04);
+    }
+  }
+
+  tbody td {
+    padding: 12px 12px;
+    vertical-align: top;
+
+    &.text-center {
+      text-align: center;
+    }
+    &.text-end {
+      text-align: right;
+    }
+  }
+}
+
+.clinic-pricing-service-name {
+  display: block;
+  font-weight: 500;
+  color: var(--smoke-color, #d9e6f8);
+  line-height: 1.4;
+}
+
+.clinic-pricing-service-desc {
+  display: block;
+  font-size: 13px;
+  color: rgba(217, 230, 248, 0.55);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.clinic-pricing-duration {
+  color: rgba(217, 230, 248, 0.6);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.clinic-pricing-price {
+  white-space: nowrap;
+
+  strong {
+    color: var(--smoke-color, #d9e6f8);
+    font-weight: 600;
+  }
+}
+
+.clinic-pricing-promo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.clinic-pricing-promo-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--theme-color, #d4af37);
+  background: rgba(var(--theme-color-rgb, 212, 175, 55), 0.12);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.clinic-pricing-old-price {
+  color: rgba(217, 230, 248, 0.4);
+  font-size: 13px;
+  text-decoration: line-through;
+}
+
+.clinic-pricing-new-price {
+  color: var(--theme-color, #d4af37);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.clinic-pricing-category-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: right;
+}
+
+.clinic-pricing-note {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(217, 230, 248, 0.45);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .clinic-pricing-category {
+    padding: 20px 16px;
+  }
+
+  .clinic-pricing-table {
+    font-size: 14px;
+
+    thead th {
+      padding: 6px 8px;
+    }
+
+    tbody td {
+      padding: 10px 8px;
+    }
+  }
+
+  .clinic-pricing-category-title {
+    font-size: 17px;
+  }
+}

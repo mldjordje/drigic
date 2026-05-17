@@ -33,6 +33,7 @@ export default function Header4() {
       { href: "/rezultati", label: t("header.beforeAfter") },
       { href: "/video-galerija", label: t("header.videos") },
       { href: "/blog", label: t("header.news") },
+      { href: "/cenovnik", label: t("header.pricing") },
       { href: "/booking", label: t("header.booking") },
       { href: "/contact", label: t("header.contact") },
     ];
