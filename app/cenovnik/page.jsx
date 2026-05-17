@@ -6,6 +6,7 @@ import Header4 from "@/components/headers/Header4";
 import Footer5 from "@/components/footers/Footer5";
 import { getDb, schema } from "@/lib/db/client";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
+import { PUBLIC_SERVICES_CACHE_TAG } from "@/lib/cache/public-services";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 import { SITE_NAME } from "@/lib/site";
 
@@ -92,7 +93,7 @@ const loadAllServices = unstable_cache(
     );
   },
   ["all-services-pricing"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: [PUBLIC_SERVICES_CACHE_TAG] }
 );
 
 export default async function CenovnikPage() {
@@ -102,16 +103,23 @@ export default async function CenovnikPage() {
 
   const categories = await loadAllServices();
 
-  const enriched = categories.map((cat) => {
-    const spec = SERVICE_CATEGORY_SPECS.find(
-      (s) => s.name.toLowerCase() === cat.categoryName.toLowerCase()
-    );
-    return {
-      ...cat,
-      slug: spec?.slug || null,
-      iconClass: spec?.iconClass || "fas fa-spa",
-    };
-  });
+  // Sort categories by their position in SERVICE_CATEGORY_SPECS so the page
+  // always shows the canonical treatment order regardless of DB sortOrder values
+  // (all categories default to sortOrder=0, making SQL ordering unreliable).
+  const enriched = categories
+    .map((cat) => {
+      const specIndex = SERVICE_CATEGORY_SPECS.findIndex(
+        (s) => s.name.toLowerCase() === cat.categoryName.toLowerCase()
+      );
+      const spec = specIndex >= 0 ? SERVICE_CATEGORY_SPECS[specIndex] : null;
+      return {
+        ...cat,
+        slug: spec?.slug || null,
+        iconClass: spec?.iconClass || "fas fa-spa",
+        _specIndex: specIndex >= 0 ? specIndex : 999,
+      };
+    })
+    .sort((a, b) => a._specIndex - b._specIndex);
 
   const hasPromo = enriched.some((cat) => cat.services.some((s) => s.promotion));
 
