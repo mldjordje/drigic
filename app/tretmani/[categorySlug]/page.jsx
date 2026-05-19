@@ -250,10 +250,16 @@ export default async function TreatmentCategoryPage({ params }) {
                 <span className="clinic-category-hero__eyebrow">Dr Igić Clinic</span>
                 <h1 className="clinic-category-hero__title">{categorySpec.name}</h1>
                 <p className="clinic-category-hero__intro">{categorySpec.heroIntro}</p>
-                <span className="clinic-category-hero__badge">
-                  <i className={categorySpec.iconClass || "fas fa-spa"} />
-                  {t("treatments.bookAppointment")}
-                </span>
+                <div className="clinic-category-hero__actions">
+                  <Link href="/booking" className="clinic-category-hero__cta">
+                    <i className="fas fa-calendar-check" />
+                    {t("treatments.bookAppointment")}
+                  </Link>
+                  <span className="clinic-category-hero__badge">
+                    <i className={categorySpec.iconClass || "fas fa-spa"} />
+                    {categorySpec.name}
+                  </span>
+                </div>
               </div>
             </div>
           ) : (
