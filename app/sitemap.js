@@ -34,7 +34,8 @@ export default async function sitemap() {
     url: `${siteUrl}/tretmani/${category.slug}`,
     lastModified: new Date(),
     changeFrequency: "weekly",
-    priority: 0.8,
+    // categories with a dedicated image are richer pages → higher priority
+    priority: category.image ? 0.9 : 0.8,
   }));
 
   const serviceRows = await db

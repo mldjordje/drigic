@@ -19,6 +19,7 @@ import {
   SITE_NAME,
   SITE_TITLE_TEMPLATE,
   getMetadataBase,
+  getConfiguredSiteUrl,
 } from "@/lib/site";
 
 const cormorantInfantTitle = Cormorant_Infant({
@@ -88,6 +89,77 @@ export const metadata = {
   },
 };
 
+const ORGANIZATION_JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": ["MedicalOrganization", "LocalBusiness"],
+      "@id": "https://drigic.rs/#organization",
+      "name": "Dr Igić Clinic",
+      "alternateName": "Klinika Dr Igić",
+      "url": "https://drigic.rs",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://drigic.rs/assets/img/logo.png",
+        "width": 200,
+        "height": 60,
+      },
+      "description":
+        "Ordinacija estetske, anti-age i regenerativne medicine u Srbiji. Specijalizovani tretmani: hijaluronski fileri, botox, skinbusteri, PRP, mezoterapija i dr.",
+      "medicalSpecialty": [
+        "Aesthetic Medicine",
+        "Anti-Age Medicine",
+        "Regenerative Medicine",
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "RS",
+        "addressLocality": "Srbija",
+      },
+      "sameAs": [
+        "https://www.instagram.com/drigic.clinic/",
+      ],
+      "employee": {
+        "@type": "Physician",
+        "@id": "https://drigic.rs/nikola-igic#physician",
+        "name": "Dr Nikola Igić",
+        "jobTitle": "Osnivač i lekar",
+        "url": "https://drigic.rs/nikola-igic",
+        "knowsAbout": [
+          "Aesthetic medicine",
+          "Hyaluronic fillers",
+          "Botox",
+          "Skinboosters",
+          "PRP",
+          "Mesotherapy",
+          "Anti-age treatments",
+        ],
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Tretmani i usluge",
+        "url": "https://drigic.rs/tretmani",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://drigic.rs/#website",
+      "name": "Dr Igić Clinic",
+      "url": "https://drigic.rs",
+      "publisher": { "@id": "https://drigic.rs/#organization" },
+      "inLanguage": ["sr", "en", "de", "it"],
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://drigic.rs/tretmani?q={search_term_string}",
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ],
+};
+
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
@@ -102,6 +174,12 @@ export default async function RootLayout({ children }) {
       className={fontRootClass}
       style={{ overflowX: "hidden", width: "100%" }}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
+        />
+      </head>
       <body
         className="body clinic-theme-light clinic-app-shell"
         style={{

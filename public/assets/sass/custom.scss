@@ -1750,8 +1750,10 @@ a.clinic-glow-btn {
   }
 
   /* ─── Service image cards ─────────────────────────────────────────────── */
+
+  /* photo layer — always absolute, fills the card */
   .clinic-treatment-card__img {
-    position: absolute;
+    position: absolute !important; /* immune to > * rule below */
     inset: 0;
     z-index: 0;
     overflow: hidden;
@@ -1761,117 +1763,139 @@ a.clinic-glow-btn {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 20%;
-      transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
-                  filter 0.6s ease;
-      /* start: neutral – readable on both themes because overlay takes over */
-      filter: saturate(0.75) brightness(0.62);
+      object-position: center 22%;
+      filter: saturate(0.78) brightness(0.64);
+      transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease;
       will-change: transform, filter;
     }
   }
 
-  /* dual-layer scrim: thin dark top vignette + strong dark fade from bottom */
+  /* dual scrim: subtle dark top vignette + strong bottom fade */
   .clinic-treatment-card__img-overlay {
-    position: absolute;
+    position: absolute !important;
     inset: 0;
     z-index: 1;
     background:
       linear-gradient(180deg,
-        rgba(4,  8, 18, 0.55)  0%,
-        rgba(4,  8, 18, 0.12) 32%,
-        rgba(4,  8, 18, 0.10) 48%,
-        rgba(3,  7, 16, 0.78) 72%,
-        rgba(2,  5, 14, 0.97) 100%);
-    transition: opacity 0.45s ease;
+        rgba(4, 8, 18, 0.52)  0%,
+        rgba(4, 8, 18, 0.08) 30%,
+        rgba(4, 8, 18, 0.08) 46%,
+        rgba(3, 7, 16, 0.80) 68%,
+        rgba(2, 5, 14, 0.98) 100%);
+    transition: background 0.45s ease;
   }
 
-  /* card with photo: flex column so topline sticks top, content goes bottom */
+  /* card with photo: flex column — topline top, content bottom */
   .clinic-treatment-card--has-image {
     display: flex;
     flex-direction: column;
-    min-height: 300px;
-    padding: 18px 20px 20px;
-    /* image defines the bg – must not be overridden by light-theme rule */
+    min-height: 320px;
+    padding: 18px 20px 22px;
+    /* transparent so the absolute image shows through */
     background: transparent !important;
-    border-color: rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 20px 44px rgba(2, 5, 14, 0.38) !important;
+    border-color: rgba(255, 255, 255, 0.13) !important;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.07),
+      0 24px 52px rgba(2, 5, 14, 0.44) !important;
 
-    /* always-white text – readable on image regardless of site theme */
-    .clinic-treatment-card__index,
-    .clinic-treatment-card__mood {
-      color: rgba(255, 255, 255, 0.82) !important;
-      border-color: rgba(255, 255, 255, 0.2) !important;
-      background: rgba(0, 0, 0, 0.28) !important;
-      backdrop-filter: blur(6px);
-    }
-
-    .clinic-treatment-card__icon {
-      margin-top: auto;   /* push icon + rest to bottom */
-      color: #fff !important;
-      background: rgba(255, 255, 255, 0.12) !important;
-      border-color: rgba(255, 255, 255, 0.2) !important;
-      backdrop-filter: blur(6px);
-    }
-
-    .clinic-treatment-card__body {
-      gap: 6px;
-
-      h3.portfolio-title {
-        color: #fff !important;
-        font-size: 20px;
-        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
-      }
-
-      p.portfolio-meta {
-        color: rgba(220, 232, 255, 0.88) !important;
-        font-size: 13px;
-        line-height: 1.55;
-        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
-      }
-    }
-
-    .clinic-treatment-card__tags span {
-      color: rgba(220, 235, 255, 0.9) !important;
-      border-color: rgba(255, 255, 255, 0.18) !important;
-      background: rgba(0, 0, 0, 0.30) !important;
-      backdrop-filter: blur(4px);
-    }
-
-    .clinic-treatment-link {
-      color: #fff !important;
-      border-color: rgba(255, 255, 255, 0.32) !important;
-      background: rgba(0, 0, 0, 0.38) !important;
-      backdrop-filter: blur(6px);
-      font-size: 11px;
-    }
-
-    .clinic-treatment-card__arrow {
-      color: #fff !important;
-      border-color: rgba(255, 255, 255, 0.24) !important;
+    /* ── critical: only content children get z-index,
+       __img and __shine are already absolute ── */
+    > *:not(.clinic-treatment-card__img):not(.clinic-treatment-card__shine) {
+      position: relative;
+      z-index: 2;
     }
 
     .clinic-treatment-card__shine { z-index: 3; }
 
-    /* all grid children over the image */
-    > * { position: relative; z-index: 2; }
+    /* pills — frosted glass, always readable on dark image */
+    .clinic-treatment-card__index,
+    .clinic-treatment-card__mood {
+      color: rgba(255, 255, 255, 0.88) !important;
+      border-color: rgba(255, 255, 255, 0.20) !important;
+      background: rgba(0, 0, 0, 0.36) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* icon pushed to bottom via auto margin */
+    .clinic-treatment-card__icon {
+      margin-top: auto;
+      color: #fff !important;
+      background: rgba(255, 255, 255, 0.13) !important;
+      border-color: rgba(255, 255, 255, 0.22) !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .clinic-treatment-card__body {
+      gap: 5px;
+
+      h3.portfolio-title {
+        color: #fff !important;
+        font-size: 20px;
+        line-height: 1.18;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.70);
+      }
+
+      p.portfolio-meta {
+        color: rgba(212, 230, 255, 0.84) !important;
+        font-size: 13px;
+        line-height: 1.52;
+        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.52);
+      }
+    }
+
+    .clinic-treatment-card__tags span {
+      color: rgba(212, 232, 255, 0.88) !important;
+      border-color: rgba(255, 255, 255, 0.16) !important;
+      background: rgba(0, 0, 0, 0.32) !important;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+
+    /* CTA pill — solid white, always legible on both themes */
+    .clinic-treatment-link {
+      background: rgba(255, 255, 255, 0.94) !important;
+      color: #0b1325 !important;
+      border-color: transparent !important;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.30);
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+      &:hover {
+        background: #fff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.36);
+      }
+    }
+
+    .clinic-treatment-card__arrow {
+      color: rgba(255, 255, 255, 0.82) !important;
+      border-color: rgba(255, 255, 255, 0.20) !important;
+    }
   }
 
+  /* hover state */
   .clinic-treatment-card--has-image:hover {
-    box-shadow: 0 32px 64px rgba(2, 5, 14, 0.52) !important;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.10),
+      0 32px 68px rgba(2, 5, 14, 0.56) !important;
 
     .clinic-treatment-card__img img {
       transform: scale(1.06);
-      filter: saturate(0.82) brightness(0.52);
+      filter: saturate(0.84) brightness(0.54);
     }
 
     .clinic-treatment-card__img-overlay {
       background:
         linear-gradient(180deg,
-          rgba(4,  8, 18, 0.62)  0%,
-          rgba(4,  8, 18, 0.14) 32%,
-          rgba(4,  8, 18, 0.12) 48%,
-          rgba(3,  7, 16, 0.86) 72%,
-          rgba(2,  5, 14, 1.00) 100%);
+          rgba(4, 8, 18, 0.60)  0%,
+          rgba(4, 8, 18, 0.10) 30%,
+          rgba(4, 8, 18, 0.10) 46%,
+          rgba(3, 7, 16, 0.88) 68%,
+          rgba(2, 5, 14, 1.00) 100%);
     }
   }
 
@@ -6373,4 +6397,48 @@ body,
   .clinic-pricing-category-title {
     font-size: 17px;
   }
+}
+
+/* ── Light-theme overrides for always-dark elements ─────────────────────────
+   These come AFTER the generic h1/h2/p !important rules so they win via
+   higher specificity (4 classes > 2 classes + 1 element).
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Category hero — text is always white because image provides dark context */
+.clinic-theme-light .clinic-home5 .clinic-category-hero .clinic-category-hero__title,
+.clinic-theme-light .clinic-home5 .clinic-category-hero h1 {
+  color: #ffffff !important;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.55) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-category-hero .clinic-category-hero__intro,
+.clinic-theme-light .clinic-home5 .clinic-category-hero p {
+  color: rgba(215, 232, 255, 0.88) !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-category-hero .clinic-category-hero__eyebrow {
+  color: rgba(181, 216, 255, 0.92) !important;
+}
+
+/* Landing image cards — text is always white (image + scrim = always dark) */
+.clinic-theme-light .clinic-home5 .clinic-treatment-card--has-image h3,
+.clinic-theme-light .clinic-home5 .clinic-treatment-card--has-image .portfolio-title {
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.70) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-treatment-card--has-image p,
+.clinic-theme-light .clinic-home5 .clinic-treatment-card--has-image .portfolio-meta {
+  color: rgba(212, 230, 255, 0.84) !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.52) !important;
+}
+
+/* CTA link inside image cards — solid white pill, dark text */
+.clinic-theme-light .clinic-home5 .clinic-treatment-card--has-image .clinic-treatment-link {
+  background: rgba(255, 255, 255, 0.94) !important;
+  color: #0b1325 !important;
+  -webkit-text-fill-color: #0b1325 !important;
+  border-color: transparent !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.30) !important;
 }
