@@ -1749,6 +1749,63 @@ a.clinic-glow-btn {
     box-shadow: 0 28px 56px rgba(4, 9, 16, 0.34);
   }
 
+  /* Service image on treatment card */
+  .clinic-treatment-card__img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    border-radius: 16px;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
+      filter: saturate(0.85) brightness(0.55);
+      will-change: transform, filter;
+    }
+  }
+
+  .clinic-treatment-card__img-overlay {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg,
+        rgba(8, 14, 24, 0.30) 0%,
+        rgba(7, 12, 22, 0.72) 55%,
+        rgba(6, 10, 20, 0.94) 100%);
+    transition: opacity 0.4s ease;
+  }
+
+  .clinic-treatment-card--has-image {
+    background: rgba(6, 10, 18, 0.5);
+
+    .clinic-treatment-card__topline,
+    .clinic-treatment-card__icon,
+    .clinic-treatment-card__body,
+    .clinic-treatment-card__arrow {
+      position: relative;
+      z-index: 1;
+    }
+
+    .clinic-treatment-card__shine {
+      z-index: 2;
+    }
+  }
+
+  .clinic-treatment-card--has-image:hover {
+    .clinic-treatment-card__img img {
+      transform: scale(1.07);
+      filter: saturate(0.9) brightness(0.45);
+    }
+
+    .clinic-treatment-card__img-overlay {
+      opacity: 0.92;
+    }
+  }
+
   .clinic-founder-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -2103,6 +2160,117 @@ a.clinic-glow-btn {
     color: #f4f8ff;
     background: rgba(255, 255, 255, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.38);
+  }
+
+  /* Category page hero */
+  .clinic-category-hero {
+    position: relative;
+    width: 100%;
+    min-height: 440px;
+    border-radius: 22px;
+    overflow: hidden;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: flex-end;
+
+    @media (max-width: 767px) {
+      min-height: 280px;
+      border-radius: 16px;
+      margin-bottom: 32px;
+    }
+  }
+
+  .clinic-category-hero__img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      filter: saturate(0.82) brightness(0.7);
+    }
+  }
+
+  .clinic-category-hero__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      linear-gradient(160deg,
+        rgba(6, 11, 20, 0.18) 0%,
+        rgba(6, 11, 20, 0.52) 45%,
+        rgba(4, 8, 16, 0.92) 100%);
+  }
+
+  .clinic-category-hero__content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding: 40px 40px 44px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    @media (max-width: 767px) {
+      padding: 24px 20px 28px;
+    }
+  }
+
+  .clinic-category-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #b5d8ff;
+    opacity: 0.9;
+
+    &::before {
+      content: "";
+      display: block;
+      width: 28px;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.7;
+    }
+  }
+
+  .clinic-category-hero__title {
+    font-size: clamp(32px, 5vw, 54px);
+    font-weight: 900;
+    color: #f4f8ff;
+    margin: 0;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+
+  .clinic-category-hero__intro {
+    font-size: clamp(14px, 1.6vw, 16px);
+    color: rgba(210, 228, 252, 0.9);
+    max-width: 680px;
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  .clinic-category-hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+    color: #e8f1ff;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 6px;
   }
 
   .clinic-treatment-detail-layout {
