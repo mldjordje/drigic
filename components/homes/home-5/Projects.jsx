@@ -268,7 +268,7 @@ export default function Projects() {
                 href={`/tretmani/${item.slug}`}
                 className={`clinic-treatment-card clinic-treatment-card--showcase glass-panel clinic-hover-raise clinic-reveal wow ${
                   index % 2 === 0 ? "img-custom-anim-left" : "img-custom-anim-right"
-                } animated`}
+                } animated${item.imageCard ? " clinic-treatment-card--has-image" : ""}`}
                 data-wow-duration="1.5s"
                 data-wow-delay={`${0.1 + index * 0.06}s`}
                 aria-label={`${localizedItem.name} - ${t("treatments.seeServices")}`}
@@ -276,6 +276,20 @@ export default function Projects() {
                   cardRefs.current[index] = node;
                 }}
               >
+                {item.imageCard ? (
+                  <div className="clinic-treatment-card__img" aria-hidden="true">
+                    <img
+                      src={item.imageCard}
+                      alt=""
+                      width={740}
+                      height={500}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <span className="clinic-treatment-card__img-overlay" />
+                  </div>
+                ) : null}
+
                 <span className="clinic-treatment-card__shine" aria-hidden="true" />
                 <div className="clinic-treatment-card__topline">
                   <span className="clinic-treatment-card__index">

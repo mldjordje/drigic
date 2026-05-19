@@ -232,14 +232,40 @@ export default async function TreatmentCategoryPage({ params }) {
       <Header4 />
       <main style={{ paddingTop: 130, paddingBottom: 90 }}>
         <section className="container">
-          <div className="title-area text-center clinic-reveal">
-            <h1 className="sec-title text-smoke" style={{ marginBottom: 12 }}>
-              {categorySpec.name}
-            </h1>
-            <p className="sec-text text-smoke" style={{ maxWidth: 900, margin: "0 auto" }}>
-              {categorySpec.heroIntro}
-            </p>
-          </div>
+          {categorySpec.image ? (
+            <div className="clinic-category-hero clinic-reveal">
+              <div className="clinic-category-hero__img">
+                <img
+                  src={categorySpec.image}
+                  alt={categorySpec.name}
+                  width={1600}
+                  height={900}
+                  loading="eager"
+                  decoding="async"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+              <div className="clinic-category-hero__overlay" />
+              <div className="clinic-category-hero__content">
+                <span className="clinic-category-hero__eyebrow">Dr Igić Clinic</span>
+                <h1 className="clinic-category-hero__title">{categorySpec.name}</h1>
+                <p className="clinic-category-hero__intro">{categorySpec.heroIntro}</p>
+                <span className="clinic-category-hero__badge">
+                  <i className={categorySpec.iconClass || "fas fa-spa"} />
+                  {t("treatments.bookAppointment")}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="title-area text-center clinic-reveal">
+              <h1 className="sec-title text-smoke" style={{ marginBottom: 12 }}>
+                {categorySpec.name}
+              </h1>
+              <p className="sec-text text-smoke" style={{ maxWidth: 900, margin: "0 auto" }}>
+                {categorySpec.heroIntro}
+              </p>
+            </div>
+          )}
 
           <div className="clinic-treatment-detail-layout">
             <article className="clinic-treatment-detail-content glass-panel clinic-reveal">
