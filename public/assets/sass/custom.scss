@@ -1893,6 +1893,216 @@ a.clinic-glow-btn {
     }
   }
 
+  /* ════════════════════════════════════════════════════════════════════════
+     svc-card — unified service card system (dark + light theme)
+     ════════════════════════════════════════════════════════════════════════ */
+
+  .svc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 8px;
+
+    @media (max-width: 1100px) { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 840px)  { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 520px)  { grid-template-columns: 1fr; gap: 12px; }
+  }
+
+  /* ── base card ── */
+  .svc-card {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+    padding: 18px 18px 66px; /* bottom pad clears the arrow */
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow  0.38s ease;
+
+    &:hover { transform: translateY(-8px); }
+  }
+
+  /* ── photo variant ── */
+  .svc-card--photo {
+    background: #08101a;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 22px 54px rgba(2, 5, 14, 0.48);
+
+    &:hover {
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.12),
+        0 32px 72px rgba(2, 5, 14, 0.60);
+    }
+  }
+
+  /* photo — full-card background image */
+  .svc-card--photo .svc-card__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 18%;
+    filter: saturate(0.76) brightness(0.66);
+    transition:
+      transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.55s ease;
+    will-change: transform;
+  }
+
+  .svc-card--photo:hover .svc-card__bg {
+    transform: scale(1.06);
+    filter: saturate(0.82) brightness(0.52);
+  }
+
+  /* photo — gradient scrim */
+  .svc-card--photo .svc-card__scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg,
+        rgba(4,  8, 18, 0.46)  0%,
+        rgba(4,  8, 18, 0.04) 34%,
+        rgba(4,  8, 18, 0.04) 50%,
+        rgba(3,  7, 16, 0.84) 72%,
+        rgba(2,  5, 14, 0.99) 100%);
+    transition: background 0.4s ease;
+  }
+
+  .svc-card--photo:hover .svc-card__scrim {
+    background:
+      linear-gradient(180deg,
+        rgba(4,  8, 18, 0.58)  0%,
+        rgba(4,  8, 18, 0.06) 34%,
+        rgba(4,  8, 18, 0.06) 50%,
+        rgba(3,  7, 16, 0.90) 72%,
+        rgba(2,  5, 14, 1.00) 100%);
+  }
+
+  /* ── plain variant (no image) ── */
+  .svc-card--plain {
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(100, 160, 240, 0.07) 0%, transparent 55%),
+      linear-gradient(148deg, rgba(14, 22, 38, 0.98) 0%, rgba(8, 13, 24, 1.00) 100%);
+    border: 1px solid rgba(180, 210, 255, 0.13);
+    box-shadow: 0 18px 44px rgba(2, 5, 14, 0.30);
+
+    &:hover {
+      box-shadow: 0 28px 60px rgba(2, 5, 14, 0.42);
+      border-color: rgba(180, 210, 255, 0.20);
+    }
+  }
+
+  /* ── number badge ── */
+  .svc-card__num {
+    position: relative;
+    z-index: 2;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  /* ── icon (plain cards only) ── */
+  .svc-card__icon {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(180, 210, 255, 0.07);
+    border: 1px solid rgba(180, 210, 255, 0.14);
+    font-size: 22px;
+    color: rgba(195, 220, 255, 0.86);
+    flex-shrink: 0;
+    margin-top: auto; /* push icon to vertical center of the space */
+    margin-bottom: 12px;
+    transition: background 0.26s ease, border-color 0.26s ease, color 0.26s ease;
+  }
+
+  .svc-card--plain:hover .svc-card__icon {
+    background: rgba(180, 210, 255, 0.13);
+    border-color: rgba(180, 210, 255, 0.24);
+    color: rgba(210, 232, 255, 0.96);
+  }
+
+  /* ── body: title + description, pinned to bottom ── */
+  .svc-card__body {
+    position: relative;
+    z-index: 2;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .svc-card__title {
+    margin: 0;
+    font-size: clamp(18px, 2.4vw, 22px);
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: -0.022em;
+    color: #ffffff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65);
+  }
+
+  .svc-card__desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.50;
+    color: rgba(198, 220, 255, 0.70);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  }
+
+  /* ── arrow circle — absolute bottom-right ── */
+  .svc-card__arrow {
+    position: absolute;
+    z-index: 3;
+    bottom: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    background: #ffffff;
+    color: #0b1325;
+    border: none;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.28s ease;
+  }
+
+  .svc-card:hover .svc-card__arrow {
+    transform: translate(3px, -3px);
+    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.38);
+  }
+
+  /* ── responsive height ── */
+  @media (max-width: 840px) {
+    .svc-card { min-height: 280px; }
+  }
+  @media (max-width: 520px) {
+    .svc-card { min-height: 260px; }
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════ */
+
   .clinic-founder-eyebrow {
     display: inline-flex;
     align-items: center;
@@ -6505,4 +6715,51 @@ body,
   -webkit-text-fill-color: #0b1325 !important;
   border-color: transparent !important;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.30) !important;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   svc-card — light-theme overrides
+   Both variants use intentionally dark backgrounds (photo scrim / dark gradient)
+   so all inner text must stay white/light, overriding the global !important rules.
+   4-class specificity (0,4,0) beats 3-class + 1-element (0,3,1).
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* photo variant: always dark behind scrim — keep white */
+.clinic-theme-light .clinic-home5 .svc-card--photo .svc-card__title,
+.clinic-theme-light .clinic-home5 .svc-card--photo h3 {
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65) !important;
+}
+
+.clinic-theme-light .clinic-home5 .svc-card--photo .svc-card__desc,
+.clinic-theme-light .clinic-home5 .svc-card--photo p {
+  color: rgba(198, 220, 255, 0.78) !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
+}
+
+.clinic-theme-light .clinic-home5 .svc-card--photo .svc-card__num {
+  color: rgba(255, 255, 255, 0.38) !important;
+}
+
+/* plain variant: dark gradient bg — keep white text */
+.clinic-theme-light .clinic-home5 .svc-card--plain .svc-card__title,
+.clinic-theme-light .clinic-home5 .svc-card--plain h3 {
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.65) !important;
+}
+
+.clinic-theme-light .clinic-home5 .svc-card--plain .svc-card__desc,
+.clinic-theme-light .clinic-home5 .svc-card--plain p {
+  color: rgba(198, 220, 255, 0.70) !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
+}
+
+.clinic-theme-light .clinic-home5 .svc-card--plain .svc-card__num {
+  color: rgba(255, 255, 255, 0.38) !important;
+}
+
+/* arrow keeps dark text (white bg circle) */
+.clinic-theme-light .clinic-home5 .svc-card .svc-card__arrow {
+  color: #0b1325 !important;
+  background: #ffffff !important;
 }
