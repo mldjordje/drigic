@@ -3420,14 +3420,7 @@ a.clinic-glow-btn {
   color: rgba(13, 23, 41, 0.70) !important;
 }
 
-/* Light theme — give the header a frosted-glass tint so links stay readable
-   over both the dark hero image and the light page body */
-.clinic-theme-light .clinic-home5 .header-layout2 .sticky-wrapper {
-  background: rgba(255, 255, 255, 0.72) !important;
-  backdrop-filter: blur(14px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(1.3) !important;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06) !important;
-}
+
 
 /* hamburger lines — dark on light theme */
 .clinic-theme-light .clinic-home5 .header-layout2 .navbar-right .sidebar-btn .line {
