@@ -2,7 +2,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
@@ -49,10 +49,10 @@ function ArrowIcon() {
 }
 
 export default function Hero() {
-  const mobileVideoRef = useRef(null);
+  const videoRef = useRef(null);
   const { locale, t } = useLocale();
   const { user: currentUser } = useSession();
-  const [showMobileVideo, setShowMobileVideo] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const heroContentRef = useRef(null);
   const wordRefs = useRef([]);
   const ctaGroupRef = useRef(null);
@@ -76,24 +76,15 @@ export default function Hero() {
     return () => document.body.classList.remove("bg-title");
   }, []);
 
+  // Resume playback on tab/visibility restore
   useEffect(() => {
-    let timerId = null;
-    const revealVideo = () => setShowMobileVideo(true);
-    const hasPreloader = !!document.querySelector(".clinic-preloader");
-
-    if (hasPreloader) {
-      window.addEventListener("clinic:preloader:done", revealVideo, { once: true });
-      timerId = window.setTimeout(revealVideo, 1200);
-    } else {
-      timerId = window.setTimeout(revealVideo, 450);
-    }
-
-    return () => {
-      window.removeEventListener("clinic:preloader:done", revealVideo);
-      if (timerId) {
-        window.clearTimeout(timerId);
+    const resume = () => {
+      if (document.visibilityState !== "hidden" && videoRef.current) {
+        videoRef.current.play().catch(() => {});
       }
     };
+    document.addEventListener("visibilitychange", resume);
+    return () => document.removeEventListener("visibilitychange", resume);
   }, []);
 
   useEffect(() => {
@@ -234,69 +225,27 @@ export default function Hero() {
     };
   }, []);
 
-  const heroVideoSrc = useMemo(
-    () => "https://www.youtube-nocookie.com/embed/T2w-sqZ2_BY?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=T2w-sqZ2_BY&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&fs=0&enablejsapi=1&vq=small",
-    []
-  );
-
-  const forcePlayMuted = useCallback(() => {
-    const iframe = mobileVideoRef.current;
-    const frameWindow = iframe?.contentWindow;
-    if (!frameWindow) return;
-    frameWindow.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*");
-    frameWindow.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
-  }, []);
-
-  const triggerPlaybackWithGesture = useCallback(() => {
-    forcePlayMuted();
-    window.setTimeout(() => forcePlayMuted(), 220);
-    window.setTimeout(() => forcePlayMuted(), 900);
-  }, [forcePlayMuted]);
-
-  useEffect(() => {
-    const retryTimer = window.setTimeout(() => forcePlayMuted(), 1200);
-    return () => window.clearTimeout(retryTimer);
-  }, [forcePlayMuted]);
-
-  useEffect(() => {
-    const resume = () => {
-      if (document.visibilityState === "hidden") {
-        return;
-      }
-      triggerPlaybackWithGesture();
-    };
-    window.addEventListener("touchstart", resume, { passive: true });
-    window.addEventListener("pointerdown", resume, { passive: true });
-    window.addEventListener("visibilitychange", resume);
-    return () => {
-      window.removeEventListener("touchstart", resume);
-      window.removeEventListener("pointerdown", resume);
-      window.removeEventListener("visibilitychange", resume);
-    };
-  }, [triggerPlaybackWithGesture]);
-
   return (
     <div className="hero-wrapper hero-5" id="hero">
       <div
-        className="hero-slider background-image por"
-        style={{ backgroundImage: "url(/assets/img/slika1.webp)" }}
-        onTouchStart={triggerPlaybackWithGesture}
-        onPointerDown={triggerPlaybackWithGesture}
+        className="hero-slider por"
+        style={{ background: "#020508" }}
       >
-        {/* Mobile video background */}
-        <div className="clinic-hero-mobile-video" aria-hidden="true">
-          {showMobileVideo ? (
-            <iframe
-              ref={mobileVideoRef}
-              src={heroVideoSrc}
-              title="Dr Igić hero background video"
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-              loading="eager"
-              onLoad={forcePlayMuted}
-            />
-          ) : null}
-        </div>
+        {/* Self-hosted background video */}
+        <video
+          ref={videoRef}
+          className={`clinic-hero-video${videoReady ? " clinic-hero-video--ready" : ""}`}
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/assets/video/hero-poster.webp"
+          aria-hidden="true"
+          onCanPlayThrough={() => setVideoReady(true)}
+        >
+          <source src="/assets/video/hero.webm" type="video/webm" />
+          <source src="/assets/video/hero.mp4"  type="video/mp4" />
+        </video>
 
         {/* Overlays */}
         <div className="hero-overlay" data-overlay="title" data-opacity="5" />

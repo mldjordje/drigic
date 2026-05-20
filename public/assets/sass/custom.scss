@@ -781,12 +781,22 @@ a.clinic-glow-btn {
     color: #d9e8f8 !important;
   }
 
-  .clinic-hero-mobile-video {
-    display: none;
+  /* Self-hosted hero background video */
+  .clinic-hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.9s ease;
   }
 
-  .clinic-hero-mobile-video iframe {
-    border: 0;
+  .clinic-hero-video--ready {
+    opacity: 1;
   }
 
   .hero-wrapper.hero-5 .hero-slider {
@@ -2859,36 +2869,7 @@ a.clinic-glow-btn {
       overflow: hidden;
     }
 
-    .clinic-hero-mobile-video {
-      display: block;
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .clinic-hero-mobile-video::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(7, 10, 14, 0.45),
-        rgba(7, 10, 14, 0.6)
-      );
-    }
-
-    .clinic-hero-mobile-video iframe {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 177.78vh;
-      height: 100vh;
-      min-width: 100%;
-      min-height: 100%;
-      transform: translate(-50%, -50%);
-    }
+    /* clinic-hero-video covers all breakpoints via object-fit: cover */
 
     .clinic-booking-calendar {
       padding: 10px;
