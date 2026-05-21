@@ -35,6 +35,10 @@ export async function generateMetadata({ params }) {
   const canonicalPath = `/tretmani/${category.slug}`;
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
 
+  const ogImages = category.image
+    ? [{ url: `${siteUrl}${category.image}`, width: 1600, height: 900, alt: category.name }]
+    : [{ url: `${siteUrl}/icons/icon-512.png`, width: 512, height: 512, alt: SITE_NAME }];
+
   return {
     title: category.seoTitle,
     description: category.seoDescription,
@@ -49,11 +53,13 @@ export async function generateMetadata({ params }) {
       type: "article",
       locale: "sr_RS",
       siteName: SITE_NAME,
+      images: ogImages,
     },
     twitter: {
       card: "summary_large_image",
       title: category.seoTitle,
       description: category.seoDescription,
+      images: ogImages.map((i) => i.url),
     },
   };
 }
@@ -214,17 +220,71 @@ export default async function TreatmentCategoryPage({ params }) {
   const categoryBeforeAfter = await loadCategoryBeforeAfter(resolvedParams?.categorySlug);
   const faq = buildFaq(categorySpec);
 
+  const siteUrl = getConfiguredSiteUrl();
+  const categoryUrl = `${siteUrl}/tretmani/${categorySpec.slug}`;
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faq.map((item) => ({
-      "@type": "Question",
-      name: item.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: item.answer,
+    "@graph": [
+      {
+        "@type": "MedicalProcedure",
+        "@id": `${categoryUrl}#procedure`,
+        "name": categorySpec.name,
+        "description": categorySpec.heroIntro,
+        "howPerformed": categorySpec.procedure || undefined,
+        "followup": categorySpec.aftercare || undefined,
+        "procedureType": {
+          "@type": "MedicalProcedureType",
+          "name": "Aesthetic and regenerative medicine",
+        },
+        "recognizingAuthority": {
+          "@type": "MedicalOrganization",
+          "name": "Dr Igić Clinic",
+          "url": siteUrl,
+        },
+        "beneficialFor": categorySpec.benefits?.map((b) => ({
+          "@type": "MedicalIndication",
+          "name": b,
+        })),
+        "url": categoryUrl,
+        ...(categorySpec.image
+          ? { "image": `${siteUrl}${categorySpec.image}` }
+          : {}),
+        "speakable": {
+          "@type": "SpeakableSpecification",
+          "cssSelector": [".clinic-category-hero__title", ".clinic-category-hero__intro"],
+        },
       },
-    })),
+      {
+        "@type": "FAQPage",
+        "@id": `${categoryUrl}#faq`,
+        "mainEntity": faq.map((item) => ({
+          "@type": "Question",
+          "name": item.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": item.answer,
+          },
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Tretmani",
+            "item": `${siteUrl}/tretmani`,
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": categorySpec.name,
+            "item": categoryUrl,
+          },
+        ],
+      },
+    ],
   };
 
   return (
@@ -250,10 +310,16 @@ export default async function TreatmentCategoryPage({ params }) {
                 <span className="clinic-category-hero__eyebrow">Dr Igić Clinic</span>
                 <h1 className="clinic-category-hero__title">{categorySpec.name}</h1>
                 <p className="clinic-category-hero__intro">{categorySpec.heroIntro}</p>
-                <span className="clinic-category-hero__badge">
-                  <i className={categorySpec.iconClass || "fas fa-spa"} />
-                  {t("treatments.bookAppointment")}
-                </span>
+                <div className="clinic-category-hero__actions">
+                  <Link href="/booking" className="clinic-category-hero__cta">
+                    <i className="fas fa-calendar-check" />
+                    {t("treatments.bookAppointment")}
+                  </Link>
+                  <span className="clinic-category-hero__badge">
+                    <i className={categorySpec.iconClass || "fas fa-spa"} />
+                    {categorySpec.name}
+                  </span>
+                </div>
               </div>
             </div>
           ) : (

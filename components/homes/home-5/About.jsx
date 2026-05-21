@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+
 import React, { useMemo, useState } from "react";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { getFounderCopy } from "@/lib/content/founder-copy";
@@ -77,20 +78,14 @@ export default function About() {
                       </span>
                     ))}
                   </div>
-                  <div className="btn-wrap mt-50 d-flex align-items-center gap-3">
-                    <Link scroll={false} href="/booking" className="link-btn text-theme clinic-glow-btn">
-                      <span className="link-effect">
-                        <span className="effect-1">{copy.primaryCta}</span>
-                        <span className="effect-1">{copy.primaryCta}</span>
+                  <div className="about-founder-btns">
+                    <Link scroll={false} href="/booking" className="about-founder-btn about-founder-btn--primary">
+                      {copy.primaryCta}
+                      <span className="about-founder-btn__icon" aria-hidden="true">
+                        <i className="fas fa-arrow-right" />
                       </span>
-                      <Image
-                        width={13}
-                        height={13}
-                        src="/assets/img/icon/arrow-left-top.svg"
-                        alt="icon"
-                      />
                     </Link>
-                    <Link scroll={false} href="/nikola-igic" className="clinic-treatment-link">
+                    <Link scroll={false} href="/nikola-igic" className="about-founder-btn about-founder-btn--ghost">
                       {copy.secondaryCta}
                     </Link>
                   </div>

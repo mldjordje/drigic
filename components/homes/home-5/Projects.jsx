@@ -258,27 +258,30 @@ export default function Projects() {
           </div>
         </div>
 
-        <div className="clinic-treatment-grid clinic-treatment-grid--showcase">
+        <div className="svc-grid clinic-reveal">
           {SERVICE_CATEGORY_SPECS.map((item, index) => {
             const localizedItem = getLocalizedCategoryCopy(locale, item);
+            const isPhoto = Boolean(item.imageCard);
 
             return (
               <Link
                 key={item.slug}
                 href={`/tretmani/${item.slug}`}
-                className={`clinic-treatment-card clinic-treatment-card--showcase glass-panel clinic-hover-raise clinic-reveal wow ${
+                className={`svc-card ${isPhoto ? "svc-card--photo" : "svc-card--plain"} clinic-reveal wow ${
                   index % 2 === 0 ? "img-custom-anim-left" : "img-custom-anim-right"
-                } animated${item.imageCard ? " clinic-treatment-card--has-image" : ""}`}
-                data-wow-duration="1.5s"
-                data-wow-delay={`${0.1 + index * 0.06}s`}
-                aria-label={`${localizedItem.name} - ${t("treatments.seeServices")}`}
+                } animated`}
+                data-wow-duration="1.2s"
+                data-wow-delay={`${0.05 + index * 0.05}s`}
+                aria-label={`${localizedItem.name} — ${t("treatments.seeServices")}`}
                 ref={(node) => {
                   cardRefs.current[index] = node;
                 }}
               >
-                {item.imageCard ? (
-                  <div className="clinic-treatment-card__img" aria-hidden="true">
+                {/* Photo background */}
+                {isPhoto ? (
+                  <>
                     <img
+                      className="svc-card__bg"
                       src={item.imageCard}
                       alt=""
                       width={740}
@@ -286,37 +289,30 @@ export default function Projects() {
                       loading="lazy"
                       decoding="async"
                     />
-                    <span className="clinic-treatment-card__img-overlay" />
-                  </div>
+                    <span className="svc-card__scrim" aria-hidden="true" />
+                  </>
                 ) : null}
 
-                <span className="clinic-treatment-card__shine" aria-hidden="true" />
-                <div className="clinic-treatment-card__topline">
-                  <span className="clinic-treatment-card__index">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <span className="clinic-treatment-card__mood">
-                    {getCategoryMood(item.slug, showcaseCopy.labels)}
-                  </span>
-                </div>
-
-                <span className="clinic-treatment-card__icon" aria-hidden="true">
-                  <i className={item.iconClass || "fas fa-spa"} />
+                {/* Number badge */}
+                <span className="svc-card__num" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
 
-                <div className="portfolio-details clinic-treatment-card__body">
-                  <h3 className="portfolio-title">{localizedItem.name}</h3>
-                  <p className="portfolio-meta">{localizedItem.shortDescription}</p>
+                {/* Icon — plain cards only */}
+                {!isPhoto ? (
+                  <span className="svc-card__icon" aria-hidden="true">
+                    <i className={item.iconClass || "fas fa-spa"} />
+                  </span>
+                ) : null}
 
-                  <div className="clinic-treatment-card__tags">
-                    <span>{showcaseCopy.labels.plan}</span>
-                    <span>{showcaseCopy.labels.natural}</span>
-                  </div>
-
-                  <span className="clinic-treatment-link">{t("treatments.seeServices")}</span>
+                {/* Title + description */}
+                <div className="svc-card__body">
+                  <h3 className="svc-card__title">{localizedItem.name}</h3>
+                  <p className="svc-card__desc">{localizedItem.shortDescription}</p>
                 </div>
 
-                <span className="clinic-treatment-card__arrow" aria-hidden="true">
+                {/* Arrow circle */}
+                <span className="svc-card__arrow" aria-hidden="true">
                   <i className="fas fa-arrow-right" />
                 </span>
               </Link>
