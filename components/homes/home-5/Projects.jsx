@@ -112,12 +112,11 @@ export default function Projects() {
         if (headerRef.current) {
           gsap.fromTo(
             headerRef.current,
-            { y: 32, opacity: 0, filter: "blur(10px)" },
+            { y: 28, opacity: 0 },
             {
               y: 0,
               opacity: 1,
-              filter: "blur(0px)",
-              duration: 0.9,
+              duration: 0.8,
               ease: "power3.out",
               scrollTrigger: {
                 trigger: headerRef.current,
@@ -148,22 +147,12 @@ export default function Projects() {
         if (cards.length) {
           gsap.fromTo(
             cards,
-            {
-              y: 70,
-              opacity: 0,
-              rotateX: 10,
-              scale: 0.94,
-              transformOrigin: "50% 100%",
-              filter: "blur(10px)",
-            },
+            { y: 50, opacity: 0 },
             {
               y: 0,
               opacity: 1,
-              rotateX: 0,
-              scale: 1,
-              filter: "blur(0px)",
-              duration: 1,
-              stagger: 0.08,
+              duration: 0.8,
+              stagger: 0.07,
               ease: "power3.out",
               scrollTrigger: {
                 trigger: sectionRef.current,

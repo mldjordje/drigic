@@ -791,11 +791,6 @@ a.clinic-glow-btn {
     object-position: center 20%;
     z-index: 0;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.9s ease;
-  }
-
-  .clinic-hero-video--ready {
     opacity: 1;
   }
 

@@ -2,7 +2,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
@@ -52,7 +52,6 @@ export default function Hero() {
   const videoRef = useRef(null);
   const { locale, t } = useLocale();
   const { user: currentUser } = useSession();
-  const [videoReady, setVideoReady] = useState(false);
   const heroContentRef = useRef(null);
   const wordRefs = useRef([]);
   const ctaGroupRef = useRef(null);
@@ -96,111 +95,58 @@ export default function Hero() {
     const veil = heroVeilRef.current;
     const line = lineRevealRef.current;
 
-    // --- Set initial hidden state immediately (shows while preloader is up) ---
     if (!reducedMotion) {
       gsap.set(veil, { opacity: 1 });
-      gsap.set(words, { yPercent: 110, opacity: 0, filter: "blur(6px)" });
+      gsap.set(words, { yPercent: 110, opacity: 0 });
       gsap.set(line, { scaleX: 0, opacity: 0, transformOrigin: "left center" });
-      gsap.set(ctaGroup, { y: 30, opacity: 0, scale: 0.92 });
-      gsap.set(founder, { x: -18, opacity: 0 });
+      gsap.set(ctaGroup, { y: 24, opacity: 0, scale: 0.94 });
+      gsap.set(founder, { x: -14, opacity: 0 });
     }
 
-    let tl = null;
+    let ctx = null;
+    let fallbackTimer = null;
 
     function startHeroAnimation() {
       if (reducedMotion) return;
 
-      tl = gsap.timeline();
+      ctx = gsap.context(() => {
+        const tl = gsap.timeline();
 
-      // 1. Veil lifts — dark curtain fades out revealing video/image
-      tl.to(veil, {
-        opacity: 0,
-        duration: 1.1,
-        ease: "power2.inOut",
-      }, 0);
+        tl.to(veil, { opacity: 0, duration: 1.0, ease: "power2.inOut" }, 0);
 
-      // 2. Words rise from below with blur clearing — staggered per word
-      tl.to(words, {
-        yPercent: 0,
-        opacity: 1,
-        filter: "blur(0px)",
-        duration: 0.85,
-        ease: "expo.out",
-        stagger: { amount: 0.42, ease: "power1.inOut" },
-      }, 0.25);
+        tl.to(words, {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.72,
+          ease: "expo.out",
+          stagger: { amount: 0.36, ease: "power1.inOut" },
+        }, 0.22);
 
-      // 3. Horizontal accent line sweeps in left→right
-      tl.to(line, {
-        scaleX: 1,
-        opacity: 1,
-        duration: 0.7,
-        ease: "power3.inOut",
-      }, 0.85);
+        tl.to(line, { scaleX: 1, opacity: 1, duration: 0.6, ease: "power3.inOut" }, 0.78);
 
-      // 4. Buttons appear — scale up from slightly small
-      tl.to(ctaGroup, {
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        duration: 0.65,
-        ease: "back.out(1.4)",
-      }, 1.05);
+        tl.to(ctaGroup, { y: 0, opacity: 1, scale: 1, duration: 0.58, ease: "back.out(1.3)" }, 0.96);
 
-      // 5. Founder link slides in from left
-      tl.to(founder, {
-        x: 0,
-        opacity: 1,
-        duration: 0.55,
-        ease: "power3.out",
-      }, 1.3);
+        tl.to(founder, { x: 0, opacity: 1, duration: 0.48, ease: "power3.out" }, 1.18);
 
-      // Scroll-driven parallax fade
-      const heroEl = document.getElementById("hero");
-      const contentEl = heroContentRef.current;
-      if (heroEl && contentEl) {
-        gsap.to(contentEl, {
-          yPercent: -8,
-          opacity: 0,
-          ease: "none",
-          scrollTrigger: {
-            trigger: heroEl,
-            start: "top top",
-            end: "75% top",
-            scrub: 1.1,
-          },
-        });
-      }
-
-      // Magnetic buttons — desktop/mouse only
-      const isTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-      if (!isTouch) {
-        const magnets = document.querySelectorAll(".clinic-hero-cta-btn.gsap-magnetic");
-        const strength = 28;
-        const moveMagnet = (e) => {
-          const el = e.currentTarget;
-          const b = el.getBoundingClientRect();
-          gsap.to(el, {
-            duration: 0.8, ease: "power3.out",
-            x: ((e.clientX - b.left) / el.offsetWidth - 0.5) * strength,
-            y: ((e.clientY - b.top) / el.offsetHeight - 0.5) * strength,
+        const heroEl = document.getElementById("hero");
+        const contentEl = heroContentRef.current;
+        if (heroEl && contentEl) {
+          gsap.to(contentEl, {
+            yPercent: -7,
+            opacity: 0,
+            ease: "none",
+            scrollTrigger: {
+              trigger: heroEl,
+              start: "top top",
+              end: "70% top",
+              scrub: 1.0,
+            },
           });
-        };
-        const resetMagnet = (e) => gsap.to(e.currentTarget, { duration: 0.8, ease: "power3.out", x: 0, y: 0 });
-        magnets.forEach((m) => {
-          m.addEventListener("mousemove", moveMagnet);
-          m.addEventListener("mouseleave", resetMagnet);
-        });
-        tl._magnetCleanup = () => magnets.forEach((m) => {
-          m.removeEventListener("mousemove", moveMagnet);
-          m.removeEventListener("mouseleave", resetMagnet);
-        });
-      }
+        }
+      });
     }
 
-    // Detect if preloader is on page — if yes, wait for its event.
-    // If no preloader (dev mode), start quickly.
     const hasPreloader = !!document.querySelector(".clinic-preloader");
-    let fallbackTimer = null;
 
     const onPreloaderDone = () => {
       clearTimeout(fallbackTimer);
@@ -208,20 +154,16 @@ export default function Hero() {
     };
 
     if (hasPreloader) {
-      // Real preloader present — wait for it, 8s safety fallback
       window.addEventListener("clinic:preloader:done", onPreloaderDone, { once: true });
       fallbackTimer = setTimeout(onPreloaderDone, 8000);
     } else {
-      // Dev mode / no preloader — start after 120ms
       fallbackTimer = setTimeout(onPreloaderDone, 120);
     }
 
     return () => {
       clearTimeout(fallbackTimer);
       window.removeEventListener("clinic:preloader:done", onPreloaderDone);
-      tl?._magnetCleanup?.();
-      tl?.kill();
-      ScrollTrigger.getAll().forEach((st) => st.kill());
+      ctx?.revert();
     };
   }, []);
 
@@ -234,14 +176,13 @@ export default function Hero() {
         {/* Self-hosted background video */}
         <video
           ref={videoRef}
-          className={`clinic-hero-video${videoReady ? " clinic-hero-video--ready" : ""}`}
+          className="clinic-hero-video"
           autoPlay
           muted
           loop
           playsInline
           poster="/assets/video/hero-poster.webp"
           aria-hidden="true"
-          onCanPlayThrough={() => setVideoReady(true)}
         >
           <source src="/assets/video/hero.webm" type="video/webm" />
           <source src="/assets/video/hero.mp4"  type="video/mp4" />
