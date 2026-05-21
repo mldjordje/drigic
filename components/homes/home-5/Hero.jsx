@@ -49,10 +49,10 @@ function ArrowIcon() {
 }
 
 export default function Hero() {
-  const mobileVideoRef = useRef(null);
+  const videoRef = useRef(null);
   const { locale, t } = useLocale();
   const { user: currentUser } = useSession();
-  const [showMobileVideo, setShowMobileVideo] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const heroContentRef = useRef(null);
   const wordRefs = useRef([]);
   const ctaGroupRef = useRef(null);
@@ -76,24 +76,15 @@ export default function Hero() {
     return () => document.body.classList.remove("bg-title");
   }, []);
 
+  // Resume playback on tab/visibility restore
   useEffect(() => {
-    let timerId = null;
-    const revealVideo = () => setShowMobileVideo(true);
-    const hasPreloader = !!document.querySelector(".clinic-preloader");
-
-    if (hasPreloader) {
-      window.addEventListener("clinic:preloader:done", revealVideo, { once: true });
-      timerId = window.setTimeout(revealVideo, 1200);
-    } else {
-      timerId = window.setTimeout(revealVideo, 450);
-    }
-
-    return () => {
-      window.removeEventListener("clinic:preloader:done", revealVideo);
-      if (timerId) {
-        window.clearTimeout(timerId);
+    const resume = () => {
+      if (document.visibilityState !== "hidden" && videoRef.current) {
+        videoRef.current.play().catch(() => {});
       }
     };
+    document.addEventListener("visibilitychange", resume);
+    return () => document.removeEventListener("visibilitychange", resume);
   }, []);
 
   useEffect(() => {
@@ -234,42 +225,27 @@ export default function Hero() {
     };
   }, []);
 
-  useEffect(() => {
-    const video = mobileVideoRef.current;
-    if (!video) return;
-    video.play().catch(() => {});
-  }, [showMobileVideo]);
-
-  useEffect(() => {
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") {
-        mobileVideoRef.current?.play().catch(() => {});
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
-
   return (
     <div className="hero-wrapper hero-5" id="hero">
       <div
-        className="hero-slider background-image por"
-        style={{ backgroundImage: "url(/assets/img/slika1.webp)" }}
+        className="hero-slider por"
+        style={{ background: "#020508" }}
       >
-        {/* Mobile video background */}
-        <div className="clinic-hero-mobile-video" aria-hidden="true">
-          {showMobileVideo ? (
-            <video
-              ref={mobileVideoRef}
-              src="/assets/video/hero.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-            />
-          ) : null}
-        </div>
+        {/* Self-hosted background video */}
+        <video
+          ref={videoRef}
+          className={`clinic-hero-video${videoReady ? " clinic-hero-video--ready" : ""}`}
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/assets/video/hero-poster.webp"
+          aria-hidden="true"
+          onCanPlayThrough={() => setVideoReady(true)}
+        >
+          <source src="/assets/video/hero.webm" type="video/webm" />
+          <source src="/assets/video/hero.mp4"  type="video/mp4" />
+        </video>
 
         {/* Overlays */}
         <div className="hero-overlay" data-overlay="title" data-opacity="5" />
