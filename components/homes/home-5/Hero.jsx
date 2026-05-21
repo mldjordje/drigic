@@ -2,7 +2,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
@@ -234,66 +234,39 @@ export default function Hero() {
     };
   }, []);
 
-  const heroVideoSrc = useMemo(
-    () => "https://www.youtube-nocookie.com/embed/T2w-sqZ2_BY?autoplay=1&mute=1&controls=0&disablekb=1&loop=1&playlist=T2w-sqZ2_BY&playsinline=1&modestbranding=1&rel=0&iv_load_policy=3&fs=0&enablejsapi=1&vq=small",
-    []
-  );
-
-  const forcePlayMuted = useCallback(() => {
-    const iframe = mobileVideoRef.current;
-    const frameWindow = iframe?.contentWindow;
-    if (!frameWindow) return;
-    frameWindow.postMessage(JSON.stringify({ event: "command", func: "mute", args: [] }), "*");
-    frameWindow.postMessage(JSON.stringify({ event: "command", func: "playVideo", args: [] }), "*");
-  }, []);
-
-  const triggerPlaybackWithGesture = useCallback(() => {
-    forcePlayMuted();
-    window.setTimeout(() => forcePlayMuted(), 220);
-    window.setTimeout(() => forcePlayMuted(), 900);
-  }, [forcePlayMuted]);
+  useEffect(() => {
+    const video = mobileVideoRef.current;
+    if (!video) return;
+    video.play().catch(() => {});
+  }, [showMobileVideo]);
 
   useEffect(() => {
-    const retryTimer = window.setTimeout(() => forcePlayMuted(), 1200);
-    return () => window.clearTimeout(retryTimer);
-  }, [forcePlayMuted]);
-
-  useEffect(() => {
-    const resume = () => {
-      if (document.visibilityState === "hidden") {
-        return;
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        mobileVideoRef.current?.play().catch(() => {});
       }
-      triggerPlaybackWithGesture();
     };
-    window.addEventListener("touchstart", resume, { passive: true });
-    window.addEventListener("pointerdown", resume, { passive: true });
-    window.addEventListener("visibilitychange", resume);
-    return () => {
-      window.removeEventListener("touchstart", resume);
-      window.removeEventListener("pointerdown", resume);
-      window.removeEventListener("visibilitychange", resume);
-    };
-  }, [triggerPlaybackWithGesture]);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
   return (
     <div className="hero-wrapper hero-5" id="hero">
       <div
         className="hero-slider background-image por"
         style={{ backgroundImage: "url(/assets/img/slika1.webp)" }}
-        onTouchStart={triggerPlaybackWithGesture}
-        onPointerDown={triggerPlaybackWithGesture}
       >
         {/* Mobile video background */}
         <div className="clinic-hero-mobile-video" aria-hidden="true">
           {showMobileVideo ? (
-            <iframe
+            <video
               ref={mobileVideoRef}
-              src={heroVideoSrc}
-              title="Dr Igić hero background video"
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-              loading="eager"
-              onLoad={forcePlayMuted}
+              src="/assets/video/hero.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
             />
           ) : null}
         </div>
