@@ -3218,27 +3218,38 @@ a.clinic-glow-btn {
   color: #2f3d53 !important;
 }
 
-.clinic-theme-light .clinic-home5 .header-layout2 .main-menu > ul > li > a,
-.clinic-theme-light .clinic-home5 .header-layout2 .search-btn {
+/* ── Light theme header: scrolled — dark nav links ── */
+.clinic-theme-light .clinic-home5 .header-layout2 .main-menu > ul > li > a {
   color: #0b1020 !important;
+  text-shadow: none !important;
 }
 
-.clinic-theme-light .clinic-home5 .header-layout2 .main-menu > ul > li > a:hover,
-.clinic-theme-light .clinic-home5 .header-layout2 .search-btn:hover {
-  color: rgba(11, 16, 32, 0.82) !important;
+.clinic-theme-light .clinic-home5 .header-layout2 .main-menu > ul > li > a:hover {
+  color: rgba(11, 16, 32, 0.68) !important;
 }
 
+/* ── Light theme header: at top (over hero) — white nav links ── */
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .main-menu > ul > li > a {
+  color: rgba(255, 255, 255, 0.88) !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.38) !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .main-menu > ul > li > a:hover {
+  color: #ffffff !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.48) !important;
+}
+
+/* ── Light theme: all glow buttons (page body, mobile CTAs, etc.) ── */
 .clinic-theme-light .clinic-home5 .clinic-glow-btn,
 .clinic-theme-light .clinic-home5 button.clinic-glow-btn,
 .clinic-theme-light .clinic-home5 a.clinic-glow-btn,
-.clinic-theme-light .clinic-home5 .clinic-header-actions .search-btn.clinic-glow-btn,
 .clinic-theme-light .clinic-home5 .mobile-cta-link,
 .clinic-theme-light .clinic-home5 .clinic-next-date-fab {
   background: #111827 !important;
-  border-color: rgba(15, 23, 42, 0.68) !important;
+  border-color: rgba(15, 23, 42, 0.6) !important;
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2) !important;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.16) !important;
 }
 
 .clinic-theme-light .clinic-home5 .clinic-glow-btn .effect-1,
@@ -3250,8 +3261,45 @@ a.clinic-glow-btn {
 }
 
 .clinic-theme-light .clinic-home5 .clinic-glow-btn::before {
-  opacity: 0.16;
+  opacity: 0.14;
   filter: blur(8px);
+}
+
+/* ── Light theme: header CTA buttons — scrolled (clean dark pill) ── */
+.clinic-theme-light .clinic-home5 .sticky-wrapper.header-sticky .clinic-header-actions .search-btn.clinic-glow-btn {
+  background: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.16) !important;
+  color: #f1f5f9 !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.14) !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper.header-sticky .clinic-header-actions .search-btn.clinic-glow-btn .effect-1,
+.clinic-theme-light .clinic-home5 .sticky-wrapper.header-sticky .clinic-header-actions .search-btn.clinic-glow-btn .link-effect {
+  color: #f1f5f9 !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+}
+
+/* ── Light theme: header CTA buttons — over hero (ghost outline) ── */
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-header-actions .search-btn.clinic-glow-btn {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border: 1px solid rgba(255, 255, 255, 0.48) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: none !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-header-actions .search-btn.clinic-glow-btn .effect-1,
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-header-actions .search-btn.clinic-glow-btn .link-effect {
+  color: rgba(255, 255, 255, 0.9) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-header-actions .search-btn.clinic-glow-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
 }
 
 .clinic-theme-light .clinic-home5 .mobile-menu-area {
@@ -3279,6 +3327,28 @@ a.clinic-glow-btn {
 .clinic-theme-light .clinic-home5 .clinic-theme-switch-track {
   border-color: rgba(15, 23, 42, 0.24);
   background: rgba(15, 23, 42, 0.12);
+}
+
+/* ── Light theme: theme toggle — over hero (ghost) ── */
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-theme-switch-desktop {
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.84) !important;
+  box-shadow: none !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-theme-switch-desktop .clinic-theme-switch-text {
+  color: rgba(255, 255, 255, 0.84) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.84) !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-theme-switch-desktop .clinic-theme-switch-track {
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .clinic-theme-switch-desktop .clinic-theme-switch-knob {
+  background: rgba(255, 255, 255, 0.92) !important;
 }
 
 .clinic-theme-light .clinic-home5 .clinic-brand-btn,
@@ -6350,6 +6420,20 @@ body,
   background: rgba(13, 23, 41, 0.12);
   border-color: rgba(13, 23, 41, 0.38);
   color: #0d1729;
+}
+
+/* ── Light theme locale switcher — over hero (ghost) ── */
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .cls-sw__trigger {
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .cls-sw__trigger:hover,
+.clinic-theme-light .clinic-home5 .sticky-wrapper:not(.header-sticky) .cls-sw--open .cls-sw__trigger {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  color: #ffffff !important;
 }
 
 .clinic-theme-light .cls-sw__menu {
