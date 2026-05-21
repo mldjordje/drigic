@@ -1774,24 +1774,24 @@ a.clinic-glow-btn {
       height: 100%;
       object-fit: cover;
       object-position: center 22%;
-      filter: saturate(0.78) brightness(0.64);
+      filter: saturate(0.88) brightness(0.78);
       transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), filter 0.6s ease;
       will-change: transform, filter;
     }
   }
 
-  /* dual scrim: subtle dark top vignette + strong bottom fade */
+  /* dual scrim: light top vignette + strong bottom fade for text */
   .clinic-treatment-card__img-overlay {
     position: absolute !important;
     inset: 0;
     z-index: 1;
     background:
       linear-gradient(180deg,
-        rgba(4, 8, 18, 0.52)  0%,
-        rgba(4, 8, 18, 0.08) 30%,
-        rgba(4, 8, 18, 0.08) 46%,
-        rgba(3, 7, 16, 0.80) 68%,
-        rgba(2, 5, 14, 0.98) 100%);
+        rgba(4, 8, 18, 0.22)  0%,
+        rgba(4, 8, 18, 0.04) 28%,
+        rgba(4, 8, 18, 0.04) 44%,
+        rgba(3, 7, 16, 0.72) 64%,
+        rgba(2, 5, 14, 0.96) 100%);
     transition: background 0.45s ease;
   }
 
@@ -1840,19 +1840,19 @@ a.clinic-glow-btn {
 
       h3.portfolio-title {
         color: #fff !important;
-        font-size: clamp(19px, 2.8vw, 23px);
+        font-size: clamp(20px, 2.8vw, 24px);
         font-weight: 900;
         line-height: 1.12;
         letter-spacing: -0.02em;
-        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.75);
+        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.90);
         margin: 0;
       }
 
       p.portfolio-meta {
-        color: rgba(205, 225, 255, 0.78) !important;
-        font-size: 12.5px;
-        line-height: 1.48;
-        text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+        color: rgba(220, 235, 255, 0.94) !important;
+        font-size: 13.5px;
+        line-height: 1.5;
+        text-shadow: 0 1px 12px rgba(0, 0, 0, 0.85);
         margin: 0;
       }
     }
