@@ -859,7 +859,8 @@ a.clinic-glow-btn {
     z-index: 3;
   }
 
-  /* Dark curtain lifted by GSAP — sits above video/overlay, below content */
+  /* Dark curtain lifted by GSAP — sits above video/overlay, below content.
+     Default opacity:0 so if GSAP fails to initialise the video is never hidden. */
   .clinic-hero-veil {
     position: absolute;
     inset: 0;
@@ -867,6 +868,7 @@ a.clinic-glow-btn {
     background: #080808;
     pointer-events: none;
     will-change: opacity;
+    opacity: 0;
   }
 
   /* Horizontal accent line — sweeps in after title reveal */

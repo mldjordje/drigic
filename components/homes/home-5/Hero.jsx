@@ -75,6 +75,14 @@ export default function Hero() {
     return () => document.body.classList.remove("bg-title");
   }, []);
 
+  // Force play + muted on mount (fixes React muted-prop serialization + Android autoPlay)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.play().catch(() => {});
+  }, []);
+
   // Resume playback on tab/visibility restore
   useEffect(() => {
     const resume = () => {
@@ -107,7 +115,7 @@ export default function Hero() {
     let fallbackTimer = null;
 
     function startHeroAnimation() {
-      if (reducedMotion) return;
+      if (reducedMotion || ctx) return;
 
       ctx = gsap.context(() => {
         const tl = gsap.timeline();
@@ -146,18 +154,21 @@ export default function Hero() {
       });
     }
 
-    const hasPreloader = !!document.querySelector(".clinic-preloader");
-
     const onPreloaderDone = () => {
       clearTimeout(fallbackTimer);
       startHeroAnimation();
     };
 
-    if (hasPreloader) {
-      window.addEventListener("clinic:preloader:done", onPreloaderDone, { once: true });
-      fallbackTimer = setTimeout(onPreloaderDone, 8000);
+    // Register listener FIRST to avoid race condition on slow devices
+    window.addEventListener("clinic:preloader:done", onPreloaderDone, { once: true });
+
+    const hasPreloader = !!document.querySelector(".clinic-preloader");
+    if (!hasPreloader) {
+      // Already gone or never present — start quickly
+      fallbackTimer = setTimeout(onPreloaderDone, 80);
     } else {
-      fallbackTimer = setTimeout(onPreloaderDone, 120);
+      // Present — wait for event, 3s hard cap (not 8s)
+      fallbackTimer = setTimeout(onPreloaderDone, 3000);
     }
 
     return () => {
