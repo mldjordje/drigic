@@ -10,6 +10,9 @@ import ProfileSetupGate from "@/components/common/ProfileSetupGate";
 import SessionProvider from "@/components/common/SessionProvider";
 import ClinicCallFab from "@/components/common/ClinicCallFab";
 import ScrollTop from "@/components/common/ScrollTop";
+import SmoothScroll from "@/components/common/SmoothScroll";
+import CustomCursor from "@/components/common/CustomCursor";
+import ScrollProgress from "@/components/common/ScrollProgress";
 
 export default function AppProviders({
   children,
@@ -229,6 +232,9 @@ export default function AppProviders({
           <ProfileSetupGate />
           <ScrollTop />
           <ClinicCallFab />
+          <SmoothScroll />
+          <CustomCursor />
+          <ScrollProgress />
         </Context>
       </SessionProvider>
     </LocaleProvider>

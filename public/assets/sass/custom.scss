@@ -7883,3 +7883,229 @@ body,
   color: #0c1422 !important;
   -webkit-text-fill-color: #0c1422 !important;
 }
+
+// ============================================================
+// ANIMATION STACK v2 — Lenis + Custom Cursor + Word Splits
+// ============================================================
+
+// ── Custom Cursor (desktop only via JS class) ─────────────
+.clinic-custom-cursor-active * {
+  cursor: none !important;
+}
+
+.clinic-cursor-dot,
+.clinic-cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 99999;
+  border-radius: 50%;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.clinic-cursor-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--theme-color, #c8a96e);
+  transition: transform 0.08s linear;
+}
+
+.clinic-cursor-ring {
+  width: 44px;
+  height: 44px;
+  border: 1.5px solid rgba(200, 169, 110, 0.55);
+  background: transparent;
+  transition: transform 0.06s linear, border-color 0.3s ease;
+  z-index: 99998;
+}
+
+// ── Scroll Progress Bar ───────────────────────────────────
+.clinic-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  z-index: 99997;
+  pointer-events: none;
+  background: rgba(200, 169, 110, 0.12);
+}
+
+.clinic-scroll-progress__bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--theme-color, #c8a96e) 0%, #e8d5a3 60%, var(--theme-color, #c8a96e) 100%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+// ── Word Split Animation ──────────────────────────────────
+.clinic-word-wrap {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  line-height: inherit;
+}
+
+.clinic-word-inner {
+  display: inline-block;
+  transform: translateY(110%);
+  will-change: transform;
+}
+
+// CSS fallback for pages using clinic-reveal without GSAP
+.is-visible .clinic-word-inner,
+.clinic-reveal.is-visible .clinic-word-inner {
+  transform: translateY(0);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--word-delay, 0s);
+}
+
+// ── Global sec-title / sec-text reveal inside clinic-reveal ─
+.clinic-reveal .sec-title:not(.clinic-about-title) {
+  transform: translateY(28px);
+  opacity: 0;
+  transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.85s ease;
+}
+
+.clinic-reveal.is-visible .sec-title:not(.clinic-about-title) {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.clinic-reveal .sec-text {
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s, opacity 0.8s ease 0.1s;
+}
+
+.clinic-reveal.is-visible .sec-text {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+// ── About Section — fix white-on-white text bug ───────────
+.clinic-about-section {
+  color: #1a1f36;
+
+  .sec-title,
+  .clinic-about-title {
+    color: var(--title-color, #1a1f36) !important;
+    -webkit-text-fill-color: var(--title-color, #1a1f36) !important;
+  }
+
+  .sec-text,
+  .clinic-founder-paragraph {
+    color: #4a5568 !important;
+  }
+
+  .clinic-founder-eyebrow {
+    color: var(--theme-color, #c8a96e) !important;
+  }
+}
+
+.clinic-theme-light .clinic-about-section {
+  .sec-title,
+  .clinic-about-title {
+    color: #0c1422 !important;
+    -webkit-text-fill-color: #0c1422 !important;
+  }
+  .sec-text,
+  .clinic-founder-paragraph {
+    color: #3d4a5c !important;
+  }
+}
+
+// ── About title initial state (GSAP animates it) ──────────
+.clinic-about-title .clinic-word-inner {
+  transform: translateY(110%);
+}
+
+// ── Eyebrow row with decorative lines ─────────────────────
+.clinic-eyebrow-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.clinic-eyebrow-line {
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(200, 169, 110, 0.7), transparent);
+  display: block;
+  transform-origin: left center;
+}
+
+// ── 3D Tilt card ──────────────────────────────────────────
+.clinic-svc-tilt {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: box-shadow 0.35s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &:hover {
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(200, 169, 110, 0.18);
+  }
+}
+
+// ── Process cards ─────────────────────────────────────────
+.clinic-float-card {
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.42s ease;
+
+  &:hover {
+    transform: translateY(-8px) scale(1.015);
+    box-shadow: 0 24px 52px rgba(0, 0, 0, 0.22);
+  }
+}
+
+// ── Button shimmer sweep on hover ─────────────────────────
+.btn.clinic-glow-btn {
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+    transform: translateX(-100%);
+    transition: transform 0.55s ease;
+    pointer-events: none;
+  }
+
+  &:hover::after {
+    transform: translateX(100%);
+  }
+}
+
+// ── Parallax image (About) ────────────────────────────────
+.clinic-about-section .about-img-1-1.shape-mockup {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+// ── Reduced motion ────────────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .clinic-cursor-dot,
+  .clinic-cursor-ring,
+  .clinic-scroll-progress,
+  .clinic-scroll-progress__bar {
+    display: none !important;
+  }
+
+  .clinic-word-inner,
+  .clinic-reveal .sec-title,
+  .clinic-reveal .sec-text {
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+
+  .clinic-float-card:hover,
+  .clinic-svc-tilt {
+    transform: none !important;
+  }
+}
