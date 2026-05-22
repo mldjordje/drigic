@@ -6,28 +6,38 @@ import { useLocale } from "@/components/common/LocaleProvider";
 import { getLocalizedCategoryCopy } from "@/lib/services/category-copy";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
-const CATEGORY_SHOWCASE_COPY = {
+const SHOWCASE_COPY = {
   sr: {
     eyebrow: "Estetske oblasti",
-    lead: "Izdvojene oblasti tretmana su postavljene kao interaktivne kartice, sa jačim fokusom na prirodan rezultat, anatomiju i individualan plan.",
-    labels: { natural: "Prirodan efekat", anatomy: "Prati anatomiju", plan: "Individualan plan", face: "Lice", body: "Telo", regenerative: "Regenerativno" },
+    lead: "Svaka oblast tretmana ima poseban pristup — individualan plan, prirodan rezultat.",
   },
   en: {
     eyebrow: "Treatment areas",
-    lead: "Highlighted treatment areas are presented as interactive cards with a stronger focus on natural outcomes, anatomy and an individual plan.",
-    labels: { natural: "Natural look", anatomy: "Anatomy first", plan: "Personal plan", face: "Face", body: "Body", regenerative: "Regenerative" },
+    lead: "Each treatment area has a unique approach — a personalised plan, a natural result.",
   },
   de: {
     eyebrow: "Behandlungsbereiche",
-    lead: "Die wichtigsten Behandlungsbereiche sind als interaktive Karten dargestellt, mit Fokus auf natuerliche Ergebnisse, Anatomie und individuelle Planung.",
-    labels: { natural: "Natuerlicher Effekt", anatomy: "Anatomie im Fokus", plan: "Individueller Plan", face: "Gesicht", body: "Koerper", regenerative: "Regenerativ" },
+    lead: "Jede Behandlungszone hat einen eigenen Ansatz — individueller Plan, natuerliches Ergebnis.",
   },
   it: {
     eyebrow: "Aree di trattamento",
-    lead: "Le principali aree di trattamento sono presentate come card interattive, con maggiore enfasi su risultato naturale, anatomia e piano individuale.",
-    labels: { natural: "Effetto naturale", anatomy: "Anatomia al centro", plan: "Piano individuale", face: "Viso", body: "Corpo", regenerative: "Rigenerativo" },
+    lead: "Ogni area di trattamento ha un approccio unico — piano personale, risultato naturale.",
   },
 };
+
+// Unique entrance for every card — no two the same
+const CARD_ENTRANCES = [
+  { from: { x: -130, rotateY: -20, opacity: 0 },              ease: "expo.out",    dur: 1.05 },
+  { from: { y: 100, scale: 0.78, opacity: 0 },                ease: "back.out(1.5)", dur: 1.0 },
+  { from: { x: 130, rotateY: 20, opacity: 0 },                ease: "expo.out",    dur: 1.05 },
+  { from: { y: -90, rotateX: 20, scale: 0.9, opacity: 0 },    ease: "power4.out",  dur: 0.95 },
+  { from: { x: -90, rotateZ: -8, scale: 0.88, opacity: 0 },   ease: "expo.out",    dur: 1.0  },
+  { from: { x: 90, rotateZ: 8, scale: 0.88, opacity: 0 },     ease: "expo.out",    dur: 1.0  },
+  { from: { y: 110, rotateY: -14, opacity: 0 },               ease: "expo.out",    dur: 1.05 },
+  { from: { scale: 0.45, rotateZ: 12, opacity: 0 },           ease: "back.out(2)", dur: 1.1  },
+  { from: { x: -80, y: -80, rotateZ: -10, opacity: 0 },       ease: "power4.out",  dur: 1.0  },
+  { from: { x: 80, y: -80, rotateZ: 10, opacity: 0 },         ease: "power4.out",  dur: 1.0  },
+];
 
 export default function Projects() {
   const { locale, t } = useLocale();
@@ -35,197 +45,131 @@ export default function Projects() {
   const headerRef = useRef(null);
   const eyebrowRef = useRef(null);
   const leadRef = useRef(null);
-  const cardRefs = useRef([]);
   const lineRef = useRef(null);
+  const cardRefs = useRef([]);
 
-  const showcaseCopy = useMemo(
-    () => CATEGORY_SHOWCASE_COPY[locale] || CATEGORY_SHOWCASE_COPY.sr,
-    [locale]
-  );
+  const copy = useMemo(() => SHOWCASE_COPY[locale] || SHOWCASE_COPY.sr, [locale]);
 
+  // 3D tilt on hover — desktop
   useEffect(() => {
-    cardRefs.current = cardRefs.current.slice(0, SERVICE_CATEGORY_SPECS.length);
-  }, []);
-
-  // 3D tilt on cards — desktop only
-  useEffect(() => {
+    if (typeof window === "undefined") return;
     if (window.matchMedia("(hover: none)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const cards = cardRefs.current.filter(Boolean);
-    const MAX_TILT = 6;
-
-    const handlers = cards.map((card) => {
+    const MAX = 7;
+    const handlers = cardRefs.current.filter(Boolean).map((card) => {
       const onMove = (e) => {
-        const rect = card.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const cy = rect.top + rect.height / 2;
-        const rotX = ((e.clientY - cy) / (rect.height / 2)) * -MAX_TILT;
-        const rotY = ((e.clientX - cx) / (rect.width / 2)) * MAX_TILT;
-        card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale3d(1.03,1.03,1.03)`;
+        const r = card.getBoundingClientRect();
+        const rotX = ((e.clientY - r.top - r.height / 2) / (r.height / 2)) * -MAX;
+        const rotY = ((e.clientX - r.left - r.width / 2) / (r.width / 2)) * MAX;
+        card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale3d(1.04,1.04,1.04) translateZ(12px)`;
       };
       const onLeave = () => {
+        card.style.transition = "transform 0.65s cubic-bezier(0.22,1,0.36,1)";
         card.style.transform = "";
+        setTimeout(() => { card.style.transition = ""; }, 700);
       };
       card.addEventListener("mousemove", onMove, { passive: true });
       card.addEventListener("mouseleave", onLeave);
       return { card, onMove, onLeave };
     });
 
-    return () => {
-      handlers.forEach(({ card, onMove, onLeave }) => {
-        card.removeEventListener("mousemove", onMove);
-        card.removeEventListener("mouseleave", onLeave);
-      });
-    };
+    return () => handlers.forEach(({ card, onMove, onLeave }) => {
+      card.removeEventListener("mousemove", onMove);
+      card.removeEventListener("mouseleave", onLeave);
+    });
   }, []);
 
   useEffect(() => {
     let ctx;
     let cancelled = false;
 
-    async function runAnimations() {
+    async function run() {
       const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
         import("gsap"),
         import("gsap/ScrollTrigger"),
       ]);
-
       if (cancelled || !sectionRef.current) return;
       gsap.registerPlugin(ScrollTrigger);
-
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (reduceMotion) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
       ctx = gsap.context(() => {
         // Eyebrow line sweep
         if (lineRef.current) {
-          gsap.fromTo(
-            lineRef.current,
-            { scaleX: 0, opacity: 0, transformOrigin: "left center" },
-            {
-              scaleX: 1,
-              opacity: 1,
-              duration: 0.9,
-              ease: "expo.inOut",
-              scrollTrigger: { trigger: headerRef.current, start: "top 84%" },
-            }
+          gsap.fromTo(lineRef.current,
+            { scaleX: 0, transformOrigin: "left center", opacity: 0 },
+            { scaleX: 1, opacity: 1, duration: 1.1, ease: "expo.inOut",
+              scrollTrigger: { trigger: headerRef.current, start: "top 84%" } }
           );
         }
 
-        // Eyebrow text
+        // Eyebrow scramble text entrance
         if (eyebrowRef.current) {
-          gsap.fromTo(
-            eyebrowRef.current,
-            { y: 16, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.65,
-              ease: "power3.out",
-              scrollTrigger: { trigger: headerRef.current, start: "top 84%" },
-              delay: 0.15,
-            }
+          gsap.fromTo(eyebrowRef.current,
+            { y: 20, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.7, ease: "power3.out", delay: 0.2,
+              scrollTrigger: { trigger: headerRef.current, start: "top 84%" } }
           );
         }
 
-        // Heading — word clip-path reveal
+        // Heading word clips — stagger reveal
         if (headerRef.current) {
-          const words = headerRef.current.querySelectorAll(".clinic-word-inner");
-          if (words.length) {
-            gsap.fromTo(
-              words,
-              { yPercent: 110 },
-              {
-                yPercent: 0,
-                duration: 0.8,
-                stagger: 0.06,
-                ease: "expo.out",
-                scrollTrigger: { trigger: headerRef.current, start: "top 82%" },
-                delay: 0.12,
-              }
+          const wordInners = headerRef.current.querySelectorAll(".clinic-word-inner");
+          if (wordInners.length) {
+            gsap.fromTo(wordInners,
+              { yPercent: 120, rotateX: 40, transformOrigin: "50% 100%" },
+              { yPercent: 0, rotateX: 0, duration: 0.9, stagger: 0.07, ease: "expo.out", delay: 0.18,
+                scrollTrigger: { trigger: headerRef.current, start: "top 82%" } }
             );
-          } else {
-            // Fallback for plain headings
-            const heading = headerRef.current.querySelector("h2");
-            if (heading) {
-              gsap.fromTo(
-                heading,
-                { y: 30, opacity: 0 },
-                {
-                  y: 0,
-                  opacity: 1,
-                  duration: 0.8,
-                  ease: "power3.out",
-                  scrollTrigger: { trigger: headerRef.current, start: "top 82%" },
-                }
-              );
-            }
           }
         }
 
         if (leadRef.current) {
-          gsap.fromTo(
-            leadRef.current,
-            { y: 22, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.85,
-              ease: "power3.out",
-              scrollTrigger: { trigger: leadRef.current, start: "top 85%" },
-              delay: 0.08,
-            }
+          gsap.fromTo(leadRef.current,
+            { y: 24, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.9, ease: "power3.out", delay: 0.35,
+              scrollTrigger: { trigger: leadRef.current, start: "top 86%" } }
           );
         }
 
-        const cards = cardRefs.current.filter(Boolean);
-        if (cards.length) {
-          // Entrance — clip-path sweep from bottom
-          gsap.fromTo(
-            cards,
-            { clipPath: "inset(100% 0 0 0)", opacity: 0 },
-            {
-              clipPath: "inset(0% 0 0 0)",
-              opacity: 1,
-              duration: 0.85,
-              stagger: { amount: 0.55, ease: "power2.inOut" },
-              ease: "expo.out",
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top 70%",
-              },
-              onComplete: () => {
-                // Reset clip-path so hover/tilt works properly
-                cards.forEach((c) => {
-                  c.style.clipPath = "";
-                });
-              },
-            }
-          );
+        // Per-card unique 3D entrance
+        cardRefs.current.filter(Boolean).forEach((card, i) => {
+          const anim = CARD_ENTRANCES[i % CARD_ENTRANCES.length];
 
-          // Parallax scroll per card
-          cards.forEach((card, index) => {
-            gsap.to(card, {
-              yPercent: index % 2 === 0 ? -5 : -10,
-              ease: "none",
-              scrollTrigger: {
-                trigger: card,
-                start: "top bottom",
-                end: "bottom top",
-                scrub: 0.8,
-              },
-            });
+          gsap.set(card, { transformPerspective: 1000, ...anim.from });
+
+          gsap.to(card, {
+            x: 0, y: 0, scale: 1, rotateX: 0, rotateY: 0, rotateZ: 0, opacity: 1,
+            duration: anim.dur,
+            ease: anim.ease,
+            scrollTrigger: {
+              trigger: card,
+              start: "top 90%",
+            },
+            onComplete() {
+              // Allow tilt to take over cleanly
+              gsap.set(card, { clearProps: "x,y,rotateX,rotateY,rotateZ,scale,transformPerspective" });
+              card.dataset.animDone = "1";
+            },
           });
-        }
+
+          // Subtle parallax after entrance
+          gsap.to(card, {
+            yPercent: i % 2 === 0 ? -5 : -9,
+            ease: "none",
+            scrollTrigger: {
+              trigger: card,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: 0.9,
+            },
+          });
+        });
       }, sectionRef);
     }
 
-    runAnimations().catch(() => {});
-
-    return () => {
-      cancelled = true;
-      ctx?.revert();
-    };
+    run().catch(() => {});
+    return () => { cancelled = true; ctx?.revert(); };
   }, []);
 
   return (
@@ -243,22 +187,27 @@ export default function Projects() {
               <div className="title-area text-center" ref={headerRef}>
                 <div className="clinic-eyebrow-row">
                   <span className="clinic-eyebrow-line" ref={lineRef} aria-hidden="true" />
-                  <span className="clinic-founder-eyebrow clinic-treatment-showcase__eyebrow" ref={eyebrowRef}>
-                    {showcaseCopy.eyebrow}
+                  <span
+                    className="clinic-founder-eyebrow clinic-treatment-showcase__eyebrow"
+                    ref={eyebrowRef}
+                    data-scramble
+                  >
+                    {copy.eyebrow}
                   </span>
                   <span className="clinic-eyebrow-line" aria-hidden="true" />
                 </div>
-                <h2 className="sec-title text-smoke">
+
+                <h2 className="sec-title text-smoke" aria-label={t("treatments.categoriesTitle")}>
                   {t("treatments.categoriesTitle").split(" ").map((word, i, arr) => (
                     <span key={i} className="clinic-word-wrap" aria-hidden="true">
                       <span className="clinic-word-inner">{word}</span>
-                      {i < arr.length - 1 ? " " : ""}
+                      {i < arr.length - 1 ? " " : ""}
                     </span>
                   ))}
-                  <span className="sr-only">{t("treatments.categoriesTitle")}</span>
                 </h2>
+
                 <p className="sec-text text-smoke" ref={leadRef}>
-                  {showcaseCopy.lead}
+                  {copy.lead}
                 </p>
               </div>
             </div>
@@ -267,7 +216,7 @@ export default function Projects() {
 
         <div className="svc-grid">
           {SERVICE_CATEGORY_SPECS.map((item, index) => {
-            const localizedItem = getLocalizedCategoryCopy(locale, item);
+            const loc = getLocalizedCategoryCopy(locale, item);
             const isPhoto = Boolean(item.imageCard);
 
             return (
@@ -275,55 +224,53 @@ export default function Projects() {
                 key={item.slug}
                 href={`/tretmani/${item.slug}`}
                 className={`svc-card ${isPhoto ? "svc-card--photo" : "svc-card--plain"} clinic-svc-tilt`}
-                aria-label={`${localizedItem.name} — ${t("treatments.seeServices")}`}
+                aria-label={`${loc.name} — ${t("treatments.seeServices")}`}
                 ref={(node) => { cardRefs.current[index] = node; }}
               >
-                {isPhoto ? (
+                {isPhoto && (
                   <>
-                    <img
-                      className="svc-card__bg"
-                      src={item.imageCard}
-                      alt=""
-                      width={740}
-                      height={500}
-                      loading="lazy"
-                      decoding="async"
-                    />
+                    <img className="svc-card__bg" src={item.imageCard} alt=""
+                      width={740} height={500} loading="lazy" decoding="async" />
                     <span className="svc-card__scrim" aria-hidden="true" />
                   </>
-                ) : null}
+                )}
 
                 <span className="svc-card__num" aria-hidden="true">
                   {String(index + 1).padStart(2, "0")}
                 </span>
 
-                {!isPhoto ? (
+                {!isPhoto && (
                   <span className="svc-card__icon" aria-hidden="true">
                     <i className={item.iconClass || "fas fa-spa"} />
                   </span>
-                ) : null}
+                )}
 
                 <div className="svc-card__body">
-                  <h3 className="svc-card__title">{localizedItem.name}</h3>
-                  <p className="svc-card__desc">{localizedItem.shortDescription}</p>
+                  <h3 className="svc-card__title">{loc.name}</h3>
+                  <p className="svc-card__desc">{loc.shortDescription}</p>
                 </div>
 
                 <span className="svc-card__arrow" aria-hidden="true">
                   <i className="fas fa-arrow-right" />
                 </span>
+
+                {/* Hover shimmer layer */}
+                <span className="svc-card__shimmer" aria-hidden="true" />
               </Link>
             );
           })}
         </div>
 
         <div className="btn-wrap mt-50 justify-content-center">
-          <Link scroll={false} href="/tretmani" className="btn bg-theme text-title clinic-glow-btn">
+          <Link scroll={false} href="/tretmani"
+            className="btn bg-theme text-title clinic-glow-btn clinic-magnetic">
             <span className="link-effect">
               <span className="effect-1">{t("treatments.allCategories")}</span>
               <span className="effect-1">{t("treatments.allCategories")}</span>
             </span>
           </Link>
-          <Link scroll={false} href="/booking" className="btn bg-theme text-title clinic-glow-btn">
+          <Link scroll={false} href="/booking"
+            className="btn bg-theme text-title clinic-glow-btn clinic-magnetic">
             <span className="link-effect">
               <span className="effect-1">{t("treatments.bookAppointment")}</span>
               <span className="effect-1">{t("treatments.bookAppointment")}</span>

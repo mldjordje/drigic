@@ -168,6 +168,112 @@ export default function AppProviders({
     };
   }, [pathname]);
 
+  // ── Text scramble on [data-scramble] elements ────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·—∙";
+
+    function runScramble(el) {
+      const text = el.dataset.scrambleText || el.textContent;
+      if (!text.trim() || el.dataset.scrambleDone) return;
+      el.dataset.scrambleText = text;
+      el.dataset.scrambleDone = "1";
+
+      let frame = 0;
+      const FRAMES = 24;
+
+      function tick() {
+        const progress = frame / FRAMES;
+        const resolved = Math.ceil(progress * text.length);
+        el.textContent = [...text].map((ch, i) => {
+          if (ch === " " || ch === "+" || ch === "%" || ch === "." || ch === ",") return ch;
+          if (i < resolved) return text[i];
+          return CHARS[Math.floor(Math.random() * CHARS.length)];
+        }).join("");
+        frame++;
+        if (frame <= FRAMES) requestAnimationFrame(tick);
+        else el.textContent = text;
+      }
+
+      const delay = parseInt(el.dataset.scrambleDelay || "0", 10);
+      setTimeout(() => requestAnimationFrame(tick), delay);
+    }
+
+    const scrambleObs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          scrambleObs.unobserve(e.target);
+          runScramble(e.target);
+        }
+      });
+    }, { threshold: 0.4 });
+
+    function scanScramble(root = document) {
+      root.querySelectorAll("[data-scramble]").forEach((el) => {
+        if (!el.dataset.scrambleDone && !el.dataset.scramblePending) {
+          el.dataset.scramblePending = "1";
+          scrambleObs.observe(el);
+        }
+      });
+    }
+
+    scanScramble();
+    const scrambleMutObs = new MutationObserver(() => scanScramble());
+    scrambleMutObs.observe(document.body, { childList: true, subtree: true });
+
+    return () => { scrambleObs.disconnect(); scrambleMutObs.disconnect(); };
+  }, [pathname]);
+
+  // ── Magnetic effect on .clinic-magnetic elements ─────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(hover: none)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const STRENGTH = 0.32;
+    const cleanups = [];
+
+    function bindMagnetic(el) {
+      if (el.dataset.magneticBound) return;
+      el.dataset.magneticBound = "1";
+
+      const onMove = (e) => {
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left - r.width / 2) * STRENGTH;
+        const y = (e.clientY - r.top - r.height / 2) * STRENGTH;
+        el.style.transform = `translate(${x}px, ${y}px)`;
+        el.style.transition = "transform 0.2s cubic-bezier(0.22,1,0.36,1)";
+      };
+
+      const onLeave = () => {
+        el.style.transform = "";
+        el.style.transition = "transform 0.55s cubic-bezier(0.22,1,0.36,1)";
+      };
+
+      el.addEventListener("mousemove", onMove, { passive: true });
+      el.addEventListener("mouseleave", onLeave);
+      cleanups.push(() => {
+        el.removeEventListener("mousemove", onMove);
+        el.removeEventListener("mouseleave", onLeave);
+      });
+    }
+
+    function scanMagnetic(root = document) {
+      root.querySelectorAll(".clinic-magnetic").forEach(bindMagnetic);
+    }
+
+    scanMagnetic();
+    const magMutObs = new MutationObserver(() => scanMagnetic());
+    magMutObs.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      magMutObs.disconnect();
+      cleanups.forEach((fn) => fn());
+    };
+  }, [pathname]);
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;

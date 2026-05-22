@@ -105,10 +105,10 @@ export default function Hero() {
 
     if (!reducedMotion) {
       gsap.set(veil, { opacity: 1 });
-      gsap.set(words, { yPercent: 110, opacity: 0 });
+      gsap.set(words, { yPercent: 120, rotateX: 45, opacity: 0, transformOrigin: "50% 100%", transformPerspective: 900 });
       gsap.set(line, { scaleX: 0, opacity: 0, transformOrigin: "left center" });
-      gsap.set(ctaGroup, { y: 24, opacity: 0, scale: 0.94 });
-      gsap.set(founder, { x: -14, opacity: 0 });
+      gsap.set(ctaGroup, { y: 28, opacity: 0, scale: 0.92 });
+      gsap.set(founder, { x: -18, opacity: 0 });
     }
 
     let ctx = null;
@@ -124,17 +124,18 @@ export default function Hero() {
 
         tl.to(words, {
           yPercent: 0,
+          rotateX: 0,
           opacity: 1,
-          duration: 0.72,
+          duration: 0.85,
           ease: "expo.out",
-          stagger: { amount: 0.36, ease: "power1.inOut" },
+          stagger: { amount: 0.42, ease: "power2.inOut" },
         }, 0.22);
 
         tl.to(line, { scaleX: 1, opacity: 1, duration: 0.6, ease: "power3.inOut" }, 0.78);
 
-        tl.to(ctaGroup, { y: 0, opacity: 1, scale: 1, duration: 0.58, ease: "back.out(1.3)" }, 0.96);
+        tl.to(ctaGroup, { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: "back.out(1.6)" }, 1.0);
 
-        tl.to(founder, { x: 0, opacity: 1, duration: 0.48, ease: "power3.out" }, 1.18);
+        tl.to(founder, { x: 0, opacity: 1, duration: 0.52, ease: "power3.out" }, 1.22);
 
         const heroEl = document.getElementById("hero");
         const contentEl = heroContentRef.current;
@@ -255,7 +256,7 @@ export default function Hero() {
                       </span>
                     </GooglePopupButton>
                   ) : null}
-                  <Link scroll={false} className="clinic-hero-cta-btn gsap-magnetic" href="/booking">
+                  <Link scroll={false} className="clinic-hero-cta-btn gsap-magnetic clinic-magnetic" href="/booking">
                     <span className="clinic-hero-btn-inner">
                       <span className="clinic-hero-btn-label">{heroCopy.booking}</span>
                       <span className="clinic-hero-btn-arrow"><ArrowIcon /></span>

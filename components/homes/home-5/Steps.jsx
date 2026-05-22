@@ -157,7 +157,7 @@ export default function Steps() {
     <div className="feature-area-1 space" id="tretmani" ref={sectionRef}>
       <div className="container">
         <div className="title-area text-center">
-          <h2 className="sec-title text-smoke" ref={titleRef}>{copy.title}</h2>
+          <h2 className="sec-title text-smoke" ref={titleRef} data-scramble>{copy.title}</h2>
           <p className="sec-text text-smoke mt-20" ref={bodyRef}>{copy.body}</p>
         </div>
         <div className="row gx-0 gy-30">
