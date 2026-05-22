@@ -8,10 +8,8 @@ import Footer5 from "@/components/footers/Footer5";
 import { getDb, schema } from "@/lib/db/client";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import { SITE_NAME, getConfiguredSiteUrl } from "@/lib/site";
-import {
-  SERVICE_CATEGORY_SPECS,
-  getCategorySpecBySlug,
-} from "@/lib/services/category-map";
+import { SERVICE_CATEGORY_SPECS, getCategorySpecBySlug } from "@/lib/services/category-map";
+import { CLINIC_PHONE_TEL, CLINIC_PHONE_DISPLAY } from "@/lib/clinicContact";
 
 export const dynamic = "force-dynamic";
 const CATEGORY_DATA_REVALIDATE = 300;
@@ -23,18 +21,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const category = getCategorySpecBySlug(resolvedParams?.categorySlug);
-
-  if (!category) {
-    return {
-      title: "Tretmani",
-      description: "Detaljne stranice tretmana i kategorija usluga klinike.",
-    };
-  }
+  if (!category) return { title: "Tretmani" };
 
   const siteUrl = getConfiguredSiteUrl();
   const canonicalPath = `/tretmani/${category.slug}`;
-  const canonicalUrl = `${siteUrl}${canonicalPath}`;
-
   const ogImages = category.image
     ? [{ url: `${siteUrl}${category.image}`, width: 1600, height: 900, alt: category.name }]
     : [{ url: `${siteUrl}/icons/icon-512.png`, width: 512, height: 512, alt: SITE_NAME }];
@@ -43,13 +33,11 @@ export async function generateMetadata({ params }) {
     title: category.seoTitle,
     description: category.seoDescription,
     keywords: category.seoKeywords,
-    alternates: {
-      canonical: canonicalPath,
-    },
+    alternates: { canonical: canonicalPath },
     openGraph: {
       title: category.seoTitle,
       description: category.seoDescription,
-      url: canonicalUrl,
+      url: `${siteUrl}${canonicalPath}`,
       type: "article",
       locale: "sr_RS",
       siteName: SITE_NAME,
@@ -67,36 +55,19 @@ export async function generateMetadata({ params }) {
 const loadCategoryServices = unstable_cache(
   async (categorySlug) => {
     const categorySpec = getCategorySpecBySlug(categorySlug);
-    if (!categorySpec) {
-      return null;
-    }
+    if (!categorySpec) return null;
 
     const db = getDb();
     const now = new Date();
 
     const [category] = await db
-      .select({
-        id: schema.serviceCategories.id,
-        name: schema.serviceCategories.name,
-        sortOrder: schema.serviceCategories.sortOrder,
-      })
+      .select({ id: schema.serviceCategories.id, name: schema.serviceCategories.name, sortOrder: schema.serviceCategories.sortOrder })
       .from(schema.serviceCategories)
-      .where(
-        and(
-          eq(schema.serviceCategories.name, categorySpec.name),
-          eq(schema.serviceCategories.isActive, true)
-        )
-      )
+      .where(and(eq(schema.serviceCategories.name, categorySpec.name), eq(schema.serviceCategories.isActive, true)))
       .orderBy(asc(schema.serviceCategories.sortOrder))
       .limit(1);
 
-    if (!category) {
-      return {
-        categorySpec,
-        category: null,
-        services: [],
-      };
-    }
+    if (!category) return { categorySpec, category: null, services: [] };
 
     const rows = await db
       .select({
@@ -122,13 +93,7 @@ const loadCategoryServices = unstable_cache(
           or(isNull(schema.servicePromotions.endsAt), gte(schema.servicePromotions.endsAt, now))
         )
       )
-      .where(
-        and(
-          eq(schema.services.categoryId, category.id),
-          eq(schema.services.isActive, true),
-          eq(schema.services.kind, "single")
-        )
-      )
+      .where(and(eq(schema.services.categoryId, category.id), eq(schema.services.isActive, true), eq(schema.services.kind, "single")))
       .orderBy(asc(schema.services.name));
 
     const dedupedRows = Array.from(new Map(rows.map((row) => [row.id, row])).values());
@@ -141,18 +106,11 @@ const loadCategoryServices = unstable_cache(
       price: Number(row.priceRsd || 0),
       promotion:
         row.promoPriceRsd !== null && row.promoPriceRsd !== undefined && row.promoActive
-          ? {
-              title: row.promotionTitle || "Promocija",
-              price: Number(row.promoPriceRsd),
-            }
+          ? { title: row.promotionTitle || "Promocija", price: Number(row.promoPriceRsd) }
           : null,
     }));
 
-    return {
-      categorySpec,
-      category,
-      services,
-    };
+    return { categorySpec, category, services };
   },
   ["treatment-category-services"],
   { revalidate: CATEGORY_DATA_REVALIDATE }
@@ -171,12 +129,7 @@ const loadCategoryBeforeAfter = unstable_cache(
           collageImageUrl: schema.beforeAfterCases.collageImageUrl,
         })
         .from(schema.beforeAfterCases)
-        .where(
-          and(
-            eq(schema.beforeAfterCases.isPublished, true),
-            eq(schema.beforeAfterCases.serviceCategory, categorySlug)
-          )
-        )
+        .where(and(eq(schema.beforeAfterCases.isPublished, true), eq(schema.beforeAfterCases.serviceCategory, categorySlug)))
         .orderBy(asc(schema.beforeAfterCases.createdAt));
     } catch {
       return [];
@@ -186,44 +139,43 @@ const loadCategoryBeforeAfter = unstable_cache(
   { revalidate: CATEGORY_DATA_REVALIDATE }
 );
 
-function buildFaq(categorySpec) {
-  return [
+function buildFaq(categorySpec, services) {
+  const base = [
     {
-      question: `Koliko traje tretman u kategoriji ${categorySpec.name}?`,
-      answer:
-        "Trajanje zavisi od konkretne usluge. U listi usluga je jasno prikazano trajanje svake stavke.",
+      question: `Šta su ${categorySpec.name} tretmani?`,
+      answer: categorySpec.heroIntro,
+    },
+    {
+      question: `Koliko traje tretman ${categorySpec.name}?`,
+      answer: services.length
+        ? `Trajanje zavisi od konkretne usluge. Dostupne usluge traju od ${Math.min(...services.map((s) => s.durationMin))} do ${Math.max(...services.map((s) => s.durationMin))} minuta. U cenovniku je jasno prikazano trajanje svake stavke.`
+        : "Trajanje zavisi od konkretne usluge i prikazano je u listi usluga.",
     },
     {
       question: "Da li je potreban pregled pre tretmana?",
-      answer:
-        "Da. Pre svakog tretmana radi se procena indikacije i individualni plan kako bi rezultat bio prirodan i bezbedan.",
+      answer: "Da. Pre svakog tretmana radi se procena indikacije i individualni plan tretmana kako bi rezultat bio prirodan, bezbjedan i prilagođen anatomiji svakog pacijenta.",
     },
     {
       question: "Da li postoji period oporavka?",
-      answer:
-        "U vecini slucajeva oporavak je kratak, ali zavisi od protokola i regije. Tacna uputstva dobijate odmah nakon tretmana.",
+      answer: categorySpec.aftercare || "U većini slučajeva oporavak je kratak. Tačna uputstva dobijate odmah nakon tretmana.",
+    },
+    {
+      question: `Ko je kandidat za ${categorySpec.name}?`,
+      answer: categorySpec.candidate,
     },
   ];
+  return base;
 }
 
-export default async function TreatmentCategoryPage({ params }) {
-  const resolvedParams = await params;
-  const data = await loadCategoryServices(resolvedParams?.categorySlug);
-  if (!data) {
-    notFound();
-  }
-
-  const cookieStore = await cookies();
-  const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
-  const t = (path, replacements) => translate(locale, path, replacements);
-  const { categorySpec, services } = data;
-  const categoryBeforeAfter = await loadCategoryBeforeAfter(resolvedParams?.categorySlug);
-  const faq = buildFaq(categorySpec);
-
-  const siteUrl = getConfiguredSiteUrl();
+function buildJsonLd(categorySpec, services, faq, siteUrl) {
   const categoryUrl = `${siteUrl}/tretmani/${categorySpec.slug}`;
 
-  const jsonLd = {
+  const minDur = services.length ? Math.min(...services.map((s) => s.durationMin)) : null;
+  const maxDur = services.length ? Math.max(...services.map((s) => s.durationMin)) : null;
+  const minPrice = services.length ? Math.min(...services.map((s) => s.promotion?.price ?? s.price)) : null;
+  const maxPrice = services.length ? Math.max(...services.map((s) => s.price)) : null;
+
+  return {
     "@context": "https://schema.org",
     "@graph": [
       {
@@ -233,245 +185,401 @@ export default async function TreatmentCategoryPage({ params }) {
         "description": categorySpec.heroIntro,
         "howPerformed": categorySpec.procedure || undefined,
         "followup": categorySpec.aftercare || undefined,
-        "procedureType": {
-          "@type": "MedicalProcedureType",
-          "name": "Aesthetic and regenerative medicine",
-        },
+        "procedureType": { "@type": "MedicalProcedureType", "name": "Aesthetic and regenerative medicine" },
         "recognizingAuthority": {
           "@type": "MedicalOrganization",
           "name": "Dr Igić Clinic",
+          "@id": "https://drigic.rs/#organization",
           "url": siteUrl,
         },
-        "beneficialFor": categorySpec.benefits?.map((b) => ({
-          "@type": "MedicalIndication",
-          "name": b,
-        })),
+        "performedBy": {
+          "@type": "Physician",
+          "@id": "https://drigic.rs/nikola-igic#physician",
+          "name": "Dr Nikola Igić",
+          "jobTitle": "Lekar estetske i anti-age medicine",
+        },
+        "beneficialFor": categorySpec.benefits?.map((b) => ({ "@type": "MedicalIndication", "name": b })),
         "url": categoryUrl,
-        ...(categorySpec.image
-          ? { "image": `${siteUrl}${categorySpec.image}` }
-          : {}),
+        ...(categorySpec.image ? { "image": `${siteUrl}${categorySpec.image}` } : {}),
+        ...(minDur && maxDur ? { "typicalAgeRange": undefined, "preparation": undefined } : {}),
         "speakable": {
           "@type": "SpeakableSpecification",
-          "cssSelector": [".clinic-category-hero__title", ".clinic-category-hero__intro"],
+          "cssSelector": [".cat-hero__title", ".cat-hero__intro", ".cat-overview__lead"],
         },
       },
+      ...(services.length
+        ? [
+            {
+              "@type": "Service",
+              "@id": `${categoryUrl}#service-catalog`,
+              "name": `${categorySpec.name} — Dr Igić Clinic`,
+              "description": categorySpec.heroIntro,
+              "provider": { "@id": "https://drigic.rs/#organization" },
+              "url": categoryUrl,
+              "serviceType": categorySpec.name,
+              "areaServed": { "@type": "Country", "name": "Srbija" },
+              "hasOfferCatalog": {
+                "@type": "OfferCatalog",
+                "name": `${categorySpec.name} usluge`,
+                "itemListElement": services.map((service, i) => ({
+                  "@type": "Offer",
+                  "position": i + 1,
+                  "name": service.name,
+                  "description": service.description || service.name,
+                  "price": String(service.promotion?.price ?? service.price),
+                  "priceCurrency": "EUR",
+                  "availability": "https://schema.org/InStock",
+                  "seller": { "@id": "https://drigic.rs/#organization" },
+                  ...(service.slug ? { "url": `${categoryUrl}/${service.slug}` } : {}),
+                })),
+              },
+              ...(minPrice && maxPrice
+                ? {
+                    "offers": {
+                      "@type": "AggregateOffer",
+                      "lowPrice": String(minPrice),
+                      "highPrice": String(maxPrice),
+                      "priceCurrency": "EUR",
+                      "offerCount": String(services.length),
+                    },
+                  }
+                : {}),
+            },
+          ]
+        : []),
       {
         "@type": "FAQPage",
         "@id": `${categoryUrl}#faq`,
         "mainEntity": faq.map((item) => ({
           "@type": "Question",
           "name": item.question,
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": item.answer,
-          },
+          "acceptedAnswer": { "@type": "Answer", "text": item.answer },
         })),
       },
       {
         "@type": "BreadcrumbList",
         "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Tretmani",
-            "item": `${siteUrl}/tretmani`,
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": categorySpec.name,
-            "item": categoryUrl,
-          },
+          { "@type": "ListItem", "position": 1, "name": "Početna", "item": siteUrl },
+          { "@type": "ListItem", "position": 2, "name": "Tretmani", "item": `${siteUrl}/tretmani` },
+          { "@type": "ListItem", "position": 3, "name": categorySpec.name, "item": categoryUrl },
         ],
       },
     ],
   };
+}
+
+export default async function TreatmentCategoryPage({ params }) {
+  const resolvedParams = await params;
+  const data = await loadCategoryServices(resolvedParams?.categorySlug);
+  if (!data) notFound();
+
+  const cookieStore = await cookies();
+  const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
+  const t = (path, replacements) => translate(locale, path, replacements);
+  const { categorySpec, services } = data;
+  const categoryBeforeAfter = await loadCategoryBeforeAfter(resolvedParams?.categorySlug);
+  const faq = buildFaq(categorySpec, services);
+
+  const siteUrl = getConfiguredSiteUrl();
+  const jsonLd = buildJsonLd(categorySpec, services, faq, siteUrl);
+
+  const durations = services.map((s) => s.durationMin).filter(Boolean);
+  const minDur = durations.length ? Math.min(...durations) : null;
+  const maxDur = durations.length ? Math.max(...durations) : null;
 
   return (
     <div className="clinic-home5">
       <Header4 />
-      <main style={{ paddingTop: 130, paddingBottom: 90 }}>
-        <section className="container">
+
+      <main className="cat-pg">
+
+        {/* ── HERO ── */}
+        <section className="cat-hero">
           {categorySpec.image ? (
-            <div className="clinic-category-hero clinic-reveal">
-              <div className="clinic-category-hero__img">
-                <img
-                  src={categorySpec.image}
-                  alt={categorySpec.name}
-                  width={1600}
-                  height={900}
-                  loading="eager"
-                  decoding="async"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              </div>
-              <div className="clinic-category-hero__overlay" />
-              <div className="clinic-category-hero__content">
-                <span className="clinic-category-hero__eyebrow">Dr Igić Clinic</span>
-                <h1 className="clinic-category-hero__title">{categorySpec.name}</h1>
-                <p className="clinic-category-hero__intro">{categorySpec.heroIntro}</p>
-                <div className="clinic-category-hero__actions">
-                  <Link href="/booking" className="clinic-category-hero__cta">
-                    <i className="fas fa-calendar-check" />
-                    {t("treatments.bookAppointment")}
-                  </Link>
-                  <span className="clinic-category-hero__badge">
-                    <i className={categorySpec.iconClass || "fas fa-spa"} />
-                    {categorySpec.name}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="title-area text-center clinic-reveal">
-              <h1 className="sec-title text-smoke" style={{ marginBottom: 12 }}>
-                {categorySpec.name}
-              </h1>
-              <p className="sec-text text-smoke" style={{ maxWidth: 900, margin: "0 auto" }}>
-                {categorySpec.heroIntro}
-              </p>
-            </div>
-          )}
-
-          <div className="clinic-treatment-detail-layout">
-            <article className="clinic-treatment-detail-content glass-panel clinic-reveal">
-              <h2>{t("treatments.detailsTitle")}</h2>
-              {categorySpec.detailedOverview.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-
-              <h3>{t("treatments.benefits")}</h3>
-              <ul>
-                {categorySpec.benefits.map((benefit) => (
-                  <li key={benefit}>{benefit}</li>
-                ))}
-              </ul>
-
-              <h3>{t("treatments.candidate")}</h3>
-              <p>{categorySpec.candidate}</p>
-
-              <h3>{t("treatments.procedure")}</h3>
-              <p>{categorySpec.procedure}</p>
-
-              <h3>{t("treatments.aftercare")}</h3>
-              <p>{categorySpec.aftercare}</p>
-            </article>
-
-            <aside
-              className="clinic-treatment-detail-gallery glass-panel clinic-reveal"
-              style={{ "--clinic-reveal-delay": "60ms" }}
-            >
-              <h3>{t("treatments.categoryResults")}</h3>
-              {categoryBeforeAfter.length ? (
-                <div className="clinic-treatment-gallery-grid">
-                  {categoryBeforeAfter.map((item, slotIndex) => (
-                    <div
-                      key={item.id}
-                      className="clinic-treatment-image-slot clinic-reveal"
-                      style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 6) * 45}ms` }}
-                    >
-                      <img
-                        src={item.collageImageUrl || item.beforeImageUrl}
-                        alt={item.treatmentType || categorySpec.name}
-                        loading="lazy"
-                        decoding="async"
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  <p>{t("treatments.categoryGalleryFallback")}</p>
-                  <div className="clinic-treatment-gallery-grid">
-                    {categorySpec.imageSlots.map((slot, slotIndex) => (
-                      <div
-                        key={slot}
-                        className="clinic-treatment-image-slot clinic-reveal"
-                        style={{ "--clinic-reveal-delay": `${Math.min(slotIndex, 6) * 45}ms` }}
-                      >
-                        <span>{slot}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </aside>
-          </div>
-
-          <div className="clinic-treatment-service-grid">
-            {services.map((service, serviceIndex) => (
-              <article
-                key={service.id}
-                className="clinic-treatment-service-card glass-panel clinic-hover-raise clinic-reveal"
-                style={{ "--clinic-reveal-delay": `${Math.min(serviceIndex, 12) * 45}ms` }}
-              >
-                <div className="clinic-treatment-service-image-slot">
-                  {t("treatments.serviceImageSpace")}
-                </div>
-                <h3>{service.name}</h3>
-                <p>{service.description || "Individualni tretman."}</p>
-                <div className="clinic-treatment-service-meta">
-                  <span>{service.durationMin} min</span>
-                  <span>
-                    {service.promotion ? (
-                      <>
-                        <del>{service.price} EUR</del> {service.promotion.price} EUR
-                      </>
-                    ) : (
-                      `${service.price} EUR`
-                    )}
-                  </span>
-                </div>
-                {service.slug ? (
-                  <Link
-                    href={`/tretmani/${resolvedParams.categorySlug}/${service.slug}`}
-                    className="clinic-treatment-link"
-                  >
-                    {t("treatments.serviceDetails")}
-                  </Link>
-                ) : null}
-              </article>
-            ))}
-          </div>
-
-          {!services.length ? (
-            <div className="admin-card" style={{ marginTop: 18 }}>
-              <p style={{ margin: 0, color: "#d9e6f8" }}>{t("treatments.noServices")}</p>
-            </div>
+            <img
+              className="cat-hero__bg"
+              src={categorySpec.image}
+              alt=""
+              width={1600}
+              height={900}
+              loading="eager"
+              decoding="async"
+              aria-hidden="true"
+            />
           ) : null}
+          <div className="cat-hero__overlay" aria-hidden="true" />
 
-          <div className="clinic-treatment-faq glass-panel clinic-reveal">
-            <h3>{t("treatments.faq")}</h3>
-            <div className="clinic-treatment-faq-list">
-              {faq.map((item, faqIndex) => (
+          <div className="cat-hero__content">
+            <nav className="cat-hero__crumb" aria-label="breadcrumb">
+              <Link href="/tretmani">Tretmani</Link>
+              <span aria-hidden="true">›</span>
+              <span>{categorySpec.name}</span>
+            </nav>
+
+            <span className="cat-hero__eyebrow">
+              <i className={categorySpec.iconClass || "fas fa-spa"} aria-hidden="true" />
+              Dr Igić Clinic — Estetska medicina
+            </span>
+
+            <h1 className="cat-hero__title">{categorySpec.name}</h1>
+            <p className="cat-hero__intro">{categorySpec.heroIntro}</p>
+
+            {services.length > 0 ? (
+              <div className="cat-hero__stats" aria-label="Ključne informacije">
+                <div className="cat-hero__stat">
+                  <strong>{services.length}</strong>
+                  <span>{services.length === 1 ? "usluga" : services.length < 5 ? "usluge" : "usluga"}</span>
+                </div>
+                {minDur ? (
+                  <>
+                    <div className="cat-hero__stat-sep" aria-hidden="true" />
+                    <div className="cat-hero__stat">
+                      <strong>{minDur === maxDur ? `${minDur}` : `${minDur}–${maxDur}`}</strong>
+                      <span>minuta</span>
+                    </div>
+                  </>
+                ) : null}
+                <div className="cat-hero__stat-sep" aria-hidden="true" />
+                <div className="cat-hero__stat">
+                  <strong>0</strong>
+                  <span>operacija</span>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="cat-hero__actions">
+              <Link href="/booking" className="cat-hero__cta">
+                <i className="fas fa-calendar-check" aria-hidden="true" />
+                {t("treatments.bookAppointment")}
+              </Link>
+              <a href={`tel:${CLINIC_PHONE_TEL}`} className="cat-hero__tel">
+                <i className="fas fa-phone" aria-hidden="true" />
+                {CLINIC_PHONE_DISPLAY}
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* ── OVERVIEW ── */}
+        <section className="cat-overview">
+          <div className="container">
+            <div className="cat-overview__grid">
+              <div className="cat-overview__main clinic-reveal">
+                <span className="cat-eyebrow">O tretmanu</span>
+                {categorySpec.detailedOverview.map((paragraph, i) => (
+                  <p key={i} className={i === 0 ? "cat-overview__lead" : "cat-overview__body-p"}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+
+              <aside className="cat-overview__sidebar">
+                <div className="cat-overview__block clinic-reveal" style={{ "--clinic-reveal-delay": "80ms" }}>
+                  <h3 className="cat-overview__block-title">
+                    <i className="fas fa-check-circle" aria-hidden="true" />
+                    Prednosti tretmana
+                  </h3>
+                  <ul className="cat-benefit-list" aria-label="Prednosti">
+                    {categorySpec.benefits.map((benefit) => (
+                      <li key={benefit} className="cat-benefit-item">
+                        <i className="fas fa-check" aria-hidden="true" />
+                        {benefit}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="cat-overview__block clinic-reveal" style={{ "--clinic-reveal-delay": "160ms" }}>
+                  <h3 className="cat-overview__block-title">
+                    <i className="fas fa-user-check" aria-hidden="true" />
+                    Ko je kandidat
+                  </h3>
+                  <p className="cat-overview__candidate">{categorySpec.candidate}</p>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        {/* ── PROCEDURE + AFTERCARE ── */}
+        <section className="cat-process">
+          <div className="container">
+            <div className="cat-process__grid">
+              <div className="cat-process__card clinic-reveal">
+                <div className="cat-process__icon" aria-hidden="true">
+                  <i className="fas fa-syringe" />
+                </div>
+                <h3>Tok procedure</h3>
+                <p>{categorySpec.procedure}</p>
+              </div>
+              <div className="cat-process__card clinic-reveal" style={{ "--clinic-reveal-delay": "100ms" }}>
+                <div className="cat-process__icon" aria-hidden="true">
+                  <i className="fas fa-heart-pulse" />
+                </div>
+                <h3>Nega nakon tretmana</h3>
+                <p>{categorySpec.aftercare}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── PRICE LIST ── */}
+        {services.length > 0 ? (
+          <section className="cat-services">
+            <div className="container">
+              <div className="cat-section-head clinic-reveal">
+                <span className="cat-eyebrow">Cenovnik</span>
+                <h2 className="cat-section-title">Usluge i cene</h2>
+                <p className="cat-section-sub">
+                  Sve cene su izražene u EUR. Konačna cena se utvrđuje na konsultaciji.
+                </p>
+              </div>
+
+              <div className="cat-price-list" role="list">
+                {services.map((service, i) => (
+                  <div
+                    key={service.id}
+                    className={`cat-price-row clinic-reveal${service.promotion ? " cat-price-row--promo" : ""}`}
+                    style={{ "--clinic-reveal-delay": `${Math.min(i, 10) * 55}ms` }}
+                    role="listitem"
+                  >
+                    {service.promotion ? (
+                      <span className="cat-price-row__promo-tag" aria-label="Promocija">
+                        <i className="fas fa-tag" aria-hidden="true" />
+                        {service.promotion.title}
+                      </span>
+                    ) : null}
+
+                    <div className="cat-price-row__info">
+                      <h3 className="cat-price-row__name">{service.name}</h3>
+                      {service.description ? (
+                        <p className="cat-price-row__desc">{service.description}</p>
+                      ) : null}
+                    </div>
+
+                    <div className="cat-price-row__meta">
+                      {service.durationMin > 0 ? (
+                        <span className="cat-price-row__duration">
+                          <i className="far fa-clock" aria-hidden="true" />
+                          {service.durationMin} min
+                        </span>
+                      ) : null}
+
+                      <div className="cat-price-row__price-wrap">
+                        {service.promotion ? (
+                          <>
+                            <s className="cat-price-row__old">{service.price} EUR</s>
+                            <strong className="cat-price-row__price">{service.promotion.price} EUR</strong>
+                          </>
+                        ) : (
+                          <strong className="cat-price-row__price">{service.price} EUR</strong>
+                        )}
+                      </div>
+
+                      <Link
+                        href="/booking"
+                        className="cat-price-row__book"
+                        aria-label={`Zakaži tretman ${service.name}`}
+                      >
+                        Zakaži
+                        <i className="fas fa-arrow-right" aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {/* ── GALLERY ── */}
+        {categoryBeforeAfter.length > 0 ? (
+          <section className="cat-gallery">
+            <div className="container">
+              <div className="cat-section-head clinic-reveal">
+                <span className="cat-eyebrow">Rezultati</span>
+                <h2 className="cat-section-title">Pre i posle tretmana</h2>
+              </div>
+              <div className="cat-gallery__grid">
+                {categoryBeforeAfter.map((item, i) => (
+                  <div
+                    key={item.id}
+                    className="cat-gallery__item clinic-reveal"
+                    style={{ "--clinic-reveal-delay": `${Math.min(i, 6) * 60}ms` }}
+                  >
+                    <img
+                      src={item.collageImageUrl || item.beforeImageUrl}
+                      alt={item.treatmentType || categorySpec.name}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {/* ── FAQ ── */}
+        <section className="cat-faq">
+          <div className="container">
+            <div className="cat-section-head clinic-reveal">
+              <span className="cat-eyebrow">FAQ</span>
+              <h2 className="cat-section-title">Često postavljana pitanja</h2>
+            </div>
+            <div className="cat-faq__list">
+              {faq.map((item, i) => (
                 <details
                   key={item.question}
-                  className="clinic-reveal"
-                  style={{ "--clinic-reveal-delay": `${Math.min(faqIndex, 8) * 45}ms` }}
+                  className="cat-faq__item clinic-reveal"
+                  style={{ "--clinic-reveal-delay": `${Math.min(i, 6) * 50}ms` }}
                 >
-                  <summary>{item.question}</summary>
-                  <p>{item.answer}</p>
+                  <summary className="cat-faq__q">
+                    <span>{item.question}</span>
+                    <span className="cat-faq__icon" aria-hidden="true" />
+                  </summary>
+                  <div className="cat-faq__a">
+                    <p>{item.answer}</p>
+                  </div>
                 </details>
               ))}
             </div>
           </div>
+        </section>
 
-          <div className="btn-wrap mt-50 justify-content-center" style={{ gap: 12 }}>
-            <Link href="/tretmani" className="btn bg-theme text-title clinic-glow-btn">
-              <span className="link-effect">
-                <span className="effect-1">{t("treatments.allCategories")}</span>
-                <span className="effect-1">{t("treatments.allCategories")}</span>
-              </span>
-            </Link>
-            <Link href="/booking" className="btn bg-theme text-title clinic-glow-btn">
-              <span className="link-effect">
-                <span className="effect-1">{t("treatments.bookAppointment")}</span>
-                <span className="effect-1">{t("treatments.bookAppointment")}</span>
-              </span>
-            </Link>
+        {/* ── CTA BANNER ── */}
+        <section className="cat-cta">
+          <div className="container">
+            <div className="cat-cta__inner clinic-reveal">
+              <div className="cat-cta__text">
+                <span className="cat-eyebrow cat-eyebrow--light">Zakažite danas</span>
+                <h2 className="cat-cta__title">Individualni plan tretmana</h2>
+                <p className="cat-cta__sub">
+                  Svaki tretman počinje konsultacijom — personalizovan pristup, prirodan rezultat i
+                  bezbedan protokol prilagođen vašoj anatomiji.
+                </p>
+              </div>
+              <div className="cat-cta__actions">
+                <Link href="/booking" className="cat-cta__btn cat-cta__btn--primary">
+                  <i className="fas fa-calendar-check" aria-hidden="true" />
+                  Zakaži online
+                </Link>
+                <a href={`tel:${CLINIC_PHONE_TEL}`} className="cat-cta__btn cat-cta__btn--outline">
+                  <i className="fas fa-phone" aria-hidden="true" />
+                  {CLINIC_PHONE_DISPLAY}
+                </a>
+              </div>
+            </div>
           </div>
         </section>
+
+        {/* ── BACK LINK ── */}
+        <div className="container" style={{ paddingBottom: "3rem" }}>
+          <Link href="/tretmani" className="cat-back-link">
+            <i className="fas fa-arrow-left" aria-hidden="true" />
+            Sve kategorije tretmana
+          </Link>
+        </div>
       </main>
 
       <script
