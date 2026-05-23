@@ -7,10 +7,10 @@ import { useLocale } from "@/components/common/LocaleProvider";
 import { getFounderCopy } from "@/lib/content/founder-copy";
 
 const EXP_LABEL = {
-  sr: "godina iskustva",
-  en: "years experience",
-  de: "Jahre Erfahrung",
-  it: "anni d'esperienza",
+  sr: "višegodišnje iskustvo",
+  en: "years of expertise",
+  de: "mehrjährige Erfahrung",
+  it: "pluriennale esperienza",
 };
 
 function NameSplit({ text }) {

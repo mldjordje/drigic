@@ -270,23 +270,30 @@ export async function GET(request) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
+  // Common select shape — includes live service colorHex so admin calendar
+  // always reflects the current service color, even for older bookings.
+  const selectShape = {
+    booking: schema.bookings,
+    userEmail: schema.users.email,
+    userPhone: schema.users.phone,
+    profileName: schema.profiles.fullName,
+    serviceId: schema.bookingItems.serviceId,
+    serviceName: schema.bookingItems.serviceNameSnapshot,
+    serviceColorSnapshot: schema.bookingItems.serviceColorSnapshot,
+    liveServiceColor: schema.services.colorHex,
+    quantity: schema.bookingItems.quantity,
+    unitLabel: schema.bookingItems.unitLabel,
+  };
+
   let rows = [];
   if (from && to) {
     rows = await db
-      .select({
-        booking: schema.bookings,
-        userEmail: schema.users.email,
-        userPhone: schema.users.phone,
-        profileName: schema.profiles.fullName,
-        serviceId: schema.bookingItems.serviceId,
-        serviceName: schema.bookingItems.serviceNameSnapshot,
-        quantity: schema.bookingItems.quantity,
-        unitLabel: schema.bookingItems.unitLabel,
-      })
+      .select(selectShape)
       .from(schema.bookings)
       .leftJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
       .leftJoin(schema.profiles, eq(schema.profiles.userId, schema.bookings.userId))
       .leftJoin(schema.bookingItems, eq(schema.bookingItems.bookingId, schema.bookings.id))
+      .leftJoin(schema.services, eq(schema.services.id, schema.bookingItems.serviceId))
       .where(
         and(
           gte(schema.bookings.startsAt, new Date(from)),
@@ -296,20 +303,12 @@ export async function GET(request) {
       .orderBy(asc(schema.bookings.startsAt));
   } else {
     rows = await db
-      .select({
-        booking: schema.bookings,
-        userEmail: schema.users.email,
-        userPhone: schema.users.phone,
-        profileName: schema.profiles.fullName,
-        serviceId: schema.bookingItems.serviceId,
-        serviceName: schema.bookingItems.serviceNameSnapshot,
-        quantity: schema.bookingItems.quantity,
-        unitLabel: schema.bookingItems.unitLabel,
-      })
+      .select(selectShape)
       .from(schema.bookings)
       .leftJoin(schema.users, eq(schema.users.id, schema.bookings.userId))
       .leftJoin(schema.profiles, eq(schema.profiles.userId, schema.bookings.userId))
       .leftJoin(schema.bookingItems, eq(schema.bookingItems.bookingId, schema.bookings.id))
+      .leftJoin(schema.services, eq(schema.services.id, schema.bookingItems.serviceId))
       .orderBy(desc(schema.bookings.startsAt))
       .limit(300);
   }
@@ -326,6 +325,7 @@ export async function GET(request) {
         clientPhone: row.userPhone || "",
         services: [],
         serviceIds: [],
+        primaryServiceColor: row.booking.primaryServiceColor || null,
       });
     }
 
@@ -336,7 +336,17 @@ export async function GET(request) {
         current.services.push(item);
       }
       if (row.serviceId && !current.serviceIds.includes(row.serviceId)) {
+        // Use LIVE color from services table for the first (primary) service.
+        // Falls back to snapshot then to whatever was stored on the booking row.
+        const isFirstService = current.serviceIds.length === 0;
         current.serviceIds.push(row.serviceId);
+        if (isFirstService) {
+          current.primaryServiceColor =
+            row.liveServiceColor ||
+            row.serviceColorSnapshot ||
+            current.primaryServiceColor ||
+            null;
+        }
       }
     }
   }

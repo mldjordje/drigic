@@ -10,7 +10,7 @@ const STATS = [
   {
     value: 3,
     suffix: "+",
-    label: { sr: "godine iskustva", en: "years experience", de: "Jahre Erfahrung", it: "anni esperienza" },
+    label: { sr: "višegodišnje iskustvo", en: "years of expertise", de: "mehrjährige Erfahrung", it: "pluriennale esperienza" },
   },
   {
     value: 98,
@@ -270,11 +270,11 @@ export default function FounderPageContent() {
             <span style={badgeNumStyle}>3<sup>+</sup></span>
             <span style={badgeLabelStyle}>
               {{
-                sr: "god. iskustva",
-                en: "yrs. experience",
+                sr: "višegodišnje",
+                en: "yrs. expertise",
                 de: "J. Erfahrung",
-                it: "anni esp.",
-              }[locale] || "god. iskustva"}
+                it: "pluriennale",
+              }[locale] || "višegodišnje"}
             </span>
           </div>
         </div>
