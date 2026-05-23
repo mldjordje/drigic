@@ -178,7 +178,7 @@ export default function About() {
 
         {/* Experience badge */}
         <div className="clinic-about-v2__badge" ref={badgeRef}>
-          <span className="clinic-about-v2__badge-num">7<sup>+</sup></span>
+          <span className="clinic-about-v2__badge-num">3<sup>+</sup></span>
           <span className="clinic-about-v2__badge-text">
             {EXP_LABEL[locale] || EXP_LABEL.sr}
           </span>

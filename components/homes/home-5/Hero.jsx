@@ -75,12 +75,25 @@ export default function Hero() {
     return () => document.body.classList.remove("bg-title");
   }, []);
 
-  // Force play + muted on mount (fixes React muted-prop serialization + Android autoPlay)
+  // Force play + muted on mount (fixes React muted-prop serialization + iOS/Android autoPlay)
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = true;
-    video.play().catch(() => {});
+
+    const tryPlay = () => {
+      video.muted = true;
+      video.play().catch(() => {});
+    };
+
+    // Try immediately, and also on canplay (iOS needs both)
+    tryPlay();
+    video.addEventListener("canplay", tryPlay, { once: true });
+    video.addEventListener("loadedmetadata", tryPlay, { once: true });
+
+    return () => {
+      video.removeEventListener("canplay", tryPlay);
+      video.removeEventListener("loadedmetadata", tryPlay);
+    };
   }, []);
 
   // Resume playback on tab/visibility restore
@@ -196,13 +209,16 @@ export default function Hero() {
           poster="/assets/video/hero-poster.webp"
           aria-hidden="true"
         >
-          <source src="/assets/video/hero.webm" type="video/webm" />
           <source src="/assets/video/hero.mp4"  type="video/mp4" />
+          <source src="/assets/video/hero.webm" type="video/webm" />
         </video>
 
         {/* Overlays */}
         <div className="hero-overlay" data-overlay="title" data-opacity="5" />
         <div className="clinic-hero-modern-overlay" aria-hidden="true" />
+
+        {/* Film grain — premium texture */}
+        <div className="clinic-hero-grain" aria-hidden="true" />
 
         {/* Dark curtain veil — lifted by GSAP on enter */}
         <div className="clinic-hero-veil" ref={heroVeilRef} aria-hidden="true" />

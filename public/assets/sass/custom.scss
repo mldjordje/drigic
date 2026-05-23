@@ -7903,6 +7903,14 @@ body,
   border-radius: 50%;
   will-change: transform;
   backface-visibility: hidden;
+  display: none;
+}
+
+.clinic-custom-cursor-active {
+  .clinic-cursor-dot,
+  .clinic-cursor-ring {
+    display: block;
+  }
 }
 
 .clinic-cursor-dot {
@@ -8720,4 +8728,500 @@ body,
 @media (prefers-reduced-motion: reduce) {
   .clinic-about-v2__img-col { clip-path: none !important; }
   .clinic-about-v2__badge   { opacity: 1 !important; transform: none !important; }
+}
+
+// ── Founder Page (fp-*) ─────────────────────────────────────
+// Desktop layout — hero goes 2-column: image | content
+@media (min-width: 992px) {
+  .fp-hero {
+    grid-template-columns: 1fr 1fr !important;
+    min-height: 100svh;
+
+    .fp-hero__img-col {
+      min-height: 100svh !important;
+      max-height: 100svh !important;
+    }
+  }
+
+  // Bio section: two columns
+  .fp-wrap > section:nth-child(3) { // bio section
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+// Gallery: always 2-col on bigger screens
+@media (min-width: 640px) {
+  .fp-gallery-img {
+    aspect-ratio: 3/4 !important;
+  }
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .fp-word,
+  .fp-para,
+  .fp-stat,
+  .fp-cred {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .fp-hero__img-col {
+    clip-path: none !important;
+    opacity: 1 !important;
+  }
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  PREMIUM UPGRADE v4 — "Clinical Precision"                       ║
+// ║  Apple × European Medical Aesthetics                             ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+// ─── 1. Design Tokens ──────────────────────────────────────────────
+.clinic-home5 {
+  --gold:          #c8a96e;
+  --gold-warm:     #d4b87e;
+  --gold-dim:      rgba(200,169,110,0.12);
+  --gold-border:   rgba(200,169,110,0.28);
+  --gold-text:     rgba(200,169,110,0.85);
+  --surface-0:     #07080c;
+  --surface-1:     rgba(255,255,255,0.025);
+  --surface-2:     rgba(255,255,255,0.05);
+  --border-hair:   rgba(255,255,255,0.055);
+  --border-soft:   rgba(255,255,255,0.09);
+  --border-mid:    rgba(255,255,255,0.15);
+  --text-hi:       #f6f9ff;
+  --text-mid:      rgba(238,244,255,0.70);
+  --text-lo:       rgba(238,244,255,0.42);
+  --ease-spring:   cubic-bezier(0.34,1.56,0.64,1);
+  --ease-silk:     cubic-bezier(0.22,1,0.36,1);
+  --ease-expo:     cubic-bezier(0.16,1,0.3,1);
+  background: var(--surface-0) !important;
+}
+
+// ─── 2. Warm ambient glow on page background ──────────────────────
+.clinic-home5::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70vh;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 60% 35% at 50% -5%,
+    rgba(200,169,110,0.055) 0%,
+    transparent 65%
+  );
+}
+
+// ─── 3. Fluid Type Scale ──────────────────────────────────────────
+.clinic-home5 {
+  h1:not(.no-fluid) {
+    font-size:      clamp(2.8rem, 7.5vw, 6.8rem) !important;
+    letter-spacing: -0.04em !important;
+    line-height:    0.98 !important;
+    font-weight:    800 !important;
+  }
+
+  .sec-title {
+    font-size:      clamp(2rem, 5vw, 3.8rem) !important;
+    letter-spacing: -0.03em !important;
+    line-height:    1.07 !important;
+    font-weight:    800 !important;
+  }
+
+  h3:not(.no-fluid) {
+    font-size:      clamp(1.15rem, 2.5vw, 1.75rem) !important;
+    letter-spacing: -0.016em !important;
+    line-height:    1.22 !important;
+  }
+
+  .sec-text {
+    font-size:   clamp(1rem, 2vw, 1.15rem) !important;
+    line-height: 1.78 !important;
+    color:       var(--text-mid) !important;
+  }
+
+  p:not(.no-fluid) {
+    line-height: 1.76 !important;
+    color: var(--text-mid) !important;
+  }
+}
+
+// ─── 4. Premium Glass Surface ─────────────────────────────────────
+.clinic-home5 {
+  .glass-panel,
+  .process-card {
+    background:      rgba(12,14,20,0.62) !important;
+    border:          1px solid var(--border-soft) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      inset 0 -1px 0 rgba(0,0,0,0.18),
+      0 28px 60px rgba(0,0,0,0.46) !important;
+    backdrop-filter:  blur(28px) saturate(1.9) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(1.9) !important;
+    border-radius:   22px !important;
+    transition:
+      transform  0.55s var(--ease-silk),
+      box-shadow 0.55s ease,
+      border-color 0.35s ease !important;
+  }
+
+  .glass-panel:hover,
+  .process-card:hover {
+    border-color: var(--gold-border) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 36px 72px rgba(0,0,0,0.52),
+      0 0 0 0.5px rgba(200,169,110,0.18) !important;
+  }
+}
+
+// ─── 5. Hero — title size & grain ─────────────────────────────────
+.clinic-home5 .clinic-hero-title {
+  font-size:      clamp(3.4rem, 10vw, 9rem) !important;
+  letter-spacing: -0.046em !important;
+  line-height:    0.93 !important;
+  font-weight:    800 !important;
+}
+
+// Grain texture overlay for hero
+.clinic-hero-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  // SVG feTurbulence grain via data-URI
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: 0.038;
+  mix-blend-mode: overlay;
+  animation: grainDrift 8s steps(8) infinite;
+}
+
+@keyframes grainDrift {
+  0%   { background-position:   0     0; }
+  12%  { background-position: -5%  -10%; }
+  25%  { background-position: -15%   5%; }
+  37%  { background-position:  7%  -25%; }
+  50%  { background-position: -5%   25%; }
+  62%  { background-position:  15%  -5%; }
+  75%  { background-position:  0    15%; }
+  87%  { background-position: -10%  10%; }
+  100% { background-position:   0    0; }
+}
+
+// ─── 6. Hero CTA — pill ───────────────────────────────────────────
+.clinic-home5 .clinic-hero-cta-btn {
+  border-radius: 999px !important;
+  font-size:     11px !important;
+  letter-spacing: 0.1em !important;
+  min-height:    50px !important;
+  padding:       0 28px !important;
+  border-color:  rgba(255,255,255,0.28) !important;
+}
+
+// ─── 7. Pill Buttons (clinic-glow-btn) ────────────────────────────
+.clinic-home5 .clinic-glow-btn {
+  border-radius: 999px !important;
+  padding:       13px 30px !important;
+  font-size:     11px !important;
+  letter-spacing: 0.1em !important;
+  font-weight:   800 !important;
+  text-transform: uppercase !important;
+  background:    rgba(255,255,255,0.05) !important;
+  border:        1px solid rgba(255,255,255,0.18) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 4px 20px rgba(0,0,0,0.42) !important;
+  transition:
+    transform    0.3s var(--ease-spring),
+    box-shadow   0.3s ease,
+    border-color 0.25s ease !important;
+}
+.clinic-home5 .clinic-glow-btn:hover {
+  transform:    translateY(-2px) scale(1.03) !important;
+  border-color: rgba(255,255,255,0.38) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    0 14px 40px rgba(0,0,0,0.52),
+    0 0 36px rgba(255,255,255,0.06) !important;
+}
+
+// ─── 8. Process / Steps cards ─────────────────────────────────────
+.clinic-home5 .process-card {
+  padding: clamp(28px,4vw,42px) !important;
+
+  .process-card-number {
+    font-size:      clamp(2.8rem,5.5vw,4.2rem) !important;
+    font-weight:    900 !important;
+    letter-spacing: -0.05em !important;
+    background:     linear-gradient(
+                      135deg,
+                      var(--gold) 0%,
+                      rgba(200,169,110,0.28) 100%
+                    ) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    line-height:    1 !important;
+    margin-bottom:  18px !important;
+    display:        block !important;
+  }
+
+  .process-card-title {
+    font-size:      clamp(1.05rem,2vw,1.35rem) !important;
+    font-weight:    700 !important;
+    letter-spacing: -0.012em !important;
+    margin-bottom:  10px !important;
+    color:          var(--text-hi) !important;
+  }
+
+  .process-card-text {
+    font-size:   clamp(0.88rem,1.6vw,0.97rem) !important;
+    line-height: 1.7 !important;
+    color:       var(--text-mid) !important;
+  }
+}
+
+// ─── 9. Service Cards (svc-card) ─────────────────────────────────
+.clinic-home5 .svc-card {
+  border-color: var(--border-hair) !important;
+
+  &:hover {
+    border-color: var(--gold-border) !important;
+    box-shadow:
+      0 32px 72px rgba(0,0,0,0.58),
+      0 0 0 1px rgba(200,169,110,0.15) !important;
+  }
+
+  .svc-card__num {
+    font-weight:    900 !important;
+    letter-spacing: -0.025em !important;
+    background: linear-gradient(
+                  135deg,
+                  var(--gold) 0%,
+                  rgba(200,169,110,0.32) 100%
+                ) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+  }
+
+  .svc-card__title {
+    font-size:      clamp(1rem,2vw,1.22rem) !important;
+    font-weight:    700 !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  .svc-card__desc {
+    font-size:   clamp(0.82rem,1.5vw,0.92rem) !important;
+    line-height: 1.62 !important;
+    color:       var(--text-mid) !important;
+  }
+}
+
+// ─── 10. Scroll Reveal — blur edition ─────────────────────────────
+// Override the existing clinic-reveal with blur-depth
+.clinic-home5 .clinic-reveal:not(.is-visible) {
+  opacity:   0;
+  transform: translateY(30px);
+  filter:    blur(5px);
+}
+.clinic-home5 .clinic-reveal.is-visible {
+  opacity:   1;
+  transform: translateY(0);
+  filter:    blur(0);
+  transition:
+    opacity   0.88s ease,
+    transform 0.88s var(--ease-silk),
+    filter    0.72s ease;
+  transition-delay: var(--clinic-reveal-delay, 0ms);
+}
+
+// ─── 11. About-v2 Enhancements ────────────────────────────────────
+.clinic-home5 .clinic-about-v2__summary {
+  font-size:   clamp(1rem,2vw,1.1rem) !important;
+  line-height: 1.78 !important;
+  color:       var(--text-mid) !important;
+}
+
+.clinic-home5 .clinic-about-v2__eyebrow {
+  font-size:      11px !important;
+  letter-spacing: 0.2em !important;
+  font-weight:    700 !important;
+  color:          var(--gold) !important;
+  border-color:   var(--gold-border) !important;
+  background:     var(--gold-dim) !important;
+}
+
+.clinic-home5 .clinic-about-v2__badge {
+  background:      rgba(200,169,110,0.10) !important;
+  border:          1px solid var(--gold-border) !important;
+  backdrop-filter: blur(24px) !important;
+}
+
+.clinic-home5 .clinic-about-v2__badge-num {
+  font-size:      clamp(2rem,5vw,3rem) !important;
+  font-weight:    900 !important;
+  letter-spacing: -0.045em !important;
+  color:          var(--gold) !important;
+}
+
+.clinic-home5 .clinic-about-v2__badge-text {
+  color: var(--gold-text) !important;
+}
+
+.clinic-home5 .clinic-about-v2__cred-dot {
+  background:  var(--gold-dim) !important;
+  border-color: var(--gold-border) !important;
+  color:        var(--gold) !important;
+}
+
+.clinic-home5 .clinic-about-v2__rule {
+  background: linear-gradient(
+                90deg,
+                var(--gold) 0%,
+                rgba(200,169,110,0.10) 100%
+              ) !important;
+  height: 2px !important;
+}
+
+.clinic-home5 .clinic-about-v2__btn--primary {
+  background: linear-gradient(
+                135deg,
+                var(--gold) 0%,
+                #a8874e 100%
+              ) !important;
+  border-color: transparent !important;
+  color: #07080c !important;
+  -webkit-text-fill-color: #07080c !important;
+  font-weight: 800 !important;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.03) !important;
+    box-shadow: 0 12px 40px rgba(200,169,110,0.28) !important;
+  }
+}
+
+.clinic-home5 .clinic-about-v2__btn--ghost {
+  border-color: var(--gold-border) !important;
+  color:        var(--gold) !important;
+  -webkit-text-fill-color: var(--gold) !important;
+
+  &:hover {
+    background:  var(--gold-dim) !important;
+    border-color: var(--gold) !important;
+  }
+}
+
+// ─── 12. Eyebrow / Founder chip ───────────────────────────────────
+.clinic-home5 .clinic-founder-eyebrow,
+.clinic-home5 .clinic-about-v2__eyebrow {
+  font-size:      11px !important;
+  letter-spacing: 0.2em !important;
+  font-weight:    700 !important;
+  color:          var(--gold) !important;
+  border-color:   var(--gold-border) !important;
+  background:     var(--gold-dim) !important;
+}
+
+// ─── 13. Section separator utility ────────────────────────────────
+.clinic-sep {
+  display: block;
+  width:   100%;
+  height:  1px;
+  border:  none;
+  margin:  0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--border-soft) 50%,
+    transparent 100%
+  );
+}
+
+// ─── 14. Hero overlay — richer gradient ───────────────────────────
+.clinic-home5 .clinic-hero-modern-overlay {
+  background:
+    // Bottom vignette (text area)
+    radial-gradient(ellipse 90% 55% at 50% 105%, rgba(7,8,12,0.85) 0%, transparent 68%),
+    // Top vignette
+    radial-gradient(ellipse 75% 45% at 50% -5%, rgba(7,8,12,0.6) 0%, transparent 55%),
+    // Left content shadow
+    radial-gradient(ellipse 52% 80% at -2% 50%, rgba(7,8,12,0.72) 0%, transparent 60%),
+    // Warm gold bloom top-right
+    radial-gradient(ellipse 45% 40% at 95% 6%, rgba(200,169,110,0.05) 0%, transparent 55%),
+    // Base luminosity
+    linear-gradient(165deg, rgba(7,8,12,0.55) 0%, rgba(7,8,12,0.12) 45%, rgba(7,8,12,0.68) 100%) !important;
+}
+
+// ─── 15. Hero particles — gold-tinted ─────────────────────────────
+.clinic-home5 .clinic-hero-particle {
+  background: radial-gradient(
+    circle,
+    rgba(200,169,110,0.65) 0%,
+    rgba(200,169,110,0) 70%
+  ) !important;
+}
+
+// ─── 16. Heading text — consistent white ──────────────────────────
+.clinic-home5 h1,
+.clinic-home5 h2,
+.clinic-home5 h3,
+.clinic-home5 h4,
+.clinic-home5 h5,
+.clinic-home5 h6,
+.clinic-home5 .sec-title {
+  color: var(--text-hi) !important;
+}
+
+// ─── 17. Footer refinement ────────────────────────────────────────
+.clinic-home5 .footer-top-wrap {
+  border-top: 1px solid var(--border-hair) !important;
+}
+
+// ─── 18. Focus states ─────────────────────────────────────────────
+.clinic-home5 a:focus-visible,
+.clinic-home5 button:focus-visible {
+  outline:        2px solid rgba(200,169,110,0.65) !important;
+  outline-offset: 3px !important;
+  border-radius:  6px !important;
+}
+
+// ─── 19. Mobile refinements ───────────────────────────────────────
+@media (max-width: 767px) {
+  .clinic-home5 .clinic-hero-title {
+    font-size:      clamp(2.6rem,13vw,4rem) !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  .clinic-home5 .svc-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .clinic-home5 .process-card .process-card-number {
+    font-size: 2.6rem !important;
+  }
+
+  .clinic-home5 .clinic-glow-btn {
+    padding: 12px 22px !important;
+    font-size: 10px !important;
+  }
+}
+
+// ─── 20. Reduced motion overrides ─────────────────────────────────
+@media (prefers-reduced-motion: reduce) {
+  .clinic-hero-grain { animation: none !important; }
+
+  .clinic-home5 .clinic-reveal:not(.is-visible),
+  .clinic-home5 .clinic-reveal.is-visible {
+    filter: none !important;
+    transform: none !important;
+    transition: opacity 0.4s ease !important;
+  }
 }
