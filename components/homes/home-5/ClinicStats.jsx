@@ -5,25 +5,25 @@ import { useLocale } from "@/components/common/LocaleProvider";
 
 const STATS = {
   sr: [
-    { value: 7, suffix: "+", label: "Godina iskustva", sublabel: "u estetskoj medicini" },
+    { value: 3, suffix: "+", label: "Višegodišnje iskustvo", sublabel: "u estetskoj medicini" },
     { value: 1200, suffix: "+", label: "Tretmana", sublabel: "uspešno izvedenih" },
     { value: 98, suffix: "%", label: "Zadovoljnih", sublabel: "pacijenata" },
     { value: 15, suffix: "+", label: "Procedura", sublabel: "u ponudi" },
   ],
   en: [
-    { value: 7, suffix: "+", label: "Years of experience", sublabel: "in aesthetic medicine" },
+    { value: 3, suffix: "+", label: "Years of expertise", sublabel: "in aesthetic medicine" },
     { value: 1200, suffix: "+", label: "Treatments", sublabel: "successfully performed" },
     { value: 98, suffix: "%", label: "Satisfied", sublabel: "patients" },
     { value: 15, suffix: "+", label: "Procedures", sublabel: "available" },
   ],
   de: [
-    { value: 7, suffix: "+", label: "Jahre Erfahrung", sublabel: "in aesthetischer Medizin" },
-    { value: 1200, suffix: "+", label: "Behandlungen", sublabel: "erfolgreich durchgefuehrt" },
+    { value: 3, suffix: "+", label: "Mehrjährige Erfahrung", sublabel: "in ästhetischer Medizin" },
+    { value: 1200, suffix: "+", label: "Behandlungen", sublabel: "erfolgreich durchgeführt" },
     { value: 98, suffix: "%", label: "Zufriedene", sublabel: "Patienten" },
     { value: 15, suffix: "+", label: "Verfahren", sublabel: "im Angebot" },
   ],
   it: [
-    { value: 7, suffix: "+", label: "Anni di esperienza", sublabel: "in medicina estetica" },
+    { value: 3, suffix: "+", label: "Pluriennale esperienza", sublabel: "in medicina estetica" },
     { value: 1200, suffix: "+", label: "Trattamenti", sublabel: "eseguiti con successo" },
     { value: 98, suffix: "%", label: "Soddisfatti", sublabel: "pazienti" },
     { value: 15, suffix: "+", label: "Procedure", sublabel: "disponibili" },
