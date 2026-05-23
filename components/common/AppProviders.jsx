@@ -11,7 +11,6 @@ import SessionProvider from "@/components/common/SessionProvider";
 import ClinicCallFab from "@/components/common/ClinicCallFab";
 import ScrollTop from "@/components/common/ScrollTop";
 import SmoothScroll from "@/components/common/SmoothScroll";
-import CustomCursor from "@/components/common/CustomCursor";
 import ScrollProgress from "@/components/common/ScrollProgress";
 
 export default function AppProviders({
@@ -339,7 +338,6 @@ export default function AppProviders({
           <ScrollTop />
           <ClinicCallFab />
           <SmoothScroll />
-          <CustomCursor />
           <ScrollProgress />
         </Context>
       </SessionProvider>

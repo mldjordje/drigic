@@ -58,6 +58,7 @@ export default function Hero() {
   const founderRef = useRef(null);
   const heroVeilRef = useRef(null);
   const lineRevealRef = useRef(null);
+  const heroWrapperRef = useRef(null);
   const heroCopy = HERO_COPY[locale] || HERO_COPY.sr;
   const heroTitleLines = useMemo(
     () =>
@@ -94,6 +95,25 @@ export default function Hero() {
       video.removeEventListener("canplay", tryPlay);
       video.removeEventListener("loadedmetadata", tryPlay);
     };
+  }, []);
+
+  // Spotlight — golden halo follows mouse through hero
+  useEffect(() => {
+    const wrapper = heroWrapperRef.current;
+    if (!wrapper) return;
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(hover: none)").matches) return;
+
+    const onMove = (e) => {
+      const r = wrapper.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * 100;
+      const y = ((e.clientY - r.top) / r.height) * 100;
+      wrapper.style.setProperty("--spot-x", `${x}%`);
+      wrapper.style.setProperty("--spot-y", `${y}%`);
+    };
+
+    wrapper.addEventListener("mousemove", onMove, { passive: true });
+    return () => wrapper.removeEventListener("mousemove", onMove);
   }, []);
 
   // Resume playback on tab/visibility restore
@@ -193,7 +213,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <div className="hero-wrapper hero-5" id="hero">
+    <div className="hero-wrapper hero-5" id="hero" ref={heroWrapperRef}>
       <div
         className="hero-slider por"
         style={{ background: "#020508" }}
@@ -222,6 +242,9 @@ export default function Hero() {
 
         {/* Dark curtain veil — lifted by GSAP on enter */}
         <div className="clinic-hero-veil" ref={heroVeilRef} aria-hidden="true" />
+
+        {/* Mouse-driven golden spotlight */}
+        <div className="clinic-hero-spotlight" aria-hidden="true" />
 
         {/* Floating ambient particles */}
         <div className="clinic-hero-particles" aria-hidden="true">
