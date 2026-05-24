@@ -792,6 +792,19 @@ a.clinic-glow-btn {
     z-index: 0;
     pointer-events: none;
     opacity: 1;
+    display: block;
+    background: #020508;
+  }
+
+  .clinic-hero-video::-webkit-media-controls,
+  .clinic-hero-video::-webkit-media-controls-panel,
+  .clinic-hero-video::-webkit-media-controls-start-playback-button,
+  .clinic-hero-video::-webkit-media-controls-play-button,
+  .clinic-hero-video::-webkit-media-controls-overlay-play-button {
+    display: none !important;
+    -webkit-appearance: none;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 
   .hero-wrapper.hero-5 .hero-slider {
