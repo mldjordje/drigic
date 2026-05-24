@@ -6,7 +6,6 @@ import {
   getAvailabilityByDayDuration,
   getAvailabilityByMonthDuration,
 } from "@/lib/booking/engine";
-import { maybeRunReminderDispatch } from "@/lib/notifications/reminder-dispatch";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,12 +60,6 @@ export async function GET(request) {
   }
 
   try {
-    try {
-      await maybeRunReminderDispatch({ db: getDb() });
-    } catch {
-      // Reminder fallback must not affect booking availability.
-    }
-
     if (month) {
       const data = durationMin
         ? await getAvailabilityByMonthDuration({ month, totalDurationMin: durationMin })

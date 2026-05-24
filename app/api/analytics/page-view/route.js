@@ -3,7 +3,6 @@ import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
-import { maybeRunReminderDispatch } from "@/lib/notifications/reminder-dispatch";
 
 export const runtime = "nodejs";
 
@@ -48,12 +47,6 @@ export async function POST(request) {
     referrer: referrer || null,
     locale: locale || null,
   });
-
-  try {
-    await maybeRunReminderDispatch({ db });
-  } catch {
-    // Reminder heartbeat must never block analytics collection.
-  }
 
   return ok({ ok: true });
 }
