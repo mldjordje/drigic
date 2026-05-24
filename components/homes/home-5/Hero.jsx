@@ -55,7 +55,6 @@ function prepareHeroVideo(video) {
   video.loop = true;
   video.playsInline = true;
   video.controls = false;
-  video.disablePictureInPicture = true;
   video.setAttribute("muted", "");
   video.setAttribute("autoplay", "");
   video.setAttribute("loop", "");
@@ -100,17 +99,7 @@ export default function Hero() {
 
     const tryPlay = () => {
       prepareHeroVideo(video);
-      const playPromise = video.play();
-      if (playPromise?.catch) {
-        playPromise.catch(() => {});
-      }
-    };
-
-    const resumeIfNeeded = () => {
-      if (document.visibilityState === "hidden") return;
-      if (video.paused || video.readyState >= 2) {
-        tryPlay();
-      }
+      video.play().catch(() => {});
     };
 
     prepareHeroVideo(video);
@@ -119,44 +108,15 @@ export default function Hero() {
     video.addEventListener("canplay", tryPlay);
     video.addEventListener("loadedmetadata", tryPlay);
     video.addEventListener("loadeddata", tryPlay);
-    video.addEventListener("pause", resumeIfNeeded);
-    video.addEventListener("stalled", resumeIfNeeded);
-    video.addEventListener("suspend", resumeIfNeeded);
-    window.addEventListener("focus", resumeIfNeeded);
-    document.addEventListener("visibilitychange", resumeIfNeeded);
-
-    let lastPlaybackTime = -1;
-    let stalledTicks = 0;
-    const watchdog = window.setInterval(() => {
-      if (document.visibilityState === "hidden") return;
-
-      const currentPlaybackTime = video.currentTime || 0;
-      const playbackIsStuck =
-        !video.paused &&
-        video.readyState >= 2 &&
-        Math.abs(currentPlaybackTime - lastPlaybackTime) < 0.05;
-
-      stalledTicks = playbackIsStuck ? stalledTicks + 1 : 0;
-      lastPlaybackTime = currentPlaybackTime;
-
-      if (stalledTicks >= 2) {
-        video.load();
-        stalledTicks = 0;
-      }
-
-      resumeIfNeeded();
-    }, 1500);
+    window.addEventListener("focus", tryPlay);
+    document.addEventListener("visibilitychange", tryPlay);
 
     return () => {
-      window.clearInterval(watchdog);
       video.removeEventListener("canplay", tryPlay);
       video.removeEventListener("loadedmetadata", tryPlay);
       video.removeEventListener("loadeddata", tryPlay);
-      video.removeEventListener("pause", resumeIfNeeded);
-      video.removeEventListener("stalled", resumeIfNeeded);
-      video.removeEventListener("suspend", resumeIfNeeded);
-      window.removeEventListener("focus", resumeIfNeeded);
-      document.removeEventListener("visibilitychange", resumeIfNeeded);
+      window.removeEventListener("focus", tryPlay);
+      document.removeEventListener("visibilitychange", tryPlay);
     };
   }, []);
 
@@ -282,8 +242,6 @@ export default function Hero() {
         className="hero-slider por"
         style={{ background: "#020508" }}
       >
-        <div className="clinic-hero-mobile-motion" aria-hidden="true" />
-
         {/* Self-hosted background video */}
         <video
           ref={videoRef}
