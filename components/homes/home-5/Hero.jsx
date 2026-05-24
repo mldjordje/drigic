@@ -282,6 +282,8 @@ export default function Hero() {
         className="hero-slider por"
         style={{ background: "#020508" }}
       >
+        <div className="clinic-hero-mobile-motion" aria-hidden="true" />
+
         {/* Self-hosted background video */}
         <video
           ref={videoRef}
