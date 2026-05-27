@@ -68,7 +68,7 @@ export default async function sitemap() {
         url: `${siteUrl}/tretmani/${categorySlug}/${row.slug}`,
         lastModified: row.updatedAt || new Date(),
         changeFrequency: "weekly",
-        priority: 0.6,
+        priority: 0.75,
       };
     })
     .filter(Boolean);

@@ -3728,6 +3728,36 @@ a.clinic-glow-btn {
     margin-top: 16px;
   }
 
+  .clinic-treatment-guidance,
+  .clinic-treatment-plan {
+    margin-top: 22px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(108, 92, 231, 0.18);
+    background:
+      linear-gradient(135deg, rgba(108, 92, 231, 0.10), rgba(20, 184, 166, 0.09)),
+      rgba(255, 255, 255, 0.58);
+  }
+
+  .clinic-treatment-guidance p,
+  .clinic-treatment-plan p {
+    margin-bottom: 12px;
+  }
+
+  .clinic-treatment-guidance__note {
+    margin-top: 12px;
+    margin-bottom: 0 !important;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .clinic-treatment-plan ol {
+    margin: 0;
+    padding-left: 20px;
+    display: grid;
+    gap: 8px;
+  }
+
   .clinic-treatment-detail-content ul {
     margin: 0;
     padding-left: 18px;
@@ -3779,6 +3809,31 @@ a.clinic-glow-btn {
 
   .clinic-treatment-faq-list p {
     margin: 8px 0 0;
+  }
+
+  .clinic-treatment-related-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 10px;
+  }
+
+  .clinic-treatment-related-card {
+    display: grid;
+    gap: 5px;
+    padding: 13px 14px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.62);
+    color: #111827;
+  }
+
+  .clinic-treatment-related-card span {
+    font-weight: 800;
+  }
+
+  .clinic-treatment-related-card small {
+    color: rgba(47, 61, 83, 0.78);
+    font-weight: 700;
   }
 
   @media (max-width: 767px) {

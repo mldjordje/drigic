@@ -5,15 +5,72 @@ import Footer5 from "@/components/footers/Footer5";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import { getLocalizedCategoryCopy } from "@/lib/services/category-copy";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
+import { SITE_NAME, getConfiguredSiteUrl } from "@/lib/site";
 
 export const metadata = {
-  title: "Tretmani",
+  title: {
+    absolute: `Tretmani i usluge estetske medicine | ${SITE_NAME}`,
+  },
+  description:
+    "Pregled svih tretmana Dr Igic Clinic: hijaluronski fileri, botox, skinbusteri, PRP, mezoterapija, hemijski piling i regenerativni protokoli.",
+  keywords: [
+    "tretmani estetske medicine",
+    "hijaluronski fileri",
+    "botox",
+    "skinbusteri",
+    "PRP",
+    "mezoterapija",
+    "preporuka tretmana",
+  ],
+  alternates: { canonical: "/tretmani" },
+  openGraph: {
+    title: "Tretmani i usluge estetske medicine",
+    description:
+      "Izaberite tretman prema cilju: volumen, bore, hidratacija, regeneracija, tekstura koze ili konture tela.",
+    type: "website",
+    siteName: SITE_NAME,
+    url: "/tretmani",
+  },
 };
 
 export default async function TreatmentsIndexPage() {
   const cookieStore = await cookies();
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
   const t = (path, replacements) => translate(locale, path, replacements);
+  const siteUrl = getConfiguredSiteUrl();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": `${siteUrl}/tretmani#collection`,
+        name: "Tretmani i usluge estetske medicine",
+        description:
+          "Katalog tretmana Dr Igic Clinic sa kategorijama, indikacijama i preporukama za izbor usluge.",
+        url: `${siteUrl}/tretmani`,
+        isPartOf: { "@id": `${siteUrl}/#website` },
+      },
+      {
+        "@type": "ItemList",
+        "@id": `${siteUrl}/tretmani#categories`,
+        name: "Kategorije tretmana",
+        itemListElement: SERVICE_CATEGORY_SPECS.map((category, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: category.name,
+          description: category.shortDescription,
+          url: `${siteUrl}/tretmani/${category.slug}`,
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Pocetna", item: siteUrl },
+          { "@type": "ListItem", position: 2, name: "Tretmani", item: `${siteUrl}/tretmani` },
+        ],
+      },
+    ],
+  };
 
   return (
     <div className="clinic-home5">
@@ -67,6 +124,10 @@ export default async function TreatmentsIndexPage() {
           </div>
         </section>
       </main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Footer5 />
     </div>
   );
