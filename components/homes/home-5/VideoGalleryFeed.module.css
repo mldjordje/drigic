@@ -42,6 +42,7 @@
   padding: 0;
   cursor: pointer;
   background: #000;
+  color: #fff;
 }
 
 .inlinePlayerWrap iframe {

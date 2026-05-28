@@ -9765,3 +9765,44 @@ body,
   color: #f8fafc !important;
   -webkit-text-fill-color: #f8fafc !important;
 }
+
+.clinic-theme-light .clinic-home5 .clinic-hero-title .clinic-word,
+.clinic-theme-dark .clinic-home5 .clinic-hero-title .clinic-word,
+.clinic-theme-light .clinic-home5 .clinic-hero-line:last-child .clinic-word:last-child,
+.clinic-theme-dark .clinic-home5 .clinic-hero-line:last-child .clinic-word:last-child {
+  background: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.42) !important;
+  animation: none !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-treatment-showcase .sec-title,
+.clinic-theme-light .clinic-home5 .clinic-treatment-showcase .sec-title *,
+.clinic-theme-light .clinic-home5 .clinic-treatment-showcase .sec-text {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.34) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-treatment-showcase .sec-text {
+  color: rgba(226, 238, 255, 0.88) !important;
+  -webkit-text-fill-color: rgba(226, 238, 255, 0.88) !important;
+}
+
+.clinic-theme-light .clinic-marquee-item {
+  color: rgba(26, 31, 54, 0.74);
+}
+
+.clinic-theme-light .clinic-marquee-dot {
+  color: #74551e;
+  opacity: 0.92;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-about-v2__btn--primary,
+.clinic-theme-dark .clinic-home5 .clinic-about-v2__btn--primary * {
+  color: #07080c !important;
+  -webkit-text-fill-color: #07080c !important;
+}
