@@ -54,6 +54,7 @@ export async function GET(request) {
   const serviceSelections = parseServiceSelections(searchParams.get("serviceSelections") || "");
   const durationMinRaw = searchParams.get("durationMin");
   const durationMin = durationMinRaw ? Number(durationMinRaw) : null;
+  const excludeBookingId = searchParams.get("excludeBookingId") || undefined;
 
   if (!day && !month) {
     return fail(400, "Provide either date=YYYY-MM-DD or month=YYYY-MM.");
@@ -62,24 +63,26 @@ export async function GET(request) {
   try {
     if (month) {
       const data = durationMin
-        ? await getAvailabilityByMonthDuration({ month, totalDurationMin: durationMin })
+        ? await getAvailabilityByMonthDuration({ month, totalDurationMin: durationMin, excludeBookingId })
         : await getAvailabilityByMonth({
             month,
             serviceIds,
             serviceSelections,
             requireHyaluronicBrand: true,
+            excludeBookingId,
           });
       // Dostupnost mora da reaguje odmah na admin izmene (nedelja/prepodnevni termini/blokade).
       return ok({ ok: true, mode: "month", ...data });
     }
 
     const data = durationMin
-      ? await getAvailabilityByDayDuration({ date: day, totalDurationMin: durationMin })
+      ? await getAvailabilityByDayDuration({ date: day, totalDurationMin: durationMin, excludeBookingId })
       : await getAvailabilityByDay({
           date: day,
           serviceIds,
           serviceSelections,
           requireHyaluronicBrand: true,
+          excludeBookingId,
         });
     return ok({ ok: true, mode: "day", ...data });
   } catch (error) {

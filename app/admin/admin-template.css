@@ -620,6 +620,66 @@
   box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.35), 0 10px 24px rgba(9, 16, 24, 0.5);
 }
 
+.admin-calendar-slot-picker {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(217, 232, 248, 0.2);
+  border-radius: 12px;
+  background: rgba(8, 13, 22, 0.42);
+}
+
+.admin-calendar-slot-picker-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.admin-calendar-slot-picker-head strong {
+  color: #edf5ff;
+}
+
+.admin-calendar-slot-picker p {
+  margin: 0;
+  color: #b8cbe3;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.admin-calendar-slot-picker p.is-error {
+  color: #ffabab;
+}
+
+.admin-calendar-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  gap: 8px;
+}
+
+.admin-calendar-slot-btn {
+  min-height: 38px;
+  border: 1px solid rgba(217, 232, 248, 0.28);
+  border-radius: 10px;
+  background: rgba(12, 20, 32, 0.88);
+  color: #f4f8ff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-calendar-slot-btn:hover {
+  border-color: rgba(217, 232, 248, 0.58);
+  background: rgba(31, 55, 84, 0.82);
+}
+
+.admin-calendar-slot-btn.is-selected {
+  border-color: rgba(217, 232, 248, 0.86);
+  background: rgba(217, 232, 248, 0.22);
+  box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.4), 0 10px 24px rgba(9, 16, 24, 0.45);
+}
+
 .admin-calendar-modal {
   position: fixed;
   inset: 0;

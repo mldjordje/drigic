@@ -62,6 +62,13 @@ function fmtDateTime(value) {
   return new Date(value).toLocaleString("sr-RS");
 }
 
+function formatSlotTime(value) {
+  return new Date(value).toLocaleTimeString("sr-RS", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function normalizeSlotStart(value) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const day = new Date(`${value}T12:00:00Z`).getUTCDay();
@@ -123,6 +130,9 @@ export default function AdminKalendarPage() {
   const [notesDraft, setNotesDraft] = useState("");
   const [pendingEditStartLocal, setPendingEditStartLocal] = useState("");
   const [pendingEditServiceIds, setPendingEditServiceIds] = useState([]);
+  const [rescheduleSlots, setRescheduleSlots] = useState([]);
+  const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
+  const [rescheduleSlotsError, setRescheduleSlotsError] = useState("");
   const [showReschedulePanel, setShowReschedulePanel] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [clientDetailsLoading, setClientDetailsLoading] = useState(false);
@@ -612,6 +622,67 @@ export default function AdminKalendarPage() {
       return sum + (svc?.durationMin || 0);
     }, 0);
   }, [pendingEditServiceIds, allServices]);
+  const pendingEditDate = useMemo(
+    () => (pendingEditStartLocal || "").slice(0, 10),
+    [pendingEditStartLocal]
+  );
+
+  useEffect(() => {
+    if (
+      !showReschedulePanel ||
+      !activeBooking ||
+      !pendingEditDate ||
+      !pendingEditServiceIds.length ||
+      !pendingEditDurationMin
+    ) {
+      setRescheduleSlots([]);
+      setRescheduleSlotsLoading(false);
+      setRescheduleSlotsError("");
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    setRescheduleSlotsLoading(true);
+    setRescheduleSlotsError("");
+
+    const params = new URLSearchParams({
+      date: pendingEditDate,
+      durationMin: String(pendingEditDurationMin),
+      excludeBookingId: activeBooking.id,
+    });
+
+    fetch(`/api/bookings/availability?${params.toString()}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await parseResponse(response);
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.message || "Neuspešno učitavanje slobodnih termina.");
+        }
+        setRescheduleSlots((data.slots || []).filter((slot) => slot.available));
+      })
+      .catch((loadError) => {
+        if (loadError?.name === "AbortError") {
+          return;
+        }
+        setRescheduleSlots([]);
+        setRescheduleSlotsError(loadError.message || "Neuspešno učitavanje slobodnih termina.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setRescheduleSlotsLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [
+    activeBooking,
+    pendingEditDate,
+    pendingEditDurationMin,
+    pendingEditServiceIds.length,
+    showReschedulePanel,
+  ]);
 
   const stats = useMemo(() => {
     const pending = bookings.filter((item) => item.status === "pending").length;
@@ -1168,6 +1239,45 @@ export default function AdminKalendarPage() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                    <div className="admin-calendar-slot-picker">
+                      <div className="admin-calendar-slot-picker-head">
+                        <strong>Slobodni termini</strong>
+                        <span>
+                          {pendingEditDate
+                            ? `Za datum ${pendingEditDate}`
+                            : "Izaberite datum za proveru"}
+                        </span>
+                      </div>
+
+                      {!pendingEditServiceIds.length ? (
+                        <p>Izaberite bar jednu uslugu da bi se prikazali slobodni termini.</p>
+                      ) : rescheduleSlotsLoading ? (
+                        <p>Učitavanje slobodnih termina...</p>
+                      ) : rescheduleSlotsError ? (
+                        <p className="is-error">{rescheduleSlotsError}</p>
+                      ) : rescheduleSlots.length ? (
+                        <div className="admin-calendar-slot-grid">
+                          {rescheduleSlots.map((slot) => {
+                            const localSlotValue = toLocalInputValue(slot.startAt);
+                            const isSelected = pendingEditStartLocal === localSlotValue;
+                            return (
+                              <button
+                                key={slot.startAt}
+                                type="button"
+                                className={`admin-calendar-slot-btn ${
+                                  isSelected ? "is-selected" : ""
+                                }`}
+                                onClick={() => setPendingEditStartLocal(localSlotValue)}
+                              >
+                                {formatSlotTime(slot.startAt)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p>Nema slobodnih termina za izabrani datum i trajanje.</p>
+                      )}
                     </div>
                     <p style={{ margin: "8px 0 0", color: "#9fb8d8", fontSize: 13 }}>
                       Procenjeno trajanje (iz usluga, max 60 min u sistemu):{" "}
