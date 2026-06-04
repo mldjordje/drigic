@@ -679,27 +679,28 @@ export default function AdminKalendarPage() {
     }
     const bookingStartLocal = toLocalInputValue(activeBooking.startsAt);
     const bookingDate = bookingStartLocal.slice(0, 10);
-    setPendingEditStartLocal(bookingStartLocal);
-    setRescheduleDate(bookingDate || todayIsoDate());
-    if (bookingDate) {
-      const parsedBookingDate = parseIsoDate(bookingDate);
-      setRescheduleCalendarMonth(
-        new Date(parsedBookingDate.getFullYear(), parsedBookingDate.getMonth(), 1)
-      );
-    }
+    const todayDate = todayIsoDate();
+    const effectiveDate = bookingDate && bookingDate >= todayDate ? bookingDate : todayDate;
+    setRescheduleDate(effectiveDate);
+    setPendingEditStartLocal(effectiveDate === bookingDate ? bookingStartLocal : "");
+    const parsedEffectiveDate = parseIsoDate(effectiveDate);
+    setRescheduleCalendarMonth(
+      new Date(parsedEffectiveDate.getFullYear(), parsedEffectiveDate.getMonth(), 1)
+    );
     setPendingEditServiceIds(activeBooking.serviceIds || []);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when server data changes (pendingBookingServerKey), not on every activeBooking ref
   }, [activeEvent?.kind, activeEvent?.refId, pendingBookingServerKey]);
 
   const pendingEditDurationMin = useMemo(() => {
     if (!pendingEditServiceIds.length) {
-      return 0;
+      return activeBooking?.totalDurationMin || 0;
     }
-    return pendingEditServiceIds.reduce((sum, id) => {
+    const fromServices = pendingEditServiceIds.reduce((sum, id) => {
       const svc = allServices.find((s) => s.id === id);
       return sum + (svc?.durationMin || 0);
     }, 0);
-  }, [pendingEditServiceIds, allServices]);
+    return fromServices || activeBooking?.totalDurationMin || 0;
+  }, [pendingEditServiceIds, allServices, activeBooking]);
   const rescheduleMonthKey = useMemo(
     () => formatMonthKey(rescheduleCalendarMonth),
     [rescheduleCalendarMonth]
