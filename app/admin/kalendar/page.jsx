@@ -62,6 +62,67 @@ function fmtDateTime(value) {
   return new Date(value).toLocaleString("sr-RS");
 }
 
+function todayIsoDate() {
+  return formatIsoDate(new Date());
+}
+
+function parseIsoDate(isoDate) {
+  const [year, month, day] = String(isoDate || "").split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function formatIsoDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatMonthKey(date) {
+  return formatIsoDate(new Date(date.getFullYear(), date.getMonth(), 1)).slice(0, 7);
+}
+
+function addMonths(date, amount) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function formatMonthLabel(date) {
+  return new Intl.DateTimeFormat("sr-RS", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function buildCalendarCells(monthDate) {
+  const firstDayOfMonth = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const gridStart = new Date(firstDayOfMonth);
+  const dayOfWeek = (firstDayOfMonth.getDay() + 6) % 7;
+  gridStart.setDate(firstDayOfMonth.getDate() - dayOfWeek);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(gridStart);
+    date.setDate(gridStart.getDate() + index);
+    return {
+      iso: formatIsoDate(date),
+      dayNumber: date.getDate(),
+      inCurrentMonth: date.getMonth() === monthDate.getMonth(),
+    };
+  });
+}
+
+function availabilityClass(availableCount, maxCount, loading) {
+  if ((loading && availableCount === undefined) || availableCount === undefined) {
+    return "is-loading";
+  }
+  if (availableCount <= 0) {
+    return "is-none";
+  }
+  if (!maxCount || maxCount <= 0) {
+    return "is-medium";
+  }
+  return availableCount / maxCount >= 0.55 ? "is-high" : "is-medium";
+}
+
 function formatSlotTime(value) {
   return new Date(value).toLocaleTimeString("sr-RS", {
     hour: "2-digit",
@@ -130,6 +191,14 @@ export default function AdminKalendarPage() {
   const [notesDraft, setNotesDraft] = useState("");
   const [pendingEditStartLocal, setPendingEditStartLocal] = useState("");
   const [pendingEditServiceIds, setPendingEditServiceIds] = useState([]);
+  const [rescheduleDate, setRescheduleDate] = useState(todayIsoDate());
+  const [rescheduleCalendarMonth, setRescheduleCalendarMonth] = useState(() => {
+    const today = parseIsoDate(todayIsoDate());
+    return new Date(today.getFullYear(), today.getMonth(), 1);
+  });
+  const [rescheduleMonthAvailability, setRescheduleMonthAvailability] = useState({});
+  const [rescheduleMonthLoading, setRescheduleMonthLoading] = useState(false);
+  const [rescheduleCalendarError, setRescheduleCalendarError] = useState("");
   const [rescheduleSlots, setRescheduleSlots] = useState([]);
   const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
   const [rescheduleSlotsError, setRescheduleSlotsError] = useState("");
@@ -608,7 +677,16 @@ export default function AdminKalendarPage() {
     ) {
       return;
     }
-    setPendingEditStartLocal(toLocalInputValue(activeBooking.startsAt));
+    const bookingStartLocal = toLocalInputValue(activeBooking.startsAt);
+    const bookingDate = bookingStartLocal.slice(0, 10);
+    setPendingEditStartLocal(bookingStartLocal);
+    setRescheduleDate(bookingDate || todayIsoDate());
+    if (bookingDate) {
+      const parsedBookingDate = parseIsoDate(bookingDate);
+      setRescheduleCalendarMonth(
+        new Date(parsedBookingDate.getFullYear(), parsedBookingDate.getMonth(), 1)
+      );
+    }
     setPendingEditServiceIds(activeBooking.serviceIds || []);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when server data changes (pendingBookingServerKey), not on every activeBooking ref
   }, [activeEvent?.kind, activeEvent?.refId, pendingBookingServerKey]);
@@ -622,16 +700,122 @@ export default function AdminKalendarPage() {
       return sum + (svc?.durationMin || 0);
     }, 0);
   }, [pendingEditServiceIds, allServices]);
-  const pendingEditDate = useMemo(
-    () => (pendingEditStartLocal || "").slice(0, 10),
-    [pendingEditStartLocal]
+  const rescheduleMonthKey = useMemo(
+    () => formatMonthKey(rescheduleCalendarMonth),
+    [rescheduleCalendarMonth]
   );
+  const rescheduleCalendarCells = useMemo(
+    () => buildCalendarCells(rescheduleCalendarMonth),
+    [rescheduleCalendarMonth]
+  );
+  const rescheduleWeekdayLabels = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat("sr-RS", { weekday: "short" });
+    const monday = new Date(2024, 0, 1);
+    return Array.from({ length: 7 }, (_, index) => {
+      const item = new Date(monday);
+      item.setDate(monday.getDate() + index);
+      return formatter.format(item);
+    });
+  }, []);
+  const rescheduleMaxSlotsInMonth = useMemo(() => {
+    const values = Object.entries(rescheduleMonthAvailability)
+      .filter(([date]) => date.startsWith(rescheduleMonthKey))
+      .map(([, count]) => Number(count) || 0);
+    return values.length ? Math.max(...values) : 0;
+  }, [rescheduleMonthAvailability, rescheduleMonthKey]);
+  const today = useMemo(() => todayIsoDate(), []);
+  const canGoPrevRescheduleMonth = useMemo(
+    () => rescheduleMonthKey > today.slice(0, 7),
+    [rescheduleMonthKey, today]
+  );
+
+  useEffect(() => {
+    if (!showReschedulePanel || !activeBooking || !pendingEditServiceIds.length || !pendingEditDurationMin) {
+      setRescheduleMonthAvailability({});
+      setRescheduleMonthLoading(false);
+      setRescheduleCalendarError("");
+      return undefined;
+    }
+
+    const controller = new AbortController();
+    setRescheduleMonthLoading(true);
+    setRescheduleCalendarError("");
+
+    const params = new URLSearchParams({
+      month: rescheduleMonthKey,
+      durationMin: String(pendingEditDurationMin),
+      excludeBookingId: activeBooking.id,
+    });
+
+    fetch(`/api/bookings/availability?${params.toString()}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const data = await parseResponse(response);
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.message || "Neuspešno učitavanje dostupnosti.");
+        }
+        const map = {};
+        (data.days || []).forEach((day) => {
+          map[day.date] = Number(day.availableSlots) || 0;
+        });
+        setRescheduleMonthAvailability(map);
+      })
+      .catch((loadError) => {
+        if (loadError?.name === "AbortError") {
+          return;
+        }
+        setRescheduleMonthAvailability({});
+        setRescheduleCalendarError(loadError.message || "Neuspešno učitavanje dostupnosti.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setRescheduleMonthLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [
+    activeBooking,
+    pendingEditDurationMin,
+    pendingEditServiceIds.length,
+    rescheduleMonthKey,
+    showReschedulePanel,
+  ]);
+
+  useEffect(() => {
+    if (!showReschedulePanel || rescheduleMonthLoading || !pendingEditServiceIds.length) {
+      return;
+    }
+    const availableDates = Object.entries(rescheduleMonthAvailability)
+      .filter(([date, count]) => date >= today && date.startsWith(rescheduleMonthKey) && Number(count) > 0)
+      .map(([date]) => date)
+      .sort();
+
+    if (!availableDates.length) {
+      return;
+    }
+
+    if (!rescheduleDate.startsWith(rescheduleMonthKey) || Number(rescheduleMonthAvailability[rescheduleDate] || 0) <= 0) {
+      setRescheduleDate(availableDates[0]);
+      setPendingEditStartLocal("");
+    }
+  }, [
+    pendingEditServiceIds.length,
+    rescheduleDate,
+    rescheduleMonthAvailability,
+    rescheduleMonthKey,
+    rescheduleMonthLoading,
+    showReschedulePanel,
+    today,
+  ]);
 
   useEffect(() => {
     if (
       !showReschedulePanel ||
       !activeBooking ||
-      !pendingEditDate ||
+      !rescheduleDate ||
       !pendingEditServiceIds.length ||
       !pendingEditDurationMin
     ) {
@@ -646,7 +830,7 @@ export default function AdminKalendarPage() {
     setRescheduleSlotsError("");
 
     const params = new URLSearchParams({
-      date: pendingEditDate,
+      date: rescheduleDate,
       durationMin: String(pendingEditDurationMin),
       excludeBookingId: activeBooking.id,
     });
@@ -678,7 +862,7 @@ export default function AdminKalendarPage() {
     return () => controller.abort();
   }, [
     activeBooking,
-    pendingEditDate,
+    rescheduleDate,
     pendingEditDurationMin,
     pendingEditServiceIds.length,
     showReschedulePanel,
@@ -1194,15 +1378,6 @@ export default function AdminKalendarPage() {
                     <p style={{ margin: "0 0 8px", color: "#bed0e8", fontSize: 14 }}>
                       Izaberite novi datum, vreme i usluge. Klijent dobija mejl ako se promene termin ili usluge. Status se resetuje na "Na čekanju".
                     </p>
-                    <label>
-                      Novi datum i vreme
-                      <input
-                        type="datetime-local"
-                        className="admin-inline-input"
-                        value={pendingEditStartLocal}
-                        onChange={(event) => setPendingEditStartLocal(event.target.value)}
-                      />
-                    </label>
                     <div>
                       <span style={{ display: "block", marginBottom: 6 }}>Usluge</span>
                       <div className="admin-calendar-service-list">
@@ -1240,14 +1415,86 @@ export default function AdminKalendarPage() {
                         ))}
                       </div>
                     </div>
+                    <div className="admin-reschedule-calendar-panel">
+                      <div className="admin-reschedule-calendar-head">
+                        <button
+                          type="button"
+                          className="admin-template-link-btn"
+                          disabled={!canGoPrevRescheduleMonth}
+                          onClick={() => setRescheduleCalendarMonth((prev) => addMonths(prev, -1))}
+                        >
+                          Prethodni
+                        </button>
+                        <strong>{formatMonthLabel(rescheduleCalendarMonth)}</strong>
+                        <button
+                          type="button"
+                          className="admin-template-link-btn"
+                          onClick={() => setRescheduleCalendarMonth((prev) => addMonths(prev, 1))}
+                        >
+                          Sledeći
+                        </button>
+                      </div>
+
+                      <div className="admin-reschedule-calendar-legend">
+                        <span><span className="admin-calendar-indicator is-high" />Više slobodnih termina</span>
+                        <span><span className="admin-calendar-indicator is-medium" />Ograničeno</span>
+                        <span><span className="admin-calendar-indicator is-none" />Popunjeno</span>
+                      </div>
+
+                      <div className="admin-reschedule-weekdays">
+                        {rescheduleWeekdayLabels.map((label) => (
+                          <span key={label}>{label}</span>
+                        ))}
+                      </div>
+
+                      <div className="admin-reschedule-calendar-grid">
+                        {rescheduleCalendarCells.map((cell) => {
+                          const availableCount = rescheduleMonthAvailability[cell.iso];
+                          const isPast = cell.iso < today;
+                          const isActive = cell.iso === rescheduleDate;
+                          const isDisabled =
+                            !pendingEditServiceIds.length ||
+                            !cell.inCurrentMonth ||
+                            isPast ||
+                            (availableCount !== undefined && Number(availableCount) <= 0);
+                          return (
+                            <button
+                              key={cell.iso}
+                              type="button"
+                              className={`admin-reschedule-day ${isActive ? "is-active" : ""} ${
+                                !cell.inCurrentMonth ? "is-out" : ""
+                              }`}
+                              disabled={isDisabled}
+                              onClick={() => {
+                                setRescheduleDate(cell.iso);
+                                setPendingEditStartLocal("");
+                              }}
+                            >
+                              <span>{cell.dayNumber}</span>
+                              {cell.inCurrentMonth ? (
+                                <span
+                                  className={`admin-calendar-indicator ${availabilityClass(
+                                    availableCount,
+                                    rescheduleMaxSlotsInMonth,
+                                    rescheduleMonthLoading
+                                  )}`}
+                                />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {!pendingEditServiceIds.length ? (
+                        <p>Izaberite bar jednu uslugu da bi se prikazala dostupnost u kalendaru.</p>
+                      ) : rescheduleCalendarError ? (
+                        <p className="is-error">{rescheduleCalendarError}</p>
+                      ) : null}
+                    </div>
                     <div className="admin-calendar-slot-picker">
                       <div className="admin-calendar-slot-picker-head">
                         <strong>Slobodni termini</strong>
-                        <span>
-                          {pendingEditDate
-                            ? `Za datum ${pendingEditDate}`
-                            : "Izaberite datum za proveru"}
-                        </span>
+                        <span>{rescheduleDate ? `Za datum ${rescheduleDate}` : "Izaberite datum"}</span>
                       </div>
 
                       {!pendingEditServiceIds.length ? (
@@ -1279,6 +1526,12 @@ export default function AdminKalendarPage() {
                         <p>Nema slobodnih termina za izabrani datum i trajanje.</p>
                       )}
                     </div>
+                    {pendingEditStartLocal ? (
+                      <p style={{ margin: "8px 0 0", color: "#d9e8f8", fontSize: 13 }}>
+                        Izabrani novi termin:{" "}
+                        <strong>{fmtDateTime(toIsoFromLocalInput(pendingEditStartLocal))}</strong>
+                      </p>
+                    ) : null}
                     <p style={{ margin: "8px 0 0", color: "#9fb8d8", fontSize: 13 }}>
                       Procenjeno trajanje (iz usluga, max 60 min u sistemu):{" "}
                       <strong>{pendingEditDurationMin} min</strong>
@@ -1287,7 +1540,7 @@ export default function AdminKalendarPage() {
                       <button
                         type="button"
                         className="admin-template-link-btn"
-                        disabled={saving || !pendingEditServiceIds.length}
+                        disabled={saving || !pendingEditServiceIds.length || !pendingEditStartLocal}
                         onClick={savePendingBookingReschedule}
                       >
                         Potvrdi prezakazivanje

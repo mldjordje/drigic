@@ -680,6 +680,126 @@
   box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.4), 0 10px 24px rgba(9, 16, 24, 0.45);
 }
 
+.admin-reschedule-calendar-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(217, 232, 248, 0.2);
+  border-radius: 12px;
+  background: rgba(8, 13, 22, 0.5);
+}
+
+.admin-reschedule-calendar-head {
+  display: grid;
+  grid-template-columns: minmax(92px, auto) minmax(0, 1fr) minmax(92px, auto);
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-reschedule-calendar-head strong {
+  color: #f4f8ff;
+  text-align: center;
+  font-size: 18px;
+  text-transform: capitalize;
+}
+
+.admin-reschedule-calendar-legend {
+  display: flex;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  color: #b8cbe3;
+  font-size: 12px;
+}
+
+.admin-reschedule-calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-reschedule-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.admin-reschedule-weekdays span {
+  color: #9fb8d8;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.admin-reschedule-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.admin-reschedule-day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+  border: 1px solid rgba(217, 232, 248, 0.2);
+  border-radius: 10px;
+  background: rgba(12, 20, 32, 0.88);
+  color: #f4f8ff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-reschedule-day:hover:not(:disabled) {
+  border-color: rgba(217, 232, 248, 0.58);
+  background: rgba(31, 55, 84, 0.82);
+}
+
+.admin-reschedule-day.is-active {
+  border-color: rgba(217, 232, 248, 0.9);
+  background: rgba(217, 232, 248, 0.2);
+  box-shadow: 0 0 0 1px rgba(217, 232, 248, 0.42), 0 10px 24px rgba(9, 16, 24, 0.45);
+}
+
+.admin-reschedule-day.is-out {
+  opacity: 0.28;
+}
+
+.admin-reschedule-day:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.admin-calendar-indicator {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(159, 184, 216, 0.58);
+}
+
+.admin-calendar-indicator.is-high {
+  background: #8be0a4;
+  box-shadow: 0 0 0 3px rgba(139, 224, 164, 0.16);
+}
+
+.admin-calendar-indicator.is-medium {
+  background: #ffd27a;
+  box-shadow: 0 0 0 3px rgba(255, 210, 122, 0.16);
+}
+
+.admin-calendar-indicator.is-none {
+  background: #ff8f8f;
+  box-shadow: 0 0 0 3px rgba(255, 143, 143, 0.14);
+}
+
+.admin-calendar-indicator.is-loading {
+  background: rgba(159, 184, 216, 0.5);
+}
+
 .admin-calendar-modal {
   position: fixed;
   inset: 0;
