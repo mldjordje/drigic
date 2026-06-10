@@ -547,10 +547,60 @@
 }
 
 .admin-calendar-client-panel {
-  border: 1px solid rgba(217, 232, 248, 0.2);
-  border-radius: 12px;
-  background: rgba(8, 13, 22, 0.5);
-  padding: 10px;
+  border: 1px solid rgba(217, 232, 248, 0.18);
+  border-radius: 14px;
+  background: rgba(8, 13, 22, 0.55);
+  padding: 14px;
+  margin-top: 8px;
+}
+
+/* Beauty pass note panel — distinct from booking details */
+.admin-calendar-note-panel {
+  border: 1px solid rgba(196, 165, 90, 0.3);
+  border-left: 3px solid rgba(196, 165, 90, 0.7);
+  border-radius: 14px;
+  background: rgba(196, 165, 90, 0.06);
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.admin-calendar-note-panel p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.admin-calendar-note-panel textarea.admin-inline-textarea {
+  border-color: rgba(196, 165, 90, 0.35) !important;
+  background: rgba(196, 165, 90, 0.05) !important;
+}
+
+.admin-calendar-note-panel textarea.admin-inline-textarea:focus {
+  border-color: rgba(196, 165, 90, 0.65) !important;
+  box-shadow: 0 0 0 2px rgba(196, 165, 90, 0.12) !important;
+}
+
+/* Mini history cards in client details panel */
+.admin-bp-record-card {
+  background: rgba(196, 165, 90, 0.07);
+  border: 1px solid rgba(196, 165, 90, 0.22);
+  border-left: 2px solid rgba(196, 165, 90, 0.55);
+  border-radius: 10px;
+  padding: 9px 11px;
+  display: grid;
+  gap: 3px;
+}
+
+.admin-bp-record-card strong {
+  font-size: 12px;
+  color: #C4A55A;
+  font-weight: 700;
+}
+
+.admin-bp-record-card span {
+  font-size: 12px;
+  color: rgba(217, 232, 248, 0.8);
+  line-height: 1.45;
+  white-space: normal;
 }
 
 .admin-calendar-details span {

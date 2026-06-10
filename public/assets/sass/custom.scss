@@ -5739,36 +5739,43 @@ a.clinic-glow-btn {
 
 /* ── Beauty Pass Section — clean light UI ── */
 .clinic-bp {
-  background: transparent;
-  padding: 56px 0 72px;
+  background: #FAF8F5;
+  padding: 64px 0 88px;
 
   &__header {
     text-align: center;
-    margin-bottom: 44px;
+    margin-bottom: 52px;
+    padding: 0 16px;
   }
 
   &__tag {
     display: inline-block;
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: rgba(10, 10, 10, 0.38);
-    margin-bottom: 10px;
+    color: #C4A55A;
+    margin-bottom: 16px;
+    padding: 6px 18px;
+    border: 1px solid rgba(196, 165, 90, 0.4);
+    border-radius: 50px;
+    background: rgba(196, 165, 90, 0.06);
   }
 
   &__title {
-    font-size: clamp(28px, 4vw, 40px);
+    font-size: clamp(30px, 5vw, 44px);
     font-weight: 700;
-    color: #111111;
-    margin: 0 0 10px;
-    letter-spacing: -0.02em;
+    color: #1A1714;
+    margin: 0 0 12px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
   }
 
   &__subtitle {
     font-size: 15px;
-    color: rgba(10, 10, 10, 0.5);
+    color: rgba(26, 23, 20, 0.52);
     margin: 0;
+    line-height: 1.65;
   }
 
   /* Loading dots */
@@ -5776,14 +5783,15 @@ a.clinic-glow-btn {
     display: flex;
     gap: 8px;
     justify-content: center;
-    padding: 40px 0;
+    padding: 60px 0;
   }
 
   &__loader-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.2);
+    background: #C4A55A;
+    opacity: 0.45;
     animation: clinicBpDotPulse 1.4s ease-in-out infinite both;
 
     &:nth-child(2) { animation-delay: 0.2s; }
@@ -5793,73 +5801,77 @@ a.clinic-glow-btn {
   /* Not-logged-in lock */
   &__lock {
     text-align: center;
-    padding: 48px 24px;
-    max-width: 440px;
+    padding: 56px 28px;
+    max-width: 420px;
     margin: 0 auto;
     background: #ffffff;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    border-radius: 28px;
+    border: 1px solid rgba(196, 165, 90, 0.22);
+    box-shadow:
+      0 1px 0 rgba(196, 165, 90, 0.1),
+      0 12px 40px rgba(0, 0, 0, 0.07);
   }
 
   &__lock-text {
     font-size: 15px;
-    color: rgba(0, 0, 0, 0.55);
-    margin: 0 0 20px;
+    color: rgba(26, 23, 20, 0.55);
+    margin: 0 0 24px;
+    line-height: 1.65;
   }
 
   &__login-btn {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 28px;
+    padding: 14px 32px;
     border-radius: 50px;
-    background: #111111;
+    background: #1A1714;
     color: #ffffff !important;
     font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
     border: none;
     cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
 
     &:hover {
+      background: #2d2825;
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
     }
   }
 
-  /* Two-column grid */
+  /* Grid — mobile first, single column */
   &__grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    grid-template-columns: 1fr;
+    gap: 20px;
     align-items: start;
   }
 
   /* Card */
   &__card {
     background: #ffffff;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 0, 0, 0.07);
-    padding: 28px;
+    border-radius: 24px;
+    border: 1px solid rgba(196, 165, 90, 0.16);
+    padding: 28px 22px;
     box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.05),
-      0 6px 24px rgba(0, 0, 0, 0.06);
+      0 1px 0 rgba(196, 165, 90, 0.07),
+      0 8px 36px rgba(0, 0, 0, 0.055);
 
     &--form {
-      padding: 24px;
+      padding: 24px 22px;
     }
   }
 
   &__card-label {
     font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
-    color: rgba(0, 0, 0, 0.35);
-    margin-bottom: 18px;
+    color: #C4A55A;
+    margin-bottom: 20px;
   }
 
   /* Booking list */
@@ -5869,54 +5881,65 @@ a.clinic-glow-btn {
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
   &__booking-item {
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    padding: 12px 14px;
+    background: #FAF8F5;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: border-color 0.2s ease;
+
+    &:hover {
+      border-color: rgba(196, 165, 90, 0.25);
+    }
   }
 
   &__booking-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: #d0c4b8;
+    background: #C4A55A;
     flex-shrink: 0;
-    margin-top: 6px;
+    margin-top: 5px;
   }
 
   &__booking-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
   }
 
   &__booking-date {
     font-size: 13px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: #1A1714;
+    letter-spacing: -0.01em;
   }
 
   &__booking-meta {
     font-size: 12px;
-    color: rgba(0, 0, 0, 0.45);
+    color: rgba(26, 23, 20, 0.48);
   }
 
   &__empty {
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.38);
+    color: rgba(26, 23, 20, 0.38);
     margin: 0;
     font-style: italic;
+    padding: 8px 0;
   }
 
   /* ── Calendar ── */
   &__cal-wrap {
-    background: #f7f5f3;
-    border-radius: 16px;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    padding: 16px;
+    background: #FAF8F5;
+    border-radius: 18px;
+    border: 1px solid rgba(196, 165, 90, 0.18);
+    padding: 18px 16px;
     margin-bottom: 20px;
   }
 
@@ -5924,14 +5947,14 @@ a.clinic-glow-btn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     gap: 8px;
   }
 
   &__cal-title {
     font-size: 14px;
     font-weight: 600;
-    color: #111111;
+    color: #1A1714;
     text-transform: capitalize;
     flex: 1;
     text-align: center;
@@ -5939,40 +5962,39 @@ a.clinic-glow-btn {
   }
 
   &__cal-nav {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(196, 165, 90, 0.35);
     background: #ffffff;
-    color: #333333;
-    font-size: 16px;
+    color: #1A1714;
+    font-size: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     line-height: 1;
 
     &:hover {
-      background: #111111;
+      background: #1A1714;
       color: #ffffff;
-      border-color: #111111;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-color: #1A1714;
+      transform: scale(1.1);
     }
   }
 
   &__cal-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 3px;
     margin-bottom: 6px;
 
     span {
-      font-size: 10px;
-      font-weight: 600;
-      color: rgba(0, 0, 0, 0.35);
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(26, 23, 20, 0.32);
       text-transform: uppercase;
       letter-spacing: 0.06em;
       text-align: center;
@@ -5983,66 +6005,65 @@ a.clinic-glow-btn {
   &__cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 3px;
   }
 
   &__cal-day {
     aspect-ratio: 1;
-    border-radius: 10px;
+    border-radius: 50%;
     border: 1px solid transparent;
-    background: #ffffff;
-    color: #1a1a1a;
+    background: transparent;
+    color: #1A1714;
     font-size: 13px;
     font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
 
     &:hover {
-      background: #f0ebe6;
-      border-color: rgba(0, 0, 0, 0.1);
-      transform: translateY(-1px);
+      background: #F2E8D0;
+      border-color: rgba(196, 165, 90, 0.35);
     }
 
     &.is-selected {
-      background: #111111;
+      background: #1A1714;
       color: #ffffff;
-      border-color: #111111;
       font-weight: 700;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
     }
 
     &.is-out {
-      color: rgba(0, 0, 0, 0.22);
+      color: rgba(26, 23, 20, 0.2);
       background: transparent;
 
       &:hover {
         background: transparent;
-        transform: none;
+        border-color: transparent;
       }
     }
   }
 
   /* Form fields */
   &__field-group {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
   }
 
   &__field-label {
     display: block;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgba(0, 0, 0, 0.45);
+    color: rgba(26, 23, 20, 0.42);
     margin-bottom: 10px;
   }
 
   /* Products grid */
   &__products {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
     gap: 8px;
   }
 
@@ -6050,13 +6071,13 @@ a.clinic-glow-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
-    padding: 10px 6px;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    background: #f7f5f3;
+    gap: 6px;
+    padding: 12px 6px;
+    border-radius: 14px;
+    border: 1px solid rgba(196, 165, 90, 0.18);
+    background: #FAF8F5;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 
     img {
       width: 38px;
@@ -6068,20 +6089,21 @@ a.clinic-glow-btn {
     span {
       font-size: 10px;
       font-weight: 500;
-      color: rgba(0, 0, 0, 0.6);
+      color: rgba(26, 23, 20, 0.58);
       text-align: center;
       line-height: 1.2;
     }
 
     &:hover {
-      background: #eee8e2;
-      border-color: rgba(0, 0, 0, 0.14);
-      transform: translateY(-1px);
+      background: #F2E8D0;
+      border-color: rgba(196, 165, 90, 0.42);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(196, 165, 90, 0.13);
     }
 
     &.is-selected {
-      background: #111111;
-      border-color: #111111;
+      background: #1A1714;
+      border-color: #1A1714;
 
       span { color: rgba(255, 255, 255, 0.85); }
     }
@@ -6090,46 +6112,58 @@ a.clinic-glow-btn {
   /* Textarea */
   &__textarea {
     width: 100%;
-    border-radius: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    background: #f7f5f3;
-    color: #111111;
+    border-radius: 14px;
+    border: 1px solid rgba(196, 165, 90, 0.22);
+    background: #FAF8F5;
+    color: #1A1714;
     font-size: 14px;
     font-family: inherit;
-    padding: 12px 14px;
+    padding: 14px 16px;
     resize: vertical;
     min-height: 96px;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     outline: none;
+    line-height: 1.55;
 
-    &::placeholder { color: rgba(0, 0, 0, 0.3); }
+    &::placeholder { color: rgba(26, 23, 20, 0.3); }
 
     &:focus {
-      border-color: rgba(0, 0, 0, 0.3);
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+      border-color: rgba(196, 165, 90, 0.55);
+      box-shadow: 0 0 0 3px rgba(196, 165, 90, 0.09);
     }
   }
 
   /* Messages */
   &__msg {
     font-size: 13px;
-    margin: 0 0 12px;
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    line-height: 1.45;
 
-    &--ok  { color: #3a7d44; }
-    &--err { color: #b94040; }
+    &--ok  {
+      color: #2e6b38;
+      background: rgba(46, 107, 56, 0.07);
+      border: 1px solid rgba(46, 107, 56, 0.18);
+    }
+    &--err {
+      color: #8b2424;
+      background: rgba(139, 36, 36, 0.06);
+      border: 1px solid rgba(139, 36, 36, 0.16);
+    }
   }
 
   /* Submit button */
   &__submit {
     width: 100%;
-    padding: 14px 20px;
+    padding: 16px 20px;
     border-radius: 50px;
     border: none;
-    background: #111111;
+    background: #1A1714;
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     cursor: pointer;
     transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
@@ -6140,18 +6174,18 @@ a.clinic-glow-btn {
       content: "";
       position: absolute;
       top: 0; left: -100%; width: 50%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-      animation: clinicBpBtnShimmer 3s ease-in-out infinite 1s;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.09), transparent);
+      animation: clinicBpBtnShimmer 3.5s ease-in-out infinite 1.5s;
     }
 
     &:hover:not(:disabled) {
-      background: #2a2a2a;
+      background: #2d2825;
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
     }
 
     &:disabled {
-      opacity: 0.55;
+      opacity: 0.45;
       cursor: not-allowed;
     }
   }
@@ -6171,13 +6205,13 @@ a.clinic-glow-btn {
 
 /* ── Upload Zone ── */
 .clinic-bp-upload-zone {
-  border: 2px dashed rgba(0, 0, 0, 0.15);
-  border-radius: 16px;
-  background: #f7f5f3;
+  border: 2px dashed rgba(196, 165, 90, 0.32);
+  border-radius: 18px;
+  background: #FAF8F5;
   padding: 32px 20px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+  transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
   margin-bottom: 20px;
   outline: none;
   user-select: none;
@@ -6185,14 +6219,15 @@ a.clinic-glow-btn {
   &:hover,
   &:focus,
   &.is-dragging {
-    border-color: rgba(0, 0, 0, 0.35);
-    background: #f0ebe5;
+    border-color: rgba(196, 165, 90, 0.65);
+    background: #F2E8D0;
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(196, 165, 90, 0.12);
   }
 
   &.is-dragging {
-    border-color: #111111;
-    background: #ede8e2;
+    border-color: #C4A55A;
+    background: #EEE0BF;
   }
 }
 
@@ -6201,36 +6236,36 @@ a.clinic-glow-btn {
 }
 
 .clinic-bp-upload-icon {
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(196, 165, 90, 0.6);
   margin-bottom: 12px;
   transition: color 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   .clinic-bp-upload-zone:hover & {
-    color: rgba(0, 0, 0, 0.65);
-    transform: translateY(-3px);
+    color: #C4A55A;
+    transform: translateY(-4px);
   }
 }
 
 .clinic-bp-upload-label {
   font-size: 14px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #1A1714;
   margin: 0 0 6px;
 }
 
 .clinic-bp-upload-sub {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.4);
+  color: rgba(26, 23, 20, 0.42);
   margin: 0;
 }
 
 /* ── Cropped preview ── */
 .clinic-bp__preview {
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(196, 165, 90, 0.2);
   margin-bottom: 20px;
-  background: #f7f5f3;
+  background: #FAF8F5;
 }
 
 .clinic-bp__preview-img {
@@ -6238,7 +6273,7 @@ a.clinic-glow-btn {
   max-height: 180px;
   object-fit: contain;
   display: block;
-  background: #f0ece8;
+  background: #F2E8D0;
 }
 
 .clinic-bp__preview-actions {
@@ -6254,13 +6289,13 @@ a.clinic-glow-btn {
   gap: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #3a7d44;
+  color: #2e6b38;
 }
 
 .clinic-bp__preview-change {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.45);
+  color: rgba(26, 23, 20, 0.42);
   background: none;
   border: none;
   cursor: pointer;
@@ -6270,7 +6305,7 @@ a.clinic-glow-btn {
   transition: color 0.2s ease;
 
   &:hover {
-    color: rgba(0, 0, 0, 0.8);
+    color: #1A1714;
   }
 }
 
@@ -6418,39 +6453,44 @@ a.clinic-glow-btn {
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 
-/* ── History thumbnails ── */
+/* ── History ── */
 .clinic-bp__history {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 .clinic-bp__history-item {
+  background: #FAF8F5;
+  border-radius: 16px;
+  border: 1px solid rgba(196, 165, 90, 0.14);
+  border-left: 3px solid rgba(196, 165, 90, 0.45);
+  padding: 16px 16px 14px;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  flex-direction: column;
+  gap: 10px;
+  transition: border-left-color 0.22s ease, box-shadow 0.22s ease;
 
-  &:last-child {
-    padding-bottom: 0;
-    border-bottom: none;
+  &:hover {
+    border-left-color: #C4A55A;
+    box-shadow: 0 4px 20px rgba(196, 165, 90, 0.1);
   }
 }
 
 .clinic-bp__thumb-row {
   display: flex;
   gap: 6px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .clinic-bp__thumb {
-  width: 56px;
-  height: 56px;
+  width: 54px;
+  height: 54px;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #f0ece8;
+  border: 1px solid rgba(196, 165, 90, 0.22);
+  background: #F2E8D0;
   cursor: pointer;
   padding: 0;
   transition: transform 0.22s ease, box-shadow 0.22s ease;
@@ -6464,16 +6504,17 @@ a.clinic-glow-btn {
   }
 
   &:hover {
-    transform: scale(1.06);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
   }
 
   &--empty {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(0, 0, 0, 0.25);
+    color: rgba(196, 165, 90, 0.5);
     cursor: default;
+    border-style: dashed;
 
     &:hover {
       transform: none;
@@ -6485,31 +6526,34 @@ a.clinic-glow-btn {
 .clinic-bp__history-meta {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding-top: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
 .clinic-bp__history-date {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 12px;
+  font-weight: 700;
+  color: #C4A55A;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .clinic-bp__history-notes {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.5);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 14px;
+  color: #1A1714;
+  line-height: 1.55;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  font-weight: 400;
 }
 
 .clinic-bp__history-product {
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(0, 0, 0, 0.35);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(26, 23, 20, 0.38);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
 }
 
 /* ── Lightbox ── */
@@ -6564,23 +6608,31 @@ a.clinic-glow-btn {
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Mobile — stack columns */
-@media (max-width: 768px) {
+/* Desktop — two columns from 960px up */
+@media (min-width: 960px) {
   .clinic-bp__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
   }
 
-  .clinic-bp__cal-day {
-    font-size: 12px;
-    border-radius: 8px;
-  }
+  .clinic-bp__card {
+    padding: 32px 28px;
 
+    &--form {
+      padding: 28px;
+    }
+  }
+}
+
+/* Crop modal mobile */
+@media (max-width: 600px) {
   .clinic-bp-crop-area {
-    height: 240px;
+    height: 220px;
   }
 
   .clinic-bp-crop-modal {
     max-width: 100%;
+    border-radius: 20px;
   }
 }
 
@@ -6761,36 +6813,52 @@ a.clinic-glow-btn {
 /* Beauty pass upcoming summary */
 .clinic-bp__next-booking {
   display: grid;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #f7f5f3;
-  margin-bottom: 18px;
+  gap: 6px;
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1A1714 0%, #2e2a26 100%);
+  margin-bottom: 22px;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: -48px;
+    right: -48px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: rgba(196, 165, 90, 0.07);
+    pointer-events: none;
+  }
 }
 
 .clinic-bp__next-booking-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.4);
+  color: #C4A55A;
 }
 
 .clinic-bp__next-booking-date {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
-  color: #121212;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .clinic-bp__next-booking-meta {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.62);
+  color: rgba(255, 255, 255, 0.52);
 }
 
 .clinic-bp__next-booking-empty {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.58);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.42);
+  font-style: italic;
 }
 
 /* Dark mode contrast fixes for white surfaces */
@@ -6814,45 +6882,67 @@ a.clinic-glow-btn {
 .clinic-theme-dark .clinic-home5 .clinic-bp__lock,
 .clinic-theme-dark .clinic-home5 .clinic-bp-crop-modal {
   background: #ffffff !important;
-  border-color: rgba(0, 0, 0, 0.12) !important;
-  color: #121212 !important;
+  border-color: rgba(196, 165, 90, 0.18) !important;
+  color: #1A1714 !important;
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__title {
-  color: #f5f5f5 !important;
+  color: #f5f0e8 !important;
 }
 
-.clinic-theme-dark .clinic-home5 .clinic-bp__subtitle,
+.clinic-theme-dark .clinic-home5 .clinic-bp__subtitle {
+  color: rgba(245, 240, 232, 0.62) !important;
+}
+
 .clinic-theme-dark .clinic-home5 .clinic-bp__tag {
-  color: rgba(245, 245, 245, 0.74) !important;
+  color: #C4A55A !important;
+  border-color: rgba(196, 165, 90, 0.4) !important;
+  background: rgba(196, 165, 90, 0.07) !important;
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__card-label,
 .clinic-theme-dark .clinic-home5 .clinic-bp__empty,
 .clinic-theme-dark .clinic-home5 .clinic-bp__booking-date,
-.clinic-theme-dark .clinic-home5 .clinic-bp__history-date,
 .clinic-theme-dark .clinic-home5 .clinic-bp__history-notes,
-.clinic-theme-dark .clinic-home5 .clinic-bp__history-product,
 .clinic-theme-dark .clinic-home5 .clinic-bp__booking-meta,
 .clinic-theme-dark .clinic-home5 .clinic-bp__field-label,
 .clinic-theme-dark .clinic-home5 .clinic-bp__preview-change,
 .clinic-theme-dark .clinic-home5 .clinic-bp__lock-text,
 .clinic-theme-dark .clinic-home5 .clinic-bp-crop-title,
 .clinic-theme-dark .clinic-home5 .clinic-bp-crop-hint {
-  color: #121212 !important;
+  color: #1A1714 !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-bp__history-date {
+  color: #C4A55A !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-bp__history-product {
+  color: rgba(26, 23, 20, 0.42) !important;
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__textarea,
 .clinic-theme-dark .clinic-home5 .clinic-bp__cal-wrap,
 .clinic-theme-dark .clinic-home5 .clinic-bp-crop-controls,
 .clinic-theme-dark .clinic-home5 .clinic-bp-crop-actions {
-  background: #f7f5f3 !important;
-  border-color: rgba(0, 0, 0, 0.12) !important;
-  color: #121212 !important;
+  background: #FAF8F5 !important;
+  border-color: rgba(196, 165, 90, 0.2) !important;
+  color: #1A1714 !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-bp__history-item {
+  background: #FAF8F5 !important;
+  border-color: rgba(196, 165, 90, 0.18) !important;
+  border-left-color: rgba(196, 165, 90, 0.45) !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-bp__booking-item {
+  background: #FAF8F5 !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__textarea::placeholder {
-  color: rgba(18, 18, 18, 0.45) !important;
+  color: rgba(26, 23, 20, 0.3) !important;
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__submit,

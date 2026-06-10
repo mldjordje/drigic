@@ -208,6 +208,12 @@ export default function AdminKalendarPage() {
   const [clientDetailsError, setClientDetailsError] = useState("");
   const [clientDetailsPayload, setClientDetailsPayload] = useState(null);
 
+  const [showNotePanel, setShowNotePanel] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteError, setNoteError] = useState("");
+  const [noteMessage, setNoteMessage] = useState("");
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return undefined;
@@ -618,6 +624,10 @@ export default function AdminKalendarPage() {
     setClientDetailsLoading(false);
     setClientDetailsError("");
     setClientDetailsPayload(null);
+    setShowNotePanel(false);
+    setNoteDraft("");
+    setNoteError("");
+    setNoteMessage("");
   }
 
   async function openClientDetailsPanel(userId) {
@@ -655,6 +665,37 @@ export default function AdminKalendarPage() {
       setClientDetailsError(loadError.message || "Greška pri učitavanju klijenta.");
     } finally {
       setClientDetailsLoading(false);
+    }
+  }
+
+  async function saveTreatmentNote() {
+    if (!activeBooking?.userId || !noteDraft.trim()) return;
+    setNoteSaving(true);
+    setNoteError("");
+    setNoteMessage("");
+    try {
+      const response = await fetch(`/api/admin/clients/${activeBooking.userId}/beauty-pass`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: activeBooking.id,
+          notes: noteDraft.trim(),
+          treatmentDate: activeBooking.startsAt,
+        }),
+      });
+      const data = await parseResponse(response);
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Greška pri čuvanju napomene.");
+      }
+      setNoteMessage("Napomena je sačuvana u beauty pasošu.");
+      setNoteDraft("");
+      if (showClientDetails && activeBooking.userId) {
+        openClientDetailsPanel(activeBooking.userId);
+      }
+    } catch (saveErr) {
+      setNoteError(saveErr.message || "Greška pri čuvanju.");
+    } finally {
+      setNoteSaving(false);
     }
   }
 
@@ -1592,6 +1633,19 @@ export default function AdminKalendarPage() {
                     >
                       Sačuvaj napomenu
                     </button>
+                    {activeBooking?.userId ? (
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        onClick={() => {
+                          setShowNotePanel((prev) => !prev);
+                          setNoteError("");
+                          setNoteMessage("");
+                        }}
+                      >
+                        {showNotePanel ? "Zatvori beauty pasoš" : "Upiši u beauty pasoš"}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       className="admin-template-link-btn"
@@ -1602,6 +1656,55 @@ export default function AdminKalendarPage() {
                     </button>
                   </div>
                 </div>
+
+                {showNotePanel && activeBooking?.userId ? (
+                  <div className="admin-calendar-note-panel">
+                    <p style={{ margin: "0 0 12px", color: "#C4A55A", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                      Upiši u beauty pasoš
+                    </p>
+                    <label style={{ display: "block" }}>
+                      <span style={{ display: "block", marginBottom: 8, color: "#9fb8d8", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                        Intervencija / napomena o tretmanu
+                      </span>
+                      <textarea
+                        className="admin-inline-textarea"
+                        rows={5}
+                        value={noteDraft}
+                        onChange={(e) => setNoteDraft(e.target.value)}
+                        placeholder="Npr. Botoks čelo 20 j, hijaluron usne 0.5ml, korekcija bora nazolabijalne..."
+                        style={{ width: "100%", boxSizing: "border-box" }}
+                      />
+                    </label>
+                    {noteError ? (
+                      <p style={{ color: "#ffabab", margin: "8px 0 0", fontSize: 13 }}>{noteError}</p>
+                    ) : null}
+                    {noteMessage ? (
+                      <p style={{ color: "#a8f0a0", margin: "8px 0 0", fontSize: 13, fontWeight: 600 }}>{noteMessage}</p>
+                    ) : null}
+                    <div className="admin-calendar-quick-actions" style={{ marginTop: 12 }}>
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        disabled={noteSaving || !noteDraft.trim()}
+                        onClick={saveTreatmentNote}
+                      >
+                        {noteSaving ? "Čuvanje..." : "Sačuvaj u beauty pasoš"}
+                      </button>
+                      <button
+                        type="button"
+                        className="admin-template-link-btn"
+                        onClick={() => {
+                          setShowNotePanel(false);
+                          setNoteDraft("");
+                          setNoteError("");
+                          setNoteMessage("");
+                        }}
+                      >
+                        Odustani
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
 
                 {showClientDetails ? (
                   <div className="admin-calendar-client-panel">
@@ -1644,7 +1747,7 @@ export default function AdminKalendarPage() {
                             {(clientDetailsPayload.beautyPass?.treatmentHistory || [])
                               .slice(0, 3)
                               .map((record) => (
-                                <div key={record.id} style={clientMiniItemStyle}>
+                                <div key={record.id} className="admin-bp-record-card">
                                   <strong>{fmtDateTime(record.treatmentDate)}</strong>
                                   <span>{record.notes || "Bez napomene"}</span>
                                 </div>
@@ -1705,11 +1808,3 @@ export default function AdminKalendarPage() {
   );
 }
 
-const clientMiniItemStyle = {
-  display: "grid",
-  gap: 2,
-  border: "1px solid rgba(217,232,248,0.2)",
-  borderRadius: 10,
-  padding: "7px 8px",
-  background: "rgba(9,15,24,0.4)",
-};
