@@ -5,6 +5,10 @@ import AdminAnalyticsRefresh from "@/components/admin/AdminAnalyticsRefresh";
 
 export const dynamic = "force-dynamic";
 
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
 function startOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
@@ -19,6 +23,10 @@ function monthKey(date) {
   return `${year}-${month}`;
 }
 
+function dayKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
 function monthLabel(date) {
   return date.toLocaleDateString("sr-RS", {
     month: "long",
@@ -26,16 +34,31 @@ function monthLabel(date) {
   });
 }
 
+function shortDayLabel(date) {
+  return date.toLocaleDateString("sr-RS", { day: "numeric", month: "numeric" });
+}
+
+function shortWeekday(date) {
+  return date.toLocaleDateString("sr-RS", { weekday: "short" });
+}
+
 function routeLabel(pathname) {
-  if (pathname === "/") {
-    return "Pocetna";
-  }
+  if (pathname === "/") return "Pocetna";
+  if (pathname === "/beauty-pass") return "Beauty Pasos";
+  if (pathname.startsWith("/zakazivanje")) return "Zakazivanje";
   if (pathname.startsWith("/tretmani/")) {
-    return "Tretmani";
+    const slug = pathname.replace("/tretmani/", "").split("?")[0];
+    return `Tretman: ${slug.replace(/-/g, " ")}`;
   }
-  if (pathname.startsWith("/project")) {
-    return "Rezultati";
-  }
+  if (pathname.startsWith("/tretmani")) return "Tretmani";
+  if (pathname.startsWith("/usluge")) return "Usluge";
+  if (pathname.startsWith("/projekti") || pathname.startsWith("/project")) return "Rezultati";
+  if (pathname.startsWith("/galerija")) return "Galerija";
+  if (pathname.startsWith("/o-nama") || pathname.startsWith("/about")) return "O nama";
+  if (pathname.startsWith("/kontakt")) return "Kontakt";
+  if (pathname.startsWith("/blog")) return "Blog";
+  if (pathname.startsWith("/vip")) return "VIP";
+  if (pathname.startsWith("/login") || pathname.startsWith("/auth")) return "Login";
   return pathname;
 }
 
@@ -69,16 +92,13 @@ function buildTrend(current, previous) {
   if (!previous && !current) {
     return { label: "0%", tone: "neutral" };
   }
-
   if (!previous) {
     return { label: "+100%", tone: "positive" };
   }
-
   const delta = ((current - previous) / previous) * 100;
   if (Math.abs(delta) < 0.1) {
     return { label: "0%", tone: "neutral" };
   }
-
   return {
     label: `${delta > 0 ? "+" : ""}${formatPercent(delta)}`,
     tone: delta > 0 ? "positive" : "negative",
@@ -94,12 +114,14 @@ async function getAnalyticsData() {
 
   const db = getDb();
   const now = new Date();
+  const todayStart = startOfDay(now);
   const currentMonth = startOfMonth(now);
   const currentMonthKey = monthKey(currentMonth);
   const last7dStart = getWindowStart(now, 7);
   const last30dStart = getWindowStart(now, 30);
   const prev30dStart = getWindowStart(now, 60);
 
+  // Only fetch page views for last 60 days (not all-time) for performance
   const [
     [clientsCount],
     [newClients30d],
@@ -131,7 +153,8 @@ async function getAnalyticsData() {
         sessionId: schema.sitePageViews.sessionId,
         createdAt: schema.sitePageViews.createdAt,
       })
-      .from(schema.sitePageViews),
+      .from(schema.sitePageViews)
+      .where(gte(schema.sitePageViews.createdAt, prev30dStart)), // last 60d only
   ]);
 
   const monthBuckets = new Map();
@@ -152,6 +175,7 @@ async function getAnalyticsData() {
   let completedPrev30dRevenue = 0;
   let completedLast30dBookings = 0;
   let completedPrev30dBookings = 0;
+  let todayBookings = 0;
 
   for (const booking of bookings) {
     const startsAt = new Date(booking.startsAt);
@@ -181,6 +205,10 @@ async function getAnalyticsData() {
 
     if (key === currentMonthKey) {
       currentMonthBookings += 1;
+    }
+
+    if (startOfDay(startsAt).getTime() === todayStart.getTime()) {
+      todayBookings += 1;
     }
 
     if (booking.status === "completed") {
@@ -230,20 +258,61 @@ async function getAnalyticsData() {
     }
   }
 
-  const pageViews30d = pageViews.filter((view) => new Date(view.createdAt) >= last30dStart);
-  const pageViews7d = pageViews.filter((view) => new Date(view.createdAt) >= last7dStart);
-  const pageViewsPrev30d = pageViews.filter((view) => {
-    const createdAt = new Date(view.createdAt);
-    return createdAt >= prev30dStart && createdAt < last30dStart;
-  });
+  // Daily page view buckets for last 30 days
+  const dailyMap = new Map();
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const k = dayKey(d);
+    dailyMap.set(k, { day: k, label: shortDayLabel(d), weekday: shortWeekday(d), views: 0, sessions: new Set() });
+  }
+
+  let todayViews = 0;
+  let todaySessions = new Set();
+
+  const pageViews30d = [];
+  const pageViews7d = [];
+  const pageViewsPrev30d = [];
 
   for (const view of pageViews) {
     const createdAt = new Date(view.createdAt);
+    const k = dayKey(createdAt);
+
+    if (dailyMap.has(k)) {
+      dailyMap.get(k).views += 1;
+      dailyMap.get(k).sessions.add(view.sessionId);
+    }
+
+    if (createdAt >= todayStart) {
+      todayViews += 1;
+      todaySessions.add(view.sessionId);
+    }
+
+    if (createdAt >= last30dStart) {
+      pageViews30d.push(view);
+    } else if (createdAt >= prev30dStart) {
+      pageViewsPrev30d.push(view);
+    }
+
+    if (createdAt >= last7dStart) {
+      pageViews7d.push(view);
+    }
+
     activityDates.push(createdAt);
     if (startOfMonth(createdAt) > maxDataMonth) {
       maxDataMonth = startOfMonth(createdAt);
     }
   }
+
+  // Convert daily map to array with session counts
+  const dailyViews = Array.from(dailyMap.values()).map((d) => ({
+    day: d.day,
+    label: d.label,
+    weekday: d.weekday,
+    views: d.views,
+    sessions: d.sessions.size,
+  }));
+
+  const maxDailyViews = Math.max(1, ...dailyViews.map((d) => d.views));
 
   const earliestActivity = activityDates.length
     ? activityDates.reduce((min, date) => (date < min ? date : min), activityDates[0])
@@ -284,6 +353,7 @@ async function getAnalyticsData() {
   const uniqueVisitors30d = new Set(pageViews30d.map((view) => view.sessionId)).size;
   const uniqueVisitors7d = new Set(pageViews7d.map((view) => view.sessionId)).size;
   const pagesPerSession30d = uniqueVisitors30d ? pageViews30d.length / uniqueVisitors30d : 0;
+  const avgDailyViews30d = pageViews30d.length / 30;
 
   const topPagesMap = new Map();
   for (const view of pageViews30d) {
@@ -292,7 +362,7 @@ async function getAnalyticsData() {
 
   const topPages = Array.from(topPagesMap.entries())
     .sort((left, right) => right[1] - left[1])
-    .slice(0, 6)
+    .slice(0, 8)
     .map(([pathname, views]) => ({
       pathname,
       label: routeLabel(pathname),
@@ -308,8 +378,7 @@ async function getAnalyticsData() {
     : 0;
   const cancellationRate =
     totalBookings?.value && Number(totalBookings.value) > 0
-      ? (bookings.filter((item) => item.status === "cancelled").length / Number(totalBookings.value)) *
-        100
+      ? (bookings.filter((item) => item.status === "cancelled").length / Number(totalBookings.value)) * 100
       : 0;
   const completionRate =
     totalBookings?.value && Number(totalBookings.value) > 0
@@ -330,6 +399,8 @@ async function getAnalyticsData() {
     months,
     maxRevenue,
     topPages,
+    dailyViews,
+    maxDailyViews,
     trends: {
       revenue30d: buildTrend(completedLast30dRevenue, completedPrev30dRevenue),
       bookings30d: buildTrend(completedLast30dBookings, completedPrev30dBookings),
@@ -358,28 +429,28 @@ async function getAnalyticsData() {
       uniqueVisitors30d,
       uniqueVisitors7d,
       pagesPerSession30d,
+      avgDailyViews30d,
       cancellationRate,
       completionRate,
       cancelledBookings: bookings.filter((item) => item.status === "cancelled").length,
       bestMonth,
       avgMonthlyRevenue,
+      todayBookings,
+      todayViews,
+      todaySessions: todaySessions.size,
     },
   };
 }
 
 function toneColor(tone) {
-  if (tone === "positive") {
-    return "#7be0a1";
-  }
-  if (tone === "negative") {
-    return "#ff9b9b";
-  }
+  if (tone === "positive") return "#7be0a1";
+  if (tone === "negative") return "#ff9b9b";
   return "#a8bdd5";
 }
 
-function StatCard({ title, value, hint, trend }) {
+function StatCard({ title, value, hint, trend, highlight }) {
   return (
-    <div style={styles.statCard}>
+    <div style={{ ...styles.statCard, ...(highlight ? styles.statCardHighlight : null) }}>
       <div style={styles.statTopRow}>
         <span style={styles.statTitle}>{title}</span>
         {trend ? (
@@ -482,8 +553,96 @@ function MonthRow({ month, maxRevenue }) {
   );
 }
 
+function DailyViewsChart({ data, maxVal }) {
+  if (!data || data.length === 0) return null;
+
+  const chartHeight = 72;
+  const barCount = data.length;
+  const totalWidth = 600;
+  const gap = 2;
+  const barW = (totalWidth - gap * (barCount - 1)) / barCount;
+
+  // Show labels only every 7 days to avoid clutter
+  const labelIndices = new Set();
+  for (let i = barCount - 1; i >= 0; i -= 7) {
+    labelIndices.add(i);
+  }
+
+  const hasData = data.some((d) => d.views > 0);
+
+  return (
+    <div style={styles.dailyChartWrap}>
+      {!hasData ? (
+        <p style={styles.emptyState}>Nema podataka o posetama za poslednjih 30 dana.</p>
+      ) : (
+        <>
+          <svg
+            viewBox={`0 0 ${totalWidth} ${chartHeight + 22}`}
+            style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}
+            aria-label="Dnevne posete sajtu"
+          >
+            {data.map((d, i) => {
+              const barH = maxVal > 0 ? (d.views / maxVal) * chartHeight : 0;
+              const x = i * (barW + gap);
+              const y = chartHeight - barH;
+              const isToday = i === barCount - 1;
+
+              return (
+                <g key={d.day}>
+                  <rect
+                    x={x}
+                    y={y}
+                    width={barW}
+                    height={Math.max(barH, d.views > 0 ? 2 : 0)}
+                    rx={2}
+                    fill={
+                      isToday
+                        ? "rgba(196, 165, 90, 0.85)"
+                        : d.views > 0
+                          ? "rgba(132, 183, 255, 0.72)"
+                          : "rgba(132, 183, 255, 0.1)"
+                    }
+                  />
+                  {labelIndices.has(i) ? (
+                    <text
+                      x={x + barW / 2}
+                      y={chartHeight + 16}
+                      textAnchor="middle"
+                      fill="rgba(160, 185, 210, 0.7)"
+                      fontSize={9}
+                      fontFamily="inherit"
+                    >
+                      {d.label}
+                    </text>
+                  ) : null}
+                </g>
+              );
+            })}
+          </svg>
+          <div style={styles.dailyChartLegend}>
+            <span style={styles.dailyChartLegendItem}>
+              <span style={{ ...styles.dailyChartLegendDot, background: "rgba(132, 183, 255, 0.72)" }} />
+              Pregledi po danu
+            </span>
+            <span style={styles.dailyChartLegendItem}>
+              <span style={{ ...styles.dailyChartLegendDot, background: "rgba(196, 165, 90, 0.85)" }} />
+              Danas
+            </span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default async function AdminAnalitikaPage() {
   const analytics = await getAnalyticsData();
+
+  const todayStr = new Date().toLocaleDateString("sr-RS", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <section style={styles.page}>
@@ -498,15 +657,57 @@ export default async function AdminAnalitikaPage() {
           </div>
           <div style={styles.heroMeta}>
             <div style={styles.heroChip}>
+              <span style={styles.heroChipLabel}>Danas</span>
+              <strong style={styles.heroChipValue}>{todayStr}</strong>
+            </div>
+            <div style={{ ...styles.heroChip, ...styles.heroChipToday }}>
+              <span style={styles.heroChipLabel}>Posete danas</span>
+              <strong style={{ ...styles.heroChipValue, ...styles.heroChipValueGold }}>
+                {formatNumber(analytics.totals.todayViews)}
+                <span style={styles.heroChipSub}> / {formatNumber(analytics.totals.todaySessions)} ses.</span>
+              </strong>
+            </div>
+            <div style={{ ...styles.heroChip, ...styles.heroChipToday }}>
+              <span style={styles.heroChipLabel}>Termini danas</span>
+              <strong style={{ ...styles.heroChipValue, ...styles.heroChipValueGold }}>
+                {formatNumber(analytics.totals.todayBookings)}
+              </strong>
+            </div>
+            <div style={styles.heroChip}>
               <span style={styles.heroChipLabel}>Period</span>
               <strong style={styles.heroChipValue}>
-                {analytics.activityStart.toLocaleDateString("sr-RS")} -{" "}
+                {analytics.activityStart.toLocaleDateString("sr-RS")} –{" "}
                 {analytics.generatedAt.toLocaleDateString("sr-RS")}
               </strong>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Daily visits chart */}
+      <SectionCard
+        title="Dnevne posete (poslednjih 30 dana)"
+        aside={
+          <div style={styles.dailyChartStats}>
+            <span style={styles.dailyChartStat}>
+              <strong style={styles.dailyChartStatVal}>{formatNumber(analytics.totals.pageViews30d)}</strong>
+              <span style={styles.dailyChartStatLbl}>pregleda</span>
+            </span>
+            <span style={styles.dailyChartStat}>
+              <strong style={styles.dailyChartStatVal}>{formatNumber(analytics.totals.uniqueVisitors30d)}</strong>
+              <span style={styles.dailyChartStatLbl}>sesija</span>
+            </span>
+            <span style={styles.dailyChartStat}>
+              <strong style={{ ...styles.dailyChartStatVal, ...(analytics.trends.views30d.tone === "positive" ? styles.posTrend : analytics.trends.views30d.tone === "negative" ? styles.negTrend : null) }}>
+                {analytics.trends.views30d.label}
+              </strong>
+              <span style={styles.dailyChartStatLbl}>vs preth.</span>
+            </span>
+          </div>
+        }
+      >
+        <DailyViewsChart data={analytics.dailyViews} maxVal={analytics.maxDailyViews} />
+      </SectionCard>
 
       <div style={styles.insightsGrid}>
         <InsightCard
@@ -556,9 +757,9 @@ export default async function AdminAnalitikaPage() {
           hint={`${formatMoney(analytics.totals.thisMonthPlannedRevenue)} jos u planu`}
         />
         <StatCard
-          title="Pregledi 30d"
+          title="Posete 30d"
           value={formatNumber(analytics.totals.pageViews30d)}
-          hint={`${formatNumber(analytics.totals.uniqueVisitors30d)} sesija`}
+          hint={`${formatNumber(analytics.totals.uniqueVisitors30d)} sesija · ~${formatRatio(analytics.totals.avgDailyViews30d)}/dan`}
           trend={analytics.trends.views30d}
         />
         <StatCard
@@ -600,26 +801,30 @@ export default async function AdminAnalitikaPage() {
           }
         >
           <div style={styles.monthsWrap}>
-            {analytics.months.map((month) => (
-              <MonthRow key={month.key} month={month} maxRevenue={analytics.maxRevenue} />
-            ))}
+            {analytics.months.length === 0 ? (
+              <p style={styles.emptyState}>Nema mesecnih podataka.</p>
+            ) : (
+              analytics.months.map((month) => (
+                <MonthRow key={month.key} month={month} maxRevenue={analytics.maxRevenue} />
+              ))
+            )}
           </div>
         </SectionCard>
 
         <SectionCard title="Pregled">
           <div style={styles.miniStatsGrid}>
             <MiniStat label="Termini mesec" value={formatNumber(analytics.totals.currentMonthBookings)} />
-            <MiniStat label="Klijenti" value={formatNumber(analytics.totals.clients)} />
+            <MiniStat label="Klijenti ukupno" value={formatNumber(analytics.totals.clients)} />
             <MiniStat label="Ukupno termina" value={formatNumber(analytics.totals.bookings)} />
             <MiniStat label="Zavrseni 30d" value={formatNumber(analytics.totals.completedLast30dBookings)} />
             <MiniStat label="Otkazani mesec" value={formatNumber(analytics.totals.thisMonthCancelled)} />
             <MiniStat
-              label="Pregledi 7d"
+              label="Posete 7d"
               value={`${formatNumber(analytics.totals.pageViews7d)} / ${formatNumber(
                 analytics.totals.uniqueVisitors7d
               )}`}
             />
-            <MiniStat label="Str./sesija" value={formatRatio(analytics.totals.pagesPerSession30d)} />
+            <MiniStat label="Str./sesija 30d" value={formatRatio(analytics.totals.pagesPerSession30d)} />
             <MiniStat label="No-show" value={formatNumber(analytics.totals.noShowCount)} />
           </div>
         </SectionCard>
@@ -650,7 +855,7 @@ export default async function AdminAnalitikaPage() {
             ))}
           </div>
         ) : (
-          <p style={styles.emptyState}>Jos nema dovoljno pageview podataka.</p>
+          <p style={styles.emptyState}>Jos nema pageview podataka za poslednjih 30 dana.</p>
         )}
       </SectionCard>
     </section>
@@ -696,7 +901,7 @@ const styles = {
   heroMeta: {
     display: "grid",
     gap: 10,
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
   },
   heroChip: {
     display: "grid",
@@ -706,6 +911,10 @@ const styles = {
     background: "rgba(8, 16, 28, 0.42)",
     border: "1px solid rgba(167, 198, 230, 0.16)",
   },
+  heroChipToday: {
+    background: "rgba(196, 165, 90, 0.08)",
+    border: "1px solid rgba(196, 165, 90, 0.28)",
+  },
   heroChipLabel: {
     fontSize: 11,
     letterSpacing: "0.08em",
@@ -714,8 +923,17 @@ const styles = {
   },
   heroChipValue: {
     color: "#f5f8fd",
-    fontSize: 14,
-    lineHeight: 1.35,
+    fontSize: 18,
+    fontWeight: 700,
+    lineHeight: 1.2,
+  },
+  heroChipValueGold: {
+    color: "#C4A55A",
+  },
+  heroChipSub: {
+    fontSize: 13,
+    fontWeight: 400,
+    color: "rgba(196, 165, 90, 0.65)",
   },
   insightsGrid: {
     display: "grid",
@@ -732,16 +950,13 @@ const styles = {
     boxShadow: "0 10px 18px rgba(4, 10, 18, 0.12)",
   },
   insightCardAccent: {
-    background:
-      "linear-gradient(180deg, rgba(29,48,76,0.96) 0%, rgba(18,31,50,0.96) 100%)",
+    background: "linear-gradient(180deg, rgba(29,48,76,0.96) 0%, rgba(18,31,50,0.96) 100%)",
   },
   insightCardSuccess: {
-    background:
-      "linear-gradient(180deg, rgba(18,47,47,0.96) 0%, rgba(12,31,32,0.96) 100%)",
+    background: "linear-gradient(180deg, rgba(18,47,47,0.96) 0%, rgba(12,31,32,0.96) 100%)",
   },
   insightCardWarning: {
-    background:
-      "linear-gradient(180deg, rgba(57,42,18,0.96) 0%, rgba(37,27,12,0.96) 100%)",
+    background: "linear-gradient(180deg, rgba(57,42,18,0.96) 0%, rgba(37,27,12,0.96) 100%)",
   },
   insightLabel: {
     fontSize: 11,
@@ -769,10 +984,13 @@ const styles = {
     gap: 8,
     padding: 14,
     borderRadius: 16,
-    background:
-      "linear-gradient(180deg, rgba(18,30,46,0.92) 0%, rgba(13,22,34,0.92) 100%)",
+    background: "linear-gradient(180deg, rgba(18,30,46,0.92) 0%, rgba(13,22,34,0.92) 100%)",
     border: "1px solid rgba(141, 177, 214, 0.16)",
     boxShadow: "0 10px 18px rgba(4, 10, 18, 0.12)",
+  },
+  statCardHighlight: {
+    background: "linear-gradient(180deg, rgba(40,55,30,0.92) 0%, rgba(25,40,18,0.92) 100%)",
+    border: "1px solid rgba(123, 224, 161, 0.22)",
   },
   statTopRow: {
     display: "flex",
@@ -819,6 +1037,7 @@ const styles = {
     gap: 10,
     alignItems: "center",
     marginBottom: 12,
+    flexWrap: "wrap",
   },
   sectionTitle: {
     margin: 0,
@@ -956,5 +1175,56 @@ const styles = {
     color: "#b2c7de",
     lineHeight: 1.5,
     fontSize: 13,
+  },
+  dailyChartWrap: {
+    display: "grid",
+    gap: 8,
+  },
+  dailyChartLegend: {
+    display: "flex",
+    gap: 14,
+    flexWrap: "wrap",
+  },
+  dailyChartLegendItem: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    color: "#a0b8d0",
+    fontSize: 11,
+  },
+  dailyChartLegendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+  },
+  dailyChartStats: {
+    display: "flex",
+    gap: 14,
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  dailyChartStat: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: 1,
+  },
+  dailyChartStatVal: {
+    color: "#f3f8ff",
+    fontSize: 16,
+    fontWeight: 700,
+    lineHeight: 1.1,
+  },
+  dailyChartStatLbl: {
+    color: "#8aa9c8",
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+  },
+  posTrend: {
+    color: "#7be0a1",
+  },
+  negTrend: {
+    color: "#ff9b9b",
   },
 };
