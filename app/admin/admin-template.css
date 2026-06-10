@@ -891,11 +891,164 @@
   -webkit-backdrop-filter: none;
 }
 
+/* ── Booking status badges ── */
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 50px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.admin-status-badge.is-pending  { background: rgba(114,122,133,0.22); color: #c8d0dc; border: 1px solid rgba(114,122,133,0.38); }
+.admin-status-badge.is-confirmed { background: rgba(53,123,79,0.22);  color: #8be0a4; border: 1px solid rgba(53,123,79,0.38); }
+.admin-status-badge.is-completed { background: rgba(45,98,126,0.22);  color: #7ecef5; border: 1px solid rgba(45,98,126,0.38); }
+.admin-status-badge.is-cancelled { background: rgba(140,42,42,0.22);  color: #ff9999; border: 1px solid rgba(140,42,42,0.38); }
+.admin-status-badge.is-no_show  { background: rgba(110,56,90,0.22);  color: #f0a0d4; border: 1px solid rgba(110,56,90,0.38); }
+
+/* ── Loading dots ── */
+.admin-loading-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 10px 0;
+}
+.admin-loading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(217, 232, 248, 0.45);
+  animation: adminDotPulse 1.4s ease-in-out infinite both;
+}
+.admin-loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.admin-loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes adminDotPulse {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Modal buttons (larger tap targets) ── */
+.admin-modal-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-modal-btn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(217, 232, 248, 0.32);
+  background: rgba(217, 232, 248, 0.09);
+  color: #eef5ff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.admin-modal-btn:hover:not(:disabled) {
+  background: rgba(217, 232, 248, 0.18);
+  border-color: rgba(217, 232, 248, 0.58);
+}
+.admin-modal-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+.admin-modal-btn.is-gold {
+  background: rgba(196, 165, 90, 0.12);
+  border-color: rgba(196, 165, 90, 0.42);
+  color: #C4A55A;
+}
+.admin-modal-btn.is-gold:hover:not(:disabled) {
+  background: rgba(196, 165, 90, 0.22);
+  border-color: rgba(196, 165, 90, 0.68);
+}
+.admin-modal-btn.is-gold.is-active {
+  background: rgba(196, 165, 90, 0.2);
+  border-color: rgba(196, 165, 90, 0.7);
+}
+.admin-modal-btn.is-save {
+  background: rgba(53, 123, 79, 0.18);
+  border-color: rgba(53, 123, 79, 0.45);
+  color: #8be0a4;
+}
+.admin-modal-btn.is-save:hover:not(:disabled) {
+  background: rgba(53, 123, 79, 0.28);
+  border-color: rgba(53, 123, 79, 0.65);
+}
+.admin-modal-btn.is-close-btn {
+  background: transparent;
+  border-color: rgba(217, 232, 248, 0.2);
+  color: rgba(217, 232, 248, 0.6);
+  flex: none;
+  min-width: 44px;
+  width: 44px;
+  padding: 0;
+}
+.admin-modal-btn.is-close-btn:hover {
+  background: rgba(217, 232, 248, 0.1);
+  border-color: rgba(217, 232, 248, 0.4);
+  color: #eef5ff;
+}
+
+/* ── Modal info rows ── */
+.admin-modal-info {
+  display: grid;
+  gap: 0;
+  margin: 14px 0;
+}
+.admin-modal-info-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(217, 232, 248, 0.07);
+  align-items: start;
+}
+.admin-modal-info-row:last-child { border-bottom: none; }
+.admin-modal-info-label {
+  font-size: 10px;
+  color: #6e8fa8;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-top: 2px;
+  line-height: 1.3;
+}
+.admin-modal-info-value {
+  font-size: 14px;
+  color: #e8f2ff;
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.admin-modal-info-value.is-muted { color: #8aa7c2; font-size: 13px; }
+
+/* ── Modal head ── */
 .admin-calendar-modal-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(217, 232, 248, 0.1);
+  margin-bottom: 2px;
+}
+
+/* ── Client actions row ── */
+.admin-modal-client-actions {
+  display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 8px;
 }
 
 .clinic-fc-wrap {

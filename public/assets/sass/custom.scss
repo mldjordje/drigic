@@ -6886,12 +6886,13 @@ a.clinic-glow-btn {
   color: #1A1714 !important;
 }
 
+/* Title/subtitle stay dark — section bg is now light cream in both themes */
 .clinic-theme-dark .clinic-home5 .clinic-bp__title {
-  color: #f5f0e8 !important;
+  color: #1A1714 !important;
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__subtitle {
-  color: rgba(245, 240, 232, 0.62) !important;
+  color: rgba(26, 23, 20, 0.55) !important;
 }
 
 .clinic-theme-dark .clinic-home5 .clinic-bp__tag {

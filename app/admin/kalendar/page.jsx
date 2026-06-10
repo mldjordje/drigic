@@ -157,6 +157,7 @@ function getInitialCalendarDate() {
 export default function AdminKalendarPage() {
   const calendarRef = useRef(null);
   const touchStartRef = useRef(null);
+  const clientPanelRef = useRef(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [range, setRange] = useState({ from: "", to: "" });
   const [loading, setLoading] = useState(false);
@@ -667,6 +668,13 @@ export default function AdminKalendarPage() {
       setClientDetailsLoading(false);
     }
   }
+
+  // Auto-scroll to client panel once data loads
+  useEffect(() => {
+    if (clientDetailsPayload && clientPanelRef.current) {
+      clientPanelRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [clientDetailsPayload]);
 
   async function saveTreatmentNote() {
     if (!activeBooking?.userId || !noteDraft.trim()) return;
@@ -1338,75 +1346,95 @@ export default function AdminKalendarPage() {
           <div className="admin-calendar-modal-backdrop" onClick={closeActiveEvent} />
           <div className="admin-card admin-calendar-modal-card">
             <div className="admin-calendar-modal-head">
-              <h3 style={{ margin: 0 }}>
-                {activeEvent.kind === "booking" ? "Detalji termina" : "Detalji blokade"}
-              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                <h3 style={{ margin: 0, fontSize: 16, color: "#e8f2ff" }}>
+                  {activeEvent.kind === "booking"
+                    ? (activeBooking?.clientName || "Detalji termina")
+                    : "Blokada"}
+                </h3>
+                {activeBooking ? (
+                  <span style={{ fontSize: 12, color: "#7a9bbd" }}>
+                    {fmtDateTime(activeBooking.startsAt)}
+                  </span>
+                ) : null}
+              </div>
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-modal-btn is-close-btn"
                 onClick={closeActiveEvent}
+                aria-label="Zatvori"
               >
-                Zatvori
+                ✕
               </button>
             </div>
 
             {activeBooking ? (
-              <div className="admin-calendar-details" style={{ marginTop: 12 }}>
-                <div>
-                  <span>Klijent</span>
-                  <div className="admin-calendar-client-row">
-                    <strong>{activeBooking.clientName || "-"}</strong>
+              <div className="admin-modal-info">
+                <div className="admin-modal-info-row">
+                  <span className="admin-modal-info-label">Klijent</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <strong className="admin-modal-info-value">{activeBooking.clientName || "-"}</strong>
+                    <div className="admin-modal-client-actions">
                     {activeBooking.userId ? (
                       <button
                         type="button"
-                        className="admin-template-link-btn"
-                        disabled={clientDetailsLoading}
-                        onClick={() => openClientDetailsPanel(activeBooking.userId)}
+                        className={`admin-modal-btn is-gold${showClientDetails ? " is-active" : ""}`}
+                        style={{ fontSize: 12, minHeight: 38 }}
+                        disabled={clientDetailsLoading && !showClientDetails}
+                        onClick={() => {
+                          if (showClientDetails) {
+                            setShowClientDetails(false);
+                            setClientDetailsPayload(null);
+                          } else {
+                            openClientDetailsPanel(activeBooking.userId);
+                          }
+                        }}
                       >
-                        {clientDetailsLoading && showClientDetails
-                          ? "Učitavanje..."
-                          : "Profil + Beauty Pass"}
+                        {clientDetailsLoading ? "Učitavanje..." : showClientDetails ? "Sakrij profil" : "Profil + Beauty Pass"}
                       </button>
                     ) : null}
                     {activeBooking.clientPhone ? (
                       <a
-                        className="admin-template-link-btn"
+                        className="admin-modal-btn"
+                        style={{ fontSize: 12, minHeight: 38, flex: "none" }}
                         href={`tel:${String(activeBooking.clientPhone).replace(/\s/g, "")}`}
                       >
-                        Pozovi klijenta
+                        📞 Pozovi
                       </a>
-                    ) : (
-                      <span style={{ color: "#9fb8d8", fontSize: 13 }}>Bez telefona u profilu</span>
-                    )}
+                    ) : null}
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <span>Termin</span>
-                  <strong>
-                    {fmtDateTime(activeBooking.startsAt)} - {fmtDateTime(activeBooking.endsAt)}
-                  </strong>
+                <div className="admin-modal-info-row">
+                  <span className="admin-modal-info-label">Vreme</span>
+                  <span className="admin-modal-info-value">
+                    {fmtDateTime(activeBooking.startsAt)} – {fmtDateTime(activeBooking.endsAt)}
+                  </span>
                 </div>
-                <div>
-                  <span>Usluge</span>
-                  <strong>{activeBooking.serviceSummary || "-"}</strong>
+                <div className="admin-modal-info-row">
+                  <span className="admin-modal-info-label">Usluge</span>
+                  <span className="admin-modal-info-value">{activeBooking.serviceSummary || "-"}</span>
                 </div>
-                <div>
-                  <span>Cena</span>
-                  <strong>{activeBooking.totalPriceRsd} EUR</strong>
+                <div className="admin-modal-info-row">
+                  <span className="admin-modal-info-label">Cena</span>
+                  <span className="admin-modal-info-value">{activeBooking.totalPriceRsd} EUR</span>
                 </div>
-                <div>
-                  <span>Status</span>
-                  <strong>{STATUS_LABEL[statusDraft] || statusDraft || "-"}</strong>
+                <div className="admin-modal-info-row">
+                  <span className="admin-modal-info-label">Status</span>
+                  <span className={`admin-status-badge is-${statusDraft}`}>
+                    {STATUS_LABEL[statusDraft] || statusDraft || "-"}
+                  </span>
                 </div>
-                <label>
-                  Napomena
+                <div className="admin-modal-info-row" style={{ borderBottom: "none" }}>
+                  <span className="admin-modal-info-label">Napomena</span>
                   <textarea
                     className="admin-inline-textarea"
                     rows={3}
                     value={notesDraft}
                     onChange={(event) => setNotesDraft(event.target.value)}
+                    style={{ margin: 0 }}
                   />
-                </label>
+                </div>
 
                 {RESCHEDULABLE_STATUSES.includes(statusDraft) && showReschedulePanel ? (
                   <div
@@ -1581,7 +1609,7 @@ export default function AdminKalendarPage() {
                     <div className="admin-calendar-quick-actions" style={{ marginTop: 10 }}>
                       <button
                         type="button"
-                        className="admin-template-link-btn"
+                        className="admin-modal-btn is-save"
                         disabled={saving || !pendingEditServiceIds.length || !pendingEditStartLocal}
                         onClick={savePendingBookingReschedule}
                       >
@@ -1589,7 +1617,7 @@ export default function AdminKalendarPage() {
                       </button>
                       <button
                         type="button"
-                        className="admin-template-link-btn"
+                        className="admin-modal-btn"
                         onClick={() => setShowReschedulePanel(false)}
                       >
                         Odustani
@@ -1598,14 +1626,14 @@ export default function AdminKalendarPage() {
                   </div>
                 ) : null}
 
-                <div className="admin-calendar-detail-actions">
+                <div className="admin-calendar-detail-actions" style={{ borderTop: "1px solid rgba(217,232,248,0.1)", paddingTop: 14, marginTop: 6 }}>
                   {(quickStatusActionsByStatus[statusDraft] || []).length ? (
-                    <div className="admin-calendar-quick-actions">
+                    <div className="admin-modal-btn-row" style={{ marginBottom: 8 }}>
                       {(quickStatusActionsByStatus[statusDraft] || []).map((action) => (
                         <button
                           key={action.value}
                           type="button"
-                          className="admin-template-link-btn"
+                          className="admin-modal-btn"
                           disabled={saving}
                           onClick={() => changeActiveBookingStatus(action.value)}
                         >
@@ -1615,7 +1643,7 @@ export default function AdminKalendarPage() {
                       {RESCHEDULABLE_STATUSES.includes(statusDraft) ? (
                         <button
                           type="button"
-                          className="admin-template-link-btn"
+                          className="admin-modal-btn"
                           disabled={saving}
                           onClick={() => setShowReschedulePanel((prev) => !prev)}
                         >
@@ -1624,36 +1652,28 @@ export default function AdminKalendarPage() {
                       ) : null}
                     </div>
                   ) : null}
-                  <div className="admin-calendar-quick-actions">
+                  <div className="admin-modal-btn-row">
                     <button
                       type="button"
-                      className="admin-template-link-btn"
+                      className="admin-modal-btn is-save"
                       disabled={saving}
                       onClick={saveBookingDetails}
                     >
-                      Sačuvaj napomenu
+                      {saving ? "Čuvanje..." : "Sačuvaj napomenu"}
                     </button>
                     {activeBooking?.userId ? (
                       <button
                         type="button"
-                        className="admin-template-link-btn"
+                        className={`admin-modal-btn is-gold${showNotePanel ? " is-active" : ""}`}
                         onClick={() => {
                           setShowNotePanel((prev) => !prev);
                           setNoteError("");
                           setNoteMessage("");
                         }}
                       >
-                        {showNotePanel ? "Zatvori beauty pasoš" : "Upiši u beauty pasoš"}
+                        {showNotePanel ? "Zatvori pasoš" : "Upiši u pasoš"}
                       </button>
                     ) : null}
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      disabled={saving}
-                      onClick={closeActiveEvent}
-                    >
-                      Zatvori
-                    </button>
                   </div>
                 </div>
 
@@ -1681,10 +1701,10 @@ export default function AdminKalendarPage() {
                     {noteMessage ? (
                       <p style={{ color: "#a8f0a0", margin: "8px 0 0", fontSize: 13, fontWeight: 600 }}>{noteMessage}</p>
                     ) : null}
-                    <div className="admin-calendar-quick-actions" style={{ marginTop: 12 }}>
+                    <div className="admin-modal-btn-row" style={{ marginTop: 12 }}>
                       <button
                         type="button"
-                        className="admin-template-link-btn"
+                        className="admin-modal-btn is-save"
                         disabled={noteSaving || !noteDraft.trim()}
                         onClick={saveTreatmentNote}
                       >
@@ -1692,7 +1712,7 @@ export default function AdminKalendarPage() {
                       </button>
                       <button
                         type="button"
-                        className="admin-template-link-btn"
+                        className="admin-modal-btn"
                         onClick={() => {
                           setShowNotePanel(false);
                           setNoteDraft("");
@@ -1707,7 +1727,14 @@ export default function AdminKalendarPage() {
                 ) : null}
 
                 {showClientDetails ? (
-                  <div className="admin-calendar-client-panel">
+                  <div className="admin-calendar-client-panel" ref={clientPanelRef}>
+                    {clientDetailsLoading ? (
+                      <div className="admin-loading-dots">
+                        <div className="admin-loading-dot" />
+                        <div className="admin-loading-dot" />
+                        <div className="admin-loading-dot" />
+                      </div>
+                    ) : null}
                     {clientDetailsError ? (
                       <p style={{ color: "#ffabab", margin: 0 }}>{clientDetailsError}</p>
                     ) : null}
