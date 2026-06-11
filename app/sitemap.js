@@ -6,28 +6,28 @@ import { SERVICE_CATEGORY_SPECS, getCategorySlugByName } from "@/lib/services/ca
 export const revalidate = 3600;
 
 const STATIC_ROUTES = [
-  "",
-  "/booking",
-  "/about",
-  "/contact",
-  "/faq",
-  "/pricing",
-  "/beauty-pass",
-  "/rezultati",
-  "/video-galerija",
-  "/tretmani",
-  "/nikola-igic",
+  { path: "",               changeFrequency: "daily",   priority: 1.0  },
+  { path: "/tretmani",      changeFrequency: "weekly",  priority: 0.9  },
+  { path: "/booking",       changeFrequency: "weekly",  priority: 0.9  },
+  { path: "/beauty-pass",   changeFrequency: "weekly",  priority: 0.85 },
+  { path: "/nikola-igic",   changeFrequency: "monthly", priority: 0.85 },
+  { path: "/about",         changeFrequency: "monthly", priority: 0.8  },
+  { path: "/rezultati",     changeFrequency: "weekly",  priority: 0.8  },
+  { path: "/video-galerija",changeFrequency: "weekly",  priority: 0.75 },
+  { path: "/pricing",       changeFrequency: "monthly", priority: 0.75 },
+  { path: "/contact",       changeFrequency: "monthly", priority: 0.75 },
+  { path: "/faq",           changeFrequency: "monthly", priority: 0.7  },
 ];
 
 export default async function sitemap() {
   const siteUrl = getConfiguredSiteUrl();
   const db = getDb();
 
-  const staticEntries = STATIC_ROUTES.map((route) => ({
-    url: `${siteUrl}${route || "/"}`,
+  const staticEntries = STATIC_ROUTES.map(({ path, changeFrequency, priority }) => ({
+    url: `${siteUrl}${path || "/"}`,
     lastModified: new Date(),
-    changeFrequency: route === "" ? "daily" : "weekly",
-    priority: route === "" ? 1 : 0.7,
+    changeFrequency,
+    priority,
   }));
 
   const categoryEntries = SERVICE_CATEGORY_SPECS.map((category) => ({
