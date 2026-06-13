@@ -25,6 +25,7 @@ const approvedModules = [
   { href: "/admin/announcements", labelKey: "admin.announcements" },
   { href: "/admin/media", labelKey: "admin.media" },
   { href: "/admin/vip", labelKey: "admin.vip" },
+  { href: "/admin/blog", label: "Blog" },
 ];
 
 const lockedModules = [

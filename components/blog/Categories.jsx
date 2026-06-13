@@ -1,20 +1,23 @@
 const categories = [
-  { id: 1, text: "Archive (3)" },
-  { id: 2, text: "Branding (6)" },
-  { id: 3, text: "Company (2)" },
-  { id: 4, text: "Design (1)" },
-  { id: 5, text: "Business (4)" },
-  { id: 6, text: "Modern (1)" },
+  { id: 1, text: "Hijaluron" },
+  { id: 2, text: "Botoks" },
+  { id: 3, text: "PRP" },
+  { id: 4, text: "Anti-age" },
+  { id: 5, text: "Saveti" },
+  { id: 6, text: "Tretmani" },
+  { id: 7, text: "Koža" },
+  { id: 8, text: "Niš" },
 ];
+
 export default function Categories() {
   return (
     <div className="sidebar__widget">
-      <h4 className="sidebar__widget-title">Categories</h4>
+      <h4 className="sidebar__widget-title">Kategorije</h4>
       <div className="sidebar__cat-list">
         <ul className="list-wrap">
-          {categories.map((link) => (
-            <li key={link.id}>
-              <a href="#">{link.text}</a>
+          {categories.map((cat) => (
+            <li key={cat.id}>
+              <span>{cat.text}</span>
             </li>
           ))}
         </ul>

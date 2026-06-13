@@ -74,5 +74,36 @@ export default async function sitemap() {
     })
     .filter(Boolean);
 
-  return [...staticEntries, ...categoryEntries, ...serviceEntries];
+  let blogEntries = [];
+  try {
+    const blogRows = await db
+      .select({
+        slug: schema.blogPosts.slug,
+        publishedAt: schema.blogPosts.publishedAt,
+        updatedAt: schema.blogPosts.updatedAt,
+      })
+      .from(schema.blogPosts)
+      .where(eq(schema.blogPosts.isPublished, true))
+      .orderBy(asc(schema.blogPosts.publishedAt));
+
+    blogEntries = blogRows.map((row) => ({
+      url: `${siteUrl}/blog-details/${row.slug}`,
+      lastModified: row.updatedAt || row.publishedAt || new Date(),
+      changeFrequency: "monthly",
+      priority: 0.65,
+    }));
+
+    if (blogRows.length > 0) {
+      blogEntries.push({
+        url: `${siteUrl}/blog`,
+        lastModified: new Date(),
+        changeFrequency: "weekly",
+        priority: 0.7,
+      });
+    }
+  } catch {
+    // blog table not ready yet — skip
+  }
+
+  return [...staticEntries, ...categoryEntries, ...serviceEntries, ...blogEntries];
 }

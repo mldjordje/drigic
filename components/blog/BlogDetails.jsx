@@ -1,16 +1,33 @@
 import { socialMediaLinks } from "@/data/socials";
 import React from "react";
-import Comments from "./Comments";
-import CommentReplay from "./CommentReplay";
 import BlogSerchbar from "./BlogSerchbar";
 import Categories from "./Categories";
-import RecentPosts from "./RecentPosts";
 import Tags from "./Tags";
 import Image from "next/image";
-import { allBlogs } from "@/data/blogs";
+import Link from "next/link";
 
-export default function BlogDetails({ blogId }) {
-  const blogItem = allBlogs.filter((elm) => elm.id == blogId)[0] || allBlogs[0];
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString("sr-RS", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+export default function BlogDetails({ post }) {
+  if (!post) {
+    return (
+      <section className="blog__details-area space">
+        <div className="container">
+          <p style={{ textAlign: "center", padding: "48px 0", opacity: 0.6 }}>
+            Post nije pronađen.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="blog__details-area space">
       <div className="container">
@@ -18,123 +35,55 @@ export default function BlogDetails({ blogId }) {
           <div className="row">
             <div className="col-70">
               <div className="blog__details-wrap">
-                <div className="blog__details-thumb">
-                  <Image
-                    width={856}
-                    height={600}
-                    src={blogItem.image}
-                    alt="img"
-                  />
-                </div>
+                {post.featuredImageUrl && (
+                  <div className="blog__details-thumb">
+                    <Image
+                      width={856}
+                      height={600}
+                      src={post.featuredImageUrl}
+                      alt={post.title}
+                    />
+                  </div>
+                )}
                 <div className="blog__details-content">
                   <div className="blog-post-meta">
                     <ul className="list-wrap">
-                      <li>{blogItem.date}</li>
-                      <li>
-                        <a href="#">{blogItem.category}</a>
-                      </li>
-                      <li>
-                        <a href="#">by Ashton Porter</a>
-                      </li>
+                      {post.publishedAt && <li>{formatDate(post.publishedAt)}</li>}
+                      {post.category && (
+                        <li>
+                          <span>{post.category}</span>
+                        </li>
+                      )}
+                      <li>Dr Nikola Igić</li>
                     </ul>
                   </div>
-                  <h2 className="title">{blogItem.title}</h2>
-                  <p>
-                    BaseCreate is pleased to announce that it has been
-                    commissioned by Leighton Asia reposition its brand. We will
-                    help Leighton Asia evolve its brand strategy, and will be
-                    responsible updating Leighton Asia’s brand identity,
-                    website, and other collaterals.
-                  </p>
-                  <p>
-                    For almost 50 years Leighton Asia, one of the region’s
-                    largest and most respected construction companies, has been
-                    progressively building for a better future by leveraging
-                    international expertise with local intelligence. In that
-                    time Leighton has delivered some of Asia’s prestigious
-                    buildings and transformational infrastructure projects.
-                  </p>
-                  <blockquote>
-                    <Image
-                      width={52}
-                      height={32}
-                      className="blockquote-icon"
-                      src="/assets/img/icon/quote.svg"
-                      alt="img"
-                    />
-                    <p>
-                      “It’s a pleasure working with Bunker. They understood our
-                      brand positioning guidelines and translated them
-                      beautifully consistently into our on-going marketing
-                      comms”
-                    </p>
-                  </blockquote>
-                  <p>
-                    Leighton Asia’s brand refreshment will help position the
-                    company to meet the challenges of future, as it seeks to
-                    lead the industry in technological innovation and
-                    sustainable building practices to deliver long-lasting value
-                    for its clients.
-                  </p>
-                  <div className="blog__details-inner">
-                    <div className="row align-items-center">
-                      <div className="col-sm-6">
-                        <div className="blog__details-inner-thumb">
-                          <Image
-                            width={416}
-                            height={380}
-                            src="/assets/img/blog/blog_details02.jpg"
-                            alt="blog single"
-                          />
-                        </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="blog__details-inner-thumb">
-                          <Image
-                            width={416}
-                            height={380}
-                            src="/assets/img/blog/blog_details03.jpg"
-                            alt="img"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <p>
-                    But in order that you may see whence all this born error of
-                    those who accuse pleasure and praise pain, I will open the
-                    whole matter, and explain the very things which were said by
-                    that discoverer of truth and, as it were, the architect of a
-                    happy life.
-                  </p>
-                  <p>
-                    Always ready to push the boundaries, especially when it
-                    comes to our own platform maximum analytical eye to create a
-                    site that was visually engaging and also optimised
-                  </p>
+                  <h1 className="title">{post.title}</h1>
+                  <div
+                    className="blog-content-html"
+                    dangerouslySetInnerHTML={{ __html: post.content }}
+                    style={{ lineHeight: 1.8 }}
+                  />
                   <div className="blog__details-bottom">
                     <div className="row align-items-center">
-                      <div className="col-md-7">
-                        <div className="post-tags">
-                          <ul className="list-wrap">
-                            <li>
-                              <a href="#">Marketing</a>
-                            </li>
-                            <li>
-                              <a href="#">Brand</a>
-                            </li>
-                            <li>
-                              <a href="#">Contemporary</a>
-                            </li>
-                          </ul>
+                      {post.seoKeywords?.length > 0 && (
+                        <div className="col-md-7">
+                          <div className="post-tags">
+                            <ul className="list-wrap">
+                              {post.seoKeywords.slice(0, 4).map((kw, i) => (
+                                <li key={i}>
+                                  <span>{kw}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <div className="col-md-5">
                         <div className="post-share">
-                          <h5 className="title">Share:</h5>
+                          <h5 className="title">Podeli:</h5>
                           <div className="social-btn style3 justify-content-md-end">
                             {socialMediaLinks.slice(0, 3).map((elm, i) => (
-                              <a key={i} href={elm.href}>
+                              <a key={i} href={elm.href} target="_blank" rel="noreferrer">
                                 <span className="link-effect">
                                   <span className="effect-1">
                                     <i className={elm.iconClass}></i>
@@ -151,58 +100,45 @@ export default function BlogDetails({ blogId }) {
                     </div>
                   </div>
                   <div className="inner__page-nav mt-20 mb-n1">
-                    <a href="#" className="nav-btn">
+                    <Link href="/blog" className="nav-btn">
                       <i className="fa fa-arrow-left"></i>
                       <span>
                         <span className="link-effect">
-                          <span className="effect-1">Previous Post</span>
-                          <span className="effect-1">Previous Post</span>
+                          <span className="effect-1">Svi postovi</span>
+                          <span className="effect-1">Svi postovi</span>
                         </span>
                       </span>
-                    </a>
-                    <a href="#" className="nav-btn">
-                      <span>
-                        <span className="link-effect">
-                          <span className="effect-1">Next Post</span>
-                          <span className="effect-1">Next Post</span>
-                        </span>
-                      </span>
-                      <i className="fa fa-arrow-right"></i>
-                    </a>
+                    </Link>
                   </div>
                 </div>
                 <div className="blog__avatar-wrap">
                   <div className="blog__avatar-img">
-                    <a href="#">
+                    <Link href="/nikola-igic">
                       <Image
                         width={196}
                         height={180}
                         src="/assets/img/blog/blog_avatar01.png"
-                        alt="img"
+                        alt="Dr Nikola Igić"
                       />
-                    </a>
+                    </Link>
                   </div>
                   <div className="blog__avatar-info">
                     <h4 className="name">
-                      <a href="#">Ashton Porter</a>
+                      <Link href="/nikola-igic">Dr Nikola Igić</Link>
                     </h4>
                     <p>
-                      But in order that you may see whence all this born error
-                      of those who accuse pleasure and praise pain will open the
-                      whole matter explain the very things which were said by
-                      that
+                      Specijalista estetske i anti-age medicine u Nišu. Dr Igić kombinuje
+                      medicinsku preciznost sa estetskim senzibilitetom kako bi postigao
+                      prirodne rezultate za svakog pacijenta.
                     </p>
                   </div>
                 </div>
-                <Comments />
-                <CommentReplay />
               </div>
             </div>
             <div className="col-30">
               <aside className="blog__sidebar">
                 <BlogSerchbar />
                 <Categories />
-                <RecentPosts />
                 <Tags />
               </aside>
             </div>
