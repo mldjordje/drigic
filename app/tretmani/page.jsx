@@ -9,24 +9,25 @@ import { SITE_NAME, getConfiguredSiteUrl } from "@/lib/site";
 
 export const metadata = {
   title: {
-    absolute: `Tretmani i usluge estetske medicine | ${SITE_NAME}`,
+    absolute: `Estetski tretmani Niš — Fileri, Botoks, PRP | ${SITE_NAME}`,
   },
   description:
-    "Pregled svih tretmana Dr Igic Clinic: hijaluronski fileri, botox, skinbusteri, PRP, mezoterapija, hemijski piling i regenerativni protokoli.",
+    "Svi estetski tretmani ordinacije Dr Igić u Nišu: hijaluronski fileri, botoks, skinbusteri, PRP, mezoterapija, hemijski piling i regenerativni protokoli.",
   keywords: [
-    "tretmani estetske medicine",
-    "hijaluronski fileri",
-    "botox",
-    "skinbusteri",
-    "PRP",
-    "mezoterapija",
-    "preporuka tretmana",
+    "estetski tretmani Niš",
+    "tretmani estetske medicine Niš",
+    "hijaluronski fileri Niš",
+    "botoks Niš",
+    "skinbusteri Niš",
+    "PRP Niš",
+    "mezoterapija Niš",
+    "preporuka tretmana Niš",
   ],
   alternates: { canonical: "/tretmani" },
   openGraph: {
-    title: "Tretmani i usluge estetske medicine",
+    title: "Estetski tretmani Niš — Dr Igić Clinic",
     description:
-      "Izaberite tretman prema cilju: volumen, bore, hidratacija, regeneracija, tekstura koze ili konture tela.",
+      "Izaberite tretman prema cilju: volumen, bore, hidratacija, regeneracija, tekstura kože ili konture tela. Niš.",
     type: "website",
     siteName: SITE_NAME,
     url: "/tretmani",

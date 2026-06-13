@@ -7,7 +7,10 @@ import Header3 from "@/components/headers/Header3";
 import React from "react";
 
 export const metadata = {
-  title: "Blog 1 || Frisk - Creative Agency & Portfolio Nextjs Template",
+  title: "Blog — Estetska medicina | Dr Igić Clinic Niš",
+  description:
+    "Saveti i stručni tekstovi o estetskoj i anti-age medicini. Hijaluronski fileri, botoks, PRP, nega kože — Dr Igić Clinic, Niš.",
+  alternates: { canonical: "/blog" },
 };
 export default function BlogPage1() {
   return (

@@ -12,7 +12,10 @@ import Header3 from "@/components/headers/Header3";
 import React from "react";
 
 export const metadata = {
-  title: "O nama",
+  title: "O nama | Dr Igić Clinic — Estetska medicina Niš",
+  description:
+    "Saznajte više o ordinaciji Dr Igić Clinic u Nišu — misija, pristup i tim. Estetska, anti-age i regenerativna medicina.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

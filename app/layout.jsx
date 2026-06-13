@@ -105,7 +105,7 @@ const ORGANIZATION_JSON_LD = {
         "height": 60,
       },
       "description":
-        "Ordinacija estetske, anti-age i regenerativne medicine u Srbiji. Specijalizovani tretmani: hijaluronski fileri, botox, skinbusteri, PRP, mezoterapija i dr.",
+        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Specijalizovani tretmani: hijaluronski fileri, botox, skinbusteri, PRP, mezoterapija i dr.",
       "medicalSpecialty": [
         "Aesthetic Medicine",
         "Anti-Age Medicine",
@@ -113,8 +113,24 @@ const ORGANIZATION_JSON_LD = {
       ],
       "address": {
         "@type": "PostalAddress",
+        "streetAddress": "Cvijićeva 31/3",
+        "addressLocality": "Niš",
+        "addressRegion": "Nišavski okrug",
+        "postalCode": "18000",
         "addressCountry": "RS",
-        "addressLocality": "Srbija",
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "43.3209",
+        "longitude": "21.8954",
+      },
+      "telephone": "+381062238888",
+      "email": "drigicclinic@gmail.com",
+      "openingHours": "Mo-Fr 16:00-21:00",
+      "priceRange": "€€",
+      "areaServed": {
+        "@type": "City",
+        "name": "Niš",
       },
       "sameAs": [
         "https://www.instagram.com/drigic.clinic/",

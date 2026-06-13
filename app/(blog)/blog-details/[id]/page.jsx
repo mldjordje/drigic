@@ -15,7 +15,9 @@ import { allBlogs } from "@/data/blogs";
 // }
 
 export const metadata = {
-  title: "Blog Details || Frisk - Creative Agency & Portfolio Nextjs Template",
+  title: "Blog | Dr Igić Clinic Niš",
+  description:
+    "Stručni tekst o estetskoj i anti-age medicini — Dr Igić Clinic, Niš.",
 };
 
 export default async function BlogPageDetails(props) {

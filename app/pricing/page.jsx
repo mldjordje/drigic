@@ -8,7 +8,9 @@ import Pricing from "@/components/pricing/Pricing";
 import React from "react";
 
 export const metadata = {
-  title: "Cenovnik",
+  title: "Cenovnik | Dr Igić Clinic Niš",
+  description: "Cene estetskih tretmana u ordinaciji Dr Igić u Nišu.",
+  alternates: { canonical: "/cenovnik" },
 };
 export default function PricingPage() {
   return (

@@ -10,9 +10,17 @@ import { SITE_NAME } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: `Cenovnik | ${SITE_NAME}`,
+  title: `Cenovnik estetskih tretmana Niš | ${SITE_NAME}`,
   description:
-    "Pregled svih estetskih tretmana i cena u Dr Igić ordinaciji. Hijaluronski fileri, botox, skinbusteri, PRP i više.",
+    "Cene estetskih tretmana u ordinaciji Dr Igić u Nišu. Hijaluronski fileri, botoks, skinbusteri, PRP, mezoterapija i više. Sve cene u EUR.",
+  keywords: [
+    "cene estetskih tretmana Niš",
+    "cenovnik fileri Niš",
+    "botoks cena Niš",
+    "estetska medicina cene Niš",
+    "dr igić clinic cenovnik",
+  ],
+  alternates: { canonical: "/cenovnik" },
 };
 
 export default async function CenovnikPage() {
