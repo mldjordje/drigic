@@ -16,7 +16,8 @@ const STATIC_ROUTES = [
   { path: "/video-galerija",changeFrequency: "weekly",  priority: 0.75 },
   { path: "/pricing",       changeFrequency: "monthly", priority: 0.75 },
   { path: "/contact",       changeFrequency: "monthly", priority: 0.75 },
-  { path: "/faq",           changeFrequency: "monthly", priority: 0.7  },
+  { path: "/faq",                    changeFrequency: "monthly", priority: 0.7  },
+  { path: "/estetska-medicina-nis", changeFrequency: "monthly", priority: 0.95 },
 ];
 
 export default async function sitemap() {

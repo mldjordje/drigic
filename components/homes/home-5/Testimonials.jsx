@@ -131,8 +131,48 @@ export default function Testimonials() {
     ],
   };
 
+  const reviewJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "MedicalOrganization",
+    "@id": "https://drigic.rs/#organization",
+    "name": "Dr Igić Clinic",
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5.0",
+      "bestRating": "5",
+      "worstRating": "1",
+      "reviewCount": "20",
+    },
+    "review": copy.items.map((elm) => ({
+      "@type": "Review",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": "5",
+        "bestRating": "5",
+      },
+      "author": {
+        "@type": "Person",
+        "name": elm.name,
+      },
+      "reviewBody": elm.text,
+      "itemReviewed": {
+        "@type": "MedicalOrganization",
+        "name": "Dr Igić Clinic",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Niš",
+          "addressCountry": "RS",
+        },
+      },
+    })),
+  };
+
   return (
     <div className="testimonial-area-2 space bg-gray overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewJsonLd) }}
+      />
       <div className="container">
         <div className="title-area text-center clinic-reveal">
           <h2 className="sec-title text-smoke">{copy.title}</h2>

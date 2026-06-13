@@ -147,7 +147,7 @@ export default function Blogs() {
                     <span>{elm.category}</span>
                   </div>
                   <h4 className="blog-title">{elm.title}</h4>
-                  <Link scroll={false} href="#konsultacije" className="link-btn">
+                  <Link href="/blog" className="link-btn">
                     <span className="link-effect">
                       <span className="effect-1">{copy.cta}</span>
                       <span className="effect-1">{copy.cta}</span>

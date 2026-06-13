@@ -87,6 +87,16 @@ export const metadata = {
     title: SITE_NAME,
     statusBarStyle: "default",
   },
+  alternates: {
+    canonical: "https://drigic.rs",
+    languages: {
+      "sr": "https://drigic.rs",
+      "en": "https://drigic.rs",
+      "de": "https://drigic.rs",
+      "it": "https://drigic.rs",
+      "x-default": "https://drigic.rs",
+    },
+  },
 };
 
 const ORGANIZATION_JSON_LD = {
@@ -132,8 +142,39 @@ const ORGANIZATION_JSON_LD = {
         "@type": "City",
         "name": "Niš",
       },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5.0",
+        "bestRating": "5",
+        "worstRating": "1",
+        "reviewCount": "20",
+      },
+      "numberOfEmployees": {
+        "@type": "QuantitativeValue",
+        "value": 1,
+      },
+      "foundingDate": "2022",
+      "additionalProperty": [
+        {
+          "@type": "PropertyValue",
+          "name": "Broj tretmana",
+          "value": "1200+",
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "Zadovoljstvo pacijenata",
+          "value": "98%",
+        },
+        {
+          "@type": "PropertyValue",
+          "name": "Dostupne procedure",
+          "value": "15+",
+        },
+      ],
       "sameAs": [
         "https://www.instagram.com/drigic.clinic/",
+        "https://maps.google.com/?cid=16708722205926497279",
+        "https://g.page/r/CQxFm_yQyYsVEAE",
       ],
       "employee": {
         "@type": "Physician",
