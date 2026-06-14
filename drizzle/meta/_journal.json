@@ -113,6 +113,13 @@
       "when": 1779631800000,
       "tag": "0016_notifications_dedupe_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1781394093993,
+      "tag": "0016_add_blog_posts",
+      "breakpoints": true
     }
   ]
 }

@@ -204,7 +204,7 @@ function buildServiceJsonLd({ service, categorySpec, relatedServices, recommenda
         description: service.description || categorySpec.seoDescription,
         serviceType: categorySpec.name,
         provider: { "@id": `${siteUrl}/#organization` },
-        areaServed: { "@type": "Country", name: "Srbija" },
+        areaServed: { "@type": "City", name: "Niš" },
         url: serviceUrl,
         offers: {
           "@type": "Offer",
@@ -282,6 +282,8 @@ export async function generateMetadata({ params }) {
       data.categorySpec.name,
       ...(data.categorySpec.seoKeywords || []),
       "estetska medicina",
+      "estetska medicina Niš",
+      `${data.service.name} Niš`,
       "preporuka tretmana",
     ],
     alternates: { canonical: canonicalPath },

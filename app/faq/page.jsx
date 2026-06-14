@@ -8,7 +8,10 @@ import Header3 from "@/components/headers/Header3";
 import React from "react";
 
 export const metadata = {
-  title: "FAQ",
+  title: "Česta pitanja o tretmanima | Dr Igić Clinic Niš",
+  description:
+    "Odgovori na najčešća pitanja o estetskim tretmanima u ordinaciji Dr Igić u Nišu — fileri, botoks, PRP, oporavak, cene.",
+  alternates: { canonical: "/faq" },
 };
 export default function FaqPage() {
   return (

@@ -29,10 +29,16 @@ export async function generateMetadata({ params }) {
     ? [{ url: `${siteUrl}${category.image}`, width: 1600, height: 900, alt: category.name }]
     : [{ url: `${siteUrl}/icons/icon-512.png`, width: 512, height: 512, alt: SITE_NAME }];
 
+  const locationKeywords = [
+    `${category.name.toLowerCase()} Niš`,
+    "estetska medicina Niš",
+    "dr igić clinic Niš",
+  ];
+
   return {
     title: category.seoTitle,
     description: category.seoDescription,
-    keywords: category.seoKeywords,
+    keywords: [...(category.seoKeywords || []), ...locationKeywords],
     alternates: { canonical: canonicalPath },
     openGraph: {
       title: category.seoTitle,
@@ -217,7 +223,7 @@ function buildJsonLd(categorySpec, services, faq, siteUrl) {
               "provider": { "@id": "https://drigic.rs/#organization" },
               "url": categoryUrl,
               "serviceType": categorySpec.name,
-              "areaServed": { "@type": "Country", "name": "Srbija" },
+              "areaServed": { "@type": "City", "name": "Niš" },
               "hasOfferCatalog": {
                 "@type": "OfferCatalog",
                 "name": `${categorySpec.name} usluge`,
