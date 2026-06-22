@@ -1,0 +1,304 @@
+// =====================================================================
+//  PREMIUM POLISH LAYER  (additive — safe to remove by deleting the
+//  @import in style.scss). Targets existing class names only.
+//  Motion, depth, contrast and field UX for landing + booking + beauty.
+// =====================================================================
+
+// ── Shared motion tokens + per-theme depth ──────────────────────────
+.clinic-home5 {
+  --pp-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --pp-spring-soft: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --pp-gold: var(--gold, #c8a96e);
+  --pp-gold-soft: rgba(200, 169, 110, 0.18);
+}
+
+.clinic-theme-dark .clinic-home5 {
+  --pp-shadow-rest: 0 18px 46px -26px rgba(0, 0, 0, 0.78);
+  --pp-shadow-hover:
+    0 36px 80px -30px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(200, 169, 110, 0.22),
+    0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  --pp-sheen: rgba(255, 255, 255, 0.07);
+  --pp-hairline: linear-gradient(90deg, transparent, rgba(200, 169, 110, 0.55), transparent);
+}
+
+.clinic-theme-light .clinic-home5 {
+  --pp-shadow-rest: 0 18px 40px -28px rgba(40, 60, 90, 0.38);
+  --pp-shadow-hover:
+    0 34px 64px -30px rgba(40, 60, 90, 0.45),
+    0 0 0 1px rgba(138, 103, 40, 0.26),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  --pp-sheen: rgba(255, 255, 255, 0.6);
+  --pp-hairline: linear-gradient(90deg, transparent, rgba(138, 103, 40, 0.5), transparent);
+}
+
+// ── Contrast: lift dim lead/body copy in dark ───────────────────────
+.clinic-theme-dark .clinic-home5 {
+  .sec-text,
+  .text-smoke {
+    color: #eef3fb !important;
+  }
+  .clinic-treatment-showcase__lead,
+  .clinic-about-v2__summary {
+    color: rgba(238, 244, 255, 0.86) !important;
+  }
+}
+.clinic-theme-light .clinic-home5 {
+  .sec-text,
+  .text-smoke {
+    color: #2c3a4f !important;
+  }
+}
+
+// ── Reveal easing upgrade (uses existing .clinic-reveal observer) ────
+@media (prefers-reduced-motion: no-preference) {
+  .clinic-home5 .clinic-before-after-card.clinic-reveal,
+  .clinic-home5 .clinic-selected-service-chip.clinic-reveal,
+  .clinic-home5 .clinic-booking-calendar.clinic-reveal {
+    opacity: 0;
+    transform: translateY(34px) scale(0.985);
+    filter: blur(6px);
+    transition:
+      opacity 0.7s var(--pp-spring),
+      transform 0.8s var(--pp-spring),
+      filter 0.7s var(--pp-spring);
+    will-change: opacity, transform, filter;
+  }
+  .clinic-home5 .clinic-before-after-card.clinic-reveal.is-visible,
+  .clinic-home5 .clinic-selected-service-chip.clinic-reveal.is-visible,
+  .clinic-home5 .clinic-booking-calendar.clinic-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+// ── Premium card depth + hover sheen ────────────────────────────────
+.clinic-home5 {
+  .svc-card,
+  .glass-panel,
+  .clinic-before-after-card,
+  .clinic-bp__card {
+    position: relative;
+    box-shadow: var(--pp-shadow-rest);
+    transition:
+      transform 0.55s var(--pp-spring),
+      box-shadow 0.55s var(--pp-spring),
+      border-color 0.55s var(--pp-spring);
+  }
+
+  // sheen sweep overlay
+  .svc-card::after,
+  .clinic-before-after-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 0%,
+      var(--pp-sheen) 48%,
+      transparent 62%
+    );
+    background-size: 240% 100%;
+    background-position: 180% 0;
+    opacity: 0;
+    transition: opacity 0.5s ease, background-position 0.9s var(--pp-spring);
+    z-index: 4;
+  }
+
+  .svc-card:hover,
+  .glass-panel:hover,
+  .clinic-before-after-card:hover,
+  .clinic-bp__card:hover {
+    box-shadow: var(--pp-shadow-hover);
+  }
+  .svc-card:hover::after,
+  .clinic-before-after-card:hover::after {
+    opacity: 1;
+    background-position: -40% 0;
+  }
+}
+
+// service card number — premium serif accent
+.clinic-home5 .svc-card__num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  background: var(--pp-hairline);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+// arrow nudge on hover
+.clinic-home5 .svc-card:hover .svc-card__arrow {
+  transform: translateX(6px);
+}
+.clinic-home5 .svc-card__arrow {
+  transition: transform 0.45s var(--pp-spring-soft);
+}
+
+// ── Buttons: animated gold sheen + lift + a11y focus ────────────────
+.clinic-home5 {
+  .clinic-glow-btn,
+  .clinic-hero-cta-btn,
+  .clinic-about-v2__btn {
+    position: relative;
+    overflow: hidden;
+    transition:
+      transform 0.4s var(--pp-spring-soft),
+      box-shadow 0.4s var(--pp-spring);
+  }
+  .clinic-glow-btn::before,
+  .clinic-hero-cta-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 70%;
+    height: 100%;
+    background: linear-gradient(
+      100deg,
+      transparent,
+      rgba(255, 255, 255, 0.35),
+      transparent
+    );
+    transform: skewX(-18deg);
+    transition: left 0.7s var(--pp-spring);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .clinic-glow-btn:hover,
+  .clinic-hero-cta-btn:hover,
+  .clinic-about-v2__btn:hover {
+    transform: translateY(-2px);
+  }
+  .clinic-glow-btn:hover::before,
+  .clinic-hero-cta-btn:hover::before {
+    left: 130%;
+  }
+  // visible keyboard focus everywhere
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--pp-gold);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+// ── Fix invisible eyebrow (transparent text-fill w/ no gradient bg) ──
+//    .clinic-founder-eyebrow expects a gradient clip that is reset to
+//    `background:none` downstream, leaving the label invisible. Force a
+//    legible solid gold (theme-aware) — premium and always readable.
+.clinic-home5 .clinic-founder-eyebrow,
+.clinic-home5 .clinic-treatment-showcase__eyebrow {
+  -webkit-text-fill-color: var(--pp-gold) !important;
+  color: var(--pp-gold) !important;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+}
+
+// ── Animated gold hairline under eyebrows ───────────────────────────
+.clinic-home5 .clinic-eyebrow-line {
+  background: var(--pp-hairline) !important;
+  background-size: 200% 100% !important;
+  animation: ppHairline 6s linear infinite;
+}
+@keyframes ppHairline {
+  to { background-position: 200% 0; }
+}
+
+// ── Section rhythm: a touch more air on key grids ───────────────────
+.clinic-home5 .svc-grid {
+  gap: clamp(18px, 2.4vw, 30px);
+}
+.clinic-home5 .clinic-treatment-showcase__hero {
+  margin-bottom: clamp(34px, 5vw, 64px);
+}
+
+// =====================================================================
+//  FIELD / FORM UX  — booking + beauty pass
+// =====================================================================
+.clinic-home5 {
+  .clinic-booking-form input,
+  .clinic-booking-form select,
+  .clinic-booking-form textarea,
+  .clinic-booking-note-input,
+  .clinic-bp input[type="text"],
+  .clinic-bp input[type="email"],
+  .clinic-bp input[type="tel"],
+  .clinic-bp input[type="date"],
+  .clinic-bp select,
+  .clinic-bp textarea,
+  .clinic-glow-field {
+    transition:
+      border-color 0.3s var(--pp-spring),
+      box-shadow 0.3s var(--pp-spring),
+      background-color 0.3s var(--pp-spring);
+  }
+  .clinic-booking-form input:focus,
+  .clinic-booking-form select:focus,
+  .clinic-booking-form textarea:focus,
+  .clinic-booking-note-input:focus,
+  .clinic-bp input:focus,
+  .clinic-bp select:focus,
+  .clinic-bp textarea:focus,
+  .clinic-glow-field:focus {
+    outline: none;
+    border-color: var(--pp-gold) !important;
+    box-shadow: 0 0 0 4px var(--pp-gold-soft);
+  }
+}
+
+// mini-nav pills — clearer active/hover
+.clinic-home5 .clinic-booking-mini-nav__btn {
+  transition:
+    background-color 0.3s var(--pp-spring),
+    border-color 0.3s var(--pp-spring),
+    transform 0.3s var(--pp-spring-soft);
+}
+.clinic-home5 .clinic-booking-mini-nav__btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--pp-gold);
+}
+
+// selected service chips — gold accent edge
+.clinic-home5 .clinic-selected-service-chip {
+  border-left: 2px solid var(--pp-gold);
+}
+
+// beauty-pass card breathing room + form card emphasis
+.clinic-home5 .clinic-bp__card {
+  transition:
+    transform 0.55s var(--pp-spring),
+    box-shadow 0.55s var(--pp-spring);
+}
+.clinic-home5 .clinic-bp__field-group {
+  margin-bottom: 18px;
+}
+.clinic-home5 .clinic-bp__field-label {
+  letter-spacing: 0.02em;
+}
+
+// upload label — interactive affordance
+.clinic-home5 .clinic-bp-upload-label {
+  transition:
+    border-color 0.3s var(--pp-spring),
+    background-color 0.3s var(--pp-spring),
+    transform 0.3s var(--pp-spring-soft);
+}
+.clinic-home5 .clinic-bp-upload-label:hover {
+  border-color: var(--pp-gold);
+  transform: translateY(-2px);
+}
+
+// ── Respect reduced motion globally for this layer ──────────────────
+@media (prefers-reduced-motion: reduce) {
+  .clinic-home5 .clinic-eyebrow-line { animation: none; }
+  .clinic-home5 .svc-card::after,
+  .clinic-home5 .clinic-before-after-card::after { display: none; }
+}
