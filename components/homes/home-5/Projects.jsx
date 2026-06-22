@@ -44,6 +44,7 @@ export default function Projects() {
   const sectionRef = useRef(null);
   const headerRef = useRef(null);
   const eyebrowRef = useRef(null);
+  const titleRef = useRef(null);
   const leadRef = useRef(null);
   const lineRef = useRef(null);
   const cardRefs = useRef([]);
@@ -112,16 +113,14 @@ export default function Projects() {
           );
         }
 
-        // Heading word clips — stagger reveal
-        if (headerRef.current) {
-          const wordInners = headerRef.current.querySelectorAll(".clinic-word-inner");
-          if (wordInners.length) {
-            gsap.fromTo(wordInners,
-              { yPercent: 120, rotateX: 40, transformOrigin: "50% 100%" },
-              { yPercent: 0, rotateX: 0, duration: 0.9, stagger: 0.07, ease: "expo.out", delay: 0.18,
-                scrollTrigger: { trigger: headerRef.current, start: "top 82%" } }
-            );
-          }
+        // Heading reveal — simple, reliable fade (never leaves title clipped)
+        if (titleRef.current) {
+          gsap.fromTo(titleRef.current,
+            { y: 28, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.9, ease: "expo.out", delay: 0.18,
+              scrollTrigger: { trigger: headerRef.current, start: "top 82%" },
+              onComplete() { gsap.set(titleRef.current, { clearProps: "transform,opacity" }); } }
+          );
         }
 
         if (leadRef.current) {
@@ -197,13 +196,8 @@ export default function Projects() {
                   <span className="clinic-eyebrow-line" aria-hidden="true" />
                 </div>
 
-                <h2 className="sec-title text-smoke" aria-label={t("treatments.categoriesTitle")}>
-                  {t("treatments.categoriesTitle").split(" ").map((word, i, arr) => (
-                    <span key={i} className="clinic-word-wrap" aria-hidden="true">
-                      <span className="clinic-word-inner">{word}</span>
-                      {i < arr.length - 1 ? " " : ""}
-                    </span>
-                  ))}
+                <h2 className="sec-title text-smoke" ref={titleRef}>
+                  {t("treatments.categoriesTitle")}
                 </h2>
 
                 <p className="sec-text text-smoke" ref={leadRef}>
