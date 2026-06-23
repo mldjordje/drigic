@@ -9201,6 +9201,18 @@ body,
   transition-delay: var(--clinic-reveal-delay, 0ms);
 }
 
+// Persistent reveal fallback — the IntersectionObserver also stamps
+// data-clinic-revealed="1", which survives React re-renders that wipe the
+// imperatively-added .is-visible class (e.g. booking service cards whose
+// className is rebuilt on every selection/state change). Without this,
+// once-revealed cards re-hide to opacity:0 and become invisible/unclickable.
+// !important + high specificity keep revealed content visible regardless.
+.clinic-home5 .clinic-reveal[data-clinic-revealed="1"] {
+  opacity:   1 !important;
+  transform: none !important;
+  filter:    none !important;
+}
+
 // ─── 11. About-v2 Enhancements ────────────────────────────────────
 .clinic-home5 .clinic-about-v2__summary {
   font-size:   clamp(1rem,2vw,1.1rem) !important;
