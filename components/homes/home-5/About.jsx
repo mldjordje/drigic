@@ -69,18 +69,22 @@ export default function About() {
           );
         }
 
-        // Image inner — parallax scroll
+        // Image inner reveal without cropping the portrait.
         if (imgWrapRef.current) {
-          gsap.to(imgWrapRef.current, {
-            yPercent: -8,
-            ease: "none",
-            scrollTrigger: {
-              trigger: sectionRef.current,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: 1.4,
-            },
-          });
+          const doctorImage = imgWrapRef.current.querySelector(".clinic-about-v2__doctor-img");
+          if (doctorImage) {
+            gsap.fromTo(
+              doctorImage,
+              { scale: 0.985, filter: "saturate(0.94) contrast(0.96)" },
+              {
+                scale: 1,
+                filter: "saturate(1.04) contrast(1.02)",
+                duration: 1.45,
+                ease: "power3.out",
+                scrollTrigger: st,
+              }
+            );
+          }
         }
 
         // Badge pop
@@ -164,7 +168,8 @@ export default function About() {
             src="/assets/img/doctor-about.webp"
             alt={copy.imageAlt}
             fill
-            style={{ objectFit: "cover", objectPosition: "center top" }}
+            className="clinic-about-v2__doctor-img"
+            style={{ objectFit: "contain", objectPosition: "center bottom" }}
             sizes="(max-width: 991px) 100vw, 50vw"
             priority
           />

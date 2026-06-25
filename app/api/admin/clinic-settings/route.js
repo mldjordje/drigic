@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 const updateSchema = z.object({
   slotMinutes: z.number().int().min(5).max(60).optional(),
-  bookingWindowDays: z.number().int().min(1).max(60).optional(),
+  bookingWindowDays: z.number().int().min(1).optional(),
   workdayStart: z.string().regex(/^\d{2}:\d{2}$/).optional(),
   workdayEnd: z.string().regex(/^\d{2}:\d{2}$/).optional(),
 });

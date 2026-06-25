@@ -351,7 +351,6 @@ export default function AdminSettingsPage() {
               <input
                 type="number"
                 min={1}
-                max={60}
                 className="admin-inline-input"
                 value={clinicForm.bookingWindowDays}
                 onChange={(event) =>
