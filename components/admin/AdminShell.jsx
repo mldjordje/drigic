@@ -10,12 +10,13 @@ import AdminNotificationsBell from "@/components/admin/AdminNotificationsBell";
 const approvedModules = [
   { href: "/admin/kalendar", labelKey: "admin.calendar" },
   { href: "/admin/dashboard", labelKey: "admin.dashboard" },
-  { href: "/admin/analitika", label: "Analitika" },
-  { href: "/admin/tutorial", label: "Tutorial" },
+  { href: "/admin/analitika", labelKey: "admin.analytics" },
+  { href: "/admin/tutorial", labelKey: "admin.tutorial" },
+  { href: "/admin/spec", labelKey: "admin.spec" },
   { href: "/admin/podesavanja", labelKey: "admin.settings" },
-  { href: "/admin/prepodnevni-termini", label: "Prepodnevni termini" },
-  { href: "/admin/popodnevni-termini", label: "Popodnevni termini" },
-  { href: "/admin/nedelja", label: "Nedelja" },
+  { href: "/admin/prepodnevni-termini", labelKey: "admin.morningSlots" },
+  { href: "/admin/popodnevni-termini", labelKey: "admin.afternoonSlots" },
+  { href: "/admin/nedelja", labelKey: "admin.sunday" },
   { href: "/admin/bookings", labelKey: "admin.bookings" },
   { href: "/admin/klijenti", labelKey: "admin.clients" },
   { href: "/admin/services", labelKey: "admin.services" },
@@ -25,13 +26,13 @@ const approvedModules = [
   { href: "/admin/announcements", labelKey: "admin.announcements" },
   { href: "/admin/media", labelKey: "admin.media" },
   { href: "/admin/vip", labelKey: "admin.vip" },
-  { href: "/admin/blog", label: "Blog" },
+  { href: "/admin/blog", labelKey: "admin.blog" },
 ];
 
 const lockedModules = [
-  { label: "Zaposleni", reason: "Nije odobreno" },
-  { label: "Finansije", reason: "Nije odobreno" },
-  { label: "Skladište preparata", reason: "Nije odobreno" },
+  { labelKey: "admin.lockedEmployees", reasonKey: "admin.lockedReason" },
+  { labelKey: "admin.lockedFinance", reasonKey: "admin.lockedReason" },
+  { labelKey: "admin.lockedStock", reasonKey: "admin.lockedReason" },
 ];
 
 const quickLinks = [
@@ -132,13 +133,13 @@ export default function AdminShell({ children }) {
           <div className="admin-template-nav">
             {lockedModules.map((item) => (
               <button
-                key={item.label}
+                key={item.labelKey}
                 type="button"
                 className="admin-template-nav-item is-locked"
                 disabled
-                title={`${item.label} - ${item.reason}`}
+                title={`${t(item.labelKey)} - ${t(item.reasonKey)}`}
               >
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -149,7 +150,7 @@ export default function AdminShell({ children }) {
           type="button"
           className="admin-template-sidebar-backdrop"
           onClick={() => setMenuOpen(false)}
-          aria-label="Zatvori meni"
+          aria-label={t("admin.closeMenu")}
         />
       ) : null}
 
@@ -160,7 +161,7 @@ export default function AdminShell({ children }) {
               type="button"
               className="admin-template-menu-btn"
               onClick={() => setMenuOpen((prev) => !prev)}
-              aria-label="Otvori meni"
+              aria-label={t("admin.openMenu")}
             >
               <span></span>
               <span></span>

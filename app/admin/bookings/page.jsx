@@ -1,15 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useLocale } from "@/components/common/LocaleProvider";
 
 const STATUSES = ["pending", "confirmed", "cancelled", "no_show"];
-const STATUS_LABELS = {
-  pending: "Na čekanju",
-  confirmed: "Potvrđen",
-  cancelled: "Otkazan",
-  no_show: "No-show",
-  completed: "Završen",
-};
 
 async function parseResponse(response) {
   const text = await response.text();
@@ -23,15 +17,17 @@ async function parseResponse(response) {
   }
 }
 
-function formatDateTime(value) {
-  try {
-    return new Date(value).toLocaleString("sr-RS");
-  } catch {
-    return value;
-  }
-}
-
 export default function AdminBookingsPage() {
+  const { t, intlLocale } = useLocale();
+  const statusLabel = (status) =>
+    status ? t(`admin.status.${status}`) : status;
+  const formatDateTime = (value) => {
+    try {
+      return new Date(value).toLocaleString(intlLocale);
+    } catch {
+      return value;
+    }
+  };
   const [bookings, setBookings] = useState([]);
   const [notesById, setNotesById] = useState({});
   const [statusById, setStatusById] = useState({});
@@ -55,7 +51,7 @@ export default function AdminBookingsPage() {
     );
     const data = await parseResponse(response);
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspešno učitavanje termina.");
+      throw new Error(data?.message || t("admin.book.loadFailed"));
     }
 
     const rows = data.data || [];
@@ -91,16 +87,16 @@ export default function AdminBookingsPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno ažuriranje termina.");
+        throw new Error(data?.message || t("admin.book.updateFailed"));
       }
-      setMessage("Termin je ažuriran.");
+      setMessage(t("admin.book.updated"));
       setStatusById((prev) => ({
         ...prev,
         [bookingId]: data.data?.status || statusToPersist,
       }));
       await loadBookings();
     } catch (err) {
-      setError(err.message || "Greška pri ažuriranju.");
+      setError(err.message || t("admin.book.genericError"));
     } finally {
       setLoading(false);
     }
@@ -117,15 +113,15 @@ export default function AdminBookingsPage() {
   function getQuickActions(status) {
     if (status === "pending") {
       return [
-        { value: "confirmed", label: "Potvrdi" },
-        { value: "cancelled", label: "Otkazi" },
-        { value: "no_show", label: "No-show" },
+        { value: "confirmed", label: t("admin.book.confirm") },
+        { value: "cancelled", label: t("admin.book.cancel") },
+        { value: "no_show", label: t("admin.book.noShow") },
       ];
     }
     if (status === "confirmed") {
       return [
-        { value: "cancelled", label: "Otkazi" },
-        { value: "no_show", label: "No-show" },
+        { value: "cancelled", label: t("admin.book.cancel") },
+        { value: "no_show", label: t("admin.book.noShow") },
       ];
     }
     return [];
@@ -134,26 +130,26 @@ export default function AdminBookingsPage() {
   return (
     <section style={{ display: "grid", gap: 12 }}>
       <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Admin - Termini</h2>
+        <h2 style={{ marginTop: 0 }}>{t("admin.book.title")}</h2>
         <p style={{ color: "#c6d7ef", marginBottom: 0 }}>
-          Mobile-first pregled termina bez horizontalnog skrola.
+          {t("admin.book.subtitle")}
         </p>
       </div>
 
       <div style={statsWrapStyle}>
         {STATUSES.map((status) => (
           <div key={status} style={statCardStyle}>
-            <strong>{STATUS_LABELS[status] || status}</strong>
+            <strong>{statusLabel(status) || status}</strong>
             <div style={{ fontSize: 24 }}>{totals[status]}</div>
           </div>
         ))}
       </div>
 
       <div className="admin-card">
-        <h3 style={{ marginTop: 0 }}>Filter perioda</h3>
+        <h3 style={{ marginTop: 0 }}>{t("admin.book.periodFilter")}</h3>
         <div style={filterWrapStyle}>
           <div>
-            <label style={labelStyle}>Od</label>
+            <label style={labelStyle}>{t("admin.book.from")}</label>
             <input
               type="date"
               value={from}
@@ -162,7 +158,7 @@ export default function AdminBookingsPage() {
             />
           </div>
           <div>
-            <label style={labelStyle}>Do</label>
+            <label style={labelStyle}>{t("admin.book.to")}</label>
             <input
               type="date"
               value={to}
@@ -176,7 +172,7 @@ export default function AdminBookingsPage() {
             style={{ alignSelf: "end" }}
             onClick={() => loadBookings().catch((err) => setError(err.message))}
           >
-            Primeni filter
+            {t("admin.book.applyFilter")}
           </button>
         </div>
       </div>
@@ -189,19 +185,19 @@ export default function AdminBookingsPage() {
           <article key={booking.id} className="admin-card" style={{ display: "grid", gap: 10 }}>
             <div style={metaGridStyle}>
               <div>
-                <small style={smallStyle}>Klijent</small>
+                <small style={smallStyle}>{t("admin.book.client")}</small>
                 <div>{booking.clientName || "-"}</div>
               </div>
               <div>
-                <small style={smallStyle}>Pocetak</small>
+                <small style={smallStyle}>{t("admin.book.start")}</small>
                 <div>{formatDateTime(booking.startsAt)}</div>
               </div>
               <div>
-                <small style={smallStyle}>Kraj</small>
+                <small style={smallStyle}>{t("admin.book.end")}</small>
                 <div>{formatDateTime(booking.endsAt)}</div>
               </div>
               <div>
-                <small style={smallStyle}>Cena / trajanje</small>
+                <small style={smallStyle}>{t("admin.book.priceDuration")}</small>
                 <div>
                   {booking.totalPriceRsd} EUR / {booking.totalDurationMin} min
                 </div>
@@ -209,22 +205,22 @@ export default function AdminBookingsPage() {
             </div>
 
             <div>
-              <small style={smallStyle}>Usluge</small>
+              <small style={smallStyle}>{t("admin.book.services")}</small>
               <div>{booking.serviceSummary || "-"}</div>
             </div>
 
             <div style={controlGridStyle}>
               <div>
-                <small style={smallStyle}>Status</small>
+                <small style={smallStyle}>{t("admin.book.status")}</small>
                 <div style={{ marginTop: 4 }}>
-                  {STATUS_LABELS[statusById[booking.id] || booking.status] ||
+                  {statusLabel(statusById[booking.id] || booking.status) ||
                     statusById[booking.id] ||
                     booking.status}
                 </div>
               </div>
 
               <label>
-                <small style={smallStyle}>Napomena</small>
+                <small style={smallStyle}>{t("admin.book.note")}</small>
                 <input
                   value={notesById[booking.id] || ""}
                   onChange={(event) =>
@@ -259,7 +255,7 @@ export default function AdminBookingsPage() {
                 disabled={loading}
                 onClick={() => updateBooking(booking.id)}
               >
-                Sačuvaj napomenu
+                {t("admin.book.saveNote")}
               </button>
             </div>
           </article>
@@ -268,7 +264,7 @@ export default function AdminBookingsPage() {
 
       {!bookings.length ? (
         <div className="admin-card">
-          <p style={{ margin: 0, color: "#d5e2f4" }}>Nema termina za prikaz.</p>
+          <p style={{ margin: 0, color: "#d5e2f4" }}>{t("admin.book.noBookings")}</p>
         </div>
       ) : null}
     </section>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useLocale } from "@/components/common/LocaleProvider";
 
 function parseResponse(response) {
   return response
@@ -19,14 +20,14 @@ function parseResponse(response) {
     .catch(() => null);
 }
 
-function fmtDateTime(value) {
-  if (!value) {
-    return "-";
-  }
-  return new Date(value).toLocaleString("sr-RS");
-}
-
 export default function AdminClientsPage() {
+  const { t, intlLocale } = useLocale();
+  const fmtDateTime = (value) => {
+    if (!value) {
+      return "-";
+    }
+    return new Date(value).toLocaleString(intlLocale);
+  };
   const [clients, setClients] = useState([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -58,12 +59,12 @@ export default function AdminClientsPage() {
       const response = await fetch(`/api/admin/clients?${params.toString()}`);
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno učitavanje klijenata.");
+        throw new Error(data?.message || t("admin.cli.loadFailed"));
       }
       setClients(data.data || []);
       setTotal(Number(data.pagination?.total || 0));
     } catch (loadError) {
-      setError(loadError.message || "Greška pri učitavanju klijenata.");
+      setError(loadError.message || t("admin.cli.genericError"));
     } finally {
       setLoading(false);
     }
@@ -86,10 +87,10 @@ export default function AdminClientsPage() {
       ]);
 
       if (!clientRes.ok || !clientData?.ok) {
-        throw new Error(clientData?.message || "Neuspešno učitavanje klijenta.");
+        throw new Error(clientData?.message || t("admin.cli.loadFailed"));
       }
       if (!passRes.ok || !passData?.ok) {
-        throw new Error(passData?.message || "Neuspešno učitavanje beauty pass podataka.");
+        throw new Error(passData?.message || t("admin.cli.loadFailed"));
       }
 
       setDetailPayload({
@@ -97,7 +98,7 @@ export default function AdminClientsPage() {
         beautyPass: passData,
       });
     } catch (detailLoadError) {
-      setDetailError(detailLoadError.message || "Greška pri učitavanju detalja klijenta.");
+      setDetailError(detailLoadError.message || t("admin.cli.genericError"));
     } finally {
       setDetailLoading(false);
     }
@@ -134,21 +135,21 @@ export default function AdminClientsPage() {
   return (
     <section style={{ display: "grid", gap: 12 }}>
       <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Klijenti</h2>
+        <h2 style={{ marginTop: 0 }}>{t("admin.cli.title")}</h2>
         <p style={{ color: "#bfd2e9" }}>
-          Mobile-first kartice klijenata i popup sa kompletnim detaljima + Beauty Pass istorijom.
+          {t("admin.cli.subtitle")}
         </p>
 
         <form onSubmit={onSearchSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input
             className="admin-inline-input"
             style={{ width: "min(460px, 100%)", marginTop: 0 }}
-            placeholder="Pretraga: ime, email ili telefon"
+            placeholder={t("admin.cli.searchPlaceholder")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
           <button type="submit" className="admin-template-link-btn" disabled={loading}>
-            Pretrazi
+            {t("admin.cli.search")}
           </button>
           <button
             type="button"
@@ -160,7 +161,7 @@ export default function AdminClientsPage() {
             }}
             disabled={loading}
           >
-            Reset
+            {t("admin.cli.reset")}
           </button>
         </form>
       </div>
@@ -172,8 +173,8 @@ export default function AdminClientsPage() {
           <article key={client.id} className="admin-card admin-client-card">
             <div className="admin-client-card-head">
               <div>
-                <strong>{client.profile?.fullName || "Bez imena"}</strong>
-                <div style={mutedTextStyle}>{client.role === "admin" ? "admin nalog" : "klijent"}</div>
+                <strong>{client.profile?.fullName || t("admin.cli.noName")}</strong>
+                <div style={mutedTextStyle}>{client.role === "admin" ? t("admin.cli.adminAccount") : t("admin.cli.clientLabel")}</div>
               </div>
               <span className={`admin-client-role ${client.role === "admin" ? "is-admin" : ""}`}>
                 {client.role}
@@ -181,18 +182,18 @@ export default function AdminClientsPage() {
             </div>
 
             <div style={mutedTextStyle}>{client.email}</div>
-            <div style={mutedTextStyle}>{client.phone || "bez telefona"}</div>
+            <div style={mutedTextStyle}>{client.phone || t("admin.cli.noPhone")}</div>
 
             <div className="admin-client-metrics">
-              <span>Termini: {client.stats?.totalBookings || 0}</span>
-              <span>Sledeći: {client.stats?.upcomingBookings || 0}</span>
-              <span>Beauty pass: {client.stats?.treatmentRecords || 0}</span>
-              <span>Dug: {client.stats?.debtRsd || 0} RSD</span>
+              <span>{t("admin.cli.bookings")}: {client.stats?.totalBookings || 0}</span>
+              <span>{t("admin.cli.upcoming")}: {client.stats?.upcomingBookings || 0}</span>
+              <span>{t("admin.cli.beautyPass")}: {client.stats?.treatmentRecords || 0}</span>
+              <span>{t("admin.cli.debt")}: {client.stats?.debtRsd || 0} RSD</span>
             </div>
 
             <div style={mutedTextStyle}>
-              Poslednji login:{" "}
-              {client.lastLoginAt ? new Date(client.lastLoginAt).toLocaleString("sr-RS") : "Nikad"}
+              {t("admin.cli.lastLogin")}:{" "}
+              {client.lastLoginAt ? new Date(client.lastLoginAt).toLocaleString(intlLocale) : t("admin.cli.never")}
             </div>
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -201,10 +202,10 @@ export default function AdminClientsPage() {
                 className="admin-template-link-btn"
                 onClick={() => openClientDetails(client.id)}
               >
-                Pregled klijenta
+                {t("admin.cli.viewClient")}
               </button>
               <Link href={`/admin/klijenti/${client.id}`} className="admin-template-link-btn">
-                Puni profil
+                {t("admin.cli.fullProfile")}
               </Link>
             </div>
           </article>
@@ -213,7 +214,7 @@ export default function AdminClientsPage() {
 
       {!clients.length && !loading ? (
         <div className="admin-card">
-          <p style={{ margin: 0, color: "#d8e4f2" }}>Nema rezultata.</p>
+          <p style={{ margin: 0, color: "#d8e4f2" }}>{t("admin.cli.noResults")}</p>
         </div>
       ) : null}
 
@@ -224,10 +225,10 @@ export default function AdminClientsPage() {
           disabled={page <= 1 || loading}
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
         >
-          Prethodna
+          {t("admin.cli.prev")}
         </button>
         <span style={{ color: "#c2d4ea" }}>
-          Strana {page} / {Math.max(Math.ceil(total / limit), 1)}
+          {t("admin.cli.page")} {page} / {Math.max(Math.ceil(total / limit), 1)}
         </span>
         <button
           type="button"
@@ -235,7 +236,7 @@ export default function AdminClientsPage() {
           disabled={!hasMore || loading}
           onClick={() => setPage((prev) => prev + 1)}
         >
-          Sledeca
+          {t("admin.cli.next")}
         </button>
       </div>
 
@@ -251,7 +252,7 @@ export default function AdminClientsPage() {
           />
           <div className="admin-card admin-calendar-modal-card">
             <div className="admin-calendar-modal-head">
-              <h3 style={{ margin: 0 }}>Detalji klijenta</h3>
+              <h3 style={{ margin: 0 }}>{t("admin.cli.detailsTitle")}</h3>
               <button
                 type="button"
                 className="admin-template-link-btn"
@@ -261,62 +262,62 @@ export default function AdminClientsPage() {
                   setDetailError("");
                 }}
               >
-                Zatvori
+                {t("admin.cli.close")}
               </button>
             </div>
 
-            {detailLoading ? <p style={{ marginTop: 10 }}>Učitavanje...</p> : null}
+            {detailLoading ? <p style={{ marginTop: 10 }}>{t("admin.cli.loading")}</p> : null}
             {detailError ? <p style={{ marginTop: 10, color: "#ffabab" }}>{detailError}</p> : null}
 
             {!detailLoading && !detailError && detailPayload ? (
               <div className="admin-calendar-details" style={{ marginTop: 12 }}>
                 <div>
-                  <span>Ime i prezime</span>
-                  <strong>{activeClientProfile?.fullName || "Bez imena"}</strong>
+                  <span>{t("admin.cli.name")}</span>
+                  <strong>{activeClientProfile?.fullName || t("admin.cli.noName")}</strong>
                 </div>
                 <div>
-                  <span>Email / telefon</span>
+                  <span>{t("admin.cli.emailPhone")}</span>
                   <strong>
                     {detailPayload.client?.email || "-"} / {detailPayload.client?.phone || "-"}
                   </strong>
                 </div>
                 <div>
-                  <span>Sledeći termini</span>
+                  <span>{t("admin.cli.upcomingAppts")}</span>
                   <strong>{activeBeautyPass?.upcomingBookings?.length || 0}</strong>
                 </div>
                 <div>
-                  <span>Beauty Pass zapisi</span>
+                  <span>{t("admin.cli.bpRecords")}</span>
                   <strong>{activeBeautyPass?.treatmentHistory?.length || 0}</strong>
                 </div>
 
                 <div>
-                  <span>Zakazani termini</span>
+                  <span>{t("admin.cli.scheduledAppts")}</span>
                   <div style={listWrapStyle}>
                     {(activeBeautyPass?.upcomingBookings || []).slice(0, 6).map((item) => (
                       <div key={item.id} style={listItemStyle}>
                         <strong>{fmtDateTime(item.startsAt)}</strong>
                         <span>{item.serviceSummary || "-"}</span>
-                        <span>Status: {item.status}</span>
+                        <span>{t("admin.cli.statusLabel")}: {t(`admin.status.${item.status}`)}</span>
                       </div>
                     ))}
                     {!activeBeautyPass?.upcomingBookings?.length ? (
-                      <span style={mutedTextStyle}>Nema zakazanih termina.</span>
+                      <span style={mutedTextStyle}>{t("admin.cli.noScheduled")}</span>
                     ) : null}
                   </div>
                 </div>
 
                 <div>
-                  <span>Beauty Pass istorija</span>
+                  <span>{t("admin.cli.bpHistory")}</span>
                   <div style={listWrapStyle}>
                     {(activeBeautyPass?.treatmentHistory || []).slice(0, 8).map((item) => (
                       <div key={item.id} style={listItemStyle}>
                         <strong>{fmtDateTime(item.treatmentDate)}</strong>
-                        <span>{item.notes || "Bez napomene"}</span>
-                        {item.product?.name ? <span>Preparat: {item.product.name}</span> : null}
+                        <span>{item.notes || t("admin.cli.noNote")}</span>
+                        {item.product?.name ? <span>{t("admin.cli.product")}: {item.product.name}</span> : null}
                       </div>
                     ))}
                     {!activeBeautyPass?.treatmentHistory?.length ? (
-                      <span style={mutedTextStyle}>Nema unosa u Beauty Pass-u.</span>
+                      <span style={mutedTextStyle}>{t("admin.cli.noBpEntries")}</span>
                     ) : null}
                   </div>
                 </div>
@@ -330,7 +331,7 @@ export default function AdminClientsPage() {
                     setDetailError("");
                   }}
                 >
-                  Otvori puni profil
+                  {t("admin.cli.openFullProfile")}
                 </Link>
               </div>
             ) : null}

@@ -5,14 +5,8 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { useLocale } from "@/components/common/LocaleProvider";
 
-const STATUS_LABEL = {
-  pending: "Na čekanju",
-  confirmed: "Potvrđen",
-  cancelled: "Otkazan",
-  no_show: "No-show",
-  completed: "Završen",
-};
 const RESCHEDULABLE_STATUSES = ["pending", "confirmed"];
 const MORNING_SCROLL_TIME = "08:00:00";
 const DEFAULT_AFTERNOON_SCROLL_TIME = "15:45:00";
@@ -58,10 +52,6 @@ function endFromStart(startIso, durationMin) {
   return new Date(start.getTime() + durationMin * 60000).toISOString();
 }
 
-function fmtDateTime(value) {
-  return new Date(value).toLocaleString("sr-RS");
-}
-
 function todayIsoDate() {
   return formatIsoDate(new Date());
 }
@@ -84,13 +74,6 @@ function formatMonthKey(date) {
 
 function addMonths(date, amount) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
-}
-
-function formatMonthLabel(date) {
-  return new Intl.DateTimeFormat("sr-RS", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
 }
 
 function buildCalendarCells(monthDate) {
@@ -123,13 +106,6 @@ function availabilityClass(availableCount, maxCount, loading) {
   return availableCount / maxCount >= 0.55 ? "is-high" : "is-medium";
 }
 
-function formatSlotTime(value) {
-  return new Date(value).toLocaleTimeString("sr-RS", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function normalizeSlotStart(value) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     const day = new Date(`${value}T12:00:00Z`).getUTCDay();
@@ -155,6 +131,13 @@ function getInitialCalendarDate() {
 }
 
 export default function AdminKalendarPage() {
+  const { t, locale, intlLocale } = useLocale();
+  const statusLabel = (status) => (status ? t(`admin.status.${status}`) : status);
+  const fmtDateTime = (value) => new Date(value).toLocaleString(intlLocale);
+  const formatMonthLabel = (date) =>
+    new Intl.DateTimeFormat(intlLocale, { month: "long", year: "numeric" }).format(date);
+  const formatSlotTime = (value) =>
+    new Date(value).toLocaleTimeString(intlLocale, { hour: "2-digit", minute: "2-digit" });
   const calendarRef = useRef(null);
   const touchStartRef = useRef(null);
   const clientPanelRef = useRef(null);
@@ -279,13 +262,13 @@ export default function AdminKalendarPage() {
     const response = await fetch("/api/services");
     const data = await parseResponse(response);
     if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || "Neuspešno učitavanje usluga.");
+      throw new Error(data?.message || t("admin.cal.msg.errServices"));
     }
     setServices(data.categories || []);
   }
 
   useEffect(() => {
-    loadServices().catch((err) => setError(err.message || "Greška pri učitavanju usluga."));
+    loadServices().catch((err) => setError(err.message || t("admin.cal.msg.errServicesGeneric")));
   }, []);
 
   async function loadCalendarData(fromIso, toIso) {
@@ -305,10 +288,10 @@ export default function AdminKalendarPage() {
       const blocksData = await parseResponse(blocksRes);
 
       if (!bookingsRes.ok || !bookingsData?.ok) {
-        throw new Error(bookingsData?.message || "Neuspešno učitavanje termina.");
+        throw new Error(bookingsData?.message || t("admin.cal.msg.errBookings"));
       }
       if (!blocksRes.ok || !blocksData?.ok) {
-        throw new Error(blocksData?.message || "Neuspešno učitavanje blokada.");
+        throw new Error(blocksData?.message || t("admin.cal.msg.errBlocks"));
       }
 
       const bookingsList = (bookingsData.data || []).filter(
@@ -320,7 +303,7 @@ export default function AdminKalendarPage() {
 
       const bookingEvents = bookingsList.map((item) => ({
         id: `booking:${item.id}`,
-        title: item.clientName || "Klijent",
+        title: item.clientName || t("admin.cal.client"),
         start: item.startsAt,
         end: item.endsAt,
         classNames: ["clinic-fc-event", `is-${item.status || "pending"}`],
@@ -335,7 +318,7 @@ export default function AdminKalendarPage() {
 
       const blockEvents = blocksList.map((item) => ({
         id: `block:${item.id}`,
-        title: "Blokiran termin",
+        title: t("admin.status.block"),
         start: item.startsAt,
         end: item.endsAt,
         classNames: ["clinic-fc-event", "is-block"],
@@ -348,7 +331,7 @@ export default function AdminKalendarPage() {
 
       setEvents([...bookingEvents, ...blockEvents]);
     } catch (loadError) {
-      setError(loadError.message || "Greška pri učitavanju kalendara.");
+      setError(loadError.message || t("admin.cal.msg.errCalendar"));
     } finally {
       setLoading(false);
     }
@@ -413,11 +396,11 @@ export default function AdminKalendarPage() {
   async function createBooking() {
     const startAt = toIsoFromLocalInput(bookingForm.startAtLocal);
     if (!startAt) {
-      setError("Datum i vreme termina nisu validni.");
+      setError(t("admin.cal.msg.invalidBookingDateTime"));
       return;
     }
     if (!bookingForm.serviceIds.length) {
-      setError("Izaberite barem jednu uslugu.");
+      setError(t("admin.cal.msg.pickAtLeastOne"));
       return;
     }
 
@@ -441,14 +424,14 @@ export default function AdminKalendarPage() {
 
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno kreiranje termina.");
+        throw new Error(data?.message || t("admin.cal.msg.errCreateBooking"));
       }
 
-      setMessage("Termin je uspešno dodat.");
+      setMessage(t("admin.cal.msg.bookingCreated"));
       setIsCreateModalOpen(false);
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greška pri kreiranju termina.");
+      setError(saveError.message || t("admin.cal.msg.errCreateBookingGeneric"));
     } finally {
       setSaving(false);
     }
@@ -457,7 +440,7 @@ export default function AdminKalendarPage() {
   async function createBlock() {
     const startAt = toIsoFromLocalInput(blockForm.startAtLocal);
     if (!startAt) {
-      setError("Datum i vreme blokade nisu validni.");
+      setError(t("admin.cal.msg.invalidBlockDateTime"));
       return;
     }
 
@@ -477,14 +460,14 @@ export default function AdminKalendarPage() {
 
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno kreiranje blokade.");
+        throw new Error(data?.message || t("admin.cal.msg.errCreateBlock"));
       }
 
-      setMessage("Blokada je uspešno dodata.");
+      setMessage(t("admin.cal.msg.blockCreated"));
       setIsCreateModalOpen(false);
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greška pri kreiranju blokade.");
+      setError(saveError.message || t("admin.cal.msg.errCreateBlockGeneric"));
     } finally {
       setSaving(false);
     }
@@ -508,12 +491,12 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno čuvanje izmene.");
+        throw new Error(data?.message || t("admin.cal.msg.errSaveEdit"));
       }
-      setMessage("Termin je ažuriran.");
+      setMessage(t("admin.cal.msg.bookingUpdated"));
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greška pri čuvanju termina.");
+      setError(saveError.message || t("admin.cal.msg.errSaveBooking"));
     } finally {
       setSaving(false);
     }
@@ -525,11 +508,11 @@ export default function AdminKalendarPage() {
     }
     const startAt = toIsoFromLocalInput(pendingEditStartLocal);
     if (!startAt) {
-      setError("Datum i vreme termina nisu validni.");
+      setError(t("admin.cal.msg.invalidBookingDateTime"));
       return;
     }
     if (!pendingEditServiceIds.length) {
-      setError("Izaberite barem jednu uslugu.");
+      setError(t("admin.cal.msg.pickAtLeastOne"));
       return;
     }
 
@@ -549,12 +532,12 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešna izmena termina.");
+        throw new Error(data?.message || t("admin.cal.msg.errReschedule"));
       }
-      setMessage("Termin je ažuriran. Klijent dobija mejl kada se promene datum, vreme ili usluge.");
+      setMessage(t("admin.cal.msg.bookingRescheduled"));
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greška pri izmeni termina.");
+      setError(saveError.message || t("admin.cal.msg.errRescheduleGeneric"));
     } finally {
       setSaving(false);
     }
@@ -581,13 +564,13 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešna izmena statusa.");
+        throw new Error(data?.message || t("admin.cal.msg.errChangeStatus"));
       }
       setStatusDraft(nextStatus);
-      setMessage("Status termina je ažuriran.");
+      setMessage(t("admin.cal.msg.statusUpdated"));
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greška pri izmeni statusa.");
+      setError(saveError.message || t("admin.cal.msg.errChangeStatusGeneric"));
     } finally {
       setSaving(false);
     }
@@ -606,13 +589,13 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Neuspešno brisanje blokade.");
+        throw new Error(data?.message || t("admin.cal.msg.errDeleteBlock"));
       }
-      setMessage("Blokada je obrisana.");
+      setMessage(t("admin.cal.msg.blockDeleted"));
       setActiveEvent(null);
       await refreshData();
     } catch (saveError) {
-      setError(saveError.message || "Greška pri brisanju blokade.");
+      setError(saveError.message || t("admin.cal.msg.errDeleteBlockGeneric"));
     } finally {
       setSaving(false);
     }
@@ -652,10 +635,10 @@ export default function AdminKalendarPage() {
       ]);
 
       if (!clientRes.ok || !clientData?.ok) {
-        throw new Error(clientData?.message || "Neuspešno učitavanje klijenta.");
+        throw new Error(clientData?.message || t("admin.cal.msg.errLoadClient"));
       }
       if (!beautyPassRes.ok || !beautyPassData?.ok) {
-        throw new Error(beautyPassData?.message || "Neuspešno učitavanje beauty pass-a.");
+        throw new Error(beautyPassData?.message || t("admin.cal.msg.errLoadBeautyPass"));
       }
 
       setClientDetailsPayload({
@@ -663,7 +646,7 @@ export default function AdminKalendarPage() {
         beautyPass: beautyPassData || null,
       });
     } catch (loadError) {
-      setClientDetailsError(loadError.message || "Greška pri učitavanju klijenta.");
+      setClientDetailsError(loadError.message || t("admin.cal.msg.errLoadClientGeneric"));
     } finally {
       setClientDetailsLoading(false);
     }
@@ -693,15 +676,15 @@ export default function AdminKalendarPage() {
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Greška pri čuvanju napomene.");
+        throw new Error(data?.message || t("admin.cal.msg.errSaveNote"));
       }
-      setNoteMessage("Napomena je sačuvana u beauty pasošu.");
+      setNoteMessage(t("admin.cal.passSaved"));
       setNoteDraft("");
       if (showClientDetails && activeBooking.userId) {
         openClientDetailsPanel(activeBooking.userId);
       }
     } catch (saveErr) {
-      setNoteError(saveErr.message || "Greška pri čuvanju.");
+      setNoteError(saveErr.message || t("admin.cal.msg.errSaveNoteGeneric"));
     } finally {
       setNoteSaving(false);
     }
@@ -759,14 +742,14 @@ export default function AdminKalendarPage() {
     [rescheduleCalendarMonth]
   );
   const rescheduleWeekdayLabels = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat("sr-RS", { weekday: "short" });
+    const formatter = new Intl.DateTimeFormat(intlLocale, { weekday: "short" });
     const monday = new Date(2024, 0, 1);
     return Array.from({ length: 7 }, (_, index) => {
       const item = new Date(monday);
       item.setDate(monday.getDate() + index);
       return formatter.format(item);
     });
-  }, []);
+  }, [intlLocale]);
   const rescheduleMaxSlotsInMonth = useMemo(() => {
     const values = Object.entries(rescheduleMonthAvailability)
       .filter(([date]) => date.startsWith(rescheduleMonthKey))
@@ -804,7 +787,7 @@ export default function AdminKalendarPage() {
       .then(async (response) => {
         const data = await parseResponse(response);
         if (!response.ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspešno učitavanje dostupnosti.");
+          throw new Error(data?.message || t("admin.cal.msg.errLoadAvailability"));
         }
         const map = {};
         (data.days || []).forEach((day) => {
@@ -817,7 +800,7 @@ export default function AdminKalendarPage() {
           return;
         }
         setRescheduleMonthAvailability({});
-        setRescheduleCalendarError(loadError.message || "Neuspešno učitavanje dostupnosti.");
+        setRescheduleCalendarError(loadError.message || t("admin.cal.msg.errLoadAvailability"));
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -892,7 +875,7 @@ export default function AdminKalendarPage() {
       .then(async (response) => {
         const data = await parseResponse(response);
         if (!response.ok || !data?.ok) {
-          throw new Error(data?.message || "Neuspešno učitavanje slobodnih termina.");
+          throw new Error(data?.message || t("admin.cal.msg.errLoadSlots"));
         }
         setRescheduleSlots((data.slots || []).filter((slot) => slot.available));
       })
@@ -901,7 +884,7 @@ export default function AdminKalendarPage() {
           return;
         }
         setRescheduleSlots([]);
-        setRescheduleSlotsError(loadError.message || "Neuspešno učitavanje slobodnih termina.");
+        setRescheduleSlotsError(loadError.message || t("admin.cal.msg.errLoadSlots"));
       })
       .finally(() => {
         if (!controller.signal.aborted) {
@@ -934,13 +917,13 @@ export default function AdminKalendarPage() {
     : "dayGridMonth,timeGridWeek,timeGridDay";
   const quickStatusActionsByStatus = {
     pending: [
-      { value: "confirmed", label: "Potvrdi" },
-      { value: "cancelled", label: "Otkazi" },
-      { value: "no_show", label: "No-show" },
+      { value: "confirmed", label: t("admin.cal.confirmAction") },
+      { value: "cancelled", label: t("admin.cal.cancelAction") },
+      { value: "no_show", label: t("admin.status.no_show") },
     ],
     confirmed: [
-      { value: "cancelled", label: "Otkazi" },
-      { value: "no_show", label: "No-show" },
+      { value: "cancelled", label: t("admin.cal.cancelAction") },
+      { value: "no_show", label: t("admin.status.no_show") },
     ],
     cancelled: [],
     no_show: [],
@@ -1016,10 +999,14 @@ export default function AdminKalendarPage() {
     <section className={`admin-calendar-page ${isMobileViewport ? "is-mobile-full" : ""}`}>
       <div className="admin-card admin-calendar-toolbar">
         <div>
-          <h2 style={{ margin: 0 }}>Admin kalendar</h2>
+          <h2 style={{ margin: 0 }}>{t("admin.cal.title")}</h2>
           <p style={{ margin: "4px 0 0", color: "#bed0e8" }}>
-            Termini: {stats.totalBookings} | Blokade: {stats.totalBlocks} | Potvrđeni:{" "}
-            {stats.confirmed} | Na čekanju: {stats.pending}
+            {t("admin.cal.statsLine", {
+              bookings: stats.totalBookings,
+              blocks: stats.totalBlocks,
+              confirmed: stats.confirmed,
+              pending: stats.pending,
+            })}
           </p>
         </div>
         <div className="admin-calendar-toolbar-actions">
@@ -1028,21 +1015,21 @@ export default function AdminKalendarPage() {
             className="admin-template-link-btn"
             onClick={() => scrollCalendarToTime(MORNING_SCROLL_TIME)}
           >
-            Jutro
+            {t("admin.cal.morning")}
           </button>
           <button
             type="button"
             className="admin-template-link-btn"
             onClick={() => scrollCalendarToTime(DEFAULT_AFTERNOON_SCROLL_TIME)}
           >
-            16h
+            {t("admin.cal.afternoon")}
           </button>
           <button
             type="button"
             className="admin-template-link-btn"
             onClick={() => openCreateModal(new Date().toISOString())}
           >
-            Novi termin / blokada
+            {t("admin.cal.newEntry")}
           </button>
           <button
             type="button"
@@ -1050,7 +1037,7 @@ export default function AdminKalendarPage() {
             onClick={() => refreshData()}
             disabled={loading}
           >
-            Osveži
+            {t("admin.cal.refresh")}
           </button>
         </div>
       </div>
@@ -1069,7 +1056,7 @@ export default function AdminKalendarPage() {
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           initialDate={initialCalendarDate}
-          locale="sr"
+          locale={locale}
           firstDay={1}
           hiddenDays={[]}
           allDaySlot={false}
@@ -1116,10 +1103,10 @@ export default function AdminKalendarPage() {
             right: toolbarRight,
           }}
           buttonText={{
-            today: "Danas",
-            month: "Mesec",
-            week: "Nedelja",
-            day: "Dan",
+            today: t("admin.cal.today"),
+            month: t("admin.cal.month"),
+            week: t("admin.cal.week"),
+            day: t("admin.cal.day"),
           }}
           eventDidMount={(arg) => {
             const serviceColor = arg.event.extendedProps?.serviceColor;
@@ -1143,13 +1130,13 @@ export default function AdminKalendarPage() {
           <div className="admin-calendar-modal-backdrop" onClick={() => setIsCreateModalOpen(false)} />
           <div className="admin-card admin-calendar-modal-card">
             <div className="admin-calendar-modal-head">
-              <h3 style={{ margin: 0 }}>Akcija na slotu</h3>
+              <h3 style={{ margin: 0 }}>{t("admin.cal.slotAction")}</h3>
               <button
                 type="button"
                 className="admin-template-link-btn"
                 onClick={() => setIsCreateModalOpen(false)}
               >
-                Zatvori
+                {t("admin.cal.close")}
               </button>
             </div>
 
@@ -1159,21 +1146,21 @@ export default function AdminKalendarPage() {
                 className={`admin-template-link-btn ${createType === "booking" ? "is-active" : ""}`}
                 onClick={() => setCreateType("booking")}
               >
-                Zakaži termin
+                {t("admin.cal.bookTab")}
               </button>
               <button
                 type="button"
                 className={`admin-template-link-btn ${createType === "block" ? "is-active" : ""}`}
                 onClick={() => setCreateType("block")}
               >
-                Blokiraj
+                {t("admin.cal.blockTab")}
               </button>
             </div>
 
             {createType === "booking" ? (
               <div className="admin-calendar-details" style={{ marginTop: 12 }}>
                 <label>
-                  Ime i prezime
+                  {t("admin.cal.fullName")}
                   <input
                     className="admin-inline-input"
                     value={bookingForm.clientName}
@@ -1184,7 +1171,7 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <label>
-                  Email (opciono)
+                  {t("admin.cal.emailOptional")}
                   <input
                     className="admin-inline-input"
                     type="email"
@@ -1195,7 +1182,7 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <label>
-                  Telefon (opciono)
+                  {t("admin.cal.phoneOptional")}
                   <input
                     className="admin-inline-input"
                     value={bookingForm.phone}
@@ -1205,7 +1192,7 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <label>
-                  Datum i vreme
+                  {t("admin.cal.dateTime")}
                   <input
                     type="datetime-local"
                     className="admin-inline-input"
@@ -1217,7 +1204,7 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <label>
-                  Status
+                  {t("admin.cal.status")}
                   <select
                     className="admin-inline-input"
                     value={bookingForm.status}
@@ -1225,8 +1212,8 @@ export default function AdminKalendarPage() {
                       setBookingForm((prev) => ({ ...prev, status: event.target.value }))
                     }
                   >
-                    <option value="confirmed">Potvrđen</option>
-                    <option value="pending">Na čekanju</option>
+                    <option value="confirmed">{t("admin.status.confirmed")}</option>
+                    <option value="pending">{t("admin.status.pending")}</option>
                   </select>
                 </label>
 
@@ -1270,7 +1257,7 @@ export default function AdminKalendarPage() {
                 </div>
 
                 <label>
-                  Napomena
+                  {t("admin.cal.note")}
                   <textarea
                     className="admin-inline-textarea"
                     rows={3}
@@ -1286,13 +1273,13 @@ export default function AdminKalendarPage() {
                   disabled={saving || !bookingForm.clientName || !bookingForm.serviceIds.length}
                   onClick={createBooking}
                 >
-                  Sačuvaj termin
+                  {t("admin.cal.saveBooking")}
                 </button>
               </div>
             ) : (
               <div className="admin-calendar-details" style={{ marginTop: 12 }}>
                 <label>
-                  Datum i vreme
+                  {t("admin.cal.dateTime")}
                   <input
                     type="datetime-local"
                     className="admin-inline-input"
@@ -1304,7 +1291,7 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <label>
-                  Trajanje (min)
+                  {t("admin.cal.durationMin")}
                   <input
                     type="number"
                     min={5}
@@ -1317,7 +1304,7 @@ export default function AdminKalendarPage() {
                   />
                 </label>
                 <label>
-                  Napomena
+                  {t("admin.cal.note")}
                   <textarea
                     className="admin-inline-textarea"
                     rows={3}
@@ -1333,7 +1320,7 @@ export default function AdminKalendarPage() {
                   disabled={saving}
                   onClick={createBlock}
                 >
-                  Sačuvaj blokadu
+                  {t("admin.cal.saveBlock")}
                 </button>
               </div>
             )}
@@ -1349,8 +1336,8 @@ export default function AdminKalendarPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
                 <h3 style={{ margin: 0, fontSize: 16, color: "#e8f2ff" }}>
                   {activeEvent.kind === "booking"
-                    ? (activeBooking?.clientName || "Detalji termina")
-                    : "Blokada"}
+                    ? (activeBooking?.clientName || t("admin.cal.bookingDetails"))
+                    : t("admin.cal.block")}
                 </h3>
                 {activeBooking ? (
                   <span style={{ fontSize: 12, color: "#7a9bbd" }}>
@@ -1362,7 +1349,7 @@ export default function AdminKalendarPage() {
                 type="button"
                 className="admin-modal-btn is-close-btn"
                 onClick={closeActiveEvent}
-                aria-label="Zatvori"
+                aria-label={t("admin.cal.close")}
               >
                 ✕
               </button>
@@ -1371,7 +1358,7 @@ export default function AdminKalendarPage() {
             {activeBooking ? (
               <div className="admin-modal-info">
                 <div className="admin-modal-info-row">
-                  <span className="admin-modal-info-label">Klijent</span>
+                  <span className="admin-modal-info-label">{t("admin.cal.client")}</span>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <strong className="admin-modal-info-value">{activeBooking.clientName || "-"}</strong>
                     <div className="admin-modal-client-actions">
@@ -1390,7 +1377,7 @@ export default function AdminKalendarPage() {
                           }
                         }}
                       >
-                        {clientDetailsLoading ? "Učitavanje..." : showClientDetails ? "Sakrij profil" : "Profil + Beauty Pass"}
+                        {clientDetailsLoading ? t("admin.cal.loading") : showClientDetails ? t("admin.cal.hideProfile") : t("admin.cal.profileBeautyPass")}
                       </button>
                     ) : null}
                     {activeBooking.clientPhone ? (
@@ -1399,34 +1386,34 @@ export default function AdminKalendarPage() {
                         style={{ fontSize: 12, minHeight: 38, flex: "none" }}
                         href={`tel:${String(activeBooking.clientPhone).replace(/\s/g, "")}`}
                       >
-                        📞 Pozovi
+                        📞 {t("admin.cal.call")}
                       </a>
                     ) : null}
                     </div>
                   </div>
                 </div>
                 <div className="admin-modal-info-row">
-                  <span className="admin-modal-info-label">Vreme</span>
+                  <span className="admin-modal-info-label">{t("admin.cal.time")}</span>
                   <span className="admin-modal-info-value">
                     {fmtDateTime(activeBooking.startsAt)} – {fmtDateTime(activeBooking.endsAt)}
                   </span>
                 </div>
                 <div className="admin-modal-info-row">
-                  <span className="admin-modal-info-label">Usluge</span>
+                  <span className="admin-modal-info-label">{t("admin.cal.services")}</span>
                   <span className="admin-modal-info-value">{activeBooking.serviceSummary || "-"}</span>
                 </div>
                 <div className="admin-modal-info-row">
-                  <span className="admin-modal-info-label">Cena</span>
+                  <span className="admin-modal-info-label">{t("admin.cal.price")}</span>
                   <span className="admin-modal-info-value">{activeBooking.totalPriceRsd} EUR</span>
                 </div>
                 <div className="admin-modal-info-row">
-                  <span className="admin-modal-info-label">Status</span>
+                  <span className="admin-modal-info-label">{t("admin.cal.status")}</span>
                   <span className={`admin-status-badge is-${statusDraft}`}>
-                    {STATUS_LABEL[statusDraft] || statusDraft || "-"}
+                    {statusLabel(statusDraft) || statusDraft || "-"}
                   </span>
                 </div>
                 <div className="admin-modal-info-row" style={{ borderBottom: "none" }}>
-                  <span className="admin-modal-info-label">Napomena</span>
+                  <span className="admin-modal-info-label">{t("admin.cal.note")}</span>
                   <textarea
                     className="admin-inline-textarea"
                     rows={3}
@@ -1446,10 +1433,10 @@ export default function AdminKalendarPage() {
                     }}
                   >
                     <p style={{ margin: "0 0 8px", color: "#bed0e8", fontSize: 14 }}>
-                      Izaberite novi datum, vreme i usluge. Klijent dobija mejl ako se promene termin ili usluge. Status se resetuje na "Na čekanju".
+                      {t("admin.cal.reschedHint")}
                     </p>
                     <div>
-                      <span style={{ display: "block", marginBottom: 6 }}>Usluge</span>
+                      <span style={{ display: "block", marginBottom: 6 }}>{t("admin.cal.services")}</span>
                       <div className="admin-calendar-service-list">
                         {services.map((category) => (
                           <div key={category.id} className="admin-calendar-service-group">
@@ -1493,7 +1480,7 @@ export default function AdminKalendarPage() {
                           disabled={!canGoPrevRescheduleMonth}
                           onClick={() => setRescheduleCalendarMonth((prev) => addMonths(prev, -1))}
                         >
-                          Prethodni
+                          {t("admin.cal.prevMonth")}
                         </button>
                         <strong>{formatMonthLabel(rescheduleCalendarMonth)}</strong>
                         <button
@@ -1501,14 +1488,14 @@ export default function AdminKalendarPage() {
                           className="admin-template-link-btn"
                           onClick={() => setRescheduleCalendarMonth((prev) => addMonths(prev, 1))}
                         >
-                          Sledeći
+                          {t("admin.cal.nextMonth")}
                         </button>
                       </div>
 
                       <div className="admin-reschedule-calendar-legend">
-                        <span><span className="admin-calendar-indicator is-high" />Više slobodnih termina</span>
-                        <span><span className="admin-calendar-indicator is-medium" />Ograničeno</span>
-                        <span><span className="admin-calendar-indicator is-none" />Popunjeno</span>
+                        <span><span className="admin-calendar-indicator is-high" />{t("admin.cal.moreSlots")}</span>
+                        <span><span className="admin-calendar-indicator is-medium" />{t("admin.cal.limited")}</span>
+                        <span><span className="admin-calendar-indicator is-none" />{t("admin.cal.full")}</span>
                       </div>
 
                       <div className="admin-reschedule-weekdays">
@@ -1556,21 +1543,21 @@ export default function AdminKalendarPage() {
                       </div>
 
                       {!pendingEditServiceIds.length ? (
-                        <p>Izaberite bar jednu uslugu da bi se prikazala dostupnost u kalendaru.</p>
+                        <p>{t("admin.cal.pickServiceForAvailability")}</p>
                       ) : rescheduleCalendarError ? (
                         <p className="is-error">{rescheduleCalendarError}</p>
                       ) : null}
                     </div>
                     <div className="admin-calendar-slot-picker">
                       <div className="admin-calendar-slot-picker-head">
-                        <strong>Slobodni termini</strong>
-                        <span>{rescheduleDate ? `Za datum ${rescheduleDate}` : "Izaberite datum"}</span>
+                        <strong>{t("admin.cal.freeSlots")}</strong>
+                        <span>{rescheduleDate ? t("admin.cal.forDate", { date: rescheduleDate }) : t("admin.cal.pickDate")}</span>
                       </div>
 
                       {!pendingEditServiceIds.length ? (
-                        <p>Izaberite bar jednu uslugu da bi se prikazali slobodni termini.</p>
+                        <p>{t("admin.cal.pickServiceForSlots")}</p>
                       ) : rescheduleSlotsLoading ? (
-                        <p>Učitavanje slobodnih termina...</p>
+                        <p>{t("admin.cal.loadingSlots")}</p>
                       ) : rescheduleSlotsError ? (
                         <p className="is-error">{rescheduleSlotsError}</p>
                       ) : rescheduleSlots.length ? (
@@ -1593,17 +1580,17 @@ export default function AdminKalendarPage() {
                           })}
                         </div>
                       ) : (
-                        <p>Nema slobodnih termina za izabrani datum i trajanje.</p>
+                        <p>{t("admin.cal.noFreeSlots")}</p>
                       )}
                     </div>
                     {pendingEditStartLocal ? (
                       <p style={{ margin: "8px 0 0", color: "#d9e8f8", fontSize: 13 }}>
-                        Izabrani novi termin:{" "}
+                        {t("admin.cal.chosenNewSlot")}{" "}
                         <strong>{fmtDateTime(toIsoFromLocalInput(pendingEditStartLocal))}</strong>
                       </p>
                     ) : null}
                     <p style={{ margin: "8px 0 0", color: "#9fb8d8", fontSize: 13 }}>
-                      Procenjeno trajanje (iz usluga, max 60 min u sistemu):{" "}
+                      {t("admin.cal.estDuration")}{" "}
                       <strong>{pendingEditDurationMin} min</strong>
                     </p>
                     <div className="admin-calendar-quick-actions" style={{ marginTop: 10 }}>
@@ -1613,14 +1600,14 @@ export default function AdminKalendarPage() {
                         disabled={saving || !pendingEditServiceIds.length || !pendingEditStartLocal}
                         onClick={savePendingBookingReschedule}
                       >
-                        Potvrdi prezakazivanje
+                        {t("admin.cal.confirmReschedule")}
                       </button>
                       <button
                         type="button"
                         className="admin-modal-btn"
                         onClick={() => setShowReschedulePanel(false)}
                       >
-                        Odustani
+                        {t("admin.cal.discard")}
                       </button>
                     </div>
                   </div>
@@ -1647,7 +1634,7 @@ export default function AdminKalendarPage() {
                           disabled={saving}
                           onClick={() => setShowReschedulePanel((prev) => !prev)}
                         >
-                          {showReschedulePanel ? "Zatvori prezakazivanje" : "Prezakazi"}
+                          {showReschedulePanel ? t("admin.cal.closeReschedule") : t("admin.cal.reschedule")}
                         </button>
                       ) : null}
                     </div>
@@ -1659,7 +1646,7 @@ export default function AdminKalendarPage() {
                       disabled={saving}
                       onClick={saveBookingDetails}
                     >
-                      {saving ? "Čuvanje..." : "Sačuvaj napomenu"}
+                      {saving ? t("admin.cal.saving") : t("admin.cal.saveNote")}
                     </button>
                     {activeBooking?.userId ? (
                       <button
@@ -1671,7 +1658,7 @@ export default function AdminKalendarPage() {
                           setNoteMessage("");
                         }}
                       >
-                        {showNotePanel ? "Zatvori pasoš" : "Upiši u pasoš"}
+                        {showNotePanel ? t("admin.cal.closePass") : t("admin.cal.writePass")}
                       </button>
                     ) : null}
                   </div>
@@ -1680,18 +1667,18 @@ export default function AdminKalendarPage() {
                 {showNotePanel && activeBooking?.userId ? (
                   <div className="admin-calendar-note-panel">
                     <p style={{ margin: "0 0 12px", color: "#C4A55A", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                      Upiši u beauty pasoš
+                      {t("admin.cal.writeBeautyPass")}
                     </p>
                     <label style={{ display: "block" }}>
                       <span style={{ display: "block", marginBottom: 8, color: "#9fb8d8", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                        Intervencija / napomena o tretmanu
+                        {t("admin.cal.interventionNote")}
                       </span>
                       <textarea
                         className="admin-inline-textarea"
                         rows={5}
                         value={noteDraft}
                         onChange={(e) => setNoteDraft(e.target.value)}
-                        placeholder="Npr. Botoks čelo 20 j, hijaluron usne 0.5ml, korekcija bora nazolabijalne..."
+                        placeholder={t("admin.cal.interventionPlaceholder")}
                         style={{ width: "100%", boxSizing: "border-box" }}
                       />
                     </label>
@@ -1708,7 +1695,7 @@ export default function AdminKalendarPage() {
                         disabled={noteSaving || !noteDraft.trim()}
                         onClick={saveTreatmentNote}
                       >
-                        {noteSaving ? "Čuvanje..." : "Sačuvaj u beauty pasoš"}
+                        {noteSaving ? t("admin.cal.saving") : t("admin.cal.savePass")}
                       </button>
                       <button
                         type="button"
@@ -1720,7 +1707,7 @@ export default function AdminKalendarPage() {
                           setNoteMessage("");
                         }}
                       >
-                        Odustani
+                        {t("admin.cal.discard")}
                       </button>
                     </div>
                   </div>
@@ -1742,45 +1729,45 @@ export default function AdminKalendarPage() {
                     {!clientDetailsLoading && !clientDetailsError && clientDetailsPayload ? (
                       <div className="admin-calendar-details">
                         <div>
-                          <span>Email / telefon</span>
+                          <span>{t("admin.cal.emailPhone")}</span>
                           <strong>
                             {clientDetailsPayload.client?.email || "-"} /{" "}
                             {clientDetailsPayload.client?.phone || "-"}
                           </strong>
                         </div>
                         <div>
-                          <span>Pol / datum rođenja</span>
+                          <span>{t("admin.cal.genderBirth")}</span>
                           <strong>
                             {clientDetailsPayload.client?.profile?.gender || "-"} /{" "}
                             {clientDetailsPayload.client?.profile?.birthDate || "-"}
                           </strong>
                         </div>
                         <div>
-                          <span>Sledeći termini</span>
+                          <span>{t("admin.cal.upcomingAppts")}</span>
                           <strong>
                             {clientDetailsPayload.beautyPass?.upcomingBookings?.length || 0}
                           </strong>
                         </div>
                         <div>
-                          <span>Beauty pass zapisi</span>
+                          <span>{t("admin.cal.bpRecords")}</span>
                           <strong>
                             {clientDetailsPayload.beautyPass?.treatmentHistory?.length || 0}
                           </strong>
                         </div>
 
                         <div>
-                          <span>Poslednja 3 Beauty Pass unosa</span>
+                          <span>{t("admin.cal.lastThreeBp")}</span>
                           <div style={{ display: "grid", gap: 6, marginTop: 4 }}>
                             {(clientDetailsPayload.beautyPass?.treatmentHistory || [])
                               .slice(0, 3)
                               .map((record) => (
                                 <div key={record.id} className="admin-bp-record-card">
                                   <strong>{fmtDateTime(record.treatmentDate)}</strong>
-                                  <span>{record.notes || "Bez napomene"}</span>
+                                  <span>{record.notes || t("admin.cal.noNote")}</span>
                                 </div>
                               ))}
                             {!clientDetailsPayload.beautyPass?.treatmentHistory?.length ? (
-                              <span style={{ color: "#9fb8d8" }}>Nema unosa.</span>
+                              <span style={{ color: "#9fb8d8" }}>{t("admin.cal.noEntries")}</span>
                             ) : null}
                           </div>
                         </div>
@@ -1790,7 +1777,7 @@ export default function AdminKalendarPage() {
                             href={`/admin/klijenti/${activeBooking.userId}`}
                             className="admin-template-link-btn"
                           >
-                            Otvori puni profil klijenta
+                            {t("admin.cal.openFullClient")}
                           </a>
                         ) : null}
                       </div>
@@ -1803,19 +1790,19 @@ export default function AdminKalendarPage() {
             {activeBlock ? (
               <div className="admin-calendar-details" style={{ marginTop: 12 }}>
                 <div>
-                  <span>Pocetak</span>
+                  <span>{t("admin.cal.start")}</span>
                   <strong>{fmtDateTime(activeBlock.startsAt)}</strong>
                 </div>
                 <div>
-                  <span>Kraj</span>
+                  <span>{t("admin.cal.end")}</span>
                   <strong>{fmtDateTime(activeBlock.endsAt)}</strong>
                 </div>
                 <div>
-                  <span>Trajanje</span>
+                  <span>{t("admin.cal.duration")}</span>
                   <strong>{activeBlock.durationMin} min</strong>
                 </div>
                 <div>
-                  <span>Napomena</span>
+                  <span>{t("admin.cal.note")}</span>
                   <strong>{activeBlock.note || "-"}</strong>
                 </div>
                 <button
@@ -1824,7 +1811,7 @@ export default function AdminKalendarPage() {
                   disabled={saving}
                   onClick={deleteBlock}
                 >
-                  Obrisi blokadu
+                  {t("admin.cal.deleteBlock")}
                 </button>
               </div>
             ) : null}
