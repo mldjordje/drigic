@@ -4,6 +4,7 @@ import MarqueeComponent from "@/components/common/Marquee";
 import Footer8 from "@/components/footers/Footer8";
 import Header3 from "@/components/headers/Header3";
 import { getDb, schema } from "@/lib/db/client";
+import { getConfiguredSiteUrl } from "@/lib/site";
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import Script from "next/script";
@@ -58,6 +59,7 @@ export default async function BlogPageDetails({ params }) {
 
   if (!post) notFound();
 
+  const siteUrl = getConfiguredSiteUrl();
   const blogJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -66,20 +68,20 @@ export default async function BlogPageDetails({ params }) {
     author: {
       "@type": "Physician",
       name: "Dr Nikola Igić",
-      url: "https://www.drigic.rs/nikola-igic",
+      url: `${siteUrl}/nikola-igic`,
     },
     publisher: {
       "@type": "MedicalOrganization",
       name: "Dr Igić Clinic",
-      url: "https://www.drigic.rs",
+      url: siteUrl,
       logo: {
         "@type": "ImageObject",
-        url: "https://www.drigic.rs/assets/img/logo/logo.png",
+        url: `${siteUrl}/assets/img/logo.png`,
       },
     },
     datePublished: post.publishedAt,
     dateModified: post.updatedAt || post.publishedAt,
-    url: `https://www.drigic.rs/blog-details/${post.slug}`,
+    url: `${siteUrl}/blog-details/${post.slug}`,
     ...(post.featuredImageUrl && { image: post.featuredImageUrl }),
     keywords: post.seoKeywords?.join(", ") || "",
     inLanguage: "sr",

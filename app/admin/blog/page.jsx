@@ -17,7 +17,7 @@ const SEO_TASKS = [
     bg: "rgba(248,113,113,0.12)",
     border: "rgba(248,113,113,0.35)",
     title: "Vercel env var",
-    desc: "Vercel Dashboard → Settings → Environment Variables → NEXT_PUBLIC_SITE_URL = https://www.drigic.rs",
+    desc: "Vercel Dashboard → Settings → Environment Variables → NEXT_PUBLIC_SITE_URL = https://drigic.rs",
     done: false,
   },
   {

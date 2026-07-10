@@ -4,7 +4,10 @@ export default function Breadcumb() {
   return (
     <div
       className="breadcumb-wrapper"
-      style={{ backgroundImage: "url(/assets/img/bg/breadcumb-bg1-5.jpg)" }}
+      style={{
+        backgroundImage: "url(/assets/img/doctor-about.webp)",
+        backgroundPosition: "center 25%",
+      }}
     >
       <div className="container">
         <div className="breadcumb-content">

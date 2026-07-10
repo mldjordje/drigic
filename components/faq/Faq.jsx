@@ -1,4 +1,4 @@
-import { faqs2 } from "@/data/faq";
+import { clinicFaqs } from "@/data/clinic-faq";
 import React from "react";
 
 export default function Faq() {
@@ -8,7 +8,7 @@ export default function Faq() {
         <div className="row justify-content-center">
           <div className="col-xl-8">
             <div className="accordion-area accordion" id="faqAccordion2">
-              {faqs2.map((elm, i) => (
+              {clinicFaqs.map((elm, i) => (
                 <div key={i} className="accordion-card style2  active">
                   <div
                     className="accordion-header"

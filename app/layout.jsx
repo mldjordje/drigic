@@ -87,16 +87,11 @@ export const metadata = {
     title: SITE_NAME,
     statusBarStyle: "default",
   },
-  alternates: {
-    canonical: "https://drigic.rs",
-    languages: {
-      "sr": "https://drigic.rs",
-      "en": "https://drigic.rs",
-      "de": "https://drigic.rs",
-      "it": "https://drigic.rs",
-      "x-default": "https://drigic.rs",
-    },
-  },
+  // NOTE: no site-wide `alternates.canonical` here. A hardcoded homepage
+  // canonical leaks onto every page that doesn't override it, wrongly
+  // canonicalizing them to "/". Each route sets its own canonical; pages
+  // without one self-canonicalize to their real URL (correct). hreflang is
+  // omitted because the site has no per-locale URLs (locale is cookie-based).
 };
 
 const ORGANIZATION_JSON_LD = {
