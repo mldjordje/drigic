@@ -5,7 +5,19 @@ import Footer5 from "@/components/footers/Footer5";
 import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import { getCachedServicesCatalog } from "@/lib/catalog/services";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
+import { HYALURONIC_BRANDS } from "@/lib/booking/constants";
 import { SITE_NAME } from "@/lib/site";
+
+function normalizeTextKey(value = "") {
+  return String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
+
+function isHyaluronicFillerService(service) {
+  return normalizeTextKey(service?.name).includes("hijaluronski filer");
+}
 
 export const dynamic = "force-dynamic";
 
@@ -47,11 +59,25 @@ export default async function CenovnikPage() {
     })
     .sort((a, b) => a._specIndex - b._specIndex);
 
-  // Show only single services on the pricing page (packages are composite)
+  // Show only single services on the pricing page (packages are composite).
+  // The per-ml "Hijaluronski filer" service has no fixed price — it's priced
+  // per brand (Revolax/Teoxane/Juvederm) — so expand it into one row per brand.
   const categoriesWithSingles = categories
     .map((cat) => ({
       ...cat,
-      services: (cat.services || []).filter((s) => s.kind === "single"),
+      services: (cat.services || [])
+        .filter((s) => s.kind === "single")
+        .flatMap((s) => {
+          if (!s.supportsMl || !isHyaluronicFillerService(s)) return [s];
+          return HYALURONIC_BRANDS.map((brand) => ({
+            ...s,
+            id: `${s.id}-${brand.key}`,
+            name: `${s.name} - ${brand.label}`,
+            priceRsd: brand.unitPriceRsd,
+            promotion: null,
+            perMl: true,
+          }));
+        }),
     }))
     .filter((cat) => cat.services.length > 0);
 
@@ -140,7 +166,9 @@ export default async function CenovnikPage() {
                                   </strong>
                                 </span>
                               ) : (
-                                <strong>{regular} EUR</strong>
+                                <strong>
+                                  {regular} EUR{service.perMl ? " / ml" : ""}
+                                </strong>
                               )}
                             </td>
                           </tr>

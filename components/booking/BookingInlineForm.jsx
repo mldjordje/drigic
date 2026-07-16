@@ -12,13 +12,7 @@ import {
 import { createPortal } from "react-dom";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
-import { CONSULTATION_SELECTION_ID } from "@/lib/booking/constants";
-
-const HYALURONIC_BRANDS = [
-  { key: "revolax", label: "Revolax", unitPrice: 180 },
-  { key: "teoxane", label: "Teoxane", unitPrice: 220 },
-  { key: "juvederm", label: "Juvederm", unitPrice: 220 },
-];
+import { CONSULTATION_SELECTION_ID, HYALURONIC_BRANDS } from "@/lib/booking/constants";
 
 const HYALURONIC_BRAND_BY_KEY = HYALURONIC_BRANDS.reduce((acc, item) => {
   acc[item.key] = item;
@@ -162,10 +156,10 @@ function getServicePriceLabel(service, brandKey) {
   if (service?.supportsMl && isHyaluronicFillerService(service)) {
     const selectedBrand = HYALURONIC_BRAND_BY_KEY[brandKey];
     if (selectedBrand) {
-      return `${selectedBrand.unitPrice} EUR / ml`;
+      return `${selectedBrand.unitPriceRsd} EUR / ml`;
     }
-    const min = Math.min(...HYALURONIC_BRANDS.map((item) => item.unitPrice));
-    const max = Math.max(...HYALURONIC_BRANDS.map((item) => item.unitPrice));
+    const min = Math.min(...HYALURONIC_BRANDS.map((item) => item.unitPriceRsd));
+    const max = Math.max(...HYALURONIC_BRANDS.map((item) => item.unitPriceRsd));
     return `${min}-${max} EUR / ml`;
   }
 
@@ -1234,7 +1228,7 @@ export default function BookingInlineForm({
                         className={`clinic-brand-btn ${selectedBrand === brand.key ? "is-active" : ""}`}
                         onClick={() => updateSelectedBrand(service.id, brand.key)}
                       >
-                        {brand.label} ({brand.unitPrice} EUR/ml)
+                        {brand.label} ({brand.unitPriceRsd} EUR/ml)
                       </button>
                     ))}
                   </div>
