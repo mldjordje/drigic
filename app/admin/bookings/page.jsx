@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/common/LocaleProvider";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 const STATUSES = ["pending", "confirmed", "cancelled", "no_show"];
 
@@ -31,11 +32,12 @@ export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [notesById, setNotesById] = useState({});
   const [statusById, setStatusById] = useState({});
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [pageError, setPageError] = useState("");
+  const [pendingById, setPendingById] = useState({});
+  const [feedbackById, setFeedbackById] = useState({});
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const pendingBookingIdsRef = useRef(new Set());
 
   async function loadBookings() {
     const query = new URLSearchParams();
@@ -67,15 +69,32 @@ export default function AdminBookingsPage() {
   }
 
   useEffect(() => {
-    loadBookings().catch((err) => setError(err.message));
+    loadBookings().catch((err) => setPageError(err.message));
   }, []);
 
-  async function updateBooking(bookingId, nextStatus) {
-    setLoading(true);
-    setError("");
-    setMessage("");
+  async function updateBooking(bookingId, nextStatus, actionLabel) {
+    if (pendingBookingIdsRef.current.has(bookingId)) {
+      return;
+    }
+
+    const booking = bookings.find((item) => item.id === bookingId);
+    const clientName = booking?.clientName || "-";
+    const previousStatus = statusById[bookingId] || booking?.status;
+    const statusToPersist = nextStatus || previousStatus;
+
+    pendingBookingIdsRef.current.add(bookingId);
+    setPendingById((previous) => ({ ...previous, [bookingId]: { actionLabel } }));
+    setFeedbackById((previous) => {
+      const next = { ...previous };
+      delete next[bookingId];
+      return next;
+    });
+    if (nextStatus) {
+      setStatusById((previous) => ({ ...previous, [bookingId]: nextStatus }));
+    }
+
+    let statusWasPersisted = false;
     try {
-      const statusToPersist = nextStatus || statusById[bookingId];
       const response = await fetch("/api/admin/bookings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -89,16 +108,46 @@ export default function AdminBookingsPage() {
       if (!response.ok || !data?.ok) {
         throw new Error(data?.message || t("admin.book.updateFailed"));
       }
-      setMessage(t("admin.book.updated"));
+      statusWasPersisted = true;
       setStatusById((prev) => ({
         ...prev,
         [bookingId]: data.data?.status || statusToPersist,
       }));
       await loadBookings();
+      setFeedbackById((previous) => ({
+        ...previous,
+        [bookingId]: {
+          tone: "success",
+          title: t("admin.book.bookingFor", { client: clientName }),
+          message: t("admin.book.actionSucceeded", {
+            action: actionLabel,
+            client: clientName,
+          }),
+        },
+      }));
     } catch (err) {
-      setError(err.message || t("admin.book.genericError"));
+      if (!statusWasPersisted && nextStatus) {
+        setStatusById((previous) => ({ ...previous, [bookingId]: previousStatus }));
+      }
+      setFeedbackById((previous) => ({
+        ...previous,
+        [bookingId]: {
+          tone: "error",
+          title: t("admin.book.bookingFor", { client: clientName }),
+          message: t("admin.book.actionFailed", {
+            action: actionLabel,
+            client: clientName,
+          }),
+          detail: err.message || t("admin.book.genericError"),
+        },
+      }));
     } finally {
-      setLoading(false);
+      pendingBookingIdsRef.current.delete(bookingId);
+      setPendingById((previous) => {
+        const next = { ...previous };
+        delete next[bookingId];
+        return next;
+      });
     }
   }
 
@@ -170,19 +219,33 @@ export default function AdminBookingsPage() {
             type="button"
             className="admin-template-link-btn"
             style={{ alignSelf: "end" }}
-            onClick={() => loadBookings().catch((err) => setError(err.message))}
+            onClick={() =>
+              loadBookings()
+                .then(() => setPageError(""))
+                .catch((err) => setPageError(err.message))
+            }
           >
             {t("admin.book.applyFilter")}
           </button>
         </div>
       </div>
 
-      {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
-      {error ? <p style={{ color: "#ff9f9f", margin: 0 }}>{error}</p> : null}
+      {pageError ? <AdminStatusMessage tone="error">{pageError}</AdminStatusMessage> : null}
 
       <div style={cardsWrapStyle}>
-        {bookings.map((booking) => (
-          <article key={booking.id} className="admin-card" style={{ display: "grid", gap: 10 }}>
+        {bookings.map((booking) => {
+          const isPending = Boolean(pendingById[booking.id]);
+          const feedback = feedbackById[booking.id];
+          const clientName = booking.clientName || "-";
+
+          return (
+          <article
+            key={booking.id}
+            className="admin-card"
+            style={{ display: "grid", gap: 10 }}
+            aria-busy={isPending ? "true" : "false"}
+            aria-label={t("admin.book.bookingFor", { client: clientName })}
+          >
             <div style={metaGridStyle}>
               <div>
                 <small style={smallStyle}>{t("admin.book.client")}</small>
@@ -223,6 +286,7 @@ export default function AdminBookingsPage() {
                 <small style={smallStyle}>{t("admin.book.note")}</small>
                 <input
                   value={notesById[booking.id] || ""}
+                  disabled={isPending}
                   onChange={(event) =>
                     setNotesById((prev) => ({
                       ...prev,
@@ -234,17 +298,30 @@ export default function AdminBookingsPage() {
               </label>
             </div>
 
+            {isPending ? (
+              <p role="status" aria-live="polite" style={{ margin: 0 }}>
+                {t("admin.book.actionInProgress", {
+                  action: pendingById[booking.id].actionLabel,
+                  client: clientName,
+                })}
+              </p>
+            ) : null}
+
+            {feedback ? (
+              <AdminStatusMessage tone={feedback.tone} title={feedback.title}>
+                {feedback.message}
+                {feedback.detail ? ` ${feedback.detail}` : ""}
+              </AdminStatusMessage>
+            ) : null}
+
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {getQuickActions(statusById[booking.id] || booking.status).map((action) => (
                 <button
                   key={`${booking.id}-${action.value}`}
                   type="button"
                   className="admin-template-link-btn"
-                  disabled={loading}
-                  onClick={() => {
-                    setStatusById((prev) => ({ ...prev, [booking.id]: action.value }));
-                    updateBooking(booking.id, action.value);
-                  }}
+                  disabled={isPending}
+                  onClick={() => updateBooking(booking.id, action.value, action.label)}
                 >
                   {action.label}
                 </button>
@@ -252,14 +329,15 @@ export default function AdminBookingsPage() {
               <button
                 type="button"
                 className="admin-template-link-btn"
-                disabled={loading}
-                onClick={() => updateBooking(booking.id)}
+                disabled={isPending}
+                onClick={() => updateBooking(booking.id, undefined, t("admin.book.saveNote"))}
               >
                 {t("admin.book.saveNote")}
               </button>
             </div>
           </article>
-        ))}
+          );
+        })}
       </div>
 
       {!bookings.length ? (
