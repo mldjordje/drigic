@@ -270,4 +270,19 @@ describe("AdminModal", () => {
     expect(childClose).not.toHaveBeenCalled();
     expect(parentClose).not.toHaveBeenCalled();
   });
+
+  it("keeps initial focus and Shift+Tab inside an initially open nested child modal", () => {
+    render(
+      <AdminModal open onClose={vi.fn()} title="Parent">
+        <AdminModal open onClose={vi.fn()} title="Child" />
+      </AdminModal>
+    );
+
+    const childDialog = screen.getByRole("dialog", { name: "Child" });
+    const childClose = childDialog.querySelector("button[aria-label='Close dialog']");
+    expect(childClose).toHaveFocus();
+
+    fireEvent.keyDown(childDialog, { key: "Tab", shiftKey: true });
+    expect(childClose).toHaveFocus();
+  });
 });

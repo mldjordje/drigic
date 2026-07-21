@@ -52,11 +52,6 @@ export default function AdminModal({
     if (!open) return undefined;
 
     openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const initialFocusTarget = isTabbable(initialFocusRef?.current, dialogRef.current)
-      ? initialFocusRef.current
-      : (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current);
-    initialFocusTarget?.focus();
-
     const entry = {
       dialog: dialogRef.current,
       focus: () => (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current)?.focus(),
@@ -66,6 +61,12 @@ export default function AdminModal({
     };
     stackEntryRef.current = entry;
     const unregister = registerAdminModal(entry);
+    if (isTopAdminModal(entry)) {
+      const initialFocusTarget = isTabbable(initialFocusRef?.current, dialogRef.current)
+        ? initialFocusRef.current
+        : (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current);
+      initialFocusTarget?.focus();
+    }
 
     return () => {
       unregister();
