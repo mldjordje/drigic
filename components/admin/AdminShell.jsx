@@ -23,6 +23,10 @@ function resolveNavLabel(item, t) {
   return item.label || "";
 }
 
+function getNavigationGroupId(labelKey) {
+  return `admin-navigation-group-${labelKey.replaceAll(".", "-")}`;
+}
+
 export default function AdminShell({ children }) {
   const pathname = usePathname();
   const { t } = useLocale();
@@ -55,8 +59,16 @@ export default function AdminShell({ children }) {
 
         {ADMIN_NAVIGATION_GROUPS.map((group) => (
           <div className="admin-template-group" key={group.labelKey}>
-            <p className="admin-template-group-title">{t(group.labelKey)}</p>
-            <nav className="admin-template-nav">
+            <p
+              className="admin-template-group-title"
+              id={getNavigationGroupId(group.labelKey)}
+            >
+              {t(group.labelKey)}
+            </p>
+            <nav
+              aria-labelledby={getNavigationGroupId(group.labelKey)}
+              className="admin-template-nav"
+            >
               {group.items.map((item) => {
                 const active = resolveAdminNavigationItem(pathname)?.href === item.href;
                 return (
@@ -75,9 +87,11 @@ export default function AdminShell({ children }) {
         ))}
 
         <div className="admin-template-group">
-          <p className="admin-template-group-title">{t("admin.navigation")}</p>
+          <p className="admin-template-group-title" id="admin-navigation-group-utilities">
+            {t("admin.navigation")}
+          </p>
           <LocaleSwitcher compact className="admin-template-locale-switcher" />
-          <nav className="admin-template-nav">
+          <nav aria-labelledby="admin-navigation-group-utilities" className="admin-template-nav">
             {quickLinks.map((item) =>
               item.href.startsWith("/api/") ? (
                 <a
