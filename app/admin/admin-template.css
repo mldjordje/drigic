@@ -1,10 +1,169 @@
 .admin-template-root {
+  --admin-color-background: #0a0c00;
+  --admin-color-surface: #101827;
+  --admin-color-raised: #17263d;
+  --admin-color-overlay: rgba(2, 8, 15, 0.72);
+  --admin-color-text: #f4f8ff;
+  --admin-color-muted: #bcd0e8;
+  --admin-color-inverse: #0a0c00;
+  --admin-color-disabled: #8ca5c5;
+  --admin-color-border: rgba(217, 232, 248, 0.3);
+  --admin-color-focus: #9fd1ff;
+  --admin-color-accent: #d9e8f8;
+  --admin-color-success: #95e7aa;
+  --admin-color-warning: #f3c27f;
+  --admin-color-danger: #ffabab;
+  --admin-color-info: #9fd1ff;
+  --admin-space-1: 4px;
+  --admin-space-2: 8px;
+  --admin-space-3: 12px;
+  --admin-space-4: 16px;
+  --admin-space-5: 20px;
+  --admin-space-6: 24px;
+  --admin-radius-sm: 8px;
+  --admin-radius-md: 12px;
+  --admin-radius-lg: 16px;
+  --admin-elevation-raised: 0 10px 24px rgba(5, 13, 22, 0.34);
+  --admin-elevation-modal: 0 26px 60px rgba(2, 8, 15, 0.62);
+  --admin-z-content: 1;
+  --admin-z-overlay: 100;
+  --admin-z-modal: 200;
+  --admin-motion-fast: 150ms;
+  --admin-motion-standard: 200ms;
+  --admin-motion-slow: 300ms;
+}
+
+.admin-template-root {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 280px 1fr;
   background: radial-gradient(circle at top right, #17263d 0%, #0a0c00 38%);
   color: #f4f8ff;
   position: relative;
+}
+
+.admin-template-root :focus-visible,
+.admin-modal-backdrop :focus-visible {
+  outline: 3px solid var(--admin-color-focus, #9fd1ff);
+  outline-offset: 3px;
+}
+
+.admin-status-message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--admin-space-3, 12px);
+  padding: var(--admin-space-3, 12px) var(--admin-space-4, 16px);
+  border: 1px solid var(--admin-color-border, rgba(217, 232, 248, 0.3));
+  border-left-width: 4px;
+  border-radius: var(--admin-radius-md, 12px);
+  background: var(--admin-color-raised, #17263d);
+  color: var(--admin-color-text, #f4f8ff);
+}
+
+.admin-status-message__icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-weight: 800;
+  line-height: 1;
+  background: currentColor;
+  color: var(--admin-color-inverse, #0a0c00);
+}
+
+.admin-status-message__content {
+  display: grid;
+  gap: var(--admin-space-1, 4px);
+}
+
+.admin-status-message__tone,
+.admin-status-message__title {
+  font-weight: 800;
+}
+
+.admin-status-message__body {
+  color: var(--admin-color-text, #f4f8ff);
+  line-height: 1.45;
+}
+
+.admin-status-message--success { border-left-color: var(--admin-color-success, #95e7aa); color: var(--admin-color-success, #95e7aa); }
+.admin-status-message--info { border-left-color: var(--admin-color-info, #9fd1ff); color: var(--admin-color-info, #9fd1ff); }
+.admin-status-message--warning { border-left-color: var(--admin-color-warning, #f3c27f); color: var(--admin-color-warning, #f3c27f); }
+.admin-status-message--error { border-left-color: var(--admin-color-danger, #ffabab); color: var(--admin-color-danger, #ffabab); }
+
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--admin-z-modal, 200);
+  display: grid;
+  place-items: center;
+  padding: var(--admin-space-4, 16px);
+  overflow: auto;
+  background: var(--admin-color-overlay, rgba(2, 8, 15, 0.72));
+  animation: admin-modal-fade-in var(--admin-motion-fast, 150ms) ease-out;
+}
+
+.admin-modal {
+  width: min(100%, 640px);
+  max-height: min(100%, 720px);
+  overflow: auto;
+  border: 1px solid var(--admin-color-border, rgba(217, 232, 248, 0.3));
+  border-radius: var(--admin-radius-lg, 16px);
+  background: var(--admin-color-surface, #101827);
+  color: var(--admin-color-text, #f4f8ff);
+  box-shadow: var(--admin-elevation-modal, 0 26px 60px rgba(2, 8, 15, 0.62));
+  animation: admin-modal-rise-in var(--admin-motion-standard, 200ms) ease-out;
+}
+
+.admin-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--admin-space-3, 12px);
+  padding: var(--admin-space-4, 16px);
+  border-bottom: 1px solid var(--admin-color-border, rgba(217, 232, 248, 0.3));
+}
+
+.admin-modal__title { margin: 0; color: var(--admin-color-text, #f4f8ff); }
+.admin-modal__description { margin: var(--admin-space-1, 4px) 0 0; color: var(--admin-color-muted, #bcd0e8); line-height: 1.45; }
+.admin-modal__body { padding: var(--admin-space-4, 16px); }
+
+.admin-modal__close {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--admin-color-border, rgba(217, 232, 248, 0.3));
+  border-radius: var(--admin-radius-sm, 8px);
+  background: transparent;
+  color: var(--admin-color-text, #f4f8ff);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--admin-motion-fast, 150ms) ease, border-color var(--admin-motion-fast, 150ms) ease;
+}
+
+.admin-modal__close:hover {
+  background: var(--admin-color-raised, #17263d);
+  border-color: var(--admin-color-accent, #d9e8f8);
+}
+
+@keyframes admin-modal-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes admin-modal-rise-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-template-root *,
+  .admin-modal-backdrop,
+  .admin-modal {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .admin-template-root,
