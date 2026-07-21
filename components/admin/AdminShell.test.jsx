@@ -80,6 +80,27 @@ describe("AdminShell responsive navigation", () => {
     expect(mobileNavigation).toHaveAccessibleName("Navigation");
     expect(within(mobileNavigation).getByRole("link", { name: "Calendar" })).toHaveAttribute("aria-current", "page");
     expect(within(mobileNavigation).getByRole("link", { name: "Today" })).not.toHaveAttribute("aria-current");
+    expect(within(mobileNavigation).getByRole("button", { name: "More" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("marks More current for a secondary destination while retaining its localized visible label", () => {
+    pathname = "/admin/services";
+    renderShell();
+
+    const mobileNavigation = document.querySelector(".admin-template-mobile-nav");
+    const moreButton = within(mobileNavigation).getByRole("button", { name: "More: Services" });
+    expect(moreButton).toHaveClass("is-active");
+    expect(moreButton).toHaveAttribute("aria-current", "page");
+    expect(moreButton).toHaveTextContent("More");
+  });
+
+  it("does not mark More current for an unknown pathname", () => {
+    pathname = "/not-an-admin-route";
+    renderShell();
+
+    const moreButton = within(document.querySelector(".admin-template-mobile-nav")).getByRole("button", { name: "More" });
+    expect(moreButton).not.toHaveClass("is-active");
+    expect(moreButton).not.toHaveAttribute("aria-current");
   });
 
   it("marks a direct destination current for nested routes", () => {
@@ -100,6 +121,15 @@ describe("AdminShell responsive navigation", () => {
     expect(drawer).toBeInTheDocument();
     expect(within(drawer).getAllByRole("navigation")).toHaveLength(9);
     expect(within(drawer).getByText("Locale utility")).toBeInTheDocument();
+  });
+
+  it("uses the localized menu-close label in the More drawer", async () => {
+    const user = userEvent.setup();
+    renderShell("sr");
+
+    await user.click(screen.getByRole("button", { name: "Više" }));
+
+    expect(screen.getByRole("dialog").querySelector("button[aria-label='Zatvori meni']")).toBeInTheDocument();
   });
 
   it("closes More on Escape and restores focus to its trigger", async () => {

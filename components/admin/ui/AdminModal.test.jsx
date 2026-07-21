@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AdminModal from "./AdminModal";
 
-function ModalHarness({ dismissible = true, initialFocusRef, children }) {
+function ModalHarness({ dismissible = true, initialFocusRef, closeLabel, children }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -17,6 +17,7 @@ function ModalHarness({ dismissible = true, initialFocusRef, children }) {
         description="Update the appointment details."
         dismissible={dismissible}
         initialFocusRef={initialFocusRef}
+        closeLabel={closeLabel}
       >
         {children}
       </AdminModal>
@@ -62,6 +63,15 @@ describe("AdminModal", () => {
     expect(saveButton).toHaveFocus();
     await user.tab();
     expect(closeButton).toHaveFocus();
+  });
+
+  it("uses a supplied close label", async () => {
+    const user = userEvent.setup();
+    render(<ModalHarness closeLabel="Zatvori meni"><button type="button">Save</button></ModalHarness>);
+
+    await user.click(screen.getByRole("button", { name: "Open dialog" }));
+
+    expect(screen.getByRole("button", { name: "Zatvori meni" })).toBeInTheDocument();
   });
 
   it("closes with Escape only when dismissible", async () => {

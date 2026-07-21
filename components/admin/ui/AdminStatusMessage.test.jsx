@@ -29,4 +29,10 @@ describe("AdminStatusMessage", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Error");
     expect(screen.getByRole("alert")).toHaveTextContent("Please fix the highlighted fields.");
   });
+
+  it("uses a supplied tone label as visible and accessible status text", () => {
+    render(<AdminStatusMessage tone="success" toneLabel="Uspeh">Sačuvano.</AdminStatusMessage>);
+
+    expect(screen.getByRole("status", { name: /Uspeh/ })).toHaveTextContent("Uspeh");
+  });
 });
