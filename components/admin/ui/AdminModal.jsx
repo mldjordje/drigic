@@ -3,19 +3,19 @@
 import { useEffect, useId, useRef } from "react";
 
 const FOCUSABLE_SELECTOR = [
-  "a[href]",
-  "area[href]",
-  "button:not([disabled])",
-  "input:not([disabled]):not([type='hidden'])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
+  "a[href]:not([tabindex='-1'])",
+  "area[href]:not([tabindex='-1'])",
+  "button:not([disabled]):not([tabindex='-1'])",
+  "input:not([disabled]):not([type='hidden']):not([tabindex='-1'])",
+  "select:not([disabled]):not([tabindex='-1'])",
+  "textarea:not([disabled]):not([tabindex='-1'])",
   "[tabindex]:not([tabindex='-1'])",
-  "[contenteditable='true']",
+  "[contenteditable='true']:not([tabindex='-1'])",
 ].join(",");
 
 function getFocusableElements(container) {
   return Array.from(container?.querySelectorAll(FOCUSABLE_SELECTOR) || []).filter(
-    (element) => !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true"
+    (element) => element.tabIndex >= 0 && !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true"
   );
 }
 
@@ -70,10 +70,14 @@ export default function AdminModal({
 
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
-    if (event.shiftKey && document.activeElement === firstElement) {
+    const activeElement = document.activeElement;
+    if (!focusableElements.includes(activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? lastElement : firstElement).focus();
+    } else if (event.shiftKey && activeElement === firstElement) {
       event.preventDefault();
       lastElement.focus();
-    } else if (!event.shiftKey && document.activeElement === lastElement) {
+    } else if (!event.shiftKey && activeElement === lastElement) {
       event.preventDefault();
       firstElement.focus();
     }

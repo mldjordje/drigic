@@ -124,4 +124,45 @@ describe("AdminModal", () => {
     fireEvent.keyDown(dialog, { key: "Tab" });
     expect(dialog).toHaveFocus();
   });
+
+  it("wraps Shift+Tab from a non-dismissible dialog to its last tabbable control", () => {
+    render(
+      <AdminModal open onClose={vi.fn()} title="Read-only appointment" dismissible={false}>
+        <button type="button">First action</button>
+        <button type="button">Last action</button>
+      </AdminModal>
+    );
+
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveFocus();
+    fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
+    expect(screen.getByRole("button", { name: "Last action" })).toHaveFocus();
+  });
+
+  it("moves Tab from a non-dismissible dialog to its first tabbable control", () => {
+    render(
+      <AdminModal open onClose={vi.fn()} title="Read-only appointment" dismissible={false}>
+        <button type="button">First action</button>
+        <button type="button">Last action</button>
+      </AdminModal>
+    );
+
+    const dialog = screen.getByRole("dialog");
+    fireEvent.keyDown(dialog, { key: "Tab" });
+    expect(screen.getByRole("button", { name: "First action" })).toHaveFocus();
+  });
+
+  it("excludes tabindex=-1 controls from the trap's tabbable order", () => {
+    render(
+      <AdminModal open onClose={vi.fn()} title="Read-only appointment" dismissible={false}>
+        <button type="button" tabIndex={-1}>Programmatic action</button>
+      </AdminModal>
+    );
+
+    const dialog = screen.getByRole("dialog");
+    const tabEvent = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+    dialog.dispatchEvent(tabEvent);
+    expect(tabEvent.defaultPrevented).toBe(true);
+    expect(dialog).toHaveFocus();
+  });
 });

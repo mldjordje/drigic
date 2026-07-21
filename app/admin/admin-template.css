@@ -88,10 +88,27 @@
   line-height: 1.45;
 }
 
-.admin-status-message--success { border-left-color: var(--admin-color-success, #95e7aa); color: var(--admin-color-success, #95e7aa); }
-.admin-status-message--info { border-left-color: var(--admin-color-info, #9fd1ff); color: var(--admin-color-info, #9fd1ff); }
-.admin-status-message--warning { border-left-color: var(--admin-color-warning, #f3c27f); color: var(--admin-color-warning, #f3c27f); }
-.admin-status-message--error { border-left-color: var(--admin-color-danger, #ffabab); color: var(--admin-color-danger, #ffabab); }
+.admin-status-message--success { --admin-status-tone: var(--admin-color-success, #95e7aa); }
+.admin-status-message--info { --admin-status-tone: var(--admin-color-info, #9fd1ff); }
+.admin-status-message--warning { --admin-status-tone: var(--admin-color-warning, #f3c27f); }
+.admin-status-message--error { --admin-status-tone: var(--admin-color-danger, #ffabab); }
+
+.admin-template-root .admin-status-message--success,
+.admin-template-root .admin-status-message--info,
+.admin-template-root .admin-status-message--warning,
+.admin-template-root .admin-status-message--error {
+  border-left-color: var(--admin-status-tone);
+}
+
+.admin-template-root .admin-status-message .admin-status-message__tone,
+.admin-template-root .admin-status-message .admin-status-message__title {
+  color: var(--admin-status-tone);
+}
+
+.admin-template-root .admin-status-message .admin-status-message__icon {
+  background: var(--admin-status-tone);
+  color: var(--admin-color-inverse);
+}
 
 .admin-modal-backdrop {
   position: fixed;
@@ -126,7 +143,7 @@
 }
 
 .admin-modal__title { margin: 0; color: var(--admin-color-text, #f4f8ff); }
-.admin-modal__description { margin: var(--admin-space-1, 4px) 0 0; color: var(--admin-color-muted, #bcd0e8); line-height: 1.45; }
+.admin-modal .admin-modal__description { margin: var(--admin-space-1, 4px) 0 0; color: var(--admin-color-muted, #bcd0e8); line-height: 1.45; }
 .admin-modal__body { padding: var(--admin-space-4, 16px); }
 
 .admin-modal__close {
