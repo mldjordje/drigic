@@ -581,6 +581,78 @@ describe("AdminBookingsPage booking mutations", () => {
     expect(within(bela).getByRole("button", { name: "Confirm" })).toBeEnabled();
   });
 
+  it("accepts an authoritative note after a successful quick status update persisted the draft", async () => {
+    const persistedRows = bookings.map((booking) =>
+      booking.id === "booking-a"
+        ? { ...booking, status: "confirmed", notes: "Edited before confirmation" }
+        : booking
+    );
+    const authoritativeRows = persistedRows.map((booking) =>
+      booking.id === "booking-a" ? { ...booking, notes: "Server revised note" } : booking
+    );
+    let getCount = 0;
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return Promise.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+      }
+      getCount += 1;
+      return Promise.resolve(
+        jsonResponse({ ok: true, data: getCount === 1 ? bookings : getCount === 2 ? persistedRows : authoritativeRows })
+      );
+    });
+    renderWithFetch(fetchMock);
+
+    const ada = await screen.findByRole("article", { name: /booking for ada/i });
+    fireEvent.change(within(ada).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Edited before confirmation" },
+    });
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    const [, patchOptions] = fetchMock.mock.calls.find(([, options]) => options?.method === "PATCH");
+    expect(JSON.parse(patchOptions.body)).toMatchObject({
+      id: "booking-a",
+      status: "confirmed",
+      notes: "Edited before confirmation",
+    });
+    await waitFor(() => expect(getCount).toBe(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "Apply filter" }));
+    await waitFor(() => expect(getCount).toBe(3));
+    expect(within(ada).getByRole("textbox", { name: "Note" })).toHaveValue("Server revised note");
+  });
+
+  it("keeps a quick-status draft dirty and present when its PATCH fails", async () => {
+    const patch = deferred();
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return patch.promise;
+      }
+      return Promise.resolve(
+        jsonResponse({
+          ok: true,
+          data: bookings.map((booking) =>
+            booking.id === "booking-a" ? { ...booking, notes: "Server note" } : booking
+          ),
+        })
+      );
+    });
+    renderWithFetch(fetchMock);
+
+    const ada = await screen.findByRole("article", { name: /booking for ada/i });
+    fireEvent.change(within(ada).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Keep after failed confirmation" },
+    });
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    await act(async () => {
+      patch.resolve(jsonResponse({ ok: false, message: "Confirmation failed" }, false));
+    });
+    expect(await within(ada).findByRole("alert")).toHaveTextContent("Confirmation failed");
+
+    fireEvent.click(screen.getByRole("button", { name: "Apply filter" }));
+    expect(await within(ada).findByRole("textbox", { name: "Note" })).toHaveValue(
+      "Keep after failed confirmation"
+    );
+  });
+
   it("announces a page-level alert when initial booking loading fails", async () => {
     renderWithFetch(
       vi.fn().mockResolvedValue(

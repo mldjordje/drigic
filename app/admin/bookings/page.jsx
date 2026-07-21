@@ -184,9 +184,7 @@ export default function AdminBookingsPage() {
         notes: notesToPersist,
       });
       pendingStatusesRef.current.delete(bookingId);
-      if (!nextStatus) {
-        dirtyNoteIdsRef.current.delete(bookingId);
-      }
+      dirtyNoteIdsRef.current.delete(bookingId);
       setBookings((previous) =>
         previous.map((item) =>
           item.id === bookingId
