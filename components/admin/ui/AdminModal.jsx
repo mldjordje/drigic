@@ -44,9 +44,11 @@ export default function AdminModal({
   const dialogRef = useRef(null);
   const closeButtonRef = useRef(null);
   const openerRef = useRef(null);
+  const initialFocusRefRef = useRef(initialFocusRef);
   const stackEntryRef = useRef(null);
   const titleId = useId();
   const descriptionId = useId();
+  initialFocusRefRef.current = initialFocusRef;
 
   useEffect(() => {
     if (!open) return undefined;
@@ -55,15 +57,20 @@ export default function AdminModal({
     const entry = {
       dialog: dialogRef.current,
       focus: () => (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current)?.focus(),
-      restoreFocus: () => {
-        if (openerRef.current?.isConnected) openerRef.current.focus();
+      restoreFocus: (nextDialog) => {
+        const opener = openerRef.current;
+        if (isTabbable(opener) && (!nextDialog || nextDialog.contains(opener))) {
+          opener.focus();
+          return true;
+        }
+        return false;
       },
     };
     stackEntryRef.current = entry;
     const unregister = registerAdminModal(entry);
     if (isTopAdminModal(entry)) {
-      const initialFocusTarget = isTabbable(initialFocusRef?.current, dialogRef.current)
-        ? initialFocusRef.current
+      const initialFocusTarget = isTabbable(initialFocusRefRef.current?.current, dialogRef.current)
+        ? initialFocusRefRef.current.current
         : (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current);
       initialFocusTarget?.focus();
     }
@@ -72,7 +79,7 @@ export default function AdminModal({
       unregister();
       if (stackEntryRef.current === entry) stackEntryRef.current = null;
     };
-  }, [open, initialFocusRef]);
+  }, [open]);
 
   if (!open) return null;
 

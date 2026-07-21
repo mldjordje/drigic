@@ -21,7 +21,8 @@ export function registerAdminModal(entry) {
       bodyOverflowBeforeLock = null;
       entry.restoreFocus?.();
     } else if (wasTop) {
-      modalStack[modalStack.length - 1].focus?.();
+      const nextEntry = modalStack[modalStack.length - 1];
+      if (!entry.restoreFocus?.(nextEntry.dialog)) nextEntry.focus?.();
     }
   };
 }

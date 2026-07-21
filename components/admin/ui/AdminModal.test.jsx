@@ -1,4 +1,4 @@
-import { createRef, useState } from "react";
+import { createRef, StrictMode, useState } from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -284,5 +284,66 @@ describe("AdminModal", () => {
 
     fireEvent.keyDown(childDialog, { key: "Tab", shiftKey: true });
     expect(childClose).toHaveFocus();
+  });
+
+  it("restores focus to the child opener inside its parent when the child closes", async () => {
+    const user = userEvent.setup();
+    function NestedHarness() {
+      const [childOpen, setChildOpen] = useState(false);
+      return (
+        <AdminModal open onClose={vi.fn()} title="Parent">
+          <button type="button" onClick={() => setChildOpen(true)}>Open child</button>
+          <AdminModal open={childOpen} onClose={() => setChildOpen(false)} title="Child" />
+        </AdminModal>
+      );
+    }
+
+    render(<NestedHarness />);
+    const opener = screen.getByRole("button", { name: "Open child" });
+    await user.click(opener);
+    await user.click(screen.getByRole("dialog", { name: "Child" }).querySelector("button[aria-label='Close dialog']"));
+
+    expect(opener).toHaveFocus();
+    expect(document.body.style.overflow).toBe("hidden");
+  });
+
+  it("does not reorder open siblings when a lower initialFocusRef identity changes", () => {
+    const lowerClose = vi.fn();
+    const topClose = vi.fn();
+    const lowerRefA = createRef();
+    const lowerRefB = createRef();
+    const { rerender } = render(
+      <>
+        <AdminModal open onClose={lowerClose} title="Lower" initialFocusRef={lowerRefA} />
+        <AdminModal open onClose={topClose} title="Top" />
+      </>
+    );
+    const topDialog = screen.getByRole("dialog", { name: "Top" });
+    const topCloseButton = topDialog.querySelector("button[aria-label='Close dialog']");
+
+    rerender(
+      <>
+        <AdminModal open onClose={lowerClose} title="Lower" initialFocusRef={lowerRefB} />
+        <AdminModal open onClose={topClose} title="Top" />
+      </>
+    );
+
+    expect(topCloseButton).toHaveFocus();
+    fireEvent.keyDown(topDialog, { key: "Escape" });
+    expect(topClose).toHaveBeenCalledTimes(1);
+    expect(lowerClose).not.toHaveBeenCalled();
+  });
+
+  it("cleans up stack state and restores focus under StrictMode effects", () => {
+    document.body.style.overflow = "scroll";
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    trigger.focus();
+    const { unmount } = render(<StrictMode><AdminModal open onClose={vi.fn()} title="Strict modal" /></StrictMode>);
+
+    unmount();
+    expect(document.body.style.overflow).toBe("scroll");
+    expect(trigger).toHaveFocus();
+    trigger.remove();
   });
 });
