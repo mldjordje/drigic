@@ -33,6 +33,8 @@ describe("AdminStatusMessage", () => {
   it("uses a supplied tone label as visible and accessible status text", () => {
     render(<AdminStatusMessage tone="success" toneLabel="Uspeh">Sačuvano.</AdminStatusMessage>);
 
-    expect(screen.getByRole("status", { name: /Uspeh/ })).toHaveTextContent("Uspeh");
+    const toneLabel = screen.getByText("Uspeh");
+    expect(screen.getByRole("status")).toContainElement(toneLabel);
+    expect(toneLabel).not.toHaveAttribute("aria-hidden", "true");
   });
 });

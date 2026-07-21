@@ -346,7 +346,7 @@ export default function AdminBookingsPage() {
         </div>
       </div>
 
-      {pageError ? <AdminStatusMessage tone="error">{pageError}</AdminStatusMessage> : null}
+      {pageError ? <AdminStatusMessage tone="error" toneLabel={t("admin.tone.error")}>{pageError}</AdminStatusMessage> : null}
 
       <div style={cardsWrapStyle}>
         {bookings.map((booking) => {
@@ -427,7 +427,7 @@ export default function AdminBookingsPage() {
             ) : null}
 
             {feedback ? (
-              <AdminStatusMessage tone={feedback.tone} title={feedback.title}>
+              <AdminStatusMessage tone={feedback.tone} toneLabel={t(`admin.tone.${feedback.tone}`)} title={feedback.title}>
                 {feedback.message}
                 {feedback.detail ? ` ${feedback.detail}` : ""}
               </AdminStatusMessage>

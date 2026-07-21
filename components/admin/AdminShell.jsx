@@ -127,6 +127,8 @@ export default function AdminShell({ children, primaryAction = null }) {
   }, [pathname, t]);
 
   const activeItem = resolveAdminNavigationItem(pathname);
+  const isMoreActive = Boolean(activeItem && !directMobileItems.some((item) => item.href === activeItem.href));
+  const moreLabel = t("admin.more");
   const closeMenu = () => setMenuOpen(false);
 
   return (
@@ -182,18 +184,20 @@ export default function AdminShell({ children, primaryAction = null }) {
         })}
         <button
           type="button"
-          className="admin-template-mobile-nav-item"
+          className={`admin-template-mobile-nav-item ${isMoreActive ? "is-active" : ""}`}
           onClick={() => setMenuOpen(true)}
+          aria-label={isMoreActive ? `${moreLabel}: ${resolveNavLabel(activeItem, t)}` : undefined}
+          aria-current={isMoreActive ? "page" : undefined}
           aria-haspopup="dialog"
           aria-expanded={menuOpen}
         >
           <NavigationIcon type="more" />
-          <span>{t("admin.more")}</span>
+          <span>{moreLabel}</span>
         </button>
       </nav>
 
       <div className="admin-template-drawer">
-        <AdminModal open={menuOpen} onClose={closeMenu} title={t("admin.navigation")}>
+        <AdminModal open={menuOpen} onClose={closeMenu} title={t("admin.navigation")} closeLabel={t("admin.closeMenu")}>
           <div className="admin-template-drawer-content">
             <GroupedNavigation scope="drawer" pathname={pathname} t={t} onNavigate={closeMenu} includeUtilities />
           </div>

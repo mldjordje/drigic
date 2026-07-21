@@ -5,9 +5,10 @@ const TONE_DETAILS = {
   error: { label: "Error", icon: "!" },
 };
 
-export default function AdminStatusMessage({ tone = "info", title, children }) {
+export default function AdminStatusMessage({ tone = "info", toneLabel, title, children }) {
   const details = TONE_DETAILS[tone] || TONE_DETAILS.info;
   const isError = tone === "error";
+  const label = toneLabel || details.label;
 
   return (
     <div
@@ -17,7 +18,7 @@ export default function AdminStatusMessage({ tone = "info", title, children }) {
     >
       <span className="admin-status-message__icon" aria-hidden="true">{details.icon}</span>
       <div className="admin-status-message__content">
-        <span className="admin-status-message__tone">{details.label}</span>
+        <span className="admin-status-message__tone">{label}</span>
         {title ? <strong className="admin-status-message__title">{title}</strong> : null}
         {children ? <div className="admin-status-message__body">{children}</div> : null}
       </div>

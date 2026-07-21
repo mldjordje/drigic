@@ -46,6 +46,7 @@ export default function AdminModal({
   description,
   initialFocusRef,
   dismissible = true,
+  closeLabel = "Close dialog",
   children,
 }) {
   if (typeof title !== "string" || !title.trim()) throw new Error("AdminModal requires a non-empty title");
@@ -155,7 +156,7 @@ export default function AdminModal({
             {description ? <p id={descriptionId} className="admin-modal__description">{description}</p> : null}
           </div>
           {dismissible ? (
-            <button ref={closeButtonRef} className="admin-modal__close" type="button" onClick={handleClose} aria-label="Close dialog">
+            <button ref={closeButtonRef} className="admin-modal__close" type="button" onClick={handleClose} aria-label={closeLabel}>
               <span aria-hidden="true">×</span>
             </button>
           ) : null}

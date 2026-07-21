@@ -1,7 +1,7 @@
 # Dr Igić v2 — foundation and admin-shell implementation plan
 
-**Design source:** `docs/superpowers/specs/2026-07-21-drigic-v2-product-incubator-design.md`  
-**Branch:** `codex/drigic-v2-foundation`  
+**Design source:** `docs/superpowers/specs/2026-07-21-drigic-v2-product-incubator-design.md`
+**Branch:** `codex/drigic-v2-foundation`
 **Worktree:** `C:\Users\PC\.config\superpowers\worktrees\drigic\drigic-v2-foundation`
 
 ## Goal
