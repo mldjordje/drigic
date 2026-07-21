@@ -1959,10 +1959,6 @@
     grid-template-columns: 1fr;
   }
 
-  .admin-template-content {
-    padding: 10px;
-  }
-
   .admin-calendar-page.is-mobile-full {
     min-height: calc(100dvh - 76px);
     grid-template-rows: auto auto 1fr;
@@ -2089,15 +2085,6 @@
     padding-top: 14px;
   }
 
-  .admin-template-topbar-actions {
-    width: 100%;
-  }
-
-  .admin-template-topbar-actions .admin-template-link-btn,
-  .admin-template-topbar-actions > div {
-    flex: 1 1 calc(50% - 5px);
-  }
-
   .admin-notif-surface.is-mobile {
     left: 10px;
     right: 10px;
@@ -2141,6 +2128,12 @@
   padding-bottom: 8px;
 }
 
+.admin-template-drawer .admin-template-nav-item {
+  box-sizing: border-box;
+  min-height: 44px;
+  align-items: center;
+}
+
 @media (min-width: 1024px) {
   .admin-template-sidebar--desktop {
     display: block;
@@ -2158,6 +2151,10 @@
 
   .admin-template-menu-btn {
     display: inline-flex;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
   }
 
   .admin-template-topbar {

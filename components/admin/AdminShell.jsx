@@ -188,7 +188,7 @@ export default function AdminShell({ children, primaryAction = null }) {
           aria-expanded={menuOpen}
         >
           <NavigationIcon type="more" />
-          <span>Više</span>
+          <span>{t("admin.more")}</span>
         </button>
       </nav>
 

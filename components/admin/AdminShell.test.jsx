@@ -17,18 +17,18 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/components/admin/AdminNotificationsBell", () => ({
-  default: () => null,
+  default: () => <button type="button" data-testid="admin-notifications">Notifications</button>,
 }));
 
 vi.mock("@/components/common/LocaleSwitcher", () => ({
   default: () => <span>Locale utility</span>,
 }));
 
-function renderShell(locale = "en") {
+function renderShell(locale = "en", primaryAction = null) {
   document.cookie = `drigic-locale=${locale}; path=/`;
   return render(
     <LocaleProvider initialLocale={locale}>
-      <AdminShell>Content</AdminShell>
+      <AdminShell primaryAction={primaryAction}>Content</AdminShell>
     </LocaleProvider>
   );
 }
@@ -54,17 +54,22 @@ describe("AdminShell responsive navigation", () => {
   });
 
   it("provides exactly five labelled phone navigation destinations or actions", () => {
-    renderShell("sr");
+    renderShell();
 
     const mobileNavigation = document.querySelector(".admin-template-mobile-nav");
-    expect(mobileNavigation).toHaveAccessibleName("Navigacija");
+    expect(mobileNavigation).toHaveAccessibleName("Navigation");
     expect(within(mobileNavigation).getAllByRole("link")).toHaveLength(4);
     expect(within(mobileNavigation).getAllByRole("button")).toHaveLength(1);
-    expect(within(mobileNavigation).getByRole("link", { name: "Danas" })).toHaveAttribute("href", "/admin/dashboard");
-    expect(within(mobileNavigation).getByRole("link", { name: "Kalendar" })).toHaveAttribute("href", "/admin/kalendar");
-    expect(within(mobileNavigation).getByRole("link", { name: "Klijenti" })).toHaveAttribute("href", "/admin/klijenti");
-    expect(within(mobileNavigation).getByRole("link", { name: "Termini" })).toHaveAttribute("href", "/admin/bookings");
-    expect(within(mobileNavigation).getByRole("button", { name: "Više" })).toBeInTheDocument();
+    expect(within(mobileNavigation).getByRole("link", { name: "Today" })).toHaveAttribute("href", "/admin/dashboard");
+    expect(within(mobileNavigation).getByRole("link", { name: "Calendar" })).toHaveAttribute("href", "/admin/kalendar");
+    expect(within(mobileNavigation).getByRole("link", { name: "Clients" })).toHaveAttribute("href", "/admin/klijenti");
+    expect(within(mobileNavigation).getByRole("link", { name: "Bookings" })).toHaveAttribute("href", "/admin/bookings");
+    expect(within(mobileNavigation).getByRole("button", { name: "More" })).toBeInTheDocument();
+  });
+
+  it("localizes the More label", () => {
+    renderShell("sr");
+    expect(within(document.querySelector(".admin-template-mobile-nav")).getByRole("button", { name: "Više" })).toBeInTheDocument();
   });
 
   it("marks the current direct phone destination", () => {
@@ -77,11 +82,19 @@ describe("AdminShell responsive navigation", () => {
     expect(within(mobileNavigation).getByRole("link", { name: "Today" })).not.toHaveAttribute("aria-current");
   });
 
+  it("marks a direct destination current for nested routes", () => {
+    pathname = "/admin/kalendar/week/2026-07-21";
+    renderShell();
+
+    const mobileNavigation = document.querySelector(".admin-template-mobile-nav");
+    expect(within(mobileNavigation).getByRole("link", { name: "Calendar" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("opens More as a named, grouped drawer", async () => {
     const user = userEvent.setup();
     renderShell();
 
-    await user.click(screen.getByRole("button", { name: "Više" }));
+    await user.click(screen.getByRole("button", { name: "More" }));
 
     const drawer = screen.getByRole("dialog", { name: "Navigation" });
     expect(drawer).toBeInTheDocument();
@@ -92,7 +105,7 @@ describe("AdminShell responsive navigation", () => {
   it("closes More on Escape and restores focus to its trigger", async () => {
     const user = userEvent.setup();
     renderShell();
-    const trigger = screen.getByRole("button", { name: "Više" });
+    const trigger = screen.getByRole("button", { name: "More" });
 
     await user.click(trigger);
     await user.keyboard("{Escape}");
@@ -104,7 +117,7 @@ describe("AdminShell responsive navigation", () => {
   it("closes More when a drawer link is activated", async () => {
     const user = userEvent.setup();
     renderShell();
-    await user.click(screen.getByRole("button", { name: "Više" }));
+    await user.click(screen.getByRole("button", { name: "More" }));
 
     await user.click(within(screen.getByRole("dialog", { name: "Navigation" })).getByRole("link", { name: "Settings" }));
 
@@ -114,7 +127,7 @@ describe("AdminShell responsive navigation", () => {
   it("closes an open drawer when the pathname changes", async () => {
     const user = userEvent.setup();
     const view = renderShell();
-    await user.click(screen.getByRole("button", { name: "Više" }));
+    await user.click(screen.getByRole("button", { name: "More" }));
     expect(screen.getByRole("dialog", { name: "Navigation" })).toBeInTheDocument();
 
     pathname = "/admin/kalendar";
@@ -135,10 +148,20 @@ describe("AdminShell responsive navigation", () => {
     expect(within(topbar).queryByRole("link", { name: "Clients" })).not.toBeInTheDocument();
   });
 
+  it("keeps notifications available in the topbar", () => {
+    renderShell();
+    expect(within(document.querySelector(".admin-template-topbar")).getByTestId("admin-notifications")).toBeInTheDocument();
+  });
+
+  it("renders an optional page primary action in the topbar", () => {
+    renderShell("en", <button type="button">Add appointment</button>);
+    expect(within(document.querySelector(".admin-template-topbar")).getByRole("button", { name: "Add appointment" })).toBeInTheDocument();
+  });
+
   it("uses unique IDs for desktop and drawer group labels", async () => {
     const user = userEvent.setup();
     renderShell();
-    await user.click(screen.getByRole("button", { name: "Više" }));
+    await user.click(screen.getByRole("button", { name: "More" }));
 
     const ids = Array.from(document.querySelectorAll("[id]"), (element) => element.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -157,5 +180,22 @@ describe("AdminShell responsive stylesheet contracts", () => {
     expect(stylesheet).toMatch(/@media\s*\(min-width:\s*1024px\)/);
     expect(stylesheet).toMatch(/safe-area-inset-bottom/);
     expect(stylesheet).toMatch(/admin-template-content[\s\S]{0,500}padding-bottom/);
+  });
+
+  it("keeps legacy 960px shell declarations out of the tablet cascade", () => {
+    const legacyBlock = stylesheet.match(/@media\s*\(max-width:\s*960px\)\s*\{([\s\S]*?)\/\* Responsive shell:/)?.[1] || "";
+
+    expect(legacyBlock).not.toMatch(/\.admin-template-content\s*\{/);
+    expect(legacyBlock).not.toMatch(/\.admin-template-topbar-actions\s*\{/);
+  });
+
+  it("guarantees 44px tablet and drawer navigation touch targets", () => {
+    const tabletBlock = stylesheet.match(/@media\s*\(min-width:\s*768px\)\s*and\s*\(max-width:\s*1023px\)\s*\{([\s\S]*?)@media\s*\(max-width:\s*767px\)/)?.[1] || "";
+    const drawerRule = stylesheet.match(/\.admin-template-drawer\s+\.admin-template-nav-item\s*\{([\s\S]*?)\}/)?.[1] || "";
+
+    expect(tabletBlock).toMatch(/\.admin-template-menu-btn\s*\{[\s\S]*?min-width:\s*44px[\s\S]*?min-height:\s*44px/);
+    expect(drawerRule).toMatch(/box-sizing:\s*border-box/);
+    expect(drawerRule).toMatch(/min-height:\s*44px/);
+    expect(drawerRule).toMatch(/align-items:\s*center/);
   });
 });
