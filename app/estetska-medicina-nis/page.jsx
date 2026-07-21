@@ -132,7 +132,7 @@ const LOCAL_JSON_LD = {
   ],
 };
 
-export default function EstetkaMedacinaНis() {
+export default function EstetkaMedacinaNis() {
   return (
     <div className="clinic-home5">
       <Header4 />

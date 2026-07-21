@@ -36,7 +36,7 @@ export const clinicFaqs = [
     id: 6,
     question: "Da li tretmani bole i koliko traje oporavak?",
     answer:
-      "Većina tretmana je minimalno neprijatna; koristi se anestetička krema ili fileri sa lidokainom kada je potrebno. Oporavak je najčešće kratak — mogући su blago crvenilo, oticanje ili modrice koji prolaze za nekoliko dana. Tačne preporuke za negu posle tretmana dobijate od lekara.",
+      "Većina tretmana je minimalno neprijatna; koristi se anestetička krema ili fileri sa lidokainom kada je potrebno. Oporavak je najčešće kratak — mogući su blago crvenilo, oticanje ili modrice koji prolaze za nekoliko dana. Tačne preporuke za negu posle tretmana dobijate od lekara.",
   },
   {
     id: 7,
