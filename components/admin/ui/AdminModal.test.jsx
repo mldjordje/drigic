@@ -397,4 +397,24 @@ describe("AdminModal", () => {
 
     expect(secondTrigger).toHaveFocus();
   });
+
+  it("wraps controls using browser tabindex order instead of DOM order", () => {
+    render(
+      <AdminModal open onClose={vi.fn()} title="Tab order">
+        <button type="button" tabIndex={2}>Second sequential</button>
+        <button type="button" tabIndex={1}>First sequential</button>
+        <button type="button">Natural action</button>
+      </AdminModal>
+    );
+
+    const dialog = screen.getByRole("dialog");
+    const firstSequential = screen.getByRole("button", { name: "First sequential" });
+    const naturalAction = screen.getByRole("button", { name: "Natural action" });
+
+    firstSequential.focus();
+    fireEvent.keyDown(dialog, { key: "Tab", shiftKey: true });
+    expect(naturalAction).toHaveFocus();
+    fireEvent.keyDown(dialog, { key: "Tab" });
+    expect(firstSequential).toHaveFocus();
+  });
 });

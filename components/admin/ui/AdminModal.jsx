@@ -25,9 +25,18 @@ function isTabbable(element, container) {
 }
 
 function getFocusableElements(container) {
-  return Array.from(container?.querySelectorAll(FOCUSABLE_SELECTOR) || []).filter(
-    (element) => isTabbable(element, container)
-  );
+  return Array.from(container?.querySelectorAll(FOCUSABLE_SELECTOR) || [])
+    .map((element, index) => ({ element, index }))
+    .filter(({ element }) => isTabbable(element, container))
+    .sort((left, right) => {
+      const leftPositive = left.element.tabIndex > 0;
+      const rightPositive = right.element.tabIndex > 0;
+      if (leftPositive && rightPositive) return left.element.tabIndex - right.element.tabIndex || left.index - right.index;
+      if (leftPositive) return -1;
+      if (rightPositive) return 1;
+      return left.index - right.index;
+    })
+    .map(({ element }) => element);
 }
 
 export default function AdminModal({
