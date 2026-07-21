@@ -346,4 +346,55 @@ describe("AdminModal", () => {
     expect(trigger).toHaveFocus();
     trigger.remove();
   });
+
+  it("preserves the external opener through StrictMode replay for initially open siblings", () => {
+    document.body.style.overflow = "scroll";
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    trigger.focus();
+    const { rerender } = render(
+      <StrictMode>
+        <AdminModal open onClose={vi.fn()} title="Lower" />
+        <AdminModal open onClose={vi.fn()} title="Top" />
+      </StrictMode>
+    );
+
+    rerender(
+      <StrictMode>
+        <AdminModal open onClose={vi.fn()} title="Lower" />
+        <AdminModal open={false} onClose={vi.fn()} title="Top" />
+      </StrictMode>
+    );
+    rerender(
+      <StrictMode>
+        <AdminModal open={false} onClose={vi.fn()} title="Lower" />
+        <AdminModal open={false} onClose={vi.fn()} title="Top" />
+      </StrictMode>
+    );
+
+    expect(document.body.style.overflow).toBe("scroll");
+    expect(trigger).toHaveFocus();
+    trigger.remove();
+  });
+
+  it("captures a new opener after a genuine close and reopen", () => {
+    const { rerender } = render(
+      <>
+        <button type="button">First trigger</button>
+        <button type="button">Second trigger</button>
+        <AdminModal open={false} onClose={vi.fn()} title="Reopen modal" />
+      </>
+    );
+    const firstTrigger = screen.getByRole("button", { name: "First trigger" });
+    const secondTrigger = screen.getByRole("button", { name: "Second trigger" });
+    firstTrigger.focus();
+
+    rerender(<><button type="button">First trigger</button><button type="button">Second trigger</button><AdminModal open onClose={vi.fn()} title="Reopen modal" /></>);
+    rerender(<><button type="button">First trigger</button><button type="button">Second trigger</button><AdminModal open={false} onClose={vi.fn()} title="Reopen modal" /></>);
+    secondTrigger.focus();
+    rerender(<><button type="button">First trigger</button><button type="button">Second trigger</button><AdminModal open onClose={vi.fn()} title="Reopen modal" /></>);
+    rerender(<><button type="button">First trigger</button><button type="button">Second trigger</button><AdminModal open={false} onClose={vi.fn()} title="Reopen modal" /></>);
+
+    expect(secondTrigger).toHaveFocus();
+  });
 });

@@ -49,16 +49,19 @@ export default function AdminModal({
   const titleId = useId();
   const descriptionId = useId();
   initialFocusRefRef.current = initialFocusRef;
+  if (!open) openerRef.current = null;
 
   useEffect(() => {
     if (!open) return undefined;
 
-    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!openerRef.current) {
+      openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
+    const opener = openerRef.current;
     const entry = {
       dialog: dialogRef.current,
       focus: () => (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current)?.focus(),
       restoreFocus: (nextDialog) => {
-        const opener = openerRef.current;
         if (isTabbable(opener) && (!nextDialog || nextDialog.contains(opener))) {
           opener.focus();
           return true;
