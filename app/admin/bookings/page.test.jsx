@@ -544,6 +544,43 @@ describe("AdminBookingsPage booking mutations", () => {
     expect(screen.getByRole("article", { name: /booking for ada/i })).toBeInTheDocument();
   });
 
+  it("rolls back the canonical status and totals when a pending reload is followed by PATCH failure", async () => {
+    const patch = deferred();
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return patch.promise;
+      }
+      return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada, bela } = await getBookingRows();
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply filter" }));
+    await waitFor(() =>
+      expect(screen.getByText("Confirmed", { selector: "strong" }).parentElement).toHaveTextContent(
+        "Confirmed1"
+      )
+    );
+    expect(within(ada).getByText("Confirmed")).toBeInTheDocument();
+    expect(within(bela).getByRole("button", { name: "Confirm" })).toBeEnabled();
+
+    await act(async () => {
+      patch.resolve(jsonResponse({ ok: false, message: "Confirmation rejected" }, false));
+    });
+
+    expect(await within(ada).findByRole("alert")).toHaveTextContent("Confirmation rejected");
+    expect(within(ada).getByText("Pending")).toBeInTheDocument();
+    expect(ada).toHaveAttribute("aria-busy", "false");
+    expect(screen.getByText("Pending", { selector: "strong" }).parentElement).toHaveTextContent(
+      "Pending2"
+    );
+    expect(screen.getByText("Confirmed", { selector: "strong" }).parentElement).toHaveTextContent(
+      "Confirmed0"
+    );
+    expect(within(bela).getByRole("button", { name: "Confirm" })).toBeEnabled();
+  });
+
   it("announces a page-level alert when initial booking loading fails", async () => {
     renderWithFetch(
       vi.fn().mockResolvedValue(

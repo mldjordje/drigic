@@ -225,6 +225,11 @@ export default function AdminBookingsPage() {
         return;
       }
       if (nextStatus) {
+        setBookings((previous) =>
+          previous.map((item) =>
+            item.id === bookingId ? { ...item, status: previousStatus } : item
+          )
+        );
         setStatusById((previous) => ({ ...previous, [bookingId]: previousStatus }));
       }
       setFeedbackById((previous) => ({
