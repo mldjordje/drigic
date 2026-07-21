@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { createTranslator } from "@/lib/i18n";
 import AdminStatusMessage from "./AdminStatusMessage";
 
 describe("AdminStatusMessage", () => {
@@ -36,5 +37,12 @@ describe("AdminStatusMessage", () => {
     const toneLabel = screen.getByText("Uspeh");
     expect(screen.getByRole("status")).toContainElement(toneLabel);
     expect(toneLabel).not.toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("renders the Serbian booking error tone label with its diacritic", () => {
+    const t = createTranslator("sr");
+    render(<AdminStatusMessage tone="error" toneLabel={t("admin.tone.error")}>Termin nije sačuvan.</AdminStatusMessage>);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Greška");
   });
 });
