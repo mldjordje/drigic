@@ -6,34 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import LocaleSwitcher from "@/components/common/LocaleSwitcher";
 import { useLocale } from "@/components/common/LocaleProvider";
 import AdminNotificationsBell from "@/components/admin/AdminNotificationsBell";
-
-const approvedModules = [
-  { href: "/admin/kalendar", labelKey: "admin.calendar" },
-  { href: "/admin/dashboard", labelKey: "admin.dashboard" },
-  { href: "/admin/analitika", labelKey: "admin.analytics" },
-  { href: "/admin/tutorial", labelKey: "admin.tutorial" },
-  { href: "/admin/spec", labelKey: "admin.spec" },
-  { href: "/admin/podesavanja", labelKey: "admin.settings" },
-  { href: "/admin/prepodnevni-termini", labelKey: "admin.morningSlots" },
-  { href: "/admin/popodnevni-termini", labelKey: "admin.afternoonSlots" },
-  { href: "/admin/nedelja", labelKey: "admin.sunday" },
-  { href: "/admin/bookings", labelKey: "admin.bookings" },
-  { href: "/admin/klijenti", labelKey: "admin.clients" },
-  { href: "/admin/services", labelKey: "admin.services" },
-  { href: "/admin/promotions", labelKey: "admin.promotions" },
-  { href: "/admin/packages", labelKey: "admin.packages" },
-  { href: "/admin/preparati", labelKey: "admin.products" },
-  { href: "/admin/announcements", labelKey: "admin.announcements" },
-  { href: "/admin/media", labelKey: "admin.media" },
-  { href: "/admin/vip", labelKey: "admin.vip" },
-  { href: "/admin/blog", labelKey: "admin.blog" },
-];
-
-const lockedModules = [
-  { labelKey: "admin.lockedEmployees", reasonKey: "admin.lockedReason" },
-  { labelKey: "admin.lockedFinance", reasonKey: "admin.lockedReason" },
-  { labelKey: "admin.lockedStock", reasonKey: "admin.lockedReason" },
-];
+import {
+  ADMIN_NAVIGATION_GROUPS,
+  resolveAdminNavigationItem,
+} from "@/lib/admin/navigation";
 
 const quickLinks = [
   { href: "/booking", labelKey: "admin.bookingForm" },
@@ -65,9 +41,7 @@ export default function AdminShell({ children }) {
   }, []);
 
   const activeModuleTitle = useMemo(() => {
-    const current = approvedModules.find((item) =>
-      pathname === item.href || pathname.startsWith(`${item.href}/`)
-    );
+    const current = resolveAdminNavigationItem(pathname);
     return current ? resolveNavLabel(current, t) : "Admin";
   }, [pathname, t]);
 
@@ -79,26 +53,26 @@ export default function AdminShell({ children }) {
           <p>{t("admin.controlPanel")}</p>
         </div>
 
-        <div className="admin-template-group">
-          <p className="admin-template-group-title">{t("admin.approved")}</p>
-          <nav className="admin-template-nav">
-            {approvedModules.map((item) => {
-              const active =
-                pathname === item.href ||
-                (item.href === "/admin/kalendar" && pathname === "/admin");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`admin-template-nav-item ${active ? "is-active" : ""}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span>{resolveNavLabel(item, t)}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        {ADMIN_NAVIGATION_GROUPS.map((group) => (
+          <div className="admin-template-group" key={group.labelKey}>
+            <p className="admin-template-group-title">{t(group.labelKey)}</p>
+            <nav className="admin-template-nav">
+              {group.items.map((item) => {
+                const active = resolveAdminNavigationItem(pathname)?.href === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`admin-template-nav-item ${active ? "is-active" : ""}`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <span>{resolveNavLabel(item, t)}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ))}
 
         <div className="admin-template-group">
           <p className="admin-template-group-title">{t("admin.navigation")}</p>
@@ -128,22 +102,6 @@ export default function AdminShell({ children }) {
           </nav>
         </div>
 
-        <div className="admin-template-group">
-          <p className="admin-template-group-title">{t("admin.locked")}</p>
-          <div className="admin-template-nav">
-            {lockedModules.map((item) => (
-              <button
-                key={item.labelKey}
-                type="button"
-                className="admin-template-nav-item is-locked"
-                disabled
-                title={`${t(item.labelKey)} - ${t(item.reasonKey)}`}
-              >
-                <span>{t(item.labelKey)}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       </aside>
       {menuOpen ? (
         <button
