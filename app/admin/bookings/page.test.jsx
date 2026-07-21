@@ -178,6 +178,125 @@ describe("AdminBookingsPage booking mutations", () => {
     expect(within(ada).getByRole("button", { name: "Save note" })).toBeEnabled();
   });
 
+  it("keeps persisted mutation success in the booking and reports a failed reload at page level", async () => {
+    let getCount = 0;
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return Promise.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+      }
+      getCount += 1;
+      if (getCount === 1) {
+        return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+      }
+      return Promise.resolve(jsonResponse({ ok: false, message: "Reload unavailable" }, false));
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada } = await getBookingRows();
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+
+    await waitFor(() =>
+      expect(within(ada).getByRole("status")).toHaveTextContent(/confirm.*completed.*ada/i)
+    );
+    expect(within(ada).getByText("Confirmed")).toBeInTheDocument();
+    expect(ada).toHaveAttribute("aria-busy", "false");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Reload unavailable");
+    expect(within(ada).queryByRole("alert")).toBeNull();
+  });
+
+  it("preserves one booking's feedback while another booking is updated", async () => {
+    const patchB = deferred();
+    let getCount = 0;
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        const payload = JSON.parse(options.body);
+        if (payload.id === "booking-b") {
+          return patchB.promise;
+        }
+        return Promise.resolve(jsonResponse({ ok: true, data: { status: payload.status } }));
+      }
+      getCount += 1;
+      return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada, bela } = await getBookingRows();
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    await waitFor(() => expect(getCount).toBe(2));
+    expect(within(ada).getByRole("status")).toHaveTextContent(/confirm.*completed.*ada/i);
+
+    fireEvent.click(within(bela).getByRole("button", { name: "Confirm" }));
+    expect(within(bela).getByRole("status")).toHaveTextContent(/confirm.*bela.*in progress/i);
+    expect(within(ada).getByRole("status")).toHaveTextContent(/confirm.*completed.*ada/i);
+
+    await act(async () => {
+      patchB.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+    await waitFor(() => expect(getCount).toBe(3));
+    expect(within(ada).getByRole("status")).toHaveTextContent(/confirm.*completed.*ada/i);
+  });
+
+  it("sends the unchanged quick-status PATCH payload", async () => {
+    const patch = deferred();
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return patch.promise;
+      }
+      return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada } = await getBookingRows();
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+
+    const [, options] = fetchMock.mock.calls.find(([, requestOptions]) => requestOptions?.method === "PATCH");
+    expect(options).toMatchObject({
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(JSON.parse(options.body)).toEqual({
+      id: "booking-a",
+      status: "confirmed",
+      notes: "",
+    });
+
+    await act(async () => {
+      patch.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+  });
+
+  it("saves notes with the current status and row-specific progress and feedback", async () => {
+    const patch = deferred();
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return patch.promise;
+      }
+      return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada } = await getBookingRows();
+    fireEvent.change(within(ada).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Follow up next week" },
+    });
+    fireEvent.click(within(ada).getByRole("button", { name: "Save note" }));
+
+    expect(within(ada).getByRole("status")).toHaveTextContent(/save note.*ada.*in progress/i);
+    const [, options] = fetchMock.mock.calls.find(([, requestOptions]) => requestOptions?.method === "PATCH");
+    expect(JSON.parse(options.body)).toEqual({
+      id: "booking-a",
+      status: "pending",
+      notes: "Follow up next week",
+    });
+
+    await act(async () => {
+      patch.resolve(jsonResponse({ ok: true, data: { status: "pending" } }));
+    });
+    expect(await within(ada).findByRole("status")).toHaveTextContent(
+      /save note.*completed.*ada/i
+    );
+  });
+
   it("announces a page-level alert when initial booking loading fails", async () => {
     renderWithFetch(
       vi.fn().mockResolvedValue(

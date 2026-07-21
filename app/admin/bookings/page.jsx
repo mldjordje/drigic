@@ -93,7 +93,6 @@ export default function AdminBookingsPage() {
       setStatusById((previous) => ({ ...previous, [bookingId]: nextStatus }));
     }
 
-    let statusWasPersisted = false;
     try {
       const response = await fetch("/api/admin/bookings", {
         method: "PATCH",
@@ -108,12 +107,10 @@ export default function AdminBookingsPage() {
       if (!response.ok || !data?.ok) {
         throw new Error(data?.message || t("admin.book.updateFailed"));
       }
-      statusWasPersisted = true;
       setStatusById((prev) => ({
         ...prev,
         [bookingId]: data.data?.status || statusToPersist,
       }));
-      await loadBookings();
       setFeedbackById((previous) => ({
         ...previous,
         [bookingId]: {
@@ -125,8 +122,15 @@ export default function AdminBookingsPage() {
           }),
         },
       }));
+
+      try {
+        await loadBookings();
+        setPageError("");
+      } catch (err) {
+        setPageError(err.message || t("admin.book.loadFailed"));
+      }
     } catch (err) {
-      if (!statusWasPersisted && nextStatus) {
+      if (nextStatus) {
         setStatusById((previous) => ({ ...previous, [bookingId]: previousStatus }));
       }
       setFeedbackById((previous) => ({
