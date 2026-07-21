@@ -104,6 +104,7 @@ Deliver the first low-risk, visible Dr Igić v2 increment: a reliable test found
 - Create: `lib/admin/navigation.js`
 - Create: `lib/admin/navigation.test.js`
 - Modify: `components/admin/AdminShell.jsx`
+- Modify: `app/admin/page.jsx`
 - Modify: `lib/i18n/index.js`
 
 ### Requirements
@@ -118,9 +119,10 @@ Deliver the first low-risk, visible Dr Igić v2 increment: a reliable test found
    - Podešavanja: settings;
    - Pomoć: tutorial and specification.
 2. Export pure helpers that flatten navigation and resolve the active item from a pathname, including nested client routes and `/admin` mapping to the Today/dashboard destination.
-3. Remove permanently locked navigation placeholders. Keep locale switching and the public booking shortcut in a secondary utility area.
-4. Render localized group labels and item labels. Add keys for supported dictionaries, using accurate Serbian and reasonable existing-language wording without restructuring the dictionary system.
-5. The visible brand must be correctly encoded as `Dr Igić`.
+3. Change the `/admin` root redirect from the calendar to `/admin/dashboard` so the route behavior matches the Today navigation model.
+4. Remove permanently locked navigation placeholders. Keep locale switching and the public booking shortcut in a secondary utility area.
+5. Render localized group labels and item labels. Add keys for supported dictionaries, using accurate Serbian and reasonable existing-language wording without restructuring the dictionary system.
+6. The visible brand must be correctly encoded as `Dr Igić`.
 
 ### TDD sequence
 
