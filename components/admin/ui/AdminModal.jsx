@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { isTopAdminModal, registerAdminModal } from "./adminModalStack";
 
 const FOCUSABLE_SELECTOR = [
   "a[href]:not([tabindex='-1'])",
@@ -13,9 +14,19 @@ const FOCUSABLE_SELECTOR = [
   "[contenteditable='true']:not([tabindex='-1'])",
 ].join(",");
 
+function isTabbable(element, container) {
+  if (!(element instanceof HTMLElement) || (container && !container.contains(element))) return false;
+  if (element.tabIndex < 0 || element.matches(":disabled") || element.matches("input[type='hidden']")) return false;
+  for (let current = element; current instanceof HTMLElement; current = current.parentElement) {
+    if (current.hidden || current.getAttribute("aria-hidden") === "true" || current.hasAttribute("inert")) return false;
+    if (current.matches("fieldset[disabled]") || ["none", "hidden", "collapse"].includes(window.getComputedStyle(current).display) || ["hidden", "collapse"].includes(window.getComputedStyle(current).visibility)) return false;
+  }
+  return true;
+}
+
 function getFocusableElements(container) {
   return Array.from(container?.querySelectorAll(FOCUSABLE_SELECTOR) || []).filter(
-    (element) => element.tabIndex >= 0 && !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true"
+    (element) => isTabbable(element, container)
   );
 }
 
@@ -28,9 +39,12 @@ export default function AdminModal({
   dismissible = true,
   children,
 }) {
+  if (typeof title !== "string" || !title.trim()) throw new Error("AdminModal requires a non-empty title");
+
   const dialogRef = useRef(null);
   const closeButtonRef = useRef(null);
   const openerRef = useRef(null);
+  const stackEntryRef = useRef(null);
   const titleId = useId();
   const descriptionId = useId();
 
@@ -38,24 +52,36 @@ export default function AdminModal({
     if (!open) return undefined;
 
     openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const initialFocusTarget = initialFocusRef?.current || closeButtonRef.current || dialogRef.current;
+    const initialFocusTarget = isTabbable(initialFocusRef?.current, dialogRef.current)
+      ? initialFocusRef.current
+      : (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current);
     initialFocusTarget?.focus();
 
+    const entry = {
+      dialog: dialogRef.current,
+      focus: () => (isTabbable(closeButtonRef.current, dialogRef.current) ? closeButtonRef.current : dialogRef.current)?.focus(),
+      restoreFocus: () => {
+        if (openerRef.current?.isConnected) openerRef.current.focus();
+      },
+    };
+    stackEntryRef.current = entry;
+    const unregister = registerAdminModal(entry);
+
     return () => {
-      document.body.style.overflow = previousOverflow;
-      if (openerRef.current?.isConnected) openerRef.current.focus();
+      unregister();
+      if (stackEntryRef.current === entry) stackEntryRef.current = null;
     };
   }, [open, initialFocusRef]);
 
   if (!open) return null;
 
   const handleKeyDown = (event) => {
-    if (event.key === "Escape" && dismissible) {
+    if (!isTopAdminModal(stackEntryRef.current)) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
       event.stopPropagation();
-      onClose?.();
+      if (dismissible) onClose?.();
       return;
     }
 
@@ -84,7 +110,11 @@ export default function AdminModal({
   };
 
   const handleBackdropClick = (event) => {
-    if (dismissible && event.target === event.currentTarget) onClose?.();
+    if (isTopAdminModal(stackEntryRef.current) && dismissible && event.target === event.currentTarget) onClose?.();
+  };
+
+  const handleClose = () => {
+    if (isTopAdminModal(stackEntryRef.current)) onClose?.();
   };
 
   return (
@@ -105,7 +135,7 @@ export default function AdminModal({
             {description ? <p id={descriptionId} className="admin-modal__description">{description}</p> : null}
           </div>
           {dismissible ? (
-            <button ref={closeButtonRef} className="admin-modal__close" type="button" onClick={onClose} aria-label="Close dialog">
+            <button ref={closeButtonRef} className="admin-modal__close" type="button" onClick={handleClose} aria-label="Close dialog">
               <span aria-hidden="true">×</span>
             </button>
           ) : null}

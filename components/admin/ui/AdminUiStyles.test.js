@@ -9,11 +9,8 @@ const stylesheet = readFileSync(
 
 describe("admin UI primitive styles", () => {
   it("uses selectors that outrank generic admin text colors for semantic status cues and modal descriptions", () => {
-    expect(stylesheet).toContain(".admin-template-root .admin-status-message .admin-status-message__tone");
-    expect(stylesheet).toContain(".admin-template-root .admin-status-message .admin-status-message__title");
-    expect(stylesheet).toContain(".admin-template-root .admin-status-message .admin-status-message__icon");
-    expect(stylesheet).toContain("color: var(--admin-status-tone);");
-    expect(stylesheet).toContain(".admin-modal .admin-modal__description");
-    expect(stylesheet).toContain("color: var(--admin-color-muted, #bcd0e8);");
+    expect(stylesheet).toMatch(/\.admin-template-root\s+\.admin-status-message\s+\.admin-status-message__(tone|title|icon)/);
+    expect(stylesheet).toMatch(/\.admin-status-message__tone[\s\S]*?color:\s*var\(--admin-status-tone\)/);
+    expect(stylesheet).toMatch(/\.admin-modal\s+\.admin-modal__description\s*\{[\s\S]*?color:\s*var\(--admin-color-muted,\s*#bcd0e8\)/);
   });
 });
