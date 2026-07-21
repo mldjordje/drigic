@@ -45,6 +45,7 @@ export default function AdminBookingsPage() {
   const persistedUpdatesRef = useRef(new Map());
   const loadGenerationRef = useRef(0);
   const isMountedRef = useRef(false);
+  const appliedFiltersRef = useRef({ from: "", to: "" });
 
   const loadBookings = useCallback(async ({ from: filterFrom = "", to: filterTo = "" } = {}) => {
     const generation = ++loadGenerationRef.current;
@@ -119,7 +120,7 @@ export default function AdminBookingsPage() {
 
   useEffect(() => {
     isMountedRef.current = true;
-    loadBookings()
+    loadBookings(appliedFiltersRef.current)
       .then((result) => {
         if (!result.stale && isMountedRef.current) {
           setPageError("");
@@ -147,7 +148,6 @@ export default function AdminBookingsPage() {
     const previousStatus = statusById[bookingId] || booking?.status;
     const statusToPersist = nextStatus || previousStatus;
     const notesToPersist = notesById[bookingId] ?? booking?.notes ?? "";
-    const filters = { from, to };
 
     pendingBookingIdsRef.current.add(bookingId);
     setPendingById((previous) => ({ ...previous, [bookingId]: { actionLabel } }));
@@ -211,7 +211,7 @@ export default function AdminBookingsPage() {
       }));
 
       try {
-        const result = await loadBookings(filters);
+        const result = await loadBookings(appliedFiltersRef.current);
         if (!result.stale && isMountedRef.current) {
           setPageError("");
         }
@@ -322,8 +322,10 @@ export default function AdminBookingsPage() {
             type="button"
             className="admin-template-link-btn"
             style={{ alignSelf: "end" }}
-            onClick={() =>
-              loadBookings({ from, to })
+            onClick={() => {
+              const filters = { from, to };
+              appliedFiltersRef.current = filters;
+              loadBookings(filters)
                 .then((result) => {
                   if (!result.stale && isMountedRef.current) {
                     setPageError("");
@@ -333,8 +335,8 @@ export default function AdminBookingsPage() {
                   if (isMountedRef.current) {
                     setPageError(err.message);
                   }
-                })
-            }
+                });
+            }}
           >
             {t("admin.book.applyFilter")}
           </button>

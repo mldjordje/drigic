@@ -485,6 +485,65 @@ describe("AdminBookingsPage booking mutations", () => {
     );
   });
 
+  it("reloads a completed mutation with the latest applied filter", async () => {
+    const patch = deferred();
+    const filteredRows = [bookings[1]];
+    const fetchMock = vi.fn((url, options) => {
+      if (options?.method === "PATCH") {
+        return patch.promise;
+      }
+      const search = new URL(url, "http://localhost").searchParams;
+      return Promise.resolve(
+        jsonResponse({ ok: true, data: search.get("from") ? filteredRows : [bookings[0]] })
+      );
+    });
+    renderWithFetch(fetchMock);
+
+    const ada = await screen.findByRole("article", { name: /booking for ada/i });
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-07-22" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply filter" }));
+    expect(await screen.findByRole("article", { name: /booking for bela/i })).toBeInTheDocument();
+    expect(screen.queryByRole("article", { name: /booking for ada/i })).toBeNull();
+
+    await act(async () => {
+      patch.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    const [reloadUrl] = fetchMock.mock.calls[3];
+    expect(new URL(reloadUrl, "http://localhost").searchParams.get("from")).toBe(
+      "2026-07-22T00:00:00.000Z"
+    );
+    expect(screen.getByRole("article", { name: /booking for bela/i })).toBeInTheDocument();
+    expect(screen.queryByRole("article", { name: /booking for ada/i })).toBeNull();
+  });
+
+  it("does not use un-applied filter edits when reloading a completed mutation", async () => {
+    const patch = deferred();
+    const fetchMock = vi.fn((url, options) => {
+      if (options?.method === "PATCH") {
+        return patch.promise;
+      }
+      return Promise.resolve(jsonResponse({ ok: true, data: [bookings[0]] }));
+    });
+    renderWithFetch(fetchMock);
+
+    const ada = await screen.findByRole("article", { name: /booking for ada/i });
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-07-22" } });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      patch.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    const [reloadUrl] = fetchMock.mock.calls[2];
+    expect(new URL(reloadUrl, "http://localhost").search).toBe("");
+    expect(screen.getByRole("article", { name: /booking for ada/i })).toBeInTheDocument();
+  });
+
   it("announces a page-level alert when initial booking loading fails", async () => {
     renderWithFetch(
       vi.fn().mockResolvedValue(
