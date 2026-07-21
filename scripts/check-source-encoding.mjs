@@ -1,7 +1,9 @@
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
-import { scanSourceEncoding } from '../lib/quality/source-encoding.js'
+import sourceEncoding from '../lib/quality/source-encoding.js'
+
+const { scanSourceEncoding } = sourceEncoding
 
 const sourceFile = /\.(?:[cm]?[jt]sx?|json|md|css|scss|html|ya?ml)$/i
 const trackedFiles = execFileSync(
