@@ -202,6 +202,12 @@ describe("AdminBookingsPage booking mutations", () => {
     expect(ada).toHaveAttribute("aria-busy", "false");
     expect(await screen.findByRole("alert")).toHaveTextContent("Reload unavailable");
     expect(within(ada).queryByRole("alert")).toBeNull();
+    expect(screen.getByText("Confirmed", { selector: "strong" }).parentElement).toHaveTextContent(
+      "Confirmed1"
+    );
+    expect(screen.getByText("Pending", { selector: "strong" }).parentElement).toHaveTextContent(
+      "Pending1"
+    );
   });
 
   it("preserves one booking's feedback while another booking is updated", async () => {
@@ -294,6 +300,188 @@ describe("AdminBookingsPage booking mutations", () => {
     });
     expect(await within(ada).findByRole("status")).toHaveTextContent(
       /save note.*completed.*ada/i
+    );
+  });
+
+  it("keeps a failed note save draft available for a retry", async () => {
+    const patch = deferred();
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return patch.promise;
+      }
+      return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada } = await getBookingRows();
+    fireEvent.change(within(ada).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Retry this note" },
+    });
+    fireEvent.click(within(ada).getByRole("button", { name: "Save note" }));
+    await act(async () => {
+      patch.resolve(jsonResponse({ ok: false, message: "Note save failed" }, false));
+    });
+
+    expect(await within(ada).findByRole("alert")).toHaveTextContent("Note save failed");
+    expect(within(ada).getByRole("textbox", { name: "Note" })).toHaveValue("Retry this note");
+  });
+
+  it("keeps the latest filter load when an older initial request resolves later", async () => {
+    const initialLoad = deferred();
+    const filteredLoad = deferred();
+    const fetchMock = vi
+      .fn()
+      .mockImplementationOnce(() => initialLoad.promise)
+      .mockImplementationOnce(() => filteredLoad.promise);
+    renderWithFetch(fetchMock);
+
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-07-21" } });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Apply filter" }));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      filteredLoad.resolve(jsonResponse({ ok: true, data: [bookings[1]] }));
+    });
+    expect(await screen.findByRole("article", { name: /booking for bela/i })).toBeInTheDocument();
+    expect(screen.queryByRole("article", { name: /booking for ada/i })).toBeNull();
+
+    await act(async () => {
+      initialLoad.resolve(jsonResponse({ ok: false, message: "Initial request failed" }, false));
+    });
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("article", { name: /booking for bela/i })).toBeInTheDocument();
+  });
+
+  it("ignores stale mutation reloads that resolve after a newer booking mutation", async () => {
+    const patchA = deferred();
+    const patchB = deferred();
+    const reloadA = deferred();
+    const reloadB = deferred();
+    let getCount = 0;
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        const { id } = JSON.parse(options.body);
+        return id === "booking-a" ? patchA.promise : patchB.promise;
+      }
+      getCount += 1;
+      if (getCount === 1) {
+        return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+      }
+      return getCount === 2 ? reloadA.promise : reloadB.promise;
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada, bela } = await getBookingRows();
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    await act(async () => {
+      patchA.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+    await waitFor(() => expect(getCount).toBe(2));
+
+    fireEvent.click(within(bela).getByRole("button", { name: "Confirm" }));
+    await act(async () => {
+      patchB.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+    await waitFor(() => expect(getCount).toBe(3));
+
+    const confirmedRows = bookings.map((booking) => ({ ...booking, status: "confirmed" }));
+    await act(async () => {
+      reloadB.resolve(jsonResponse({ ok: true, data: confirmedRows }));
+    });
+    expect(within(ada).getByText("Confirmed")).toBeInTheDocument();
+    expect(within(bela).getByText("Confirmed")).toBeInTheDocument();
+
+    await act(async () => {
+      reloadA.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+    expect(within(ada).getByText("Confirmed")).toBeInTheDocument();
+    expect(within(bela).getByText("Confirmed")).toBeInTheDocument();
+  });
+
+  it("does not let an earlier reload overwrite another row's pending optimistic status", async () => {
+    const patchA = deferred();
+    const patchB = deferred();
+    const reloadA = deferred();
+    let getCount = 0;
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        const { id } = JSON.parse(options.body);
+        return id === "booking-a" ? patchA.promise : patchB.promise;
+      }
+      getCount += 1;
+      return getCount === 1
+        ? Promise.resolve(jsonResponse({ ok: true, data: bookings }))
+        : reloadA.promise;
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada, bela } = await getBookingRows();
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    await act(async () => {
+      patchA.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+    await waitFor(() => expect(getCount).toBe(2));
+
+    fireEvent.click(within(bela).getByRole("button", { name: "Confirm" }));
+    expect(within(bela).getByText("Confirmed")).toBeInTheDocument();
+    await act(async () => {
+      reloadA.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+
+    expect(within(bela).getByText("Confirmed")).toBeInTheDocument();
+    await act(async () => {
+      patchB.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+  });
+
+  it("preserves unsaved note drafts during another booking's reload", async () => {
+    const patchA = deferred();
+    let getCount = 0;
+    const fetchMock = vi.fn((_, options) => {
+      if (options?.method === "PATCH") {
+        return patchA.promise;
+      }
+      getCount += 1;
+      return Promise.resolve(jsonResponse({ ok: true, data: bookings }));
+    });
+    renderWithFetch(fetchMock);
+
+    const { ada, bela } = await getBookingRows();
+    fireEvent.change(within(bela).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Bela's unsaved draft" },
+    });
+    fireEvent.click(within(ada).getByRole("button", { name: "Confirm" }));
+    await act(async () => {
+      patchA.resolve(jsonResponse({ ok: true, data: { status: "confirmed" } }));
+    });
+    await waitFor(() => expect(getCount).toBe(2));
+
+    expect(within(bela).getByRole("textbox", { name: "Note" })).toHaveValue("Bela's unsaved draft");
+  });
+
+  it("preserves unsaved note drafts when a filter temporarily hides that booking", async () => {
+    let getCount = 0;
+    const fetchMock = vi.fn(() => {
+      getCount += 1;
+      const data = getCount === 1 ? bookings : getCount === 2 ? [bookings[0]] : bookings;
+      return Promise.resolve(jsonResponse({ ok: true, data }));
+    });
+    renderWithFetch(fetchMock);
+
+    const { bela } = await getBookingRows();
+    fireEvent.change(within(bela).getByRole("textbox", { name: "Note" }), {
+      target: { value: "Keep this filtered draft" },
+    });
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "2026-07-21" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply filter" }));
+    await waitFor(() => expect(screen.queryByRole("article", { name: /booking for bela/i })).toBeNull());
+
+    fireEvent.change(screen.getByLabelText("From"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apply filter" }));
+    const belaAfterFilter = await screen.findByRole("article", { name: /booking for bela/i });
+    expect(within(belaAfterFilter).getByRole("textbox", { name: "Note" })).toHaveValue(
+      "Keep this filtered draft"
     );
   });
 

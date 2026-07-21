@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/common/LocaleProvider";
 import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
@@ -20,6 +20,8 @@ async function parseResponse(response) {
 
 export default function AdminBookingsPage() {
   const { t, intlLocale } = useLocale();
+  const tRef = useRef(t);
+  tRef.current = t;
   const statusLabel = (status) =>
     status ? t(`admin.status.${status}`) : status;
   const formatDateTime = (value) => {
@@ -38,39 +40,102 @@ export default function AdminBookingsPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const pendingBookingIdsRef = useRef(new Set());
+  const pendingStatusesRef = useRef(new Map());
+  const dirtyNoteIdsRef = useRef(new Set());
+  const persistedUpdatesRef = useRef(new Map());
+  const loadGenerationRef = useRef(0);
+  const isMountedRef = useRef(false);
 
-  async function loadBookings() {
+  const loadBookings = useCallback(async ({ from: filterFrom = "", to: filterTo = "" } = {}) => {
+    const generation = ++loadGenerationRef.current;
     const query = new URLSearchParams();
-    if (from) {
-      query.set("from", `${from}T00:00:00.000Z`);
+    if (filterFrom) {
+      query.set("from", `${filterFrom}T00:00:00.000Z`);
     }
-    if (to) {
-      query.set("to", `${to}T23:59:59.999Z`);
-    }
-
-    const response = await fetch(
-      `/api/admin/bookings${query.toString() ? `?${query.toString()}` : ""}`
-    );
-    const data = await parseResponse(response);
-    if (!response.ok || !data?.ok) {
-      throw new Error(data?.message || t("admin.book.loadFailed"));
+    if (filterTo) {
+      query.set("to", `${filterTo}T23:59:59.999Z`);
     }
 
-    const rows = data.data || [];
-    setBookings(rows);
-    const nextStatus = {};
-    const nextNotes = {};
-    rows.forEach((item) => {
-      nextStatus[item.id] = item.status;
-      nextNotes[item.id] = item.notes || "";
-    });
-    setStatusById(nextStatus);
-    setNotesById(nextNotes);
-  }
+    try {
+      const response = await fetch(
+        `/api/admin/bookings${query.toString() ? `?${query.toString()}` : ""}`
+      );
+      const data = await parseResponse(response);
+      if (!isMountedRef.current || generation !== loadGenerationRef.current) {
+        return { stale: true };
+      }
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || tRef.current("admin.book.loadFailed"));
+      }
+
+      const rows = (data.data || []).map((item) => {
+        const persisted = persistedUpdatesRef.current.get(item.id);
+        let row = item;
+        if (persisted) {
+          const serverMatchesPersisted =
+            item.status === persisted.status && (item.notes || "") === persisted.notes;
+          if (serverMatchesPersisted) {
+            persistedUpdatesRef.current.delete(item.id);
+          } else {
+            row = { ...item, status: persisted.status, notes: persisted.notes };
+          }
+        }
+
+        const pendingStatus = pendingStatusesRef.current.get(item.id);
+        return pendingStatus ? { ...row, status: pendingStatus } : row;
+      });
+      if (!isMountedRef.current || generation !== loadGenerationRef.current) {
+        return { stale: true };
+      }
+
+      setBookings(rows);
+      const nextStatus = {};
+      rows.forEach((item) => {
+        nextStatus[item.id] = item.status;
+      });
+      setStatusById(nextStatus);
+      setNotesById((previous) => {
+        const nextNotes = {};
+        dirtyNoteIdsRef.current.forEach((bookingId) => {
+          if (previous[bookingId] !== undefined) {
+            nextNotes[bookingId] = previous[bookingId];
+          }
+        });
+        rows.forEach((item) => {
+          nextNotes[item.id] = dirtyNoteIdsRef.current.has(item.id)
+            ? previous[item.id] ?? item.notes ?? ""
+            : item.notes || "";
+        });
+        return nextNotes;
+      });
+      return { stale: false };
+    } catch (err) {
+      if (!isMountedRef.current || generation !== loadGenerationRef.current) {
+        return { stale: true };
+      }
+      throw err;
+    }
+  }, []);
 
   useEffect(() => {
-    loadBookings().catch((err) => setPageError(err.message));
-  }, []);
+    isMountedRef.current = true;
+    loadBookings()
+      .then((result) => {
+        if (!result.stale && isMountedRef.current) {
+          setPageError("");
+        }
+      })
+      .catch((err) => {
+        if (isMountedRef.current) {
+          setPageError(err.message);
+        }
+      });
+
+    return () => {
+      isMountedRef.current = false;
+      loadGenerationRef.current += 1;
+    };
+  }, [loadBookings]);
 
   async function updateBooking(bookingId, nextStatus, actionLabel) {
     if (pendingBookingIdsRef.current.has(bookingId)) {
@@ -81,6 +146,8 @@ export default function AdminBookingsPage() {
     const clientName = booking?.clientName || "-";
     const previousStatus = statusById[bookingId] || booking?.status;
     const statusToPersist = nextStatus || previousStatus;
+    const notesToPersist = notesById[bookingId] ?? booking?.notes ?? "";
+    const filters = { from, to };
 
     pendingBookingIdsRef.current.add(bookingId);
     setPendingById((previous) => ({ ...previous, [bookingId]: { actionLabel } }));
@@ -90,6 +157,7 @@ export default function AdminBookingsPage() {
       return next;
     });
     if (nextStatus) {
+      pendingStatusesRef.current.set(bookingId, nextStatus);
       setStatusById((previous) => ({ ...previous, [bookingId]: nextStatus }));
     }
 
@@ -100,16 +168,35 @@ export default function AdminBookingsPage() {
         body: JSON.stringify({
           id: bookingId,
           status: statusToPersist,
-          notes: notesById[bookingId],
+          notes: notesToPersist,
         }),
       });
       const data = await parseResponse(response);
       if (!response.ok || !data?.ok) {
         throw new Error(data?.message || t("admin.book.updateFailed"));
       }
+      if (!isMountedRef.current) {
+        return;
+      }
+      const persistedStatus = data.data?.status || statusToPersist;
+      persistedUpdatesRef.current.set(bookingId, {
+        status: persistedStatus,
+        notes: notesToPersist,
+      });
+      pendingStatusesRef.current.delete(bookingId);
+      if (!nextStatus) {
+        dirtyNoteIdsRef.current.delete(bookingId);
+      }
+      setBookings((previous) =>
+        previous.map((item) =>
+          item.id === bookingId
+            ? { ...item, status: persistedStatus, notes: notesToPersist }
+            : item
+        )
+      );
       setStatusById((prev) => ({
         ...prev,
-        [bookingId]: data.data?.status || statusToPersist,
+        [bookingId]: persistedStatus,
       }));
       setFeedbackById((previous) => ({
         ...previous,
@@ -124,12 +211,19 @@ export default function AdminBookingsPage() {
       }));
 
       try {
-        await loadBookings();
-        setPageError("");
+        const result = await loadBookings(filters);
+        if (!result.stale && isMountedRef.current) {
+          setPageError("");
+        }
       } catch (err) {
-        setPageError(err.message || t("admin.book.loadFailed"));
+        if (isMountedRef.current) {
+          setPageError(err.message || t("admin.book.loadFailed"));
+        }
       }
     } catch (err) {
+      if (!isMountedRef.current) {
+        return;
+      }
       if (nextStatus) {
         setStatusById((previous) => ({ ...previous, [bookingId]: previousStatus }));
       }
@@ -147,11 +241,14 @@ export default function AdminBookingsPage() {
       }));
     } finally {
       pendingBookingIdsRef.current.delete(bookingId);
-      setPendingById((previous) => {
-        const next = { ...previous };
-        delete next[bookingId];
-        return next;
-      });
+      pendingStatusesRef.current.delete(bookingId);
+      if (isMountedRef.current) {
+        setPendingById((previous) => {
+          const next = { ...previous };
+          delete next[bookingId];
+          return next;
+        });
+      }
     }
   }
 
@@ -202,8 +299,9 @@ export default function AdminBookingsPage() {
         <h3 style={{ marginTop: 0 }}>{t("admin.book.periodFilter")}</h3>
         <div style={filterWrapStyle}>
           <div>
-            <label style={labelStyle}>{t("admin.book.from")}</label>
+            <label htmlFor="booking-filter-from" style={labelStyle}>{t("admin.book.from")}</label>
             <input
+              id="booking-filter-from"
               type="date"
               value={from}
               onChange={(event) => setFrom(event.target.value)}
@@ -211,8 +309,9 @@ export default function AdminBookingsPage() {
             />
           </div>
           <div>
-            <label style={labelStyle}>{t("admin.book.to")}</label>
+            <label htmlFor="booking-filter-to" style={labelStyle}>{t("admin.book.to")}</label>
             <input
+              id="booking-filter-to"
               type="date"
               value={to}
               onChange={(event) => setTo(event.target.value)}
@@ -224,9 +323,17 @@ export default function AdminBookingsPage() {
             className="admin-template-link-btn"
             style={{ alignSelf: "end" }}
             onClick={() =>
-              loadBookings()
-                .then(() => setPageError(""))
-                .catch((err) => setPageError(err.message))
+              loadBookings({ from, to })
+                .then((result) => {
+                  if (!result.stale && isMountedRef.current) {
+                    setPageError("");
+                  }
+                })
+                .catch((err) => {
+                  if (isMountedRef.current) {
+                    setPageError(err.message);
+                  }
+                })
             }
           >
             {t("admin.book.applyFilter")}
@@ -292,10 +399,13 @@ export default function AdminBookingsPage() {
                   value={notesById[booking.id] || ""}
                   disabled={isPending}
                   onChange={(event) =>
-                    setNotesById((prev) => ({
-                      ...prev,
-                      [booking.id]: event.target.value,
-                    }))
+                    {
+                      dirtyNoteIdsRef.current.add(booking.id);
+                      setNotesById((prev) => ({
+                        ...prev,
+                        [booking.id]: event.target.value,
+                      }));
+                    }
                   }
                   style={{ ...inputStyle, marginTop: 4 }}
                 />
