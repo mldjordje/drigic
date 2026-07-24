@@ -54,6 +54,7 @@ export default function SitePageTracker() {
 
     const payload = JSON.stringify({
       pathname,
+      search: query || "",
       referrer: document.referrer || "",
       locale: document.documentElement.lang || "",
       sessionId: getSessionId(),

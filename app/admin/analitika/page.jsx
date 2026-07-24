@@ -151,6 +151,10 @@ async function getAnalyticsData() {
       .select({
         pathname: schema.sitePageViews.pathname,
         sessionId: schema.sitePageViews.sessionId,
+        trafficSource: schema.sitePageViews.trafficSource,
+        trafficChannel: schema.sitePageViews.trafficChannel,
+        isAiReferral: schema.sitePageViews.isAiReferral,
+        referrerHost: schema.sitePageViews.referrerHost,
         createdAt: schema.sitePageViews.createdAt,
       })
       .from(schema.sitePageViews)
@@ -370,6 +374,43 @@ async function getAnalyticsData() {
       share: pageViews30d.length ? (views / pageViews30d.length) * 100 : 0,
     }));
 
+  const firstTouchBySession = new Map();
+  for (const view of pageViews30d) {
+    const existing = firstTouchBySession.get(view.sessionId);
+    if (!existing || new Date(view.createdAt) < new Date(existing.createdAt)) {
+      firstTouchBySession.set(view.sessionId, view);
+    }
+  }
+
+  const trafficSourceMap = new Map();
+  for (const view of firstTouchBySession.values()) {
+    const source = view.trafficSource || view.referrerHost || "Direct / Unknown";
+    const current = trafficSourceMap.get(source) || {
+      source,
+      channel: view.trafficChannel || "Unknown",
+      sessions: 0,
+      isAiReferral: false,
+    };
+    current.sessions += 1;
+    current.isAiReferral = current.isAiReferral || Boolean(view.isAiReferral);
+    trafficSourceMap.set(source, current);
+  }
+
+  const allTrafficSources = Array.from(trafficSourceMap.values()).sort(
+    (left, right) => right.sessions - left.sessions
+  );
+  const aiReferralSessions = allTrafficSources
+    .filter((source) => source.isAiReferral)
+    .reduce((sum, source) => sum + source.sessions, 0);
+  const trafficSources = allTrafficSources
+    .slice(0, 10)
+    .map((source) => ({
+      ...source,
+      share: uniqueVisitors30d
+        ? (source.sessions / uniqueVisitors30d) * 100
+        : 0,
+    }));
+
   const avgCompletedTicket = completedBookings?.value
     ? completedRevenue / Number(completedBookings.value)
     : 0;
@@ -399,6 +440,7 @@ async function getAnalyticsData() {
     months,
     maxRevenue,
     topPages,
+    trafficSources,
     dailyViews,
     maxDailyViews,
     trends: {
@@ -438,6 +480,7 @@ async function getAnalyticsData() {
       todayBookings,
       todayViews,
       todaySessions: todaySessions.size,
+      aiReferralSessions,
     },
   };
 }
@@ -830,6 +873,47 @@ export default async function AdminAnalitikaPage() {
         </SectionCard>
       </div>
 
+      <SectionCard
+        title="Izvori poseta 30d"
+        aside={
+          <span style={styles.sourceAiSummary}>
+            AI preporuke: {formatNumber(analytics.totals.aiReferralSessions)} ses.
+          </span>
+        }
+      >
+        {analytics.trafficSources.length ? (
+          <div style={styles.pageList}>
+            {analytics.trafficSources.map((source) => (
+              <div key={source.source} style={styles.pageRow}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <strong style={styles.pageLabel}>
+                    {source.source}
+                    {source.isAiReferral ? (
+                      <span style={styles.aiSourceBadge}>AI</span>
+                    ) : null}
+                  </strong>
+                  <div style={styles.pagePath}>{source.channel}</div>
+                  <div style={styles.pageBarTrack}>
+                    <div
+                      style={{
+                        ...styles.pageBarFill,
+                        width: `${Math.max(4, source.share)}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div style={styles.pageViews}>
+                  <strong>{formatNumber(source.sessions)}</strong>
+                  <span>{formatPercent(source.share)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={styles.emptyState}>Još nema podataka o izvorima poseta.</p>
+        )}
+      </SectionCard>
+
       <SectionCard title="Top stranice 30d">
         {analytics.topPages.length ? (
           <div style={styles.pageList}>
@@ -934,6 +1018,29 @@ const styles = {
     fontSize: 13,
     fontWeight: 400,
     color: "rgba(196, 165, 90, 0.65)",
+  },
+  sourceAiSummary: {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: 28,
+    padding: "5px 9px",
+    borderRadius: 999,
+    color: "#d8e7f7",
+    background: "rgba(105, 160, 218, 0.12)",
+    border: "1px solid rgba(105, 160, 218, 0.24)",
+    fontSize: 12,
+    fontWeight: 700,
+  },
+  aiSourceBadge: {
+    display: "inline-flex",
+    marginLeft: 8,
+    padding: "2px 6px",
+    borderRadius: 999,
+    color: "#06131f",
+    background: "#8fd4ff",
+    fontSize: 10,
+    lineHeight: 1.2,
+    letterSpacing: "0.08em",
   },
   insightsGrid: {
     display: "grid",

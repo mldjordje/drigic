@@ -72,10 +72,15 @@ export default function BeforeAfterShowcase({
   compactFilter = false,
   viewMoreHref = "/rezultati",
   viewMoreLabel = "POGLEDAJ VISE",
+  initialCases = [],
 }) {
   const { t } = useLocale();
-  const [cases, setCases] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cases, setCases] = useState(() =>
+    Array.isArray(initialCases) ? initialCases : []
+  );
+  const [loading, setLoading] = useState(
+    () => !Array.isArray(initialCases) || initialCases.length === 0
+  );
   const [activeCategory, setActiveCategory] = useState("all");
   const [lightboxImage, setLightboxImage] = useState(null);
   const lightboxRef = useRef(null);
@@ -241,6 +246,9 @@ export default function BeforeAfterShowcase({
                     <h3>{item.treatmentType || "Tretman"}</h3>
                     <span className="clinic-before-after-category">{item.categoryLabel}</span>
                     {item.productUsed ? <span>{item.productUsed}</span> : null}
+                    {item.summary ? (
+                      <p className="clinic-before-after-summary">{item.summary}</p>
+                    ) : null}
                   </div>
                   <div
                     className="clinic-before-after-collage"
@@ -258,9 +266,14 @@ export default function BeforeAfterShowcase({
                   >
                     <img
                       src={item.collageImageUrl || item.beforeImageUrl}
-                      alt={`${item.treatmentType || "Tretman"} pre i posle`}
+                      alt={
+                        item.imageAlt ||
+                        `${item.treatmentType || "Tretman"} pre i posle`
+                      }
                       loading="lazy"
                       decoding="async"
+                      width={1080}
+                      height={1080}
                     />
                     <span>Pre / Posle</span>
                   </div>

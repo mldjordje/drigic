@@ -3,11 +3,13 @@ import { z } from "zod";
 import { fail, ok, readJson } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
+import { parseTrafficAttribution } from "@/lib/analytics/traffic-source";
 
 export const runtime = "nodejs";
 
 const payloadSchema = z.object({
   pathname: z.string().min(1).max(512),
+  search: z.string().max(2048).optional(),
   referrer: z.string().max(2048).optional(),
   locale: z.string().max(16).optional(),
   sessionId: z.string().min(8).max(128),
@@ -24,7 +26,7 @@ export async function POST(request) {
     return fail(400, "Invalid payload", parsed.error.flatten());
   }
 
-  const { pathname, referrer, locale, sessionId } = parsed.data;
+  const { pathname, search, referrer, locale, sessionId } = parsed.data;
   if (shouldSkipPath(pathname)) {
     return ok({ ok: true, skipped: true });
   }
@@ -40,11 +42,19 @@ export async function POST(request) {
   }
 
   const db = getDb();
+  const attribution = parseTrafficAttribution({ referrer, search });
   await db.insert(schema.sitePageViews).values({
     userId,
     sessionId,
     pathname,
     referrer: referrer || null,
+    referrerHost: attribution.referrerHost || null,
+    trafficSource: attribution.trafficSource,
+    trafficChannel: attribution.trafficChannel,
+    utmSource: attribution.utmSource || null,
+    utmMedium: attribution.utmMedium || null,
+    utmCampaign: attribution.utmCampaign || null,
+    isAiReferral: attribution.isAiReferral,
     locale: locale || null,
   });
 

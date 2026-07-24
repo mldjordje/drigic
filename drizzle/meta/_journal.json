@@ -120,6 +120,13 @@
       "when": 1781394093993,
       "tag": "0016_add_blog_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1784856000000,
+      "tag": "0017_ai_traffic_attribution",
+      "breakpoints": true
     }
   ]
 }

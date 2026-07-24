@@ -2,6 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import { publicOk } from "@/lib/api/http";
 import { getDb, schema } from "@/lib/db/client";
+import { getCuratedBeforeAfterCases } from "@/data/before-after-cases";
 
 export const runtime = "nodejs";
 export const revalidate = 300;
@@ -129,7 +130,19 @@ export async function GET(request) {
   const serviceCategory = String(searchParams.get("serviceCategory") || "").trim();
   const serviceId = String(searchParams.get("serviceId") || "").trim();
   const limit = Math.max(1, Math.min(60, Number(searchParams.get("limit") || 30)));
-  const data = await getCachedBeforeAfterCases(serviceCategory, serviceId, limit);
+  const databaseCases = await getCachedBeforeAfterCases(serviceCategory, serviceId, limit);
+  const curatedCases = getCuratedBeforeAfterCases({ serviceCategory, serviceId });
+  const seenImages = new Set();
+  const data = [...curatedCases, ...databaseCases]
+    .filter((item) => {
+      const imageUrl = item.collageImageUrl || item.beforeImageUrl || item.afterImageUrl;
+      if (!imageUrl || seenImages.has(imageUrl)) {
+        return false;
+      }
+      seenImages.add(imageUrl);
+      return true;
+    })
+    .slice(0, limit);
 
   return publicOk(
     { ok: true, data },

@@ -3230,6 +3230,14 @@ a.clinic-glow-btn {
     font-weight: 600;
   }
 
+  .clinic-before-after-head .clinic-before-after-summary {
+    flex-basis: 100%;
+    margin: 2px 0 0;
+    color: #d8e3f2;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
   .clinic-before-after-images {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4411,6 +4419,10 @@ a.clinic-glow-btn {
 .clinic-theme-light .clinic-home5 .clinic-before-after-head span,
 .clinic-theme-light .clinic-home5 .clinic-before-after-images figcaption {
   color: #334155;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-before-after-head .clinic-before-after-summary {
+  color: #475569;
 }
 
 .clinic-theme-light .clinic-home5 .clinic-before-after-images img {
