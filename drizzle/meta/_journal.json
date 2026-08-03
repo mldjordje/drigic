@@ -127,6 +127,13 @@
       "when": 1784856000000,
       "tag": "0017_ai_traffic_attribution",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785628800000,
+      "tag": "0018_email_campaigns",
+      "breakpoints": true
     }
   ]
 }
