@@ -7,14 +7,15 @@ import LocaleSwitcher from "@/components/common/LocaleSwitcher";
 import { useLocale } from "@/components/common/LocaleProvider";
 import AdminNotificationsBell from "@/components/admin/AdminNotificationsBell";
 import AdminModal from "@/components/admin/ui/AdminModal";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
 import {
   ADMIN_NAVIGATION_GROUPS,
   resolveAdminNavigationItem,
 } from "@/lib/admin/navigation";
 
 const quickLinks = [
-  { href: "/booking", labelKey: "admin.bookingForm" },
-  { href: "/api/auth/google?next=/admin", labelKey: "admin.changeAccount" },
+  { href: "/booking", labelKey: "admin.bookingForm", icon: "external" },
+  { href: "/api/auth/google?next=/admin", labelKey: "admin.changeAccount", icon: "user" },
 ];
 
 const directMobileItems = [
@@ -33,34 +34,39 @@ function getNavigationGroupId(scope, labelKey) {
 }
 
 function NavigationIcon({ type }) {
-  const paths = {
-    today: <path d="M4 5.5h16M7 3.5v4M17 3.5v4M5 9h14v10H5zM8 12h3M13 12h3M8 15h3" />,
-    calendar: <path d="M5 4.5h14v15H5zM8 2.5v4M16 2.5v4M5 9h14M8 12h3M13 12h3M8 15h3" />,
-    clients: <path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.5 20c.5-3.2 2.4-5 5.5-5s5 1.8 5.5 5M16 11a2.5 2.5 0 1 0 0-5M17 15c2.1.3 3.4 1.8 3.8 4" />,
-    bookings: <path d="M5 4.5h14v15H5zM8 2.5v4M16 2.5v4M5 9h14M8 13l2 2 4-4" />,
-    more: <path d="M6.5 12h.01M12 12h.01M17.5 12h.01" strokeWidth="3" strokeLinecap="round" />,
-    menu: <path d="M4 7h16M4 12h16M4 17h16" strokeWidth="2" strokeLinecap="round" />,
-  };
-
-  return (
-    <svg className="admin-template-nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
-      {paths[type]}
-    </svg>
-  );
+  return <AdminIcon name={type} size={22} className="admin-template-nav-icon" />;
 }
 
-function GroupedNavigation({ scope, pathname, t, onNavigate, includeUtilities = false }) {
+/**
+ * Renders every navigation group. `query` narrows the visible items so the
+ * sidebar stays usable once a clinic has twenty-plus modules — groups with no
+ * match are hidden, but the group landmarks themselves stay in the tree.
+ */
+function GroupedNavigation({ scope, pathname, t, onNavigate, includeUtilities = false, query = "" }) {
   const activeItem = resolveAdminNavigationItem(pathname);
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const matches = (item) =>
+    !normalizedQuery || resolveNavLabel(item, t).toLowerCase().includes(normalizedQuery);
+
+  const visibleGroups = ADMIN_NAVIGATION_GROUPS.map((group) => ({
+    group,
+    items: group.items.filter(matches),
+  })).filter(({ group, items }) => items.length > 0 || !normalizedQuery || t(group.labelKey).toLowerCase().includes(normalizedQuery));
 
   return (
     <>
-      {ADMIN_NAVIGATION_GROUPS.map((group) => {
+      {visibleGroups.map(({ group, items }) => {
         const groupId = getNavigationGroupId(scope, group.labelKey);
+        const groupItems = items.length > 0 ? items : group.items;
         return (
           <div className="admin-template-group" key={group.labelKey}>
-            <p className="admin-template-group-title" id={groupId}>{t(group.labelKey)}</p>
+            <p className="admin-template-group-title" id={groupId}>
+              {group.icon ? <AdminIcon name={group.icon} size={14} /> : null}
+              {t(group.labelKey)}
+            </p>
             <nav aria-labelledby={groupId} className="admin-template-nav">
-              {group.items.map((item) => {
+              {groupItems.map((item) => {
                 const active = activeItem?.href === item.href;
                 return (
                   <Link
@@ -70,6 +76,7 @@ function GroupedNavigation({ scope, pathname, t, onNavigate, includeUtilities = 
                     aria-current={active ? "page" : undefined}
                     onClick={onNavigate}
                   >
+                    {item.icon ? <AdminIcon name={item.icon} size={18} /> : null}
                     <span>{resolveNavLabel(item, t)}</span>
                   </Link>
                 );
@@ -79,18 +86,27 @@ function GroupedNavigation({ scope, pathname, t, onNavigate, includeUtilities = 
         );
       })}
 
+      {visibleGroups.length === 0 ? (
+        <p className="admin-template-search-empty">{t("admin.ui.searchEmpty")}</p>
+      ) : null}
+
       {includeUtilities ? (
-        <div className="admin-template-group">
-          <p className="admin-template-group-title" id={getNavigationGroupId(scope, "utilities")}>{t("admin.navigation")}</p>
+        <div className="admin-template-group admin-template-sidebar-footer">
+          <p className="admin-template-group-title" id={getNavigationGroupId(scope, "utilities")}>
+            <AdminIcon name="globe" size={14} />
+            {t("admin.navigation")}
+          </p>
           <LocaleSwitcher compact className="admin-template-locale-switcher" />
           <nav aria-labelledby={getNavigationGroupId(scope, "utilities")} className="admin-template-nav">
             {quickLinks.map((item) => (
               item.href.startsWith("/api/") ? (
                 <a key={item.href} href={item.href} className="admin-template-nav-item" onClick={onNavigate}>
+                  <AdminIcon name={item.icon} size={18} />
                   <span>{resolveNavLabel(item, t)}</span>
                 </a>
               ) : (
                 <Link key={item.href} href={item.href} className="admin-template-nav-item" onClick={onNavigate}>
+                  <AdminIcon name={item.icon} size={18} />
                   <span>{resolveNavLabel(item, t)}</span>
                 </Link>
               )
@@ -106,6 +122,7 @@ export default function AdminShell({ children, primaryAction = null }) {
   const pathname = usePathname();
   const { t } = useLocale();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -121,12 +138,17 @@ export default function AdminShell({ children, primaryAction = null }) {
     setMenuOpen(false);
   }, [pathname]);
 
-  const activeModuleTitle = useMemo(() => {
-    const current = resolveAdminNavigationItem(pathname);
-    return current ? resolveNavLabel(current, t) : "Admin";
-  }, [pathname, t]);
-
   const activeItem = resolveAdminNavigationItem(pathname);
+
+  const activeModuleTitle = useMemo(
+    () => (activeItem ? resolveNavLabel(activeItem, t) : "Admin"),
+    [activeItem, t]
+  );
+
+  const activeModuleDescription = activeItem?.descriptionKey
+    ? t(activeItem.descriptionKey)
+    : t("admin.officeAdmin");
+
   const isMoreActive = Boolean(activeItem && !directMobileItems.some((item) => item.href === activeItem.href));
   const moreLabel = t("admin.more");
   const closeMenu = () => setMenuOpen(false);
@@ -135,10 +157,32 @@ export default function AdminShell({ children, primaryAction = null }) {
     <div className="admin-template-root">
       <aside className="admin-template-sidebar admin-template-sidebar--desktop">
         <div className="admin-template-brand">
-          <h1>Dr Igić</h1>
-          <p>{t("admin.controlPanel")}</p>
+          <span className="admin-template-brand-mark" aria-hidden="true">DI</span>
+          <div className="admin-template-brand-text">
+            <h1>Dr Igić</h1>
+            <p>{t("admin.controlPanel")}</p>
+          </div>
         </div>
-        <GroupedNavigation scope="desktop" pathname={pathname} t={t} onNavigate={closeMenu} includeUtilities />
+
+        <div className="admin-template-search">
+          <AdminIcon name="search" size={16} />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("admin.ui.searchPlaceholder")}
+            aria-label={t("admin.ui.searchLabel")}
+          />
+        </div>
+
+        <GroupedNavigation
+          scope="desktop"
+          pathname={pathname}
+          t={t}
+          onNavigate={closeMenu}
+          query={query}
+          includeUtilities
+        />
       </aside>
 
       <div className="admin-template-main">
@@ -154,9 +198,12 @@ export default function AdminShell({ children, primaryAction = null }) {
             >
               <NavigationIcon type="menu" />
             </button>
-            <div>
+            <span className="admin-template-topbar-icon" aria-hidden="true">
+              <AdminIcon name={activeItem?.icon || "dashboard"} size={20} />
+            </span>
+            <div className="admin-template-topbar-heading">
               <h2>{activeModuleTitle}</h2>
-              <p>{t("admin.officeAdmin")}</p>
+              <p>{activeModuleDescription}</p>
             </div>
           </div>
           <div className="admin-template-topbar-actions">

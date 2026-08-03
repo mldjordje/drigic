@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminSection from "@/components/admin/ui/AdminSection";
+import AdminField from "@/components/admin/ui/AdminField";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 function parseResponse(response) {
   return response
@@ -149,39 +155,54 @@ export default function AdminPreparatiPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Preparati (Beauty Pass)</h2>
-        <p style={{ color: "#bed0e8", marginBottom: 0 }}>
-          Admin dodaje brend preparata i logo. Klijent posle bira iz ponude.
-        </p>
-      </div>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="products"
+        title="Preparati (Beauty Pass)"
+        description="Brendovi preparata koje koristite u tretmanima. Ono što ovde dodate klijent vidi kao ponudu u Beauty Pass-u."
+      />
 
-      {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
-      {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
+      {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+      {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
 
-      <form onSubmit={submitProduct} className="admin-card" style={{ display: "grid", gap: 8 }}>
-        <h3 style={{ marginTop: 0 }}>{form.id ? "Izmena preparata" : "Novi preparat"}</h3>
-        <label>
-          Naziv
+      <AdminSection
+        icon={form.id ? "edit" : "plus"}
+        title={form.id ? "Izmena preparata" : "Novi preparat"}
+        description="Naziv i logo se prikazuju klijentu; sort order određuje redosled u listi."
+      >
+      <form onSubmit={submitProduct} style={{ display: "grid", gap: 12 }}>
+        <AdminField
+          icon="products"
+          label="Naziv"
+          hint="Ime brenda ili preparata kako ga klijent vidi (npr. „Juvederm“)."
+          required
+        >
           <input
             className="admin-inline-input"
             value={form.name}
             onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
             required
           />
-        </label>
-        <label>
-          Logo URL
+        </AdminField>
+        <AdminField
+          icon="link"
+          label="Logo URL"
+          hint="Ako logo već postoji negde online, nalepite link. U suprotnom koristite upload ispod."
+          optional
+        >
           <input
             className="admin-inline-input"
             value={form.logoUrl}
             onChange={(event) => setForm((prev) => ({ ...prev, logoUrl: event.target.value }))}
             placeholder="https://..."
           />
-        </label>
-        <label>
-          Upload logo slike
+        </AdminField>
+        <AdminField
+          icon="upload"
+          label="Upload logo slike"
+          hint="Sa telefona možete izabrati fotografiju iz galerije ili direktno kameru. Preporuka: PNG sa providnom pozadinom."
+          optional
+        >
           <input
             type="file"
             accept="image/*"
@@ -190,13 +211,13 @@ export default function AdminPreparatiPage() {
               setForm((prev) => ({ ...prev, logoFile: event.target.files?.[0] || null }))
             }
           />
-          <small style={{ color: "#9db5d4" }}>
-            Sa telefona možete izabrati fotografiju iz galerije ili direktno kameru.
-          </small>
-        </label>
+        </AdminField>
         <div className="admin-services-split-grid">
-          <label>
-            Sort order
+          <AdminField
+            icon="list"
+            label="Redosled prikaza"
+            hint="Manji broj = viši položaj u listi preparata."
+          >
             <input
               type="number"
               min={0}
@@ -206,17 +227,19 @@ export default function AdminPreparatiPage() {
                 setForm((prev) => ({ ...prev, sortOrder: event.target.value }))
               }
             />
-          </label>
-          <label className={`admin-toggle-card ${form.isActive ? "is-active" : ""}`}>
+          </AdminField>
+          <label className={`admin-switch ${form.isActive ? "is-on" : ""}`}>
             <input
               type="checkbox"
-              className="admin-toggle-card-input"
               checked={form.isActive}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, isActive: event.target.checked }))
               }
             />
-            <span className="admin-toggle-card-title">Aktivan preparat</span>
+            <span className="admin-switch-text">
+              <strong>Aktivan preparat</strong>
+              <span>Neaktivni preparati ostaju u bazi, ali se ne nude pri upisu u Beauty Pass.</span>
+            </span>
           </label>
         </div>
 
@@ -241,21 +264,24 @@ export default function AdminPreparatiPage() {
           </div>
         ) : null}
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button type="submit" className="admin-template-link-btn" disabled={loading}>
+        <div className="admin-btn-row">
+          <button type="submit" className="admin-btn admin-btn--primary" disabled={loading}>
+            <AdminIcon name={form.id ? "save" : "plus"} size={16} />
             {form.id ? "Sačuvaj izmene" : "Dodaj preparat"}
           </button>
           {form.id ? (
             <button
               type="button"
-              className="admin-template-link-btn"
+              className="admin-btn"
               onClick={() => setForm(emptyForm)}
             >
+              <AdminIcon name="close" size={16} />
               Odustani
             </button>
           ) : null}
         </div>
       </form>
+      </AdminSection>
 
       <div className="admin-clients-grid">
         {products.map((product) => (
@@ -279,13 +305,16 @@ export default function AdminPreparatiPage() {
                 <div style={{ color: "#a9c0dc", fontSize: 12 }}>Sort: {product.sortOrder || 0}</div>
               </div>
             </div>
-            <div style={{ color: "#a9c0dc", fontSize: 12 }}>
-              {product.isActive ? "aktivan" : "neaktivan"}
+            <div>
+              <span className={`admin-chip ${product.isActive ? "is-green" : ""}`.trim()}>
+                <AdminIcon name={product.isActive ? "check" : "close"} size={14} />
+                {product.isActive ? "aktivan" : "neaktivan"}
+              </span>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="admin-btn-row">
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-btn admin-btn--sm"
                 onClick={() =>
                   setForm({
                     id: product.id,
@@ -297,20 +326,30 @@ export default function AdminPreparatiPage() {
                   })
                 }
               >
+                <AdminIcon name="edit" size={15} />
                 Izmeni
               </button>
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-btn admin-btn--sm"
                 onClick={() => toggleActive(product)}
                 disabled={loading}
               >
+                <AdminIcon name={product.isActive ? "close" : "check"} size={15} />
                 {product.isActive ? "Deaktiviraj" : "Aktiviraj"}
               </button>
             </div>
           </article>
         ))}
       </div>
+
+      {!products.length ? (
+        <AdminEmptyState
+          icon="products"
+          title="Još nema preparata"
+          description="Dodajte prvi brend gore — pojaviće se u ovoj listi i u Beauty Pass ponudi."
+        />
+      ) : null}
     </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -350,7 +351,14 @@ export default function AdminBlogPage() {
   const titleLen = form.seoTitle.length;
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, alignItems: "start" }}>
+    <div className="admin-page">
+      <AdminPageHeader
+        icon="blog"
+        title="Blog i SEO"
+        description="Tekstovi i aktuelnosti na sajtu klinike, sa listom SEO zadataka i tema. Objavljeni post se odmah pojavljuje u sekciji Aktuelnosti."
+      />
+
+    <div className="admin-blog-layout" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, alignItems: "start" }}>
 
       {/* ── LEFT PANEL ─────────────────────────────────────────── */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -657,6 +665,7 @@ export default function AdminBlogPage() {
           </div>
         </div>
       </form>
+    </div>
     </div>
   );
 }

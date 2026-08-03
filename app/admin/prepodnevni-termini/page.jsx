@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminSection from "@/components/admin/ui/AdminSection";
+import AdminField from "@/components/admin/ui/AdminField";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 const emptyForm = {
   startDate: "",
@@ -162,43 +168,38 @@ export default function AdminMorningShiftsPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Prepodnevni termini</h2>
-        <p style={{ color: "#bed0e8", marginBottom: 0 }}>
-          Podrazumevano radno vreme je: radni dani 16-21h, subota 10-16h, nedelja ne radi
-          (osim ako je podešena u Admin → Nedelja).
-          Ovde uključi dodatni prepodnevni raspon za izabrane datume. Nedelja ostaje zatvorena
-          i ako upadne u opseg.
-        </p>
-        {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
-        {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
-      </div>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="sunrise"
+        title="Prepodnevni termini"
+        description="Podrazumevano radno vreme: radni dani 16–21h, subota 10–16h, nedelja ne radi (osim ako je uključena u Admin → Nedelja). Ovde otvarate dodatni prepodnevni raspon za izabrane datume — nedelja ostaje zatvorena i ako upadne u opseg."
+      />
 
-      <div style={statGridStyle}>
-        <div className="admin-card">
-          <strong>{activeItems.length}</strong>
-          <div style={mutedTextStyle}>aktivnih perioda</div>
+      {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+      {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
+
+      <div className="admin-stat-grid">
+        <div className="admin-stat-card admin-stat-card--green">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="check" size={18} /></span>
+          <span className="admin-stat-card-label">Aktivnih perioda</span>
+          <strong className="admin-stat-card-value">{activeItems.length}</strong>
         </div>
-        <div className="admin-card">
-          <strong>{items.length}</strong>
-          <div style={mutedTextStyle}>ukupno sačuvanih aktivacija</div>
+        <div className="admin-stat-card admin-stat-card--gold">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="list" size={18} /></span>
+          <span className="admin-stat-card-label">Ukupno aktivacija</span>
+          <strong className="admin-stat-card-value">{items.length}</strong>
         </div>
       </div>
 
       <div style={gridStyle}>
-        <form onSubmit={handleCreate} className="admin-card" style={{ display: "grid", gap: 10 }}>
-          <div>
-            <h3 style={{ marginTop: 0, marginBottom: 6 }}>Nova aktivacija</h3>
-            <p style={mutedTextStyle}>
-              Unesi period i jutarnji raspon sati. Novi slobodni slotovi će se automatski pojaviti
-              na booking formi i u dostupnosti termina.
-            </p>
-          </div>
-
+        <AdminSection
+          icon="plus"
+          title="Nova aktivacija"
+          description="Unesite period i jutarnji raspon sati. Novi slobodni slotovi se automatski pojavljuju na booking formi i u dostupnosti termina."
+        >
+        <form onSubmit={handleCreate} style={{ display: "grid", gap: 12 }}>
           <div className="admin-services-split-grid">
-            <label>
-              Datum od
+            <AdminField icon="calendar" label="Datum od" hint="Prvi dan kada važi prepodnevni raspon." required>
               <input
                 type="date"
                 className="admin-inline-input"
@@ -208,9 +209,8 @@ export default function AdminMorningShiftsPage() {
                 }
                 required
               />
-            </label>
-            <label>
-              Datum do
+            </AdminField>
+            <AdminField icon="calendar" label="Datum do" hint="Poslednji dan (uključen) kada važi raspon." required>
               <input
                 type="date"
                 className="admin-inline-input"
@@ -220,12 +220,11 @@ export default function AdminMorningShiftsPage() {
                 }
                 required
               />
-            </label>
+            </AdminField>
           </div>
 
           <div className="admin-services-split-grid">
-            <label>
-              Prepodne od
+            <AdminField icon="clock" label="Prepodne od" hint="Prvi jutarnji termin, npr. 09:00." required>
               <input
                 type="time"
                 className="admin-inline-input"
@@ -235,9 +234,8 @@ export default function AdminMorningShiftsPage() {
                 }
                 required
               />
-            </label>
-            <label>
-              Prepodne do
+            </AdminField>
+            <AdminField icon="clock" label="Prepodne do" hint="Kraj jutarnjeg bloka, npr. 13:00." required>
               <input
                 type="time"
                 className="admin-inline-input"
@@ -247,11 +245,15 @@ export default function AdminMorningShiftsPage() {
                 }
                 required
               />
-            </label>
+            </AdminField>
           </div>
 
-          <label>
-            Napomena
+          <AdminField
+            icon="edit"
+            label="Napomena"
+            hint="Interni podsetnik zašto je period otvoren. Klijent je ne vidi."
+            optional
+          >
             <textarea
               className="admin-inline-textarea"
               rows={3}
@@ -261,59 +263,75 @@ export default function AdminMorningShiftsPage() {
               }
               placeholder="npr. dodatni termini pred praznik"
             />
-          </label>
+          </AdminField>
 
-          <button type="submit" className="admin-template-link-btn" disabled={busyKey === "create"}>
+          <button type="submit" className="admin-btn admin-btn--primary" disabled={busyKey === "create"}>
+            <AdminIcon name="sunrise" size={16} />
             {busyKey === "create" ? "Čuvanje..." : "Aktiviraj prepodnevne termine"}
           </button>
         </form>
+        </AdminSection>
 
-        <div className="admin-card" style={{ display: "grid", gap: 10 }}>
-          <div>
-            <h3 style={{ marginTop: 0, marginBottom: 6 }}>Sačuvane aktivacije</h3>
-            <p style={mutedTextStyle}>
-              Aktivne stavke odmah utiču na prikaz slobodnih termina. Isključi ili obriši kada
-              period više ne treba da bude otvoren.
-            </p>
-          </div>
-
-          {loading ? <p style={mutedTextStyle}>Učitavanje aktivacija...</p> : null}
+        <AdminSection
+          icon="list"
+          title="Sačuvane aktivacije"
+          description="Aktivne stavke odmah utiču na prikaz slobodnih termina. Isključite ili obrišite kada period više ne treba da bude otvoren."
+        >
+          {loading ? (
+            <div style={{ display: "grid", gap: 8 }}>
+              <div className="admin-skeleton admin-skeleton--card" />
+              <div className="admin-skeleton admin-skeleton--card" />
+            </div>
+          ) : null}
           {!loading && !items.length ? (
-            <p style={mutedTextStyle}>Još nema sačuvanih prepodnevnih aktivacija.</p>
+            <AdminEmptyState
+              icon="sunrise"
+              title="Još nema prepodnevnih aktivacija"
+              description="Popunite formu levo da otvorite prvi jutarnji period."
+            />
           ) : null}
 
           {items.map((item) => (
             <article key={item.id} style={listRowStyle}>
-              <div style={{ display: "grid", gap: 4 }}>
+              <div style={{ display: "grid", gap: 5 }}>
                 <strong>
                   {formatDateLabel(item.startDate)} - {formatDateLabel(item.endDate)}
                 </strong>
-                <small style={mutedTextStyle}>
-                  {item.startTime} - {item.endTime} | {item.isActive ? "aktivno" : "isključeno"}
-                </small>
+                <span className="admin-btn-row">
+                  <span className="admin-chip">
+                    <AdminIcon name="clock" size={14} />
+                    {item.startTime} - {item.endTime}
+                  </span>
+                  <span className={`admin-chip ${item.isActive ? "is-green" : ""}`.trim()}>
+                    <AdminIcon name={item.isActive ? "check" : "close"} size={14} />
+                    {item.isActive ? "aktivno" : "isključeno"}
+                  </span>
+                </span>
                 {item.note ? <small style={mutedTextStyle}>{item.note}</small> : null}
               </div>
               <div style={buttonRowStyle}>
                 <button
                   type="button"
-                  className="admin-template-link-btn"
+                  className="admin-btn admin-btn--sm"
                   disabled={busyKey === `toggle-${item.id}`}
                   onClick={() => toggleItem(item)}
                 >
+                  <AdminIcon name={item.isActive ? "close" : "check"} size={15} />
                   {item.isActive ? "Isključi" : "Uključi"}
                 </button>
                 <button
                   type="button"
-                  className="admin-template-link-btn"
+                  className="admin-btn admin-btn--sm admin-btn--danger"
                   disabled={busyKey === `delete-${item.id}`}
                   onClick={() => deleteItem(item)}
                 >
+                  <AdminIcon name="trash" size={15} />
                   Obriši
                 </button>
               </div>
             </article>
           ))}
-        </div>
+        </AdminSection>
       </div>
     </section>
   );

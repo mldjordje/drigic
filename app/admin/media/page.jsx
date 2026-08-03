@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { SERVICE_CATEGORY_SPECS, getCategorySlugByName } from "@/lib/services/category-map";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 async function compressImage(file, maxSizeMB = 1.5, quality = 0.85) {
   return new Promise((resolve) => {
@@ -348,16 +350,15 @@ export default function AdminMediaPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Media CMS</h2>
-        <p style={{ color: "#c8d9ee", marginBottom: 0 }}>
-          Dodavanje, pregled, izmena i brisanje pre/posle, galerije i YouTube linkova.
-        </p>
-      </div>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="media"
+        title="Media CMS"
+        description="Slike i video zapisi koje sajt prikazuje: pre/posle poređenja, galerija i YouTube linkovi. Sve što ovde objavite odmah je vidljivo posetiocima."
+      />
 
-      {message ? <p style={{ color: "#9be39f", margin: 0 }}>{message}</p> : null}
-      {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
+      {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+      {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
 
       <div className="admin-card">
         <h3 style={{ marginTop: 0 }}>

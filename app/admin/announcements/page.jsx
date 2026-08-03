@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminField from "@/components/admin/ui/AdminField";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 function toIsoOrNull(value) {
   if (!value) {
@@ -163,62 +168,67 @@ export default function AdminAnnouncementsPage() {
 
   return (
     <section className="admin-announcements-page">
-      <div className="admin-card">
-        <div className="admin-announcements-head">
-          <div>
-            <h2 style={{ margin: 0 }}>Obaveštenja na početnoj strani</h2>
-            <p className="admin-announcements-subtitle">
-              Ovde kreiraš poruke koje klijenti vide na landing strani. Stranica sada prikazuje
-              status, prozor objave i detalje svake poruke na jednom mestu.
-            </p>
-          </div>
-          <div className="admin-announcements-status">
-            <span className="admin-announcement-badge is-live">{stats.live} aktivno</span>
-            <span className="admin-announcement-badge is-scheduled">
-              {stats.scheduled} zakazano
-            </span>
-            <span className="admin-announcement-badge is-muted">{stats.total} ukupno</span>
-          </div>
-        </div>
+      <AdminPageHeader
+        icon="announcements"
+        title="Obaveštenja na početnoj strani"
+        description="Poruke koje klijenti vide na naslovnoj strani sajta. Ovde vidite status, prozor objave i detalje svake poruke na jednom mestu."
+        actions={
+          <>
+            <span className="admin-chip is-green">{stats.live} aktivno</span>
+            <span className="admin-chip is-blue">{stats.scheduled} zakazano</span>
+            <span className="admin-chip">{stats.total} ukupno</span>
+          </>
+        }
+      />
 
-        <div className="admin-announcements-summary">
-          <article className="admin-announcement-stat-card">
-            <span>Ukupno obaveštenja</span>
-            <strong>{stats.total}</strong>
-            <small>Sve poruke sačuvane u sistemu.</small>
-          </article>
-          <article className="admin-announcement-stat-card">
-            <span>Trenutno aktivna</span>
-            <strong>{stats.live}</strong>
-            <small>Vidljiva klijentima na sajtu.</small>
-          </article>
-          <article className="admin-announcement-stat-card">
-            <span>Zakazana</span>
-            <strong>{stats.scheduled}</strong>
-            <small>Čekaju svoj početak prikaza.</small>
-          </article>
-          <article className="admin-announcement-stat-card">
-            <span>Pauzirana ili istekla</span>
-            <strong>{stats.inactive + stats.expired}</strong>
-            <small>Spremna za reviziju ili novo objavljivanje.</small>
-          </article>
+      <div className="admin-stat-grid">
+        <div className="admin-stat-card admin-stat-card--gold">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="list" size={18} /></span>
+          <span className="admin-stat-card-label">Ukupno obaveštenja</span>
+          <strong className="admin-stat-card-value">{stats.total}</strong>
+          <span className="admin-stat-card-hint">Sve poruke sačuvane u sistemu.</span>
+        </div>
+        <div className="admin-stat-card admin-stat-card--green">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="eye" size={18} /></span>
+          <span className="admin-stat-card-label">Trenutno aktivna</span>
+          <strong className="admin-stat-card-value">{stats.live}</strong>
+          <span className="admin-stat-card-hint">Vidljiva klijentima na sajtu.</span>
+        </div>
+        <div className="admin-stat-card admin-stat-card--blue">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="clock" size={18} /></span>
+          <span className="admin-stat-card-label">Zakazana</span>
+          <strong className="admin-stat-card-value">{stats.scheduled}</strong>
+          <span className="admin-stat-card-hint">Čekaju svoj početak prikaza.</span>
+        </div>
+        <div className="admin-stat-card admin-stat-card--amber">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="warning" size={18} /></span>
+          <span className="admin-stat-card-label">Pauzirana ili istekla</span>
+          <strong className="admin-stat-card-value">{stats.inactive + stats.expired}</strong>
+          <span className="admin-stat-card-hint">Spremna za reviziju ili novo objavljivanje.</span>
         </div>
       </div>
 
       <div className="admin-announcements-layout">
-        <div className="admin-card">
-          <div className="admin-announcements-section-head">
+        <div className="admin-section">
+          <div className="admin-section-head">
             <div>
-              <h3 style={{ margin: 0 }}>Novo obaveštenje</h3>
-              <p className="admin-announcements-subtitle">
-                Unesi naslov, poruku i opcioni vremenski prozor prikaza.
+              <h3 className="admin-section-title">
+                <AdminIcon name="plus" size={18} />
+                Novo obaveštenje
+              </h3>
+              <p className="admin-section-desc">
+                Unesite naslov, poruku i opcioni vremenski prozor prikaza.
               </p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="admin-announcement-form">
-            <label className="admin-announcement-field">
-              <span>Naslov</span>
+            <AdminField
+              icon="edit"
+              label="Naslov"
+              hint="Prvi red poruke na naslovnoj strani — držite ga kratkim i jasnim."
+              required
+            >
               <input
                 required
                 value={form.title}
@@ -228,10 +238,14 @@ export default function AdminAnnouncementsPage() {
                 className="admin-inline-input"
                 placeholder="Kratak naslov koji će odmah privući pažnju"
               />
-            </label>
+            </AdminField>
 
-            <label className="admin-announcement-field">
-              <span>Poruka</span>
+            <AdminField
+              icon="announcements"
+              label="Poruka"
+              hint={`Tekst obaveštenja koji klijent čita. ${form.message.length} / 5000 karaktera.`}
+              required
+            >
               <textarea
                 required
                 value={form.message}
@@ -242,12 +256,15 @@ export default function AdminAnnouncementsPage() {
                 className="admin-inline-textarea"
                 placeholder="Na primer: Novi termini za konsultacije su otvoreni od ponedeljka."
               />
-              <small>{form.message.length} / 5000 karaktera</small>
-            </label>
+            </AdminField>
 
             <div className="admin-announcement-grid">
-              <label className="admin-announcement-field">
-                <span>Početak prikaza</span>
+              <AdminField
+                icon="clock"
+                label="Početak prikaza"
+                hint="Ostavite prazno da poruka krene odmah po čuvanju."
+                optional
+              >
                 <input
                   type="datetime-local"
                   value={form.startsAt}
@@ -256,10 +273,14 @@ export default function AdminAnnouncementsPage() {
                   }
                   className="admin-inline-input"
                 />
-              </label>
+              </AdminField>
 
-              <label className="admin-announcement-field">
-                <span>Kraj prikaza</span>
+              <AdminField
+                icon="clock"
+                label="Kraj prikaza"
+                hint="Ostavite prazno da poruka ostane dok je ručno ne isključite."
+                optional
+              >
                 <input
                   type="datetime-local"
                   value={form.endsAt}
@@ -268,10 +289,10 @@ export default function AdminAnnouncementsPage() {
                   }
                   className="admin-inline-input"
                 />
-              </label>
+              </AdminField>
             </div>
 
-            <label className="admin-announcement-toggle">
+            <label className={`admin-switch ${form.isActive ? "is-on" : ""}`}>
               <input
                 type="checkbox"
                 checked={form.isActive}
@@ -279,21 +300,20 @@ export default function AdminAnnouncementsPage() {
                   setForm((prev) => ({ ...prev, isActive: event.target.checked }))
                 }
               />
-              <span>
+              <span className="admin-switch-text">
                 <strong>Aktivno odmah nakon čuvanja</strong>
-                <small>
-                  Ako je isključeno, poruka ostaje sačuvana ali nije vidljiva klijentima.
-                </small>
+                <span>Ako je isključeno, poruka ostaje sačuvana ali nije vidljiva klijentima.</span>
               </span>
             </label>
 
-            <div className="admin-announcement-actions">
-              <button type="submit" disabled={loading} className="admin-template-link-btn">
+            <div className="admin-btn-row">
+              <button type="submit" disabled={loading} className="admin-btn admin-btn--primary">
+                <AdminIcon name="save" size={16} />
                 {loading ? "Čuvanje..." : "Sačuvaj obaveštenje"}
               </button>
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-btn"
                 onClick={() =>
                   setForm({
                     title: "",
@@ -304,20 +324,24 @@ export default function AdminAnnouncementsPage() {
                   })
                 }
               >
+                <AdminIcon name="refresh" size={16} />
                 Resetuj formu
               </button>
             </div>
           </form>
 
-          {message ? <p className="admin-announcement-feedback is-success">{message}</p> : null}
-          {error ? <p className="admin-announcement-feedback is-error">{error}</p> : null}
+          {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+          {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
         </div>
 
-        <div className="admin-card">
-          <div className="admin-announcements-section-head">
+        <div className="admin-section">
+          <div className="admin-section-head">
             <div>
-              <h3 style={{ margin: 0 }}>Pregled pre objave</h3>
-              <p className="admin-announcements-subtitle">
+              <h3 className="admin-section-title">
+                <AdminIcon name="eye" size={18} />
+                Pregled pre objave
+              </h3>
+              <p className="admin-section-desc">
                 Ovako će poruka izgledati u administraciji i kroz status prikaza.
               </p>
             </div>
@@ -356,18 +380,24 @@ export default function AdminAnnouncementsPage() {
         </div>
       </div>
 
-      <div className="admin-card">
-        <div className="admin-announcements-section-head">
+      <div className="admin-section">
+        <div className="admin-section-head">
           <div>
-            <h3 style={{ margin: 0 }}>Lista obaveštenja</h3>
-            <p className="admin-announcements-subtitle">
+            <h3 className="admin-section-title">
+              <AdminIcon name="list" size={18} />
+              Lista obaveštenja
+            </h3>
+            <p className="admin-section-desc">
               Detaljan pregled svih poruka, njihovog statusa i trajanja prikaza.
             </p>
           </div>
         </div>
 
         {booting ? (
-          <p className="admin-announcements-empty">Učitavanje obaveštenja...</p>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div className="admin-skeleton admin-skeleton--card" />
+            <div className="admin-skeleton admin-skeleton--card" />
+          </div>
         ) : items.length ? (
           <div className="admin-announcement-list">
             {items.map((item) => {
@@ -412,9 +442,11 @@ export default function AdminAnnouncementsPage() {
             })}
           </div>
         ) : (
-          <p className="admin-announcements-empty">
-            Nema sačuvanih obaveštenja. Napravi prvo obaveštenje iz forme iznad.
-          </p>
+          <AdminEmptyState
+            icon="announcements"
+            title="Nema sačuvanih obaveštenja"
+            description="Napravite prvo obaveštenje iz forme iznad — prikazaće se klijentima na naslovnoj strani."
+          />
         )}
       </div>
     </section>

@@ -3,8 +3,33 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/common/LocaleProvider";
 import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminSection from "@/components/admin/ui/AdminSection";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
 
 const STATUSES = ["pending", "confirmed", "cancelled", "no_show"];
+
+const STATUS_ICON = {
+  pending: "clock",
+  confirmed: "check",
+  cancelled: "close",
+  no_show: "warning",
+  completed: "check",
+};
+
+const STATUS_TONE = {
+  pending: "amber",
+  confirmed: "green",
+  cancelled: "rose",
+  no_show: "violet",
+};
+
+const ACTION_VARIANT = {
+  confirmed: "admin-btn--success",
+  cancelled: "admin-btn--danger",
+  no_show: "admin-btn--danger",
+};
 
 async function parseResponse(response) {
   const text = await response.text();
@@ -281,34 +306,40 @@ export default function AdminBookingsPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>{t("admin.book.title")}</h2>
-        <p style={{ color: "#c6d7ef", marginBottom: 0 }}>
-          {t("admin.book.subtitle")}
-        </p>
-      </div>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="bookings"
+        title={t("admin.book.title")}
+        description={t("admin.desc.bookings")}
+      />
 
-      <div style={statsWrapStyle}>
+      <div className="admin-stat-grid">
         {STATUSES.map((status) => (
-          <div key={status} style={statCardStyle}>
-            <strong>{statusLabel(status) || status}</strong>
-            <div style={{ fontSize: 24 }}>{totals[status]}</div>
+          <div key={status} className={`admin-stat-card admin-stat-card--${STATUS_TONE[status]}`}>
+            <span className="admin-stat-card-icon" aria-hidden="true">
+              <AdminIcon name={STATUS_ICON[status]} size={18} />
+            </span>
+            <strong className="admin-stat-card-label">{statusLabel(status) || status}</strong>
+            <div className="admin-stat-card-value">{totals[status]}</div>
           </div>
         ))}
       </div>
 
-      <div className="admin-card">
-        <h3 style={{ marginTop: 0 }}>{t("admin.book.periodFilter")}</h3>
+      <AdminSection
+        icon="filter"
+        title={t("admin.book.periodFilter")}
+        description={t("admin.book.filterHint")}
+      >
         <div style={filterWrapStyle}>
           <div>
             <label htmlFor="booking-filter-from" style={labelStyle}>{t("admin.book.from")}</label>
             <input
               id="booking-filter-from"
               type="date"
+              className="admin-inline-input"
               value={from}
               onChange={(event) => setFrom(event.target.value)}
-              style={inputStyle}
+              style={{ marginTop: 0 }}
             />
           </div>
           <div>
@@ -316,14 +347,15 @@ export default function AdminBookingsPage() {
             <input
               id="booking-filter-to"
               type="date"
+              className="admin-inline-input"
               value={to}
               onChange={(event) => setTo(event.target.value)}
-              style={inputStyle}
+              style={{ marginTop: 0 }}
             />
           </div>
           <button
             type="button"
-            className="admin-template-link-btn"
+            className="admin-btn admin-btn--primary"
             style={{ alignSelf: "end" }}
             onClick={() => {
               const filters = { from, to };
@@ -344,7 +376,7 @@ export default function AdminBookingsPage() {
             {t("admin.book.applyFilter")}
           </button>
         </div>
-      </div>
+      </AdminSection>
 
       {pageError ? <AdminStatusMessage tone="error" toneLabel={t("admin.tone.error")}>{pageError}</AdminStatusMessage> : null}
 
@@ -364,19 +396,27 @@ export default function AdminBookingsPage() {
           >
             <div style={metaGridStyle}>
               <div>
-                <small style={smallStyle}>{t("admin.book.client")}</small>
+                <small style={smallStyle}>
+                  <AdminIcon name="user" size={13} /> {t("admin.book.client")}
+                </small>
                 <div>{booking.clientName || "-"}</div>
               </div>
               <div>
-                <small style={smallStyle}>{t("admin.book.start")}</small>
+                <small style={smallStyle}>
+                  <AdminIcon name="clock" size={13} /> {t("admin.book.start")}
+                </small>
                 <div>{formatDateTime(booking.startsAt)}</div>
               </div>
               <div>
-                <small style={smallStyle}>{t("admin.book.end")}</small>
+                <small style={smallStyle}>
+                  <AdminIcon name="clock" size={13} /> {t("admin.book.end")}
+                </small>
                 <div>{formatDateTime(booking.endsAt)}</div>
               </div>
               <div>
-                <small style={smallStyle}>{t("admin.book.priceDuration")}</small>
+                <small style={smallStyle}>
+                  <AdminIcon name="money" size={13} /> {t("admin.book.priceDuration")}
+                </small>
                 <div>
                   {booking.totalPriceRsd} EUR / {booking.totalDurationMin} min
                 </div>
@@ -384,23 +424,32 @@ export default function AdminBookingsPage() {
             </div>
 
             <div>
-              <small style={smallStyle}>{t("admin.book.services")}</small>
+              <small style={smallStyle}>
+                <AdminIcon name="services" size={13} /> {t("admin.book.services")}
+              </small>
               <div>{booking.serviceSummary || "-"}</div>
             </div>
 
             <div style={controlGridStyle}>
               <div>
                 <small style={smallStyle}>{t("admin.book.status")}</small>
-                <div style={{ marginTop: 4 }}>
-                  {statusLabel(statusById[booking.id] || booking.status) ||
-                    statusById[booking.id] ||
-                    booking.status}
+                <div style={{ marginTop: 6 }}>
+                  <span className={`admin-status-badge is-${statusById[booking.id] || booking.status}`}>
+                    {statusLabel(statusById[booking.id] || booking.status) ||
+                      statusById[booking.id] ||
+                      booking.status}
+                  </span>
                 </div>
               </div>
 
-              <label>
-                <small style={smallStyle}>{t("admin.book.note")}</small>
+              <label className="admin-field">
+                <span className="admin-field-label">
+                  <AdminIcon name="edit" size={15} />
+                  {t("admin.book.note")}
+                </span>
                 <input
+                  className="admin-inline-input"
+                  aria-label={t("admin.book.note")}
                   value={notesById[booking.id] || ""}
                   disabled={isPending}
                   onChange={(event) =>
@@ -412,8 +461,8 @@ export default function AdminBookingsPage() {
                       }));
                     }
                   }
-                  style={{ ...inputStyle, marginTop: 4 }}
                 />
+                <span className="admin-field-hint">{t("admin.book.noteHint")}</span>
               </label>
             </div>
 
@@ -433,24 +482,26 @@ export default function AdminBookingsPage() {
               </AdminStatusMessage>
             ) : null}
 
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="admin-btn-row">
               {getQuickActions(statusById[booking.id] || booking.status).map((action) => (
                 <button
                   key={`${booking.id}-${action.value}`}
                   type="button"
-                  className="admin-template-link-btn"
+                  className={`admin-btn admin-btn--sm ${ACTION_VARIANT[action.value] || ""}`.trim()}
                   disabled={isPending}
                   onClick={() => updateBooking(booking.id, action.value, action.label)}
                 >
+                  <AdminIcon name={STATUS_ICON[action.value] || "check"} size={15} />
                   {action.label}
                 </button>
               ))}
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-btn admin-btn--sm"
                 disabled={isPending}
                 onClick={() => updateBooking(booking.id, undefined, t("admin.book.saveNote"))}
               >
+                <AdminIcon name="save" size={15} />
                 {t("admin.book.saveNote")}
               </button>
             </div>
@@ -460,26 +511,15 @@ export default function AdminBookingsPage() {
       </div>
 
       {!bookings.length ? (
-        <div className="admin-card">
-          <p style={{ margin: 0, color: "#d5e2f4" }}>{t("admin.book.noBookings")}</p>
-        </div>
+        <AdminEmptyState
+          icon="bookings"
+          title={t("admin.book.noBookings")}
+          description={t("admin.desc.bookings")}
+        />
       ) : null}
     </section>
   );
 }
-
-const statsWrapStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))",
-  gap: 8,
-};
-
-const statCardStyle = {
-  border: "1px solid rgba(217,232,248,0.25)",
-  borderRadius: 10,
-  padding: "10px 12px",
-  background: "rgba(217,232,248,0.08)",
-};
 
 const filterWrapStyle = {
   display: "flex",
@@ -508,19 +548,17 @@ const controlGridStyle = {
 const labelStyle = {
   display: "block",
   marginBottom: 6,
-  fontWeight: 600,
+  fontWeight: 700,
+  fontSize: 13,
 };
 
 const smallStyle = {
-  color: "#abc2dd",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 5,
+  color: "var(--admin-text-faint)",
   fontSize: 12,
-};
-
-const inputStyle = {
-  borderRadius: 8,
-  border: "1px solid rgba(217,232,248,0.35)",
-  padding: "7px 9px",
-  background: "rgba(10,12,0,0.5)",
-  color: "#f2f5fb",
-  width: "100%",
+  fontWeight: 700,
+  letterSpacing: "0.04em",
+  textTransform: "uppercase",
 };

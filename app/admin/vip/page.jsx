@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminSection from "@/components/admin/ui/AdminSection";
+import AdminField from "@/components/admin/ui/AdminField";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 const statusOptions = ["pending", "approved", "rejected"];
 
@@ -124,119 +130,150 @@ export default function AdminVipPage() {
   }, [requests]);
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>VIP tretmani</h2>
-        <p style={{ color: "#c7d8ef", marginBottom: 0 }}>
-          Admin upravlja VIP cenom i odobrava/odbija VIP zahteve.
-        </p>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="vip"
+        title="VIP tretmani"
+        description="Podesi osnovnu VIP cenu i obradi zahteve koje klijenti pošalju sa VIP forme."
+      />
+
+      {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+      {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
+
+      <div className="admin-stat-grid">
+        <div className="admin-stat-card admin-stat-card--amber">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="clock" size={18} /></span>
+          <span className="admin-stat-card-label">Na čekanju</span>
+          <strong className="admin-stat-card-value">{counters.pending}</strong>
+        </div>
+        <div className="admin-stat-card admin-stat-card--green">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="check" size={18} /></span>
+          <span className="admin-stat-card-label">Odobreno</span>
+          <strong className="admin-stat-card-value">{counters.approved}</strong>
+        </div>
+        <div className="admin-stat-card admin-stat-card--rose">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="close" size={18} /></span>
+          <span className="admin-stat-card-label">Odbijeno</span>
+          <strong className="admin-stat-card-value">{counters.rejected}</strong>
+        </div>
       </div>
 
-      {message ? <p style={{ color: "#9be39f" }}>{message}</p> : null}
-      {error ? <p style={{ color: "#ffabab" }}>{error}</p> : null}
-
-      <div className="admin-card">
-        <h3 style={{ marginTop: 0 }}>VIP settings</h3>
-        <form onSubmit={saveSettings} style={{ display: "grid", gap: 10 }}>
-          <label>
-            Osnovna VIP cena (RSD)
-            <input
-              className="admin-inline-input"
-              type="number"
-              min={0}
-              value={settings.basePriceRsd}
-              onChange={(event) =>
-                setSettings((prev) => ({ ...prev, basePriceRsd: event.target.value }))
-              }
-            />
-          </label>
-          <label>
-            Napomena
+      <AdminSection
+        icon="settings"
+        title="VIP podešavanja"
+        description="Cena i napomena koje klijent vidi na VIP formi na sajtu."
+      >
+        <form onSubmit={saveSettings} style={{ display: "grid", gap: 12 }}>
+          <div className="admin-form-grid">
+            <AdminField
+              icon="money"
+              label="Osnovna VIP cena (RSD)"
+              hint="Polazna cena VIP termina. Konačnu cenu i dalje potvrđujete ručno po zahtevu."
+              required
+            >
+              <input
+                className="admin-inline-input"
+                type="number"
+                min={0}
+                value={settings.basePriceRsd}
+                onChange={(event) =>
+                  setSettings((prev) => ({ ...prev, basePriceRsd: event.target.value }))
+                }
+              />
+            </AdminField>
+          </div>
+          <AdminField
+            icon="edit"
+            label="Napomena"
+            hint="Kratak tekst uz VIP ponudu — npr. šta je uključeno i koliko traje termin."
+            optional
+          >
             <textarea
               className="admin-inline-textarea"
               rows={4}
               value={settings.notes}
               onChange={(event) => setSettings((prev) => ({ ...prev, notes: event.target.value }))}
             />
-          </label>
-          <button type="submit" className="admin-template-link-btn" disabled={loading}>
-            Sačuvaj settings
-          </button>
+          </AdminField>
+          <div className="admin-btn-row">
+            <button type="submit" className="admin-btn admin-btn--primary" disabled={loading}>
+              <AdminIcon name="save" size={16} />
+              Sačuvaj podešavanja
+            </button>
+          </div>
         </form>
-      </div>
+      </AdminSection>
 
-      <div className="admin-card">
-        <h3 style={{ marginTop: 0 }}>VIP zahtevi</h3>
-        <p style={{ marginTop: 0, color: "#bdd0e8" }}>
-          Pending: {counters.pending} | Approved: {counters.approved} | Rejected: {counters.rejected}
-        </p>
-
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", minWidth: 760, borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Datum zahteva</th>
-                <th style={thStyle}>Traženi datum</th>
-                <th style={thStyle}>Korisnik</th>
-                <th style={thStyle}>Poruka</th>
-                <th style={thStyle}>Status</th>
-                <th style={thStyle}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((item) => (
-                <tr key={item.id}>
-                  <td style={tdStyle}>{new Date(item.createdAt).toLocaleString("sr-RS")}</td>
-                  <td style={tdStyle}>
-                    {item.requestedDate
-                      ? new Date(item.requestedDate).toLocaleString("sr-RS")
-                      : "-"}
-                  </td>
-                  <td style={tdStyle}>{item.userId}</td>
-                  <td style={tdStyle}>{item.message || "-"}</td>
-                  <td style={tdStyle}>
-                    <select
-                      className="admin-inline-input"
-                      value={selectedStatus[item.id] || item.status}
-                      onChange={(event) =>
-                        setSelectedStatus((prev) => ({ ...prev, [item.id]: event.target.value }))
-                      }
-                    >
-                      {statusOptions.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td style={tdStyle}>
-                    <button
-                      type="button"
-                      className="admin-template-link-btn"
-                      disabled={loading}
-                      onClick={() => updateRequest(item)}
-                    >
-                      Sačuvaj
-                    </button>
-                  </td>
+      <AdminSection
+        icon="list"
+        title="VIP zahtevi"
+        description="Promeni status zahteva i sačuvaj — klijent dobija obaveštenje o ishodu."
+      >
+        {requests.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table" style={{ minWidth: 760 }}>
+              <thead>
+                <tr>
+                  <th>Datum zahteva</th>
+                  <th>Traženi datum</th>
+                  <th>Korisnik</th>
+                  <th>Poruka</th>
+                  <th>Status</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </thead>
+              <tbody>
+                {requests.map((item) => (
+                  <tr key={item.id}>
+                    <td>{new Date(item.createdAt).toLocaleString("sr-RS")}</td>
+                    <td>
+                      {item.requestedDate
+                        ? new Date(item.requestedDate).toLocaleString("sr-RS")
+                        : "-"}
+                    </td>
+                    <td>{item.userId}</td>
+                    <td>{item.message || "-"}</td>
+                    <td>
+                      <select
+                        className="admin-inline-input"
+                        aria-label="Status zahteva"
+                        style={{ marginTop: 0, minWidth: 140 }}
+                        value={selectedStatus[item.id] || item.status}
+                        onChange={(event) =>
+                          setSelectedStatus((prev) => ({ ...prev, [item.id]: event.target.value }))
+                        }
+                      >
+                        {statusOptions.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn--sm"
+                        disabled={loading}
+                        onClick={() => updateRequest(item)}
+                      >
+                        <AdminIcon name="save" size={15} />
+                        Sačuvaj
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <AdminEmptyState
+            icon="vip"
+            title="Još nema VIP zahteva"
+            description="Zahtevi poslati sa VIP forme na sajtu pojaviće se ovde."
+          />
+        )}
+      </AdminSection>
     </section>
   );
 }
-
-const thStyle = {
-  textAlign: "left",
-  borderBottom: "1px solid rgba(217,232,248,0.24)",
-  padding: "8px 6px",
-};
-
-const tdStyle = {
-  borderBottom: "1px solid rgba(217,232,248,0.12)",
-  padding: "8px 6px",
-  verticalAlign: "top",
-};

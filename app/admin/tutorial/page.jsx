@@ -1,3 +1,9 @@
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminSection from "@/components/admin/ui/AdminSection";
+
+/** Icons follow the order of tutorialSections below. */
+const TUTORIAL_ICONS = ["grid", "calendar", "services", "clients", "media", "settings", "help"];
+
 const tutorialSections = [
   {
     title: "1. Osnovna navigacija",
@@ -92,26 +98,26 @@ const tutorialSections = [
 
 export default function AdminTutorialPage() {
   return (
-    <section style={{ display: "grid", gap: 16 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Tutorial za admin panel</h2>
-        <p style={{ marginBottom: 0, color: "#c8d8ec", maxWidth: 900 }}>
-          Ova stranica je kratko uputstvo za svakodnevni rad u admin panelu:
-          kako se upravlja terminima, kako se dodaju usluge, akcije, paketi i
-          kako se proverava šta korisnik vidi na sajtu.
-        </p>
-      </div>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="tutorial"
+        title="Tutorial za admin panel"
+        description="Kratko uputstvo za svakodnevni rad: kako se upravlja terminima, kako se dodaju usluge, akcije i paketi i kako se proverava šta klijent vidi na sajtu."
+      />
 
-      {tutorialSections.map((section) => (
-        <article key={section.title} className="admin-card">
-          <h3 style={{ marginTop: 0 }}>{section.title}</h3>
-          <p style={{ color: "#d8e5f5" }}>{section.body}</p>
+      {tutorialSections.map((section, index) => (
+        <AdminSection
+          key={section.title}
+          icon={TUTORIAL_ICONS[index] || "tutorial"}
+          title={section.title}
+          description={section.body}
+        >
           <ul className="admin-locked-list" style={{ marginBottom: 0 }}>
             {section.bullets.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </article>
+        </AdminSection>
       ))}
     </section>
   );

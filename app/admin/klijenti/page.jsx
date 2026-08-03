@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/components/common/LocaleProvider";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
 
 function parseResponse(response) {
   return response
@@ -133,38 +136,41 @@ export default function AdminClientsPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>{t("admin.cli.title")}</h2>
-        <p style={{ color: "#bfd2e9" }}>
-          {t("admin.cli.subtitle")}
-        </p>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="clients"
+        title={t("admin.cli.title")}
+        description={t("admin.desc.clients")}
+      />
 
-        <form onSubmit={onSearchSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <form onSubmit={onSearchSubmit} className="admin-toolbar">
+        <span className="admin-search-input">
+          <AdminIcon name="search" size={16} />
           <input
-            className="admin-inline-input"
-            style={{ width: "min(460px, 100%)", marginTop: 0 }}
             placeholder={t("admin.cli.searchPlaceholder")}
+            aria-label={t("admin.cli.searchPlaceholder")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
-          <button type="submit" className="admin-template-link-btn" disabled={loading}>
-            {t("admin.cli.search")}
-          </button>
-          <button
-            type="button"
-            className="admin-template-link-btn"
-            onClick={() => {
-              setSearch("");
-              setPage(1);
-              loadClients({ searchValue: "", pageValue: 1 });
-            }}
-            disabled={loading}
-          >
-            {t("admin.cli.reset")}
-          </button>
-        </form>
-      </div>
+        </span>
+        <button type="submit" className="admin-btn admin-btn--primary" disabled={loading}>
+          <AdminIcon name="search" size={16} />
+          {t("admin.cli.search")}
+        </button>
+        <button
+          type="button"
+          className="admin-btn"
+          onClick={() => {
+            setSearch("");
+            setPage(1);
+            loadClients({ searchValue: "", pageValue: 1 });
+          }}
+          disabled={loading}
+        >
+          <AdminIcon name="refresh" size={16} />
+          {t("admin.cli.reset")}
+        </button>
+      </form>
 
       {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
 
@@ -196,15 +202,17 @@ export default function AdminClientsPage() {
               {client.lastLoginAt ? new Date(client.lastLoginAt).toLocaleString(intlLocale) : t("admin.cli.never")}
             </div>
 
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className="admin-btn-row">
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-btn admin-btn--sm"
                 onClick={() => openClientDetails(client.id)}
               >
+                <AdminIcon name="eye" size={15} />
                 {t("admin.cli.viewClient")}
               </button>
-              <Link href={`/admin/klijenti/${client.id}`} className="admin-template-link-btn">
+              <Link href={`/admin/klijenti/${client.id}`} className="admin-btn admin-btn--sm">
+                <AdminIcon name="user" size={15} />
                 {t("admin.cli.fullProfile")}
               </Link>
             </div>
@@ -213,30 +221,30 @@ export default function AdminClientsPage() {
       </div>
 
       {!clients.length && !loading ? (
-        <div className="admin-card">
-          <p style={{ margin: 0, color: "#d8e4f2" }}>{t("admin.cli.noResults")}</p>
-        </div>
+        <AdminEmptyState icon="clients" title={t("admin.cli.noResults")} />
       ) : null}
 
-      <div className="admin-card" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="admin-toolbar">
         <button
           type="button"
-          className="admin-template-link-btn"
+          className="admin-btn admin-btn--sm"
           disabled={page <= 1 || loading}
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
         >
+          <AdminIcon name="chevronLeft" size={15} />
           {t("admin.cli.prev")}
         </button>
-        <span style={{ color: "#c2d4ea" }}>
+        <span style={{ color: "var(--admin-text-soft)", fontWeight: 700 }}>
           {t("admin.cli.page")} {page} / {Math.max(Math.ceil(total / limit), 1)}
         </span>
         <button
           type="button"
-          className="admin-template-link-btn"
+          className="admin-btn admin-btn--sm"
           disabled={!hasMore || loading}
           onClick={() => setPage((prev) => prev + 1)}
         >
           {t("admin.cli.next")}
+          <AdminIcon name="chevronRight" size={15} />
         </button>
       </div>
 

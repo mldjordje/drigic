@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminField from "@/components/admin/ui/AdminField";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 const AUDIENCE_OPTIONS = [
   { value: "all", label: "Svi klijenti sa važećim mejlom" },
@@ -177,61 +182,64 @@ export default function AdminCampaignsPage() {
 
   return (
     <section className="admin-announcements-page">
-      <div className="admin-card">
-        <div className="admin-announcements-head">
-          <div>
-            <h2 style={{ margin: 0 }}>Mejl kampanje</h2>
-            <p className="admin-announcements-subtitle">
-              Napiši poruku, dodaj sliku i pošalji je klijentima. Svaki mejl nosi dugme za
-              zakazivanje termina i obaveznu odjavu sa liste.
-            </p>
-          </div>
-          <div className="admin-announcements-status">
-            <span className="admin-announcement-badge is-live">{stats.sending} u slanju</span>
-            <span className="admin-announcement-badge is-scheduled">{stats.drafts} nacrta</span>
-            <span className="admin-announcement-badge is-muted">{stats.sent} poslato</span>
-          </div>
-        </div>
+      <AdminPageHeader
+        icon="campaigns"
+        title="Mejl kampanje"
+        description="Napišite poruku, dodajte sliku i pošaljite je klijentima. Svaki mejl nosi dugme za zakazivanje termina i obaveznu odjavu sa liste."
+        actions={
+          <>
+            <span className="admin-chip is-green">{stats.sending} u slanju</span>
+            <span className="admin-chip is-blue">{stats.drafts} nacrta</span>
+            <span className="admin-chip">{stats.sent} poslato</span>
+          </>
+        }
+      />
 
-        <div className="admin-announcements-summary">
-          {AUDIENCE_OPTIONS.map((option) => (
-            <article className="admin-announcement-stat-card" key={option.value}>
-              <span>{option.label}</span>
-              <strong>{audience[option.value] ?? "-"}</strong>
-              <small>Primalaca u ovoj grupi.</small>
-            </article>
-          ))}
-        </div>
-
-        {delivery && !delivery.configured ? (
-          <p className="admin-announcement-feedback is-error">
-            Slanje mejlova nije podešeno (nedostaje: {delivery.missing.join(", ")}). Kampanje
-            možeš da pripremiš, ali slanje neće raditi dok se ne doda API ključ.
-          </p>
-        ) : null}
-        {delivery?.configured ? (
-          <p className="admin-announcements-subtitle">
-            Dnevni limit: {delivery.dailyLimit} mejlova. Preostalo danas:{" "}
-            <strong>{delivery.quotaRemaining}</strong>. Ostatak se automatski šalje narednih
-            dana.
-          </p>
-        ) : null}
+      <div className="admin-stat-grid">
+        {AUDIENCE_OPTIONS.map((option) => (
+          <div className="admin-stat-card admin-stat-card--blue" key={option.value}>
+            <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="clients" size={18} /></span>
+            <span className="admin-stat-card-label">{option.label}</span>
+            <strong className="admin-stat-card-value">{audience[option.value] ?? "-"}</strong>
+            <span className="admin-stat-card-hint">Primalaca u ovoj grupi.</span>
+          </div>
+        ))}
       </div>
 
+      {delivery && !delivery.configured ? (
+        <AdminStatusMessage tone="error" toneLabel="Greška" title="Slanje mejlova nije podešeno">
+          Nedostaje: {delivery.missing.join(", ")}. Kampanje možete da pripremite, ali slanje neće
+          raditi dok se ne doda API ključ.
+        </AdminStatusMessage>
+      ) : null}
+      {delivery?.configured ? (
+        <AdminStatusMessage tone="info" toneLabel="Informacija">
+          Dnevni limit: {delivery.dailyLimit} mejlova. Preostalo danas:{" "}
+          <strong>{delivery.quotaRemaining}</strong>. Ostatak se automatski šalje narednih dana.
+        </AdminStatusMessage>
+      ) : null}
+
       <div className="admin-announcements-layout">
-        <div className="admin-card">
-          <div className="admin-announcements-section-head">
+        <div className="admin-section">
+          <div className="admin-section-head">
             <div>
-              <h3 style={{ margin: 0 }}>Nova kampanja</h3>
-              <p className="admin-announcements-subtitle">
+              <h3 className="admin-section-title">
+                <AdminIcon name="plus" size={18} />
+                Nova kampanja
+              </h3>
+              <p className="admin-section-desc">
                 Kampanja se prvo čuva kao nacrt. Slanje se pokreće posebnim dugmetom.
               </p>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="admin-announcement-form">
-            <label className="admin-announcement-field">
-              <span>Interni naziv</span>
+            <AdminField
+              icon="edit"
+              label="Interni naziv"
+              hint="Vidi samo admin — služi da prepoznate kampanju u listi. Ne šalje se klijentima."
+              required
+            >
               <input
                 required
                 value={form.title}
@@ -239,11 +247,14 @@ export default function AdminCampaignsPage() {
                 className="admin-inline-input"
                 placeholder="Npr. Avgustovska akcija na tretmane lica"
               />
-              <small>Vidi samo admin, ne šalje se klijentima.</small>
-            </label>
+            </AdminField>
 
-            <label className="admin-announcement-field">
-              <span>Naslov mejla (subject)</span>
+            <AdminField
+              icon="mail"
+              label="Naslov mejla (subject)"
+              hint="Ovo klijent vidi u inboxu — najviše utiče na to da li će mejl uopšte otvoriti."
+              required
+            >
               <input
                 required
                 value={form.subject}
@@ -253,10 +264,14 @@ export default function AdminCampaignsPage() {
                 className="admin-inline-input"
                 placeholder="Ono što klijent vidi u inboxu"
               />
-            </label>
+            </AdminField>
 
-            <label className="admin-announcement-field">
-              <span>Kratak opis ispod naslova</span>
+            <AdminField
+              icon="info"
+              label="Kratak opis ispod naslova"
+              hint="Sivi tekst koji Gmail prikazuje pored naslova (preview text)."
+              optional
+            >
               <input
                 value={form.previewText}
                 onChange={(event) =>
@@ -265,10 +280,14 @@ export default function AdminCampaignsPage() {
                 className="admin-inline-input"
                 placeholder="Sivi tekst koji Gmail prikazuje pored naslova"
               />
-            </label>
+            </AdminField>
 
-            <label className="admin-announcement-field">
-              <span>Naslov u poruci</span>
+            <AdminField
+              icon="announcements"
+              label="Naslov u poruci"
+              hint="Veliki naslov na vrhu samog mejla, unutar tela poruke."
+              required
+            >
               <input
                 required
                 value={form.heading}
@@ -278,10 +297,14 @@ export default function AdminCampaignsPage() {
                 className="admin-inline-input"
                 placeholder="Veliki naslov na vrhu mejla"
               />
-            </label>
+            </AdminField>
 
-            <label className="admin-announcement-field">
-              <span>Tekst poruke</span>
+            <AdminField
+              icon="blog"
+              label="Tekst poruke"
+              hint={`Svaki novi red postaje novi pasus u mejlu. ${form.body.length} / 8000 karaktera.`}
+              required
+            >
               <textarea
                 required
                 rows={8}
@@ -290,11 +313,14 @@ export default function AdminCampaignsPage() {
                 className="admin-inline-textarea"
                 placeholder="Svaki novi red postaje novi pasus u mejlu."
               />
-              <small>{form.body.length} / 8000 karaktera</small>
-            </label>
+            </AdminField>
 
-            <label className="admin-announcement-field">
-              <span>Slika (opciono)</span>
+            <AdminField
+              icon="image"
+              label="Slika"
+              hint="Preporuka: široka slika (npr. 1200×600), najviše 2 MB."
+              optional
+            >
               <input
                 type="file"
                 accept="image/*"
@@ -302,12 +328,14 @@ export default function AdminCampaignsPage() {
                 onChange={handleImageChange}
                 className="admin-inline-input"
               />
-              <small>Preporuka: široka slika, najviše 2 MB.</small>
-            </label>
+            </AdminField>
 
             <div className="admin-announcement-grid">
-              <label className="admin-announcement-field">
-                <span>Tekst dugmeta</span>
+              <AdminField
+                icon="link"
+                label="Tekst dugmeta"
+                hint="Poziv na akciju u mejlu, npr. „Zakaži termin“."
+              >
                 <input
                   value={form.ctaLabel}
                   onChange={(event) =>
@@ -315,10 +343,14 @@ export default function AdminCampaignsPage() {
                   }
                   className="admin-inline-input"
                 />
-              </label>
+              </AdminField>
 
-              <label className="admin-announcement-field">
-                <span>Link dugmeta</span>
+              <AdminField
+                icon="external"
+                label="Link dugmeta"
+                hint="Ostavite prazno da dugme vodi na stranu za zakazivanje."
+                optional
+              >
                 <input
                   value={form.ctaUrl}
                   onChange={(event) =>
@@ -327,11 +359,15 @@ export default function AdminCampaignsPage() {
                   className="admin-inline-input"
                   placeholder="Prazno = strana za zakazivanje"
                 />
-              </label>
+              </AdminField>
             </div>
 
-            <label className="admin-announcement-field">
-              <span>Kome se šalje</span>
+            <AdminField
+              icon="clients"
+              label="Kome se šalje"
+              hint={`Grupa primalaca. Trenutno u ovoj grupi: ${selectedAudienceSize} primalaca.`}
+              required
+            >
               <select
                 value={form.audience}
                 onChange={(event) =>
@@ -345,33 +381,37 @@ export default function AdminCampaignsPage() {
                   </option>
                 ))}
               </select>
-              <small>Trenutno u ovoj grupi: {selectedAudienceSize} primalaca.</small>
-            </label>
+            </AdminField>
 
-            <div className="admin-announcement-actions">
-              <button type="submit" disabled={busy} className="admin-template-link-btn">
+            <div className="admin-btn-row">
+              <button type="submit" disabled={busy} className="admin-btn admin-btn--primary">
+                <AdminIcon name="save" size={16} />
                 {busy ? "Čuvanje..." : "Sačuvaj kao nacrt"}
               </button>
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-btn"
                 onClick={resetForm}
                 disabled={busy}
               >
+                <AdminIcon name="refresh" size={16} />
                 Resetuj formu
               </button>
             </div>
           </form>
 
-          {message ? <p className="admin-announcement-feedback is-success">{message}</p> : null}
-          {error ? <p className="admin-announcement-feedback is-error">{error}</p> : null}
+          {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+          {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
         </div>
 
-        <div className="admin-card">
-          <div className="admin-announcements-section-head">
+        <div className="admin-section">
+          <div className="admin-section-head">
             <div>
-              <h3 style={{ margin: 0 }}>Kako će mejl izgledati</h3>
-              <p className="admin-announcements-subtitle">
+              <h3 className="admin-section-title">
+                <AdminIcon name="eye" size={18} />
+                Kako će mejl izgledati
+              </h3>
+              <p className="admin-section-desc">
                 Približan prikaz poruke koja stiže klijentu.
               </p>
             </div>
@@ -465,17 +505,20 @@ export default function AdminCampaignsPage() {
         </div>
       </div>
 
-      <div className="admin-card">
-        <div className="admin-announcements-section-head">
+      <div className="admin-section">
+        <div className="admin-section-head">
           <div>
-            <h3 style={{ margin: 0 }}>Sve kampanje</h3>
-            <p className="admin-announcements-subtitle">
+            <h3 className="admin-section-title">
+              <AdminIcon name="list" size={18} />
+              Sve kampanje
+            </h3>
+            <p className="admin-section-desc">
               Status slanja, broj primalaca i akcije nad svakom kampanjom.
             </p>
           </div>
           <button
             type="button"
-            className="admin-template-link-btn"
+            className="admin-btn admin-btn--primary"
             disabled={busy || !stats.sending}
             onClick={() =>
               callCampaignAction(
@@ -485,12 +528,16 @@ export default function AdminCampaignsPage() {
               )
             }
           >
+            <AdminIcon name="mail" size={16} />
             Pošalji sledeću turu odmah
           </button>
         </div>
 
         {booting ? (
-          <p className="admin-announcements-empty">Učitavanje kampanja...</p>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div className="admin-skeleton admin-skeleton--card" />
+            <div className="admin-skeleton admin-skeleton--card" />
+          </div>
         ) : campaigns.length ? (
           <div className="admin-announcement-list">
             {campaigns.map((campaign) => (
@@ -538,10 +585,10 @@ export default function AdminCampaignsPage() {
                   <p className="admin-announcement-feedback is-error">{campaign.lastError}</p>
                 ) : null}
 
-                <div className="admin-announcement-actions">
+                <div className="admin-btn-row">
                   <button
                     type="button"
-                    className="admin-template-link-btn"
+                    className="admin-btn admin-btn--sm"
                     disabled={busy}
                     onClick={() =>
                       callCampaignAction(
@@ -551,6 +598,7 @@ export default function AdminCampaignsPage() {
                       )
                     }
                   >
+                    <AdminIcon name="mail" size={15} />
                     Pošalji test sebi
                   </button>
 
@@ -558,15 +606,16 @@ export default function AdminCampaignsPage() {
                     <>
                       <button
                         type="button"
-                        className="admin-template-link-btn"
+                        className="admin-btn admin-btn--sm admin-btn--success"
                         disabled={busy}
                         onClick={() => handleSend(campaign)}
                       >
+                        <AdminIcon name="check" size={15} />
                         Pokreni slanje
                       </button>
                       <button
                         type="button"
-                        className="admin-template-link-btn"
+                        className="admin-btn admin-btn--sm admin-btn--danger"
                         disabled={busy}
                         onClick={() => {
                           if (window.confirm("Obrisati ovu kampanju?")) {
@@ -578,6 +627,7 @@ export default function AdminCampaignsPage() {
                           }
                         }}
                       >
+                        <AdminIcon name="trash" size={15} />
                         Obriši
                       </button>
                     </>
@@ -586,7 +636,7 @@ export default function AdminCampaignsPage() {
                   {campaign.status === "sending" ? (
                     <button
                       type="button"
-                      className="admin-template-link-btn"
+                      className="admin-btn admin-btn--sm admin-btn--danger"
                       disabled={busy}
                       onClick={() => {
                         if (window.confirm("Zaustaviti dalje slanje ove kampanje?")) {
@@ -598,6 +648,7 @@ export default function AdminCampaignsPage() {
                         }
                       }}
                     >
+                      <AdminIcon name="close" size={15} />
                       Zaustavi slanje
                     </button>
                   ) : null}
@@ -606,9 +657,11 @@ export default function AdminCampaignsPage() {
             ))}
           </div>
         ) : (
-          <p className="admin-announcements-empty">
-            Još nema nijedne kampanje. Napravi prvu iz forme iznad.
-          </p>
+          <AdminEmptyState
+            icon="campaigns"
+            title="Još nema nijedne kampanje"
+            description="Napravite prvu iz forme iznad — čuva se kao nacrt dok ručno ne pokrenete slanje."
+          />
         )}
       </div>
     </section>

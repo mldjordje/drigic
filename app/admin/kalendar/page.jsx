@@ -6,6 +6,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useLocale } from "@/components/common/LocaleProvider";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
 
 const RESCHEDULABLE_STATUSES = ["pending", "confirmed"];
 const MORNING_SCROLL_TIME = "08:00:00";
@@ -998,45 +999,54 @@ export default function AdminKalendarPage() {
   return (
     <section className={`admin-calendar-page ${isMobileViewport ? "is-mobile-full" : ""}`}>
       <div className="admin-card admin-calendar-toolbar">
-        <div>
-          <h2 style={{ margin: 0 }}>{t("admin.cal.title")}</h2>
-          <p style={{ margin: "4px 0 0", color: "#bed0e8" }}>
-            {t("admin.cal.statsLine", {
-              bookings: stats.totalBookings,
-              blocks: stats.totalBlocks,
-              confirmed: stats.confirmed,
-              pending: stats.pending,
-            })}
-          </p>
+        <div className="admin-page-header-main" style={{ padding: 0 }}>
+          <span className="admin-page-header-icon" aria-hidden="true">
+            <AdminIcon name="calendar" size={22} />
+          </span>
+          <div className="admin-page-header-text">
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>{t("admin.cal.title")}</h2>
+            <p style={{ margin: "4px 0 0", color: "var(--admin-text-soft)", fontSize: 13 }}>
+              {t("admin.cal.statsLine", {
+                bookings: stats.totalBookings,
+                blocks: stats.totalBlocks,
+                confirmed: stats.confirmed,
+                pending: stats.pending,
+              })}
+            </p>
+          </div>
         </div>
         <div className="admin-calendar-toolbar-actions">
           <button
             type="button"
-            className="admin-template-link-btn"
+            className="admin-btn admin-btn--sm"
             onClick={() => scrollCalendarToTime(MORNING_SCROLL_TIME)}
           >
+            <AdminIcon name="sunrise" size={15} />
             {t("admin.cal.morning")}
           </button>
           <button
             type="button"
-            className="admin-template-link-btn"
+            className="admin-btn admin-btn--sm"
             onClick={() => scrollCalendarToTime(DEFAULT_AFTERNOON_SCROLL_TIME)}
           >
+            <AdminIcon name="sun" size={15} />
             {t("admin.cal.afternoon")}
           </button>
           <button
             type="button"
-            className="admin-template-link-btn"
+            className="admin-btn admin-btn--sm admin-btn--primary"
             onClick={() => openCreateModal(new Date().toISOString())}
           >
+            <AdminIcon name="plus" size={15} />
             {t("admin.cal.newEntry")}
           </button>
           <button
             type="button"
-            className="admin-template-link-btn"
+            className="admin-btn admin-btn--sm"
             onClick={() => refreshData()}
             disabled={loading}
           >
+            <AdminIcon name="refresh" size={15} />
             {t("admin.cal.refresh")}
           </button>
         </div>

@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminSection from "@/components/admin/ui/AdminSection";
+import AdminField from "@/components/admin/ui/AdminField";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 function parseResponse(response) {
   return response
@@ -292,48 +298,58 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <section style={{ display: "grid", gap: 12 }}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Podešavanja</h2>
-        <p style={{ color: "#bed0e8", marginBottom: 0 }}>
-          Ovde admin može da podesi booking pravila, kategorije usluga i delove tela koji se
-          pojavljuju na formi za usluge.
-        </p>
-        {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
-        {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
-      </div>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="settings"
+        title="Podešavanja"
+        description="Booking pravila, kategorije usluga i delovi tela koji se pojavljuju na formi za usluge. Promene ovde odmah utiču na to šta klijent vidi na sajtu."
+      />
 
-      <div style={statGridStyle}>
-        <div className="admin-card">
-          <strong>{overview.categories}</strong>
-          <div style={mutedTextStyle}>ukupno kategorija usluga</div>
+      {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+      {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
+
+      <div className="admin-stat-grid">
+        <div className="admin-stat-card admin-stat-card--gold">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="catalog" size={18} /></span>
+          <span className="admin-stat-card-label">Kategorija usluga</span>
+          <strong className="admin-stat-card-value">{overview.categories}</strong>
         </div>
-        <div className="admin-card">
-          <strong>{overview.activeCategories}</strong>
-          <div style={mutedTextStyle}>aktivnih kategorija</div>
+        <div className="admin-stat-card admin-stat-card--green">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="check" size={18} /></span>
+          <span className="admin-stat-card-label">Aktivnih kategorija</span>
+          <strong className="admin-stat-card-value">{overview.activeCategories}</strong>
         </div>
-        <div className="admin-card">
-          <strong>{overview.bodyAreas}</strong>
-          <div style={mutedTextStyle}>delova tela u select listi</div>
+        <div className="admin-stat-card admin-stat-card--blue">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="user" size={18} /></span>
+          <span className="admin-stat-card-label">Delova tela</span>
+          <strong className="admin-stat-card-value">{overview.bodyAreas}</strong>
         </div>
-        <div className="admin-card">
-          <strong>{overview.mappedServices}</strong>
-          <div style={mutedTextStyle}>usluga vezanih za deo tela</div>
+        <div className="admin-stat-card admin-stat-card--violet">
+          <span className="admin-stat-card-icon" aria-hidden="true"><AdminIcon name="link" size={18} /></span>
+          <span className="admin-stat-card-label">Usluga sa delom tela</span>
+          <strong className="admin-stat-card-value">{overview.mappedServices}</strong>
         </div>
       </div>
 
       <div style={gridStyle}>
-        <form onSubmit={saveClinicSettings} className="admin-card" style={{ display: "grid", gap: 10 }}>
+        <form onSubmit={saveClinicSettings} className="admin-section" style={{ gap: 12 }}>
           <div>
-            <h3 style={{ marginTop: 0, marginBottom: 6 }}>Booking pravila</h3>
-            <p style={mutedTextStyle}>
+            <h3 className="admin-section-title">
+              <AdminIcon name="clock" size={18} />
+              Booking pravila
+            </h3>
+            <p className="admin-section-desc">
               Osnovne postavke raspoloživosti termina u ordinaciji.
             </p>
           </div>
 
           <div className="admin-services-split-grid">
-            <label>
-              Slot (min)
+            <AdminField
+              icon="clock"
+              label="Slot (min)"
+              hint="Razmak između dva termina u kalendaru. 15 min znači da klijent bira 16:00, 16:15, 16:30…"
+              required
+            >
               <input
                 type="number"
                 min={5}
@@ -345,9 +361,13 @@ export default function AdminSettingsPage() {
                 }
                 required
               />
-            </label>
-            <label>
-              Booking prozor (dana)
+            </AdminField>
+            <AdminField
+              icon="calendar"
+              label="Booking prozor (dana)"
+              hint="Koliko dana unapred klijent može da zakaže. Sve posle toga se ne prikazuje na sajtu."
+              required
+            >
               <input
                 type="number"
                 min={1}
@@ -358,7 +378,7 @@ export default function AdminSettingsPage() {
                 }
                 required
               />
-            </label>
+            </AdminField>
           </div>
 
           <div style={listRowStyle}>
@@ -368,58 +388,64 @@ export default function AdminSettingsPage() {
                 Radni dani 16-21h, subota 10-16h; nedelja po podešavanju u modulu Nedelja.
               </small>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              <Link href="/admin/prepodnevni-termini" className="admin-template-link-btn">
+            <div className="admin-btn-row">
+              <Link href="/admin/prepodnevni-termini" className="admin-btn admin-btn--sm">
+                <AdminIcon name="sunrise" size={15} />
                 Prepodnevni termini
               </Link>
-              <Link href="/admin/nedelja" className="admin-template-link-btn">
+              <Link href="/admin/nedelja" className="admin-btn admin-btn--sm">
+                <AdminIcon name="weekend" size={15} />
                 Nedelja
               </Link>
             </div>
           </div>
 
-          <button type="submit" className="admin-template-link-btn" disabled={busyKey === "clinic"}>
+          <button type="submit" className="admin-btn admin-btn--primary" disabled={busyKey === "clinic"}>
+            <AdminIcon name="save" size={16} />
             {busyKey === "clinic" ? "Čuvanje..." : "Sačuvaj booking pravila"}
           </button>
         </form>
 
-        <div className="admin-card" style={{ display: "grid", gap: 10 }}>
-          <div>
-            <h3 style={{ marginTop: 0, marginBottom: 6 }}>Korisni admin linkovi</h3>
-            <p style={mutedTextStyle}>
-              Brzi pristup modulima koji se najčešće koriste uz podešavanja.
-            </p>
-          </div>
-          <div style={{ display: "grid", gap: 8 }}>
+        <AdminSection
+          icon="link"
+          title="Korisni admin linkovi"
+          description="Brzi pristup modulima koji se najčešće koriste uz podešavanja."
+        >
+          <div className="admin-tile-grid" style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
             {usefulLinks.map((item) => (
-              <Link key={item.href} href={item.href} className="admin-template-link-btn">
-                {item.title}
+              <Link key={item.href} href={item.href} className="admin-tile">
+                <span className="admin-tile-icon" aria-hidden="true">
+                  <AdminIcon name="chevronRight" size={18} />
+                </span>
+                <span className="admin-tile-text">
+                  <strong>{item.title}</strong>
+                  <span>{item.body}</span>
+                </span>
               </Link>
             ))}
           </div>
-          <div style={{ display: "grid", gap: 8 }}>
-            {usefulLinks.map((item) => (
-              <div key={`${item.href}-desc`} style={listRowStyle}>
-                <strong>{item.title}</strong>
-                <small style={mutedTextStyle}>{item.body}</small>
-              </div>
-            ))}
-          </div>
-        </div>
+        </AdminSection>
       </div>
 
       <div style={gridStyle}>
-        <div className="admin-card" style={{ display: "grid", gap: 10 }}>
-          <form onSubmit={(event) => saveMetadata(event, "category")} style={{ display: "grid", gap: 10 }}>
+        <div className="admin-section" style={{ gap: 12 }}>
+          <form onSubmit={(event) => saveMetadata(event, "category")} style={{ display: "grid", gap: 12 }}>
             <div>
-              <h3 style={{ marginTop: 0, marginBottom: 6 }}>Kategorije usluga</h3>
-              <p style={mutedTextStyle}>
-                Aktivna kategorija je vidljiva kroz katalog i public listing usluga.
+              <h3 className="admin-section-title">
+                <AdminIcon name="catalog" size={18} />
+                Kategorije usluga
+              </h3>
+              <p className="admin-section-desc">
+                Aktivna kategorija je vidljiva kroz katalog i javnu listu usluga na sajtu.
               </p>
             </div>
 
-            <label>
-              Naziv kategorije
+            <AdminField
+              icon="catalog"
+              label="Naziv kategorije"
+              hint="Ime grupe tretmana kako ga klijent vidi na sajtu (npr. „Anti-age“)."
+              required
+            >
               <input
                 className="admin-inline-input"
                 value={categoryForm.name}
@@ -428,11 +454,14 @@ export default function AdminSettingsPage() {
                 }
                 required
               />
-            </label>
+            </AdminField>
 
             <div className="admin-services-split-grid">
-              <label>
-                Sort order
+              <AdminField
+                icon="list"
+                label="Redosled prikaza"
+                hint="Manji broj = kategorija ide bliže vrhu liste."
+              >
                 <input
                   type="number"
                   min={0}
@@ -443,22 +472,25 @@ export default function AdminSettingsPage() {
                     setCategoryForm((prev) => ({ ...prev, sortOrder: event.target.value }))
                   }
                 />
-              </label>
-              <label className={`admin-toggle-card ${categoryForm.isActive ? "is-active" : ""}`}>
+              </AdminField>
+              <label className={`admin-switch ${categoryForm.isActive ? "is-on" : ""}`}>
                 <input
                   type="checkbox"
-                  className="admin-toggle-card-input"
                   checked={Boolean(categoryForm.isActive)}
                   onChange={(event) =>
                     setCategoryForm((prev) => ({ ...prev, isActive: event.target.checked }))
                   }
                 />
-                <span className="admin-toggle-card-title">Aktivna kategorija</span>
+                <span className="admin-switch-text">
+                  <strong>Aktivna kategorija</strong>
+                  <span>Isključena kategorija nestaje sa sajta, ali usluge ostaju u bazi.</span>
+                </span>
               </label>
             </div>
 
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="submit" className="admin-template-link-btn" disabled={busyKey === "category"}>
+            <div className="admin-btn-row">
+              <button type="submit" className="admin-btn admin-btn--primary" disabled={busyKey === "category"}>
+                <AdminIcon name={categoryForm.id ? "save" : "plus"} size={16} />
                 {busyKey === "category"
                   ? "Čuvanje..."
                   : categoryForm.id
@@ -468,9 +500,10 @@ export default function AdminSettingsPage() {
               {categoryForm.id ? (
                 <button
                   type="button"
-                  className="admin-template-link-btn"
+                  className="admin-btn"
                   onClick={() => setCategoryForm(emptyCategoryForm)}
                 >
+                  <AdminIcon name="close" size={16} />
                   Otkaži izmenu
                 </button>
               ) : null}
@@ -478,9 +511,9 @@ export default function AdminSettingsPage() {
           </form>
 
           <div style={{ display: "grid", gap: 8 }}>
-            {loading ? <p style={mutedTextStyle}>Učitavanje kategorija...</p> : null}
+            {loading ? <div className="admin-skeleton admin-skeleton--card" /> : null}
             {!loading && !categories.length ? (
-              <p style={mutedTextStyle}>Nema dodatih kategorija.</p>
+              <AdminEmptyState icon="catalog" title="Nema dodatih kategorija" />
             ) : null}
             {categories.map((item) => (
               <article key={item.id} style={listRowStyle}>
@@ -494,7 +527,7 @@ export default function AdminSettingsPage() {
                 <div style={buttonRowStyle}>
                   <button
                     type="button"
-                    className="admin-template-link-btn"
+                    className="admin-btn admin-btn--sm"
                     onClick={() =>
                       setCategoryForm({
                         id: item.id,
@@ -504,14 +537,16 @@ export default function AdminSettingsPage() {
                       })
                     }
                   >
+                    <AdminIcon name="edit" size={15} />
                     Izmeni
                   </button>
                   <button
                     type="button"
-                    className="admin-template-link-btn"
+                    className="admin-btn admin-btn--sm"
                     disabled={busyKey === `category-toggle-${item.id}`}
                     onClick={() => toggleCategory(item)}
                   >
+                    <AdminIcon name={item.isActive ? "close" : "check"} size={15} />
                     {item.isActive ? "Isključi" : "Uključi"}
                   </button>
                 </div>
@@ -520,18 +555,25 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        <div className="admin-card" style={{ display: "grid", gap: 10 }}>
-          <form onSubmit={(event) => saveMetadata(event, "bodyArea")} style={{ display: "grid", gap: 10 }}>
+        <div className="admin-section" style={{ gap: 12 }}>
+          <form onSubmit={(event) => saveMetadata(event, "bodyArea")} style={{ display: "grid", gap: 12 }}>
             <div>
-              <h3 style={{ marginTop: 0, marginBottom: 6 }}>Delovi tela</h3>
-              <p style={mutedTextStyle}>
-                Ove stavke se pojavljuju u select polju na uslugama. Ako ovde nema ništa,
-                admin forma za uslugu prikazuje samo opciju "Bez dela tela".
+              <h3 className="admin-section-title">
+                <AdminIcon name="user" size={18} />
+                Delovi tela
+              </h3>
+              <p className="admin-section-desc">
+                Ove stavke se pojavljuju u select polju na uslugama. Ako ovde nema ništa, forma za
+                uslugu nudi samo opciju „Bez dela tela“.
               </p>
             </div>
 
-            <label>
-              Naziv dela tela
+            <AdminField
+              icon="user"
+              label="Naziv dela tela"
+              hint="Zona tretmana koja se bira na usluzi (npr. Lice, Vrat, Telo)."
+              required
+            >
               <input
                 className="admin-inline-input"
                 value={bodyAreaForm.name}
@@ -541,10 +583,13 @@ export default function AdminSettingsPage() {
                 placeholder="npr. Lice"
                 required
               />
-            </label>
+            </AdminField>
 
-            <label>
-              Sort order
+            <AdminField
+              icon="list"
+              label="Redosled prikaza"
+              hint="Manji broj = stavka ide bliže vrhu select liste."
+            >
               <input
                 type="number"
                 min={0}
@@ -555,10 +600,11 @@ export default function AdminSettingsPage() {
                   setBodyAreaForm((prev) => ({ ...prev, sortOrder: event.target.value }))
                 }
               />
-            </label>
+            </AdminField>
 
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="submit" className="admin-template-link-btn" disabled={busyKey === "bodyArea"}>
+            <div className="admin-btn-row">
+              <button type="submit" className="admin-btn admin-btn--primary" disabled={busyKey === "bodyArea"}>
+                <AdminIcon name={bodyAreaForm.id ? "save" : "plus"} size={16} />
                 {busyKey === "bodyArea"
                   ? "Čuvanje..."
                   : bodyAreaForm.id
@@ -567,10 +613,11 @@ export default function AdminSettingsPage() {
               </button>
               <button
                 type="button"
-                className="admin-template-link-btn"
+                className="admin-btn"
                 disabled={busyKey === "bodyArea-seed"}
                 onClick={seedDefaultBodyAreas}
               >
+                <AdminIcon name="sparkle" size={16} />
                 {busyKey === "bodyArea-seed"
                   ? "Dodavanje..."
                   : "Dodaj osnovne: Lice, Vrat, Telo"}
@@ -578,9 +625,10 @@ export default function AdminSettingsPage() {
               {bodyAreaForm.id ? (
                 <button
                   type="button"
-                  className="admin-template-link-btn"
+                  className="admin-btn"
                   onClick={() => setBodyAreaForm(emptyBodyAreaForm)}
                 >
+                  <AdminIcon name="close" size={16} />
                   Otkaži izmenu
                 </button>
               ) : null}
@@ -588,9 +636,9 @@ export default function AdminSettingsPage() {
           </form>
 
           <div style={{ display: "grid", gap: 8 }}>
-            {loading ? <p style={mutedTextStyle}>Učitavanje delova tela...</p> : null}
+            {loading ? <div className="admin-skeleton admin-skeleton--card" /> : null}
             {!loading && !bodyAreas.length ? (
-              <p style={mutedTextStyle}>Još nema dodatih delova tela.</p>
+              <AdminEmptyState icon="user" title="Još nema dodatih delova tela" />
             ) : null}
             {bodyAreas.map((item) => (
               <article key={item.id} style={listRowStyle}>
@@ -600,10 +648,10 @@ export default function AdminSettingsPage() {
                     sort: {item.sortOrder} | vezanih usluga: {item.serviceCount}
                   </small>
                 </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <div className="admin-btn-row">
                   <button
                     type="button"
-                    className="admin-template-link-btn"
+                    className="admin-btn admin-btn--sm"
                     onClick={() =>
                       setBodyAreaForm({
                         id: item.id,
@@ -612,11 +660,12 @@ export default function AdminSettingsPage() {
                       })
                     }
                   >
+                    <AdminIcon name="edit" size={15} />
                     Izmeni
                   </button>
                   <button
                     type="button"
-                    className="admin-template-link-btn"
+                    className="admin-btn admin-btn--sm admin-btn--danger"
                     disabled={busyKey === `bodyArea-delete-${item.id}` || Number(item.serviceCount || 0) > 0}
                     title={
                       Number(item.serviceCount || 0) > 0
@@ -625,6 +674,7 @@ export default function AdminSettingsPage() {
                     }
                     onClick={() => deleteBodyArea(item.id)}
                   >
+                    <AdminIcon name="trash" size={15} />
                     {busyKey === `bodyArea-delete-${item.id}` ? "Brisanje..." : "Obriši"}
                   </button>
                 </div>

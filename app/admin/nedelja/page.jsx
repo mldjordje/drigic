@@ -1,6 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import AdminIcon from "@/components/admin/ui/AdminIcon";
+import AdminPageHeader from "@/components/admin/ui/AdminPageHeader";
+import AdminField from "@/components/admin/ui/AdminField";
+import AdminEmptyState from "@/components/admin/ui/AdminEmptyState";
+import AdminStatusMessage from "@/components/admin/ui/AdminStatusMessage";
 
 function parseResponse(response) {
   return response
@@ -160,21 +165,26 @@ export default function AdminSundayPage() {
   );
 
   return (
-    <section style={sectionGridStyle}>
-      <div className="admin-card">
-        <h2 style={{ marginTop: 0 }}>Nedeljni termini</h2>
-        <p style={{ ...muted, marginBottom: 0 }}>
-          Ovde podešavaš da li klinika radi nedeljom. Kada je nedelja aktivna, slobodni termini se
-          prikazuju i klijentima i u admin kalendaru.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginTop: 10 }}>
-          <label style={{ display: "grid", gap: 6 }}>
-            <small style={muted}>Prikaži nedelja unapred</small>
+    <section className="admin-page">
+      <AdminPageHeader
+        icon="weekend"
+        title="Nedeljni termini"
+        description="Podesite da li klinika radi nedeljom. Kada je nedelja aktivna, slobodni termini se prikazuju i klijentima na sajtu i u admin kalendaru."
+      />
+
+      <div className="admin-section">
+        <div className="admin-toolbar">
+          <AdminField
+            icon="calendar"
+            label="Prikaži nedelja unapred"
+            hint="Koliko narednih nedelja se prikazuje u listi ispod."
+            className="admin-toolbar-spacer"
+          >
             <select
               className="admin-inline-input"
               value={weeksAhead}
               onChange={(e) => setWeeksAhead(Math.max(1, Math.min(24, Number(e.target.value) || 8)))}
-              style={{ minWidth: 180 }}
+              style={{ minWidth: 180, maxWidth: 240 }}
             >
               {[3, 6, 8, 12, 16, 24].map((n) => (
                 <option key={n} value={n}>
@@ -182,8 +192,9 @@ export default function AdminSundayPage() {
                 </option>
               ))}
             </select>
-          </label>
-          <button type="button" className="admin-template-link-btn" onClick={() => load()} disabled={loading}>
+          </AdminField>
+          <button type="button" className="admin-btn" onClick={() => load()} disabled={loading}>
+            <AdminIcon name="refresh" size={16} />
             Osveži
           </button>
         </div>
@@ -211,14 +222,23 @@ export default function AdminSundayPage() {
             </small>
           </div>
         ) : null}
-        {message ? <p style={{ color: "#9be39f", marginBottom: 0 }}>{message}</p> : null}
-        {error ? <p style={{ color: "#ffabab", marginBottom: 0 }}>{error}</p> : null}
+        {message ? <AdminStatusMessage tone="success" toneLabel="Uspeh">{message}</AdminStatusMessage> : null}
+        {error ? <AdminStatusMessage tone="error" toneLabel="Greška">{error}</AdminStatusMessage> : null}
       </div>
 
-      <div className="admin-card" style={{ display: "grid", gap: 10 }}>
-        {loading ? <p style={muted}>Učitavanje…</p> : null}
+      <div className="admin-section" style={{ gap: 10 }}>
+        {loading ? (
+          <div style={{ display: "grid", gap: 8 }}>
+            <div className="admin-skeleton admin-skeleton--card" />
+            <div className="admin-skeleton admin-skeleton--card" />
+          </div>
+        ) : null}
         {!loading && !(payload?.weeks || []).length ? (
-          <p style={muted}>Nema dostupnih nedelja za prikaz.</p>
+          <AdminEmptyState
+            icon="weekend"
+            title="Nema dostupnih nedelja za prikaz"
+            description="Povećajte broj nedelja unapred u filteru iznad."
+          />
         ) : null}
 
         {(payload?.weeks || []).map((w) => {
@@ -239,8 +259,7 @@ export default function AdminSundayPage() {
               </div>
 
               <div className="admin-services-split-grid">
-                <label>
-                  Od
+                <AdminField icon="clock" label="Od" hint="Prvi termin te nedelje.">
                   <input
                     type="time"
                     className="admin-inline-input"
@@ -253,9 +272,8 @@ export default function AdminSundayPage() {
                       }))
                     }
                   />
-                </label>
-                <label>
-                  Do
+                </AdminField>
+                <AdminField icon="clock" label="Do" hint="Poslednji termin te nedelje.">
                   <input
                     type="time"
                     className="admin-inline-input"
@@ -268,10 +286,10 @@ export default function AdminSundayPage() {
                       }))
                     }
                   />
-                </label>
+                </AdminField>
               </div>
 
-              <label style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <label className={`admin-switch ${isActive ? "is-on" : ""}`}>
                 <input
                   type="checkbox"
                   checked={isActive}
@@ -283,33 +301,29 @@ export default function AdminSundayPage() {
                     }))
                   }
                 />
-                <span style={{ fontWeight: 800 }}>
-                  {isActive ? "Nedelja radi (otvoreno za klijente)" : "Nedelja ne radi"}
+                <span className="admin-switch-text">
+                  <strong>{isActive ? "Nedelja radi (otvoreno za klijente)" : "Nedelja ne radi"}</strong>
+                  <span>Kada je otvoreno, termini se pojavljuju u booking formi i u admin kalendaru.</span>
                 </span>
-                <small style={muted}>
-                  Kada je otvoreno, termini se pojavljuju u booking formi i u admin kalendaru.
-                </small>
               </label>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+              <div className="admin-btn-row" style={{ justifyContent: "flex-end" }}>
                 <button
                   type="button"
-                  className="admin-template-link-btn"
+                  className={`admin-btn admin-btn--sm ${isActive ? "admin-btn--danger" : "admin-btn--success"}`}
                   disabled={busyKey === w.sundayDate}
                   onClick={() => saveWeek(w.sundayDate, { ...row, isActive: !isActive })}
-                  style={{
-                    borderColor: isActive ? "rgba(255, 171, 171, 0.42)" : "rgba(155, 227, 159, 0.45)",
-                    color: isActive ? "#ffabab" : "#9be39f",
-                  }}
                 >
+                  <AdminIcon name={isActive ? "close" : "check"} size={15} />
                   {busyKey === w.sundayDate ? "Čuvanje..." : isActive ? "Deaktiviraj" : "Aktiviraj"}
                 </button>
                 <button
                   type="button"
-                  className="admin-template-link-btn"
+                  className="admin-btn admin-btn--sm"
                   disabled={busyKey === w.sundayDate}
                   onClick={() => saveWeek(w.sundayDate)}
                 >
+                  <AdminIcon name="save" size={15} />
                   {busyKey === w.sundayDate ? "Čuvanje..." : "Sačuvaj vreme"}
                 </button>
               </div>
