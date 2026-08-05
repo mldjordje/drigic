@@ -33,7 +33,7 @@ export default function PrijavaClient({ nextPath = "/", reason = "" }) {
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <h1 style={{ marginTop: 0 }}>Prijava</h1>
+        <h1 style={{ marginTop: 0, color: "#f2f5fb" }}>Prijava</h1>
 
         {message ? (
           <p style={{ color: isError ? "#ffb6b6" : "#e4efff" }}>{message}</p>
@@ -49,7 +49,7 @@ export default function PrijavaClient({ nextPath = "/", reason = "" }) {
             padding: 20,
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Sign in with Google</h2>
+          <h2 style={{ marginTop: 0, color: "#f2f5fb" }}>Sign in with Google</h2>
           <p style={{ marginTop: 0, color: "#c7d8ef" }}>
             Prijava je sada preko Google naloga.
           </p>

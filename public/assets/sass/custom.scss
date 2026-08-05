@@ -734,23 +734,23 @@ a.clinic-glow-btn {
   }
 
   /* When page background is light, keep header readable */
-  .clinic-theme-light .header-layout2 .main-menu > ul > li > a,
+  @at-root .clinic-theme-light .header-layout2 .main-menu > ul > li > a,
   .clinic-theme-light .header-layout2 .search-btn,
   .clinic-theme-light .header-layout2 .header-button .search-btn {
     color: #0b1020 !important;
   }
 
-  .clinic-theme-light .header-layout2 .main-menu > ul > li > a:hover,
+  @at-root .clinic-theme-light .header-layout2 .main-menu > ul > li > a:hover,
   .clinic-theme-light .header-layout2 .search-btn:hover {
     color: #0b1020 !important;
     opacity: 0.82;
   }
 
-  .clinic-theme-light .header-layout2 .sidebar-btn {
+  @at-root .clinic-theme-light .header-layout2 .sidebar-btn {
     border-color: rgba(11, 16, 32, 0.72);
   }
 
-  .clinic-theme-light .header-layout2 .sidebar-btn .line {
+  @at-root .clinic-theme-light .header-layout2 .sidebar-btn .line {
     background: rgba(11, 16, 32, 0.9);
   }
 
@@ -3071,37 +3071,37 @@ a.clinic-glow-btn {
   }
 
   /* ── Light theme overrides for cat-pg ── */
-  .clinic-theme-light .clinic-home5 .cat-pg {
+  @at-root .clinic-theme-light .clinic-home5 .cat-pg {
     background: #f8fafc;
   }
 
-  .clinic-theme-light .clinic-home5 .cat-overview,
+  @at-root .clinic-theme-light .clinic-home5 .cat-overview,
   .clinic-theme-light .clinic-home5 .cat-process,
   .clinic-theme-light .clinic-home5 .cat-gallery,
   .clinic-theme-light .clinic-home5 .cat-faq {
     background: #f8fafc;
   }
 
-  .clinic-theme-light .clinic-home5 .cat-services,
+  @at-root .clinic-theme-light .clinic-home5 .cat-services,
   .clinic-theme-light .clinic-home5 .cat-cta {
     background: #f1f5f9;
   }
 
-  .clinic-theme-light .clinic-home5 .cat-section-head .cat-section-title,
+  @at-root .clinic-theme-light .clinic-home5 .cat-section-head .cat-section-title,
   .clinic-theme-light .clinic-home5 .cat-process__card h3,
   .clinic-theme-light .clinic-home5 .cat-price-row__name,
   .clinic-theme-light .clinic-home5 .cat-cta__title {
     color: #0f172a !important;
   }
 
-  .clinic-theme-light .clinic-home5 .cat-eyebrow { color: rgba(30, 60, 120, 0.5); }
+  @at-root .clinic-theme-light .clinic-home5 .cat-eyebrow { color: rgba(30, 60, 120, 0.5); }
 
-  .clinic-theme-light .clinic-home5 .cat-overview__lead {
+  @at-root .clinic-theme-light .clinic-home5 .cat-overview__lead {
     color: rgba(15, 23, 42, 0.80);
     border-left-color: rgba(30, 60, 120, 0.2);
   }
 
-  .clinic-theme-light .clinic-home5 .cat-overview__body-p,
+  @at-root .clinic-theme-light .clinic-home5 .cat-overview__body-p,
   .clinic-theme-light .clinic-home5 .cat-overview__candidate,
   .clinic-theme-light .clinic-home5 .cat-process__card p,
   .clinic-theme-light .clinic-home5 .cat-price-row__desc,
@@ -3110,7 +3110,7 @@ a.clinic-glow-btn {
     color: rgba(30, 50, 90, 0.62) !important;
   }
 
-  .clinic-theme-light .clinic-home5 .cat-overview__block,
+  @at-root .clinic-theme-light .clinic-home5 .cat-overview__block,
   .clinic-theme-light .clinic-home5 .cat-process__card,
   .clinic-theme-light .clinic-home5 .cat-faq__item,
   .clinic-theme-light .clinic-home5 .cat-cta__inner {
@@ -3118,25 +3118,25 @@ a.clinic-glow-btn {
     border-color: rgba(15, 23, 42, 0.10) !important;
   }
 
-  .clinic-theme-light .clinic-home5 .cat-price-list {
+  @at-root .clinic-theme-light .clinic-home5 .cat-price-list {
     border-color: rgba(15, 23, 42, 0.10);
   }
 
-  .clinic-theme-light .clinic-home5 .cat-price-row {
+  @at-root .clinic-theme-light .clinic-home5 .cat-price-row {
     border-bottom-color: rgba(15, 23, 42, 0.07);
     &:hover { background: rgba(15, 23, 42, 0.025); }
     &--promo { background: rgba(200, 169, 110, 0.05); border-left-color: rgba(200, 169, 110, 0.45); }
   }
 
-  .clinic-theme-light .clinic-home5 .cat-price-row__price { color: #0f172a; }
-  .clinic-theme-light .clinic-home5 .cat-price-row--promo .cat-price-row__price { color: #a07840; }
+  @at-root .clinic-theme-light .clinic-home5 .cat-price-row__price { color: #0f172a; }
+  @at-root .clinic-theme-light .clinic-home5 .cat-price-row--promo .cat-price-row__price { color: #a07840; }
 
-  .clinic-theme-light .clinic-home5 .cat-price-row__duration,
+  @at-root .clinic-theme-light .clinic-home5 .cat-price-row__duration,
   .clinic-theme-light .clinic-home5 .cat-price-row__old {
     color: rgba(30, 50, 90, 0.45) !important;
   }
 
-  .clinic-theme-light .clinic-home5 .cat-price-row__book {
+  @at-root .clinic-theme-light .clinic-home5 .cat-price-row__book {
     background: rgba(15, 23, 42, 0.05) !important;
     border-color: rgba(15, 23, 42, 0.15) !important;
     color: rgba(15, 23, 42, 0.75) !important;
@@ -3146,12 +3146,12 @@ a.clinic-glow-btn {
     }
   }
 
-  .clinic-theme-light .clinic-home5 .cat-benefit-item { color: rgba(15, 23, 42, 0.75); }
-  .clinic-theme-light .clinic-home5 .cat-faq__q { color: rgba(15, 23, 42, 0.85); }
-  .clinic-theme-light .clinic-home5 .cat-back-link { color: rgba(30, 60, 120, 0.45); }
+  @at-root .clinic-theme-light .clinic-home5 .cat-benefit-item { color: rgba(15, 23, 42, 0.75); }
+  @at-root .clinic-theme-light .clinic-home5 .cat-faq__q { color: rgba(15, 23, 42, 0.85); }
+  @at-root .clinic-theme-light .clinic-home5 .cat-back-link { color: rgba(30, 60, 120, 0.45); }
 
-  .clinic-theme-light .clinic-home5 .cat-cta__btn--primary { background: #0f172a; color: #f8fafc; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25); }
-  .clinic-theme-light .clinic-home5 .cat-cta__btn--outline { border-color: rgba(15, 23, 42, 0.22); color: rgba(15, 23, 42, 0.75); background: rgba(15, 23, 42, 0.04); }
+  @at-root .clinic-theme-light .clinic-home5 .cat-cta__btn--primary { background: #0f172a; color: #f8fafc; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25); }
+  @at-root .clinic-theme-light .clinic-home5 .cat-cta__btn--outline { border-color: rgba(15, 23, 42, 0.22); color: rgba(15, 23, 42, 0.75); background: rgba(15, 23, 42, 0.04); }
 
   /* ─────────────────────────────────────────────────────────────────────── */
 
@@ -7204,15 +7204,6 @@ a.clinic-glow-btn {
   text-shadow: none !important;
 }
 
-.clinic-theme-dark .clinic-home5 .clinic-bp__title {
-  color: #f5f7fb !important;
-  text-shadow: none !important;
-}
-
-.clinic-theme-dark .clinic-home5 .clinic-bp__subtitle {
-  color: rgba(235, 241, 250, 0.82) !important;
-  text-shadow: none !important;
-}
 
 .clinic-theme-dark .clinic-home5 .clinic-booking-mini-nav__btn {
   background: rgba(6, 8, 12, 0.98);
@@ -7753,7 +7744,7 @@ body,
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: rgba(217, 232, 248, 0.45);
+    color: rgba(217, 232, 248, 0.62);
     border-bottom: 1px solid rgba(217, 232, 248, 0.08);
 
     &.text-center { text-align: center; }
@@ -7788,7 +7779,7 @@ body,
 .clinic-pricing-service-desc {
   display: block;
   font-size: 13px;
-  color: rgba(217, 232, 248, 0.5);
+  color: rgba(217, 232, 248, 0.62);
   margin-top: 3px;
   line-height: 1.4;
 }
@@ -7828,7 +7819,7 @@ body,
 }
 
 .clinic-pricing-old-price {
-  color: rgba(217, 232, 248, 0.38);
+  color: rgba(217, 232, 248, 0.58);
   font-size: 13px;
   text-decoration: line-through;
 }
@@ -7871,7 +7862,7 @@ body,
 }
 
 .clinic-theme-light .clinic-home5 .clinic-pricing-table thead th {
-  color: rgba(15, 23, 42, 0.45) !important;
+  color: rgba(15, 23, 42, 0.66) !important;
   border-bottom-color: rgba(15, 23, 42, 0.1) !important;
 }
 
@@ -7909,7 +7900,7 @@ body,
 }
 
 .clinic-theme-light .clinic-home5 .clinic-pricing-old-price {
-  color: rgba(15, 23, 42, 0.35) !important;
+  color: rgba(15, 23, 42, 0.62) !important;
 }
 
 .clinic-theme-light .clinic-home5 .clinic-pricing-new-price {
@@ -8404,7 +8395,7 @@ body,
 .clinic-stat-card__sublabel {
   display: block;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.42);
+  color: rgba(255, 255, 255, 0.6);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -8516,7 +8507,7 @@ body,
 }
 
 .clinic-theme-light .clinic-stat-card__sublabel {
-  color: rgba(26, 31, 54, 0.5);
+  color: rgba(26, 31, 54, 0.72);
 }
 
 .clinic-theme-light .clinic-stats-glow--l {
@@ -10003,7 +9994,7 @@ a.clinic-google-review-btn,
 .clinic-review-lead {
   max-width: 560px;
   margin: 14px auto 0;
-  color: var(--clinic-text-secondary, #6b7280);
+  color: rgba(238, 244, 255, 0.8);
   font-size: 16px;
   line-height: 1.6;
 }
@@ -10022,4 +10013,115 @@ a.clinic-google-review-btn,
   .clinic-google-review-btn__stars {
     display: none;
   }
+}
+
+/* ── Contrast corrections ─────────────────────────────────
+   Buttons and links whose text colour came from a theme variable that does
+   not contrast with the surface they are painted on. */
+.clinic-theme-light .clinic-home5 .btn.style2,
+.clinic-theme-light .clinic-home5 .btn.style2:hover,
+.clinic-theme-light .clinic-home5 .btn.style2:focus {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+.clinic-theme-light .clinic-home5 .icon-btn {
+  color: #0f172a;
+}
+
+.clinic-theme-dark .clinic-home5 a.text-body {
+  color: rgba(238, 244, 255, 0.88) !important;
+}
+
+/* ── Contrast pass ────────────────────────────────────────────────────────
+   Every rule below fixes text that failed WCAG AA (4.5:1, or 3:1 for large
+   text) against the surface it is actually painted on, measured on the
+   built site in both themes. */
+
+/* The white header treatment is only correct while the header floats over
+   the home hero video; on every other page the surface behind it is light. */
+.clinic-theme-light .clinic-home5:not(:has(.hero-5, .fp-hero)) .sticky-wrapper:not(.header-sticky) .main-menu > ul > li > a,
+.clinic-theme-light .clinic-home5:not(:has(.hero-5, .fp-hero)) .sticky-wrapper:not(.header-sticky) .main-menu > ul > li > a:hover,
+.clinic-theme-light .clinic-home5:not(:has(.hero-5, .fp-hero)) .sticky-wrapper:not(.header-sticky) .search-btn,
+.clinic-theme-light .clinic-home5:not(:has(.hero-5, .fp-hero)) .sticky-wrapper:not(.header-sticky) .clinic-theme-switch-desktop .clinic-theme-switch-text,
+.clinic-theme-light .clinic-home5:not(:has(.hero-5, .fp-hero)) .sticky-wrapper:not(.header-sticky) .cls-sw,
+.clinic-theme-light .clinic-home5:not(:has(.hero-5, .fp-hero)) .sticky-wrapper:not(.header-sticky) .cls-sw__code {
+  color: #0d1729 !important;
+  -webkit-text-fill-color: #0d1729 !important;
+  text-shadow: none !important;
+}
+
+/* Video feed cards are always on black. */
+.clinic-theme-light .clinic-home5 [class*="VideoGalleryFeed_meta"] h2,
+.clinic-theme-dark .clinic-home5 [class*="VideoGalleryFeed_meta"] h2,
+[class*="VideoGalleryFeed_meta"] h2 {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.clinic-theme-light .clinic-home5 [class*="VideoGalleryFeed_meta"] p,
+.clinic-theme-dark .clinic-home5 [class*="VideoGalleryFeed_meta"] p,
+[class*="VideoGalleryFeed_meta"] p {
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
+/* Review band stays near-black in both themes. */
+.clinic-theme-light .clinic-home5 .clinic-review-lead,
+.clinic-theme-dark .clinic-home5 .clinic-review-lead,
+.clinic-review-lead {
+  color: rgba(238, 244, 255, 0.8) !important;
+}
+
+/* Gold CTA: near-black text on the gold gradient was 3.86:1. */
+.clinic-home5 .clinic-about-v2__btn--primary,
+.clinic-home5 .clinic-about-v2__btn--primary *,
+.clinic-theme-light .clinic-home5 .clinic-about-v2__btn--primary,
+.clinic-theme-light .clinic-home5 .clinic-about-v2__btn--primary * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Circle icon buttons on the contact page sit on a light surface. */
+.clinic-theme-light .clinic-home5 .icon-btn {
+  color: #0f172a !important;
+}
+
+/* Beauty Pass tag: gold on cream. */
+.clinic-theme-light .clinic-home5 .clinic-bp__tag,
+.clinic-theme-dark .clinic-home5 .clinic-bp__tag {
+  color: #7d5e21 !important;
+}
+
+/* Muted body copy that landed between 3.4:1 and 4.2:1. */
+.clinic-theme-light .clinic-home5 .cat-overview__body-p,
+.clinic-theme-light .clinic-home5 .cat-overview__candidate,
+.clinic-theme-light .clinic-home5 .cat-process__card p,
+.clinic-theme-light .clinic-home5 .cat-price-row__desc,
+.clinic-theme-light .clinic-home5 .cat-cta__sub,
+.clinic-theme-light .clinic-home5 .cat-faq__a p {
+  color: rgba(30, 50, 90, 0.82) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-duration {
+  color: rgba(15, 23, 42, 0.7) !important;
+}
+
+.clinic-theme-light .clinic-home5 .clinic-pricing-service-desc {
+  color: rgba(30, 41, 59, 0.78) !important;
+}
+
+/* Template pages (breadcrumb banner) keep a light surface in both themes, so
+   the dark-theme white header text is unreadable on them. */
+.clinic-theme-dark body:has(.breadcumb-wrapper) .header-layout2 .sticky-wrapper:not(.header-sticky) .main-menu > ul > li > a,
+.clinic-theme-dark body:has(.breadcumb-wrapper) .header-layout2 .sticky-wrapper:not(.header-sticky) .main-menu > ul > li > a:hover,
+.clinic-theme-dark body:has(.breadcumb-wrapper) .header-layout2 .sticky-wrapper:not(.header-sticky) .search-btn,
+.clinic-theme-dark body:has(.breadcumb-wrapper) .header-layout2 .sticky-wrapper:not(.header-sticky) .cls-sw,
+.clinic-theme-dark body:has(.breadcumb-wrapper) .header-layout2 .sticky-wrapper:not(.header-sticky) .cls-sw__code {
+  color: #0d1729 !important;
+  -webkit-text-fill-color: #0d1729 !important;
+  text-shadow: none !important;
+}
+
+.clinic-theme-dark .clinic-home5 .clinic-bp__subtitle {
+  color: rgba(26, 23, 20, 0.72) !important;
 }
