@@ -16,7 +16,8 @@
     "db:seed": "node scripts/seed.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:utf8": "node scripts/check-source-encoding.mjs"
+    "check:utf8": "node scripts/check-source-encoding.mjs",
+    "qr:google": "node scripts/generate-google-review-qr.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.17",

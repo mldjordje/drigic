@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
+import GoogleReviewButton from "@/components/common/GoogleReviewButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { CLINIC_ADDRESS } from "@/lib/clinicContact";
 
@@ -34,6 +35,10 @@ export default function Footer5() {
                       <span className="effect-1">{t("common.login")}</span>
                     </span>
                   </GooglePopupButton>
+                  <GoogleReviewButton
+                    label={t("footer.googleReview")}
+                    className="btn clinic-glow-btn clinic-review-footer-btn"
+                  />
                 </div>
               </div>
             </div>

@@ -2,6 +2,7 @@
 import Image from "next/image";
 import React from "react";
 import Slider from "react-slick";
+import GoogleReviewButton from "@/components/common/GoogleReviewButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 
 const TESTIMONIALS_COPY = {
@@ -94,8 +95,6 @@ const TESTIMONIALS_COPY = {
 export default function Testimonials() {
   const { locale } = useLocale();
   const copy = TESTIMONIALS_COPY[locale] || TESTIMONIALS_COPY.sr;
-  const googleReviewUrl =
-    "https://search.google.com/local/writereview?placeid=ChIJ6491w7WxVUcR_0VL_FC5jOg";
 
   const slickSettings = {
     slidesToShow: 1,
@@ -177,15 +176,10 @@ export default function Testimonials() {
         <div className="title-area text-center clinic-reveal">
           <h2 className="sec-title text-smoke">{copy.title}</h2>
           <div className="btn-wrap mt-25 justify-content-center">
-            <a
-              href={googleReviewUrl}
-              target="_blank"
-              rel="noreferrer"
+            <GoogleReviewButton
+              label={copy.cta}
               className="btn bg-theme text-title clinic-glow-btn"
-              aria-label={`${copy.cta} — Dr Igić Clinic`}
-            >
-              {copy.cta}
-            </a>
+            />
           </div>
         </div>
       </div>
