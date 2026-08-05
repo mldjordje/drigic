@@ -9977,3 +9977,49 @@ body,
   color: #07080c !important;
   -webkit-text-fill-color: #07080c !important;
 }
+
+/* Google review CTA */
+a.clinic-google-review-btn,
+.clinic-google-review-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.clinic-google-review-btn__glyph {
+  flex: 0 0 auto;
+  display: block;
+}
+
+.clinic-google-review-btn__stars {
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 1px;
+  color: #fbbc05;
+}
+
+.clinic-review-lead {
+  max-width: 560px;
+  margin: 14px auto 0;
+  color: var(--clinic-text-secondary, #6b7280);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.clinic-home5 .clinic-review-footer-btn {
+  background: rgba(10, 12, 0, 0.7) !important;
+  color: #d9e8f8 !important;
+  border-color: rgba(217, 232, 248, 0.55) !important;
+}
+
+@media (max-width: 575px) {
+  .clinic-google-review-btn {
+    white-space: normal;
+  }
+
+  .clinic-google-review-btn__stars {
+    display: none;
+  }
+}
