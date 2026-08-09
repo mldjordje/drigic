@@ -100,6 +100,12 @@ export default function Footer5() {
               <p className="copyright-text">
                 Copyright © {new Date().getFullYear()} {t("footer.copyrightSuffix")}
               </p>
+              <p className="copyright-text">
+                Dizajn i razvoj:{" "}
+                <a className="credit" href="https://adspire.rs" target="_blank" rel="noopener">
+                  Adspire
+                </a>
+              </p>
             </div>
           </div>
         </div>

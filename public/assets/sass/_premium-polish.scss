@@ -296,42 +296,41 @@
   transform: translateY(-2px);
 }
 
-// ── Footer credit: gold sheen sweep on the "Developed by" link ──────
-.clinic-footer-credit {
+// ── Footer credit: underline wipes in from the left on hover ────────
+.credit {
+  color: currentColor;
+  font-size: inherit;
+  font-family: inherit;
+  opacity: 0.55;
+  text-decoration: none;
   position: relative;
-  display: inline-block;
-  background: linear-gradient(
-    90deg,
-    currentColor 0%,
-    currentColor 40%,
-    var(--pp-gold) 50%,
-    currentColor 60%,
-    currentColor 100%
-  );
-  background-size: 220% 100%;
-  background-position: 100% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  animation: clinic-credit-sheen 3.2s ease-in-out infinite;
-  transition: transform 0.3s var(--pp-spring-soft);
+  transition: opacity 0.3s ease;
 }
-.clinic-footer-credit:hover {
-  transform: translateY(-1px);
-  animation-play-state: paused;
-  -webkit-text-fill-color: var(--pp-gold);
-  color: var(--pp-gold);
+.credit::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes clinic-credit-sheen {
-  0% { background-position: 100% 0; }
-  50% { background-position: 0% 0; }
-  100% { background-position: 100% 0; }
+.credit:hover {
+  color: currentColor;
+  opacity: 1;
+}
+.credit:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
 // ── Respect reduced motion globally for this layer ──────────────────
 @media (prefers-reduced-motion: reduce) {
-  .clinic-footer-credit { animation: none; -webkit-text-fill-color: var(--pp-gold); color: var(--pp-gold); }
+  .credit,
+  .credit::after { transition: none; }
   .clinic-home5 .clinic-eyebrow-line { animation: none; }
   .clinic-home5 .svc-card::after,
   .clinic-home5 .clinic-before-after-card::after { display: none; }
