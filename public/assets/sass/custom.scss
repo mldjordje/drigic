@@ -10125,3 +10125,160 @@ a.clinic-google-review-btn,
 .clinic-theme-dark .clinic-home5 .clinic-bp__subtitle {
   color: rgba(26, 23, 20, 0.72) !important;
 }
+
+/* Hero contact rail — direct phone and map access in the lower-left corner. */
+.clinic-home5 .clinic-hero-contact {
+  position: absolute;
+  z-index: 5;
+  left: max(24px, calc((100vw - 1320px) / 2 + 12px));
+  bottom: 24px;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0;
+  padding: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(8, 11, 16, 0.78), rgba(8, 11, 16, 0.5));
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  backdrop-filter: blur(18px) saturate(125%);
+  font-style: normal;
+  will-change: transform, opacity;
+}
+
+.clinic-home5 .clinic-hero-contact__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 54px;
+  padding: 8px 14px 8px 9px;
+  border-radius: 12px;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  text-decoration: none;
+  transition: background-color 220ms ease, transform 220ms ease;
+}
+
+.clinic-home5 .clinic-hero-contact__item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.clinic-home5 .clinic-hero-contact__item:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.95);
+  outline-offset: -2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.clinic-home5 .clinic-hero-contact__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.clinic-home5 .clinic-hero-contact__icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.clinic-home5 .clinic-hero-contact__copy {
+  display: grid;
+  gap: 3px;
+}
+
+.clinic-home5 .clinic-hero-contact__label {
+  color: rgba(255, 255, 255, 0.58) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.58) !important;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.clinic-home5 .clinic-hero-contact__value {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.clinic-home5 .clinic-hero-contact__divider {
+  width: 1px;
+  margin: 13px 2px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.24), transparent);
+}
+
+@media (max-width: 767px) {
+  .clinic-home5 .clinic-hero-contact {
+    right: 16px;
+    left: 16px;
+    bottom: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) 1px minmax(0, 1.14fr);
+    padding: 5px;
+    border-radius: 16px;
+  }
+
+  .clinic-home5 .clinic-hero-contact__item {
+    min-width: 0;
+    min-height: 50px;
+    gap: 8px;
+    padding: 7px 8px;
+  }
+
+  .clinic-home5 .clinic-hero-contact__icon {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .clinic-home5 .clinic-hero-contact__icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .clinic-home5 .clinic-hero-contact__copy {
+    min-width: 0;
+  }
+
+  .clinic-home5 .clinic-hero-contact__value {
+    overflow: hidden;
+    font-size: 11px;
+    text-overflow: ellipsis;
+  }
+
+  .clinic-home5 .clinic-hero-contact__divider {
+    width: 1px;
+    margin: 10px 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .clinic-home5 .clinic-hero-contact__icon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clinic-home5 .clinic-hero-contact,
+  .clinic-home5 .clinic-hero-contact__item {
+    transform: none !important;
+    transition: none !important;
+  }
+}

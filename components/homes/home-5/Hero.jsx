@@ -6,6 +6,11 @@ import { useEffect, useMemo, useRef } from "react";
 import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
+import {
+  CLINIC_ADDRESS,
+  CLINIC_PHONE_DISPLAY,
+  CLINIC_PHONE_TEL,
+} from "@/lib/clinicContact";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,6 +21,8 @@ const HERO_COPY = {
       ["regenerativna", "medicina"],
     ],
     booking: "Zakaži termin",
+    phone: "Telefon",
+    location: "Lokacija",
   },
   en: {
     lines: [
@@ -23,6 +30,8 @@ const HERO_COPY = {
       ["regenerative", "medicine"],
     ],
     booking: "Book appointment",
+    phone: "Phone",
+    location: "Location",
   },
   de: {
     lines: [
@@ -30,6 +39,8 @@ const HERO_COPY = {
       ["regenerative", "Medizin"],
     ],
     booking: "Termin buchen",
+    phone: "Telefon",
+    location: "Standort",
   },
   it: {
     lines: [
@@ -37,13 +48,35 @@ const HERO_COPY = {
       ["e", "rigenerativa"],
     ],
     booking: "Prenota appuntamento",
+    phone: "Telefono",
+    location: "Posizione",
   },
 };
+
+const CLINIC_MAP_URL =
+  "https://www.google.com/maps?ll=43.323902,21.9050293&z=16&t=m&hl=sr&gl=RS&mapclient=embed&cid=16708722205926497279";
 
 function ArrowIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M1 7.5H14M14 7.5L8 1.5M14 7.5L8 13.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M8.2 3.5 5.6 4.7c-.8.4-1.2 1.3-1 2.2 1.2 6.2 6.2 11.2 12.4 12.4.9.2 1.8-.2 2.2-1l1.2-2.6c.3-.7.1-1.5-.5-1.9l-3.1-2.1c-.6-.4-1.4-.3-1.9.2l-1.2 1.2a12.2 12.2 0 0 1-4.8-4.8l1.2-1.2c.5-.5.6-1.3.2-1.9L8.2 3.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="12" cy="10" r="2.35" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -72,6 +105,7 @@ export default function Hero() {
   const wordRefs = useRef([]);
   const ctaGroupRef = useRef(null);
   const founderRef = useRef(null);
+  const contactRef = useRef(null);
   const heroVeilRef = useRef(null);
   const lineRevealRef = useRef(null);
   const heroWrapperRef = useRef(null);
@@ -157,6 +191,7 @@ export default function Hero() {
     const words = wordRefs.current.filter(Boolean);
     const ctaGroup = ctaGroupRef.current;
     const founder = founderRef.current;
+    const contact = contactRef.current;
     const veil = heroVeilRef.current;
     const line = lineRevealRef.current;
 
@@ -166,6 +201,7 @@ export default function Hero() {
       gsap.set(line, { scaleX: 0, opacity: 0, transformOrigin: "left center" });
       gsap.set(ctaGroup, { y: 28, opacity: 0, scale: 0.92 });
       gsap.set(founder, { x: -18, opacity: 0 });
+      gsap.set(contact, { y: 14, opacity: 0 });
     }
 
     let ctx = null;
@@ -193,6 +229,8 @@ export default function Hero() {
         tl.to(ctaGroup, { y: 0, opacity: 1, scale: 1, duration: 0.65, ease: "back.out(1.6)" }, 1.0);
 
         tl.to(founder, { x: 0, opacity: 1, duration: 0.52, ease: "power3.out" }, 1.22);
+
+        tl.to(contact, { y: 0, opacity: 1, duration: 0.58, ease: "power3.out" }, 1.34);
 
         const heroEl = document.getElementById("hero");
         const contentEl = heroContentRef.current;
@@ -342,6 +380,31 @@ export default function Hero() {
             </div>
           </div>
         </div>
+
+        <address ref={contactRef} className="clinic-hero-contact" aria-label="Kontakt i lokacija ordinacije">
+          <a className="clinic-hero-contact__item" href={`tel:${CLINIC_PHONE_TEL}`}>
+            <span className="clinic-hero-contact__icon"><PhoneIcon /></span>
+            <span className="clinic-hero-contact__copy">
+              <span className="clinic-hero-contact__label">{heroCopy.phone}</span>
+              <span className="clinic-hero-contact__value">{CLINIC_PHONE_DISPLAY}</span>
+            </span>
+          </a>
+
+          <span className="clinic-hero-contact__divider" aria-hidden="true" />
+
+          <a
+            className="clinic-hero-contact__item"
+            href={CLINIC_MAP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="clinic-hero-contact__icon"><LocationIcon /></span>
+            <span className="clinic-hero-contact__copy">
+              <span className="clinic-hero-contact__label">{heroCopy.location}</span>
+              <span className="clinic-hero-contact__value">{CLINIC_ADDRESS}, Niš</span>
+            </span>
+          </a>
+        </address>
       </div>
     </div>
   );
