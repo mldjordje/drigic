@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { sql } from "drizzle-orm";
 import { created, fail, readJson } from "@/lib/api/http";
-import { requireUser } from "@/lib/auth/guards";
+import { consumeRateLimit, getRequestIp } from "@/lib/api/rate-limit";
+import { getSessionFromRequest } from "@/lib/auth/guards";
 import { sendTransactionalEmail } from "@/lib/auth/email";
 import { getDb, schema } from "@/lib/db/client";
 import { env } from "@/lib/env";
@@ -23,6 +24,7 @@ import {
   resolveQuote,
 } from "@/lib/booking/engine";
 import { getClinicSettings, getDefaultEmployee } from "@/lib/booking/config";
+import { isPlaceholderGuestEmail, resolveGuestUser } from "@/lib/booking/guest";
 import { WORKING_HOURS_SUMMARY } from "@/lib/booking/schedule";
 
 export const runtime = "nodejs";
@@ -40,6 +42,13 @@ const payloadSchema = z.object({
     .optional(),
   startAt: z.string().datetime(),
   notes: z.string().max(1000).optional(),
+  guest: z
+    .object({
+      fullName: z.string().min(2).max(120),
+      phone: z.string().min(6).max(32),
+      email: z.string().email().max(255).optional().or(z.literal("")),
+    })
+    .optional(),
 });
 
 async function lockEmployeeSchedule(tx, employeeId) {
@@ -50,15 +59,27 @@ async function lockEmployeeSchedule(tx, employeeId) {
 
 export async function POST(request) {
   try {
-    const auth = await requireUser(request);
-    if (auth.error) {
-      return auth.error;
-    }
+    const sessionUser = await getSessionFromRequest(request);
 
     const body = await readJson(request);
     const parsed = payloadSchema.safeParse(body);
     if (!parsed.success) {
       return fail(400, "Invalid payload", parsed.error.flatten());
+    }
+
+    // Guests can book without an account; the request must then carry contact details.
+    if (!sessionUser && !parsed.data.guest) {
+      return fail(401, "Unauthorized");
+    }
+
+    if (!sessionUser) {
+      const limit = consumeRateLimit(`guest-booking:${getRequestIp(request)}`, {
+        limit: 5,
+        windowMs: 60 * 60 * 1000,
+      });
+      if (!limit.allowed) {
+        return fail(429, "Previse zahteva sa ove adrese. Pokusajte kasnije ili nas pozovite.");
+      }
     }
 
     const db = getDb();
@@ -87,6 +108,30 @@ export async function POST(request) {
       return fail(400, `Clinic working hours are: ${WORKING_HOURS_SUMMARY}`);
     }
 
+    // Resolved last so a rejected request never leaves a stray guest account behind.
+    let bookingUser = sessionUser;
+    let guestContact = null;
+    if (!sessionUser) {
+      const resolved = await resolveGuestUser(parsed.data.guest);
+      bookingUser = resolved.user;
+      guestContact = resolved.guest;
+    }
+
+    const guestNoteParts = guestContact
+      ? [
+          `Gost: ${guestContact.fullName}`,
+          `Telefon: ${guestContact.phone}`,
+          guestContact.email ? `Email: ${guestContact.email}` : null,
+        ].filter(Boolean)
+      : [];
+    const bookingNotes =
+      [guestNoteParts.join(" | "), parsed.data.notes || ""].filter(Boolean).join("\n") || null;
+    const clientEmail =
+      guestContact?.email ||
+      (isPlaceholderGuestEmail(bookingUser.email) ? "" : bookingUser.email || "");
+    const clientPhone = guestContact?.phone || bookingUser.phone || null;
+    const clientDisplay = guestContact?.fullName || clientEmail || bookingUser.id;
+
     let createdBooking = null;
     await db.transaction(async (tx) => {
       await lockEmployeeSchedule(tx, employee.id);
@@ -105,7 +150,7 @@ export async function POST(request) {
       [createdBooking] = await tx
         .insert(schema.bookings)
         .values({
-          userId: auth.user.id,
+          userId: bookingUser.id,
           employeeId: employee.id,
           startsAt: startAt,
           endsAt,
@@ -113,7 +158,7 @@ export async function POST(request) {
           totalDurationMin: quote.totalDurationMin,
           totalPriceRsd: quote.totalPriceRsd,
           primaryServiceColor: quote.primaryServiceColor,
-          notes: parsed.data.notes || null,
+          notes: bookingNotes,
         })
         .returning();
 
@@ -140,8 +185,10 @@ export async function POST(request) {
           bookingId: createdBooking.id,
           previousStatus: null,
           nextStatus: "pending",
-          changedByUserId: auth.user.id,
-          note: "Booking created online (awaiting admin confirmation)",
+          changedByUserId: bookingUser.id,
+          note: guestContact
+            ? "Guest booking created online (awaiting admin confirmation)"
+            : "Booking created online (awaiting admin confirmation)",
         });
       } catch (logError) {
         console.error("[bookings.create] status log insert failed", logError);
@@ -156,8 +203,7 @@ export async function POST(request) {
         .map((item) => `${item.name}${item.quantity > 1 ? ` x${item.quantity}` : ""}`)
         .join(", ");
       const inboxEmail = String(env.ADMIN_BOOKING_NOTIFY_EMAIL || "").trim();
-      const clientDisplay = auth.user.email || auth.user.id;
-      const clientEmailPayload = auth.user.email
+      const clientEmailPayload = clientEmail
         ? buildClientBookingEmail({
             subject: "Zahtev za termin je primljen",
             previewText: "Vas zahtev je uspesno evidentiran",
@@ -169,7 +215,7 @@ export async function POST(request) {
             durationMin: quote.totalDurationMin,
             priceRsd: quote.totalPriceRsd,
             statusLabel: "Na cekanju",
-            notes: parsed.data.notes || null,
+            notes: bookingNotes,
           })
         : null;
 
@@ -187,10 +233,10 @@ export async function POST(request) {
               durationMin: quote.totalDurationMin,
               priceRsd: quote.totalPriceRsd,
               statusLabel: "Na cekanju",
-              notes: parsed.data.notes || null,
+              notes: bookingNotes,
               clientName: clientDisplay,
-              clientEmail: auth.user.email || null,
-              clientPhone: null,
+              clientEmail: clientEmail || null,
+              clientPhone: clientPhone,
             }),
           })
         : { sent: false, reason: "ADMIN_BOOKING_NOTIFY_EMAIL missing" };
@@ -202,11 +248,11 @@ export async function POST(request) {
         );
       }
 
-      if (auth.user.email) {
+      if (clientEmail) {
         await deliverBookingNotification({
           db,
-          userId: auth.user.id,
-          email: auth.user.email,
+          userId: bookingUser.id,
+          email: clientEmail,
           type: "booking_submitted",
           title: "Zahtev za termin je poslat",
           message: `Vas zahtev za termin ${startsAtLabel} je primljen. Uskoro cete dobiti potvrdu klinike. Usluge: ${serviceSummary || "-"}.`,
@@ -221,14 +267,14 @@ export async function POST(request) {
         db,
         bookingId: createdBooking.id,
         clientName: clientDisplay,
-        clientEmail: auth.user.email || auth.user.id,
-        clientPhone: null,
+        clientEmail: clientEmail || bookingUser.id,
+        clientPhone: clientPhone,
         startsAtLabel,
         startsAt: createdBooking.startsAt,
         serviceSummary,
         durationMin: quote.totalDurationMin,
         priceRsd: quote.totalPriceRsd,
-        notes: parsed.data.notes || null,
+        notes: bookingNotes,
       });
     } catch (notifyError) {
       console.error("[bookings.create] notification pipeline failed", notifyError);

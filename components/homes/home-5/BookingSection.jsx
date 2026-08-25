@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import GooglePopupButton from "@/components/auth/GooglePopupButton";
 import { useLocale } from "@/components/common/LocaleProvider";
 import { useSession } from "@/components/common/SessionProvider";
 
@@ -45,19 +44,8 @@ export default function BookingSection({ googleNextPath = "/" }) {
           </div>
         ) : null}
 
-        {!loading && !user ? (
-          <div className="clinic-login-lock" style={{ ...glassCardStyle, maxWidth: 760, margin: "0 auto" }}>
-            <p style={{ marginTop: 0, color: "var(--clinic-text-muted)" }}>
-              {t("booking.loginRequired")}
-            </p>
-            <GooglePopupButton className="btn clinic-glow-btn" nextPath={googleNextPath}>
-              {t("common.login").toUpperCase()} WITH GOOGLE
-            </GooglePopupButton>
-          </div>
-        ) : null}
-
-        {!loading && user ? (
-          <BookingInlineForm googleNextPath={googleNextPath} showUpcoming />
+        {!loading ? (
+          <BookingInlineForm googleNextPath={googleNextPath} showUpcoming={Boolean(user)} />
         ) : null}
       </div>
     </section>

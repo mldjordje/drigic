@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useLocale } from "@/components/common/LocaleProvider";
+import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
 import { useSession } from "@/components/common/SessionProvider";
 import { CONSULTATION_SELECTION_ID, HYALURONIC_BRANDS } from "@/lib/booking/constants";
 
@@ -365,6 +366,10 @@ export default function BookingInlineForm({
   const { t, intlLocale, locale } = useLocale();
   const { user } = useSession();
   const [services, setServices] = useState([]);
+  const [guestMode, setGuestMode] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [selectedMap, setSelectedMap] = useState({});
   const [selectedBrandMap, setSelectedBrandMap] = useState({});
   const [date, setDate] = useState(todayIsoDate());
@@ -1060,9 +1065,14 @@ export default function BookingInlineForm({
     setError("");
     setMessage("");
 
-    if (!user) {
+    if (!user && !guestMode) {
       const nextPath = encodeURIComponent(googleNextPath || "/booking");
       window.location.href = `/api/auth/google?next=${nextPath}`;
+      return;
+    }
+
+    if (!user && (guestName.trim().length < 2 || guestPhone.replace(/\D/g, "").length < 6)) {
+      setError(t("booking.guestMissingFields"));
       return;
     }
 
@@ -1090,6 +1100,15 @@ export default function BookingInlineForm({
           serviceSelections,
           startAt: selectedStartAt,
           notes,
+          ...(user
+            ? {}
+            : {
+                guest: {
+                  fullName: guestName.trim(),
+                  phone: guestPhone.trim(),
+                  email: guestEmail.trim(),
+                },
+              }),
         }),
       });
       const data = await parseResponse(response);
@@ -1098,14 +1117,16 @@ export default function BookingInlineForm({
       }
 
       setError("");
-      setMessage(t("booking.bookedPending"));
+      setMessage(user ? t("booking.bookedPending") : t("booking.guestBookedPending"));
       setSelectedStartAt("");
       setNotes("");
       if (userCacheKey) {
         USER_BOOKINGS_CACHE.delete(userCacheKey);
       }
       setAvailabilityVersion((prev) => prev + 1);
-      await loadMyBookings({ force: true });
+      if (user) {
+        await loadMyBookings({ force: true });
+      }
     } catch (err) {
       setError(err.message || t("booking.genericBookingError"));
     } finally {
@@ -1262,7 +1283,7 @@ export default function BookingInlineForm({
     </button>
   ) : null;
 
-  if (!user) {
+  if (!user && !guestMode) {
     return (
       <section className={sectionClassName} style={cardStyle}>
         <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>{t("booking.title")}</h2>
@@ -1277,6 +1298,17 @@ export default function BookingInlineForm({
           >
             {t("booking.loginWithGoogle")}
           </a>
+          <InAppBrowserNotice />
+          <p style={{ marginBottom: 8, marginTop: 24, color: "var(--clinic-text-muted)" }}>
+            {t("booking.guestIntro")}
+          </p>
+          <button
+            type="button"
+            className="btn clinic-outline-btn clinic-guest-cta"
+            onClick={() => setGuestMode(true)}
+          >
+            {t("booking.guestContinue")}
+          </button>
         </div>
       </section>
     );
@@ -1285,9 +1317,59 @@ export default function BookingInlineForm({
   return (
     <section className={sectionClassName} style={cardStyle}>
       <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>{t("booking.title")}</h2>
-      <p style={{ color: "var(--clinic-text-muted)" }}>
-        {t("booking.loggedInAs", { email: user.email })}
-      </p>
+      {user ? (
+        <p style={{ color: "var(--clinic-text-muted)" }}>
+          {t("booking.loggedInAs", { email: user.email })}
+        </p>
+      ) : (
+        <div className="clinic-guest-contact">
+          <p style={{ marginTop: 0, color: "var(--clinic-text-muted)" }}>
+            {t("booking.guestContactIntro")}
+          </p>
+          <div className="clinic-guest-contact__grid">
+            <label className="clinic-guest-field">
+              <span>{t("booking.guestName")}*</span>
+              <input
+                type="text"
+                value={guestName}
+                autoComplete="name"
+                onChange={(event) => setGuestName(event.target.value)}
+                placeholder={t("booking.guestNamePlaceholder")}
+                required
+              />
+            </label>
+            <label className="clinic-guest-field">
+              <span>{t("booking.guestPhone")}*</span>
+              <input
+                type="tel"
+                value={guestPhone}
+                autoComplete="tel"
+                inputMode="tel"
+                onChange={(event) => setGuestPhone(event.target.value)}
+                placeholder="06x xxx xxxx"
+                required
+              />
+            </label>
+            <label className="clinic-guest-field">
+              <span>{t("booking.guestEmail")}</span>
+              <input
+                type="email"
+                value={guestEmail}
+                autoComplete="email"
+                onChange={(event) => setGuestEmail(event.target.value)}
+                placeholder="email@primer.com"
+              />
+            </label>
+          </div>
+          <button
+            type="button"
+            className="clinic-guest-switch"
+            onClick={() => setGuestMode(false)}
+          >
+            {t("booking.guestBackToLogin")}
+          </button>
+        </div>
+      )}
 
       <form
         onSubmit={handleBook}
