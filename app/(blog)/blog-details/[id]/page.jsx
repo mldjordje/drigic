@@ -1,8 +1,7 @@
 import BlogDetails from "@/components/blog/BlogDetails";
 import Breadcumb2 from "@/components/blog/Breadcumb2";
-import MarqueeComponent from "@/components/common/Marquee";
-import Footer8 from "@/components/footers/Footer8";
-import Header3 from "@/components/headers/Header3";
+import Footer5 from "@/components/footers/Footer5";
+import Header4 from "@/components/headers/Header4";
 import { getDb, schema } from "@/lib/db/client";
 import { getConfiguredSiteUrl } from "@/lib/site";
 import { and, eq } from "drizzle-orm";
@@ -99,11 +98,10 @@ export default async function BlogPageDetails({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
       />
-      <Header3 />
+      <Header4 />
       <Breadcumb2 />
       <BlogDetails post={post} />
-      <MarqueeComponent />
-      <Footer8 />
+      <Footer5 />
     </>
   );
 }

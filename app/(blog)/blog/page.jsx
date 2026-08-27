@@ -1,8 +1,7 @@
 import BlogList1 from "@/components/blog/BlogList1";
 import Breadcumb from "@/components/blog/Breadcumb";
-import MarqueeComponent from "@/components/common/Marquee";
-import Footer8 from "@/components/footers/Footer8";
-import Header3 from "@/components/headers/Header3";
+import Footer5 from "@/components/footers/Footer5";
+import Header4 from "@/components/headers/Header4";
 import { getDb, schema } from "@/lib/db/client";
 import { desc, eq } from "drizzle-orm";
 
@@ -43,11 +42,10 @@ export default async function BlogPage1() {
 
   return (
     <>
-      <Header3 />
+      <Header4 />
       <Breadcumb />
       <BlogList1 posts={posts} />
-      <MarqueeComponent />
-      <Footer8 />
+      <Footer5 />
     </>
   );
 }

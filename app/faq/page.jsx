@@ -1,10 +1,9 @@
-import MarqueeComponent from "@/components/common/Marquee";
 import Breadcumb from "@/components/faq/Breadcumb";
 import ContactInfo from "@/components/faq/ContactInfo";
 import Faq from "@/components/faq/Faq";
 
-import Footer8 from "@/components/footers/Footer8";
-import Header3 from "@/components/headers/Header3";
+import Footer5 from "@/components/footers/Footer5";
+import Header4 from "@/components/headers/Header4";
 import React from "react";
 import { clinicFaqs } from "@/data/clinic-faq";
 import { getConfiguredSiteUrl } from "@/lib/site";
@@ -36,12 +35,11 @@ export default function FaqPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <Header3 />
+      <Header4 />
       <Breadcumb />
       <Faq />
       <ContactInfo />
-      <MarqueeComponent />
-      <Footer8 />
+      <Footer5 />
     </>
   );
 }
