@@ -105,6 +105,13 @@ function buildTrend(current, previous) {
   };
 }
 
+const BOOKING_FUNNEL_STEPS = [
+  { key: "step_1_view", label: "1. Otvorio izbor tretmana" },
+  { key: "step_2_view", label: "2. Stigao do termina" },
+  { key: "step_3_view", label: "3. Stigao do podataka" },
+  { key: "booking_completed", label: "4. Zakazao termin" },
+];
+
 function getWindowStart(now, days) {
   return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
 }
@@ -129,6 +136,7 @@ async function getAnalyticsData() {
     [completedBookings],
     bookings,
     pageViews,
+    funnelEvents,
   ] = await Promise.all([
     db.select({ value: count() }).from(schema.users).where(eq(schema.users.role, "client")),
     db
@@ -159,7 +167,42 @@ async function getAnalyticsData() {
       })
       .from(schema.sitePageViews)
       .where(gte(schema.sitePageViews.createdAt, prev30dStart)), // last 60d only
+    // Tolerates the table not existing yet (migration not applied).
+    (async () => {
+      try {
+        return await db
+          .select({
+            step: schema.bookingFunnelEvents.step,
+            sessionId: schema.bookingFunnelEvents.sessionId,
+            createdAt: schema.bookingFunnelEvents.createdAt,
+          })
+          .from(schema.bookingFunnelEvents)
+          .where(gte(schema.bookingFunnelEvents.createdAt, last30dStart));
+      } catch {
+        return [];
+      }
+    })(),
   ]);
+
+  const funnelSessionsByStep = new Map(
+    BOOKING_FUNNEL_STEPS.map((item) => [item.key, new Set()])
+  );
+  for (const event of funnelEvents) {
+    const bucket = funnelSessionsByStep.get(event.step);
+    if (bucket) {
+      bucket.add(event.sessionId);
+    }
+  }
+  const funnelEntryCount = funnelSessionsByStep.get("step_1_view")?.size || 0;
+  const bookingFunnel = BOOKING_FUNNEL_STEPS.map((item) => {
+    const sessions = funnelSessionsByStep.get(item.key)?.size || 0;
+    return {
+      key: item.key,
+      label: item.label,
+      sessions,
+      sharePct: funnelEntryCount ? Math.round((sessions / funnelEntryCount) * 100) : 0,
+    };
+  });
 
   const monthBuckets = new Map();
   const activityDates = [];
@@ -437,6 +480,7 @@ async function getAnalyticsData() {
   return {
     generatedAt: now,
     activityStart: earliestActivity,
+    bookingFunnel,
     months,
     maxRevenue,
     topPages,
@@ -872,6 +916,53 @@ export default async function AdminAnalitikaPage() {
           </div>
         </SectionCard>
       </div>
+
+      <SectionCard
+        title="Levak zakazivanja 30d"
+        aside={
+          <span style={styles.sourceAiSummary}>
+            Sesije koje su otvorile formu:{" "}
+            {formatNumber(analytics.bookingFunnel[0]?.sessions || 0)}
+          </span>
+        }
+      >
+        {analytics.bookingFunnel[0]?.sessions ? (
+          <div style={styles.pageList}>
+            {analytics.bookingFunnel.map((funnelStep, funnelIndex) => {
+              const previous = analytics.bookingFunnel[funnelIndex - 1];
+              const dropped = previous ? previous.sessions - funnelStep.sessions : 0;
+              return (
+                <div key={funnelStep.key} style={styles.pageRow}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <strong style={styles.pageLabel}>{funnelStep.label}</strong>
+                    <div style={styles.pagePath}>
+                      {previous
+                        ? `Odustalo u ovom koraku: ${formatNumber(Math.max(0, dropped))}`
+                        : "Ulaz u levak"}
+                    </div>
+                    <div style={styles.pageBarTrack}>
+                      <div
+                        style={{
+                          ...styles.pageBarFill,
+                          width: `${Math.max(4, funnelStep.sharePct)}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div style={styles.pageViews}>
+                    <strong>{formatNumber(funnelStep.sessions)}</strong>
+                    <span>{formatPercent(funnelStep.sharePct)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p style={styles.emptyState}>
+            Još nema podataka o levku. Podaci se skupljaju od prvog otvaranja booking forme.
+          </p>
+        )}
+      </SectionCard>
 
       <SectionCard
         title="Izvori poseta 30d"

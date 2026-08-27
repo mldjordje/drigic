@@ -335,3 +335,381 @@
   .clinic-home5 .svc-card::after,
   .clinic-home5 .clinic-before-after-card::after { display: none; }
 }
+
+
+/* ==========================================================================
+   Booking flow v2 + profile setup gate
+   Appended last so these rules win over the earlier minified blocks.
+   ========================================================================== */
+
+:root {
+  --clinic-gate-bg: #ffffff;
+  --clinic-gate-text: #0f172a;
+  --clinic-gate-text-2: #253040;
+  --clinic-gate-muted: #5b6677;
+  --clinic-gate-border: rgba(17, 24, 39, 0.16);
+  --clinic-gate-border-soft: rgba(17, 24, 39, 0.1);
+  --clinic-gate-field-bg: #ffffff;
+  --clinic-gate-badge-bg: rgba(15, 23, 42, 0.06);
+  --clinic-gate-danger: #c53030;
+  --clinic-gate-btn-bg: #111827;
+  --clinic-gate-btn-text: #ffffff;
+  --clinic-card-solid-bg: #ffffff;
+  --clinic-bar-bg: rgba(255, 255, 255, 0.96);
+  --clinic-bar-border: rgba(17, 24, 39, 0.14);
+  --clinic-bar-text: #0f172a;
+  --clinic-bar-cta-bg: #111827;
+  --clinic-bar-cta-text: #ffffff;
+  --clinic-bar-cta-border: #111827;
+}
+
+.clinic-theme-dark,
+html[data-clinic-theme="dark"] {
+  --clinic-gate-bg: #10151d;
+  --clinic-gate-text: #f4f8ff;
+  --clinic-gate-text-2: #dfe9f8;
+  --clinic-gate-muted: #a9b7cb;
+  --clinic-gate-border: rgba(217, 232, 248, 0.28);
+  --clinic-gate-border-soft: rgba(217, 232, 248, 0.18);
+  --clinic-gate-field-bg: rgba(255, 255, 255, 0.06);
+  --clinic-gate-badge-bg: rgba(217, 232, 248, 0.12);
+  --clinic-gate-danger: #ff9f9f;
+  --clinic-gate-btn-bg: #f4f8ff;
+  --clinic-gate-btn-text: #07080c;
+  --clinic-card-solid-bg: #10151d;
+  --clinic-bar-bg: rgba(8, 12, 18, 0.95);
+  --clinic-bar-border: rgba(255, 255, 255, 0.18);
+  --clinic-bar-text: #f6f9ff;
+  --clinic-bar-cta-bg: #f6f9ff;
+  --clinic-bar-cta-text: #07080c;
+  --clinic-bar-cta-border: rgba(255, 255, 255, 0.6);
+}
+
+/* --- Profile setup gate --------------------------------------------------- */
+
+.clinic-profile-gate .clinic-profile-gate__card h3,
+.clinic-profile-gate h3 {
+  color: var(--clinic-gate-text) !important;
+  -webkit-text-fill-color: var(--clinic-gate-text) !important;
+  text-shadow: none !important;
+}
+
+.clinic-profile-gate .clinic-profile-gate__card p,
+.clinic-profile-gate .clinic-profile-gate__card span,
+.clinic-profile-gate .clinic-profile-gate__card small,
+.clinic-profile-gate .clinic-profile-gate__card label {
+  -webkit-text-fill-color: currentColor;
+}
+
+.clinic-profile-gate .clinic-profile-gate__card input,
+.clinic-profile-gate .clinic-profile-gate__card select {
+  -webkit-text-fill-color: var(--clinic-gate-text);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.clinic-profile-gate .clinic-profile-gate__card select {
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 34px;
+}
+
+.clinic-profile-gate .clinic-profile-gate__card input:focus-visible,
+.clinic-profile-gate .clinic-profile-gate__card select:focus-visible,
+.clinic-profile-gate .clinic-profile-gate__card button:focus-visible {
+  outline: 2px solid var(--clinic-gate-text);
+  outline-offset: 2px;
+}
+
+.clinic-profile-gate .clinic-profile-gate__card button[type="submit"]:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
+.clinic-profile-gate .clinic-profile-gate__card button[type="submit"]:disabled {
+  opacity: 0.65;
+  cursor: progress;
+}
+
+/* --- Booking stepper ------------------------------------------------------ */
+
+.clinic-booking-steps {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.clinic-booking-step {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.clinic-booking-step__btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--clinic-card-border-soft);
+  background: transparent;
+  color: var(--clinic-text-muted);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: default;
+  text-align: left;
+}
+
+.clinic-booking-step.is-done .clinic-booking-step__btn {
+  cursor: pointer;
+  color: var(--clinic-text-secondary);
+  border-color: var(--clinic-card-border);
+}
+
+.clinic-booking-step.is-active .clinic-booking-step__btn {
+  color: var(--clinic-text-strong);
+  border-color: var(--clinic-text-strong);
+  background: var(--clinic-summary-bg);
+}
+
+.clinic-booking-step__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.clinic-booking-step.is-active .clinic-booking-step__dot {
+  background: var(--clinic-button-bg);
+  color: var(--clinic-button-text);
+  border-color: var(--clinic-button-border);
+}
+
+.clinic-booking-step__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .clinic-booking-step__label {
+    display: none;
+  }
+
+  .clinic-booking-step__btn {
+    justify-content: center;
+  }
+}
+
+/* --- Consultation shortcut ------------------------------------------------ */
+
+.clinic-consultation-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--clinic-card-border);
+  background: var(--clinic-summary-bg);
+}
+
+.clinic-consultation-card.is-selected {
+  border-color: var(--clinic-text-strong);
+}
+
+.clinic-consultation-card__text {
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
+  flex: 1 1 260px;
+}
+
+.clinic-consultation-card__text strong {
+  color: var(--clinic-text-strong);
+  font-size: 16px;
+}
+
+.clinic-consultation-card__text span {
+  color: var(--clinic-text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.clinic-consultation-card__cta {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid var(--clinic-button-border);
+  background: var(--clinic-button-bg);
+  color: var(--clinic-button-text);
+  min-height: 46px;
+}
+
+.clinic-consultation-card__cta.is-selected {
+  background: transparent;
+  color: var(--clinic-text-strong);
+  border-color: var(--clinic-card-border);
+}
+
+.clinic-booking-note-ok {
+  margin: 0 0 12px;
+  font-weight: 600;
+  color: var(--clinic-success);
+}
+
+/* --- Treatment search ----------------------------------------------------- */
+
+.clinic-service-search {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.clinic-service-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid var(--clinic-field-border);
+  background: var(--clinic-field-bg);
+  color: var(--clinic-text-strong);
+  padding: 12px 14px;
+  font-size: 15px;
+  min-height: 46px;
+}
+
+.clinic-service-search button {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid var(--clinic-card-border);
+  background: transparent;
+  color: var(--clinic-text-secondary);
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* --- Inline alerts -------------------------------------------------------- */
+
+.clinic-booking-alert {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--clinic-danger);
+  background: rgba(197, 48, 48, 0.08);
+  color: var(--clinic-text-strong);
+}
+
+.clinic-booking-alert strong {
+  color: var(--clinic-text-strong);
+}
+
+.clinic-booking-alert span {
+  color: var(--clinic-text-secondary);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.clinic-booking-alert__cta {
+  border-radius: 999px;
+  border: 1px solid var(--clinic-button-border);
+  background: var(--clinic-button-bg);
+  color: var(--clinic-button-text);
+  padding: 9px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.clinic-booking-error {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--clinic-danger);
+  background: rgba(197, 48, 48, 0.08);
+  color: var(--clinic-danger);
+  font-weight: 700;
+}
+
+/* --- Guest login block ---------------------------------------------------- */
+
+.clinic-guest-login {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--clinic-card-border);
+}
+
+.clinic-guest-login > span {
+  color: var(--clinic-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.clinic-guest-login__btn {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--clinic-card-border);
+  color: var(--clinic-text-strong);
+  padding: 11px 18px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* --- Summary head --------------------------------------------------------- */
+
+.clinic-booking-summary__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- Sticky action bar ---------------------------------------------------- */
+
+.clinic-booking-bar__cta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.clinic-booking-bar__info strong,
+.clinic-booking-bar__info span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 380px) {
+  .clinic-booking-bar__cta {
+    padding: 12px 16px !important;
+    font-size: 13px;
+  }
+}
+
+/* The submit button lives in the sticky bar; keep the in-form one for
+   no-JS/keyboard flows but out of the visual flow on wide screens. */
+.clinic-booking-submit {
+  display: none;
+}

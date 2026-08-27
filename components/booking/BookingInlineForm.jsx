@@ -14,6 +14,53 @@ import { useLocale } from "@/components/common/LocaleProvider";
 import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
 import { useSession } from "@/components/common/SessionProvider";
 import { CONSULTATION_SELECTION_ID, HYALURONIC_BRANDS } from "@/lib/booking/constants";
+import { trackBookingFunnel } from "@/lib/analytics/booking-funnel";
+
+const STEP_SERVICES = 1;
+const STEP_DATE = 2;
+const STEP_DETAILS = 3;
+const TOTAL_STEPS = 3;
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    // The catalog mixes Serbian and English spellings (Botoks / Botox),
+    // so fold "x" into "ks" on both sides of the comparison.
+    .replace(/x/g, "ks")
+    .trim();
+}
+
+function serviceMatchesQuery(service, normalizedQuery) {
+  if (!normalizedQuery) {
+    return true;
+  }
+  const haystack = normalizeSearchText(
+    [service?.name, service?.shortDescription, service?.description]
+      .filter(Boolean)
+      .join(" ")
+  );
+  return normalizedQuery
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((token) => haystack.includes(token));
+}
+
+function filterCategoryGroups(groups, normalizedQuery) {
+  if (!normalizedQuery) {
+    return groups;
+  }
+  return groups
+    .map((category) => ({
+      ...category,
+      services: (category.services || []).filter((service) =>
+        serviceMatchesQuery(service, normalizedQuery)
+      ),
+    }))
+    .filter((category) => category.services.length);
+}
 
 const HYALURONIC_BRAND_BY_KEY = HYALURONIC_BRANDS.reduce((acc, item) => {
   acc[item.key] = item;
@@ -366,7 +413,8 @@ export default function BookingInlineForm({
   const { t, intlLocale, locale } = useLocale();
   const { user } = useSession();
   const [services, setServices] = useState([]);
-  const [guestMode, setGuestMode] = useState(false);
+  const [step, setStep] = useState(STEP_SERVICES);
+  const [serviceQuery, setServiceQuery] = useState("");
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -388,13 +436,18 @@ export default function BookingInlineForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [hideNextDateCta, setHideNextDateCta] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [activeCatalogSection, setActiveCatalogSection] = useState("");
+  // The form is also mounted (collapsed) inside the homepage hero panel, so the
+  // sticky action bar and funnel tracking only kick in once it is on screen.
+  const [formOnScreen, setFormOnScreen] = useState(false);
+  const [activeCatalogSection, setActiveCatalogSection] = useState("services");
   const [availabilityVersion, setAvailabilityVersion] = useState(0);
   const dateStepRef = useRef(null);
   const faceSectionRef = useRef(null);
   const bodySectionRef = useRef(null);
+  const formTopRef = useRef(null);
+  const errorRef = useRef(null);
+  const brandAlertRef = useRef(null);
   const bookingCatalogCopy = useMemo(
     () => BOOKING_CATALOG_COPY[locale] || BOOKING_CATALOG_COPY.sr,
     [locale]
@@ -585,6 +638,55 @@ export default function BookingInlineForm({
   );
 
   const hasOffers = packageServices.length > 0 || promotionCategoryGroups.length > 0;
+
+  const normalizedServiceQuery = useMemo(
+    () => normalizeSearchText(serviceQuery),
+    [serviceQuery]
+  );
+  const isSearching = normalizedServiceQuery.length > 0;
+  const searchResultGroups = useMemo(() => {
+    if (!isSearching) {
+      return [];
+    }
+    const packageGroup = packageServices.filter((service) =>
+      serviceMatchesQuery(service, normalizedServiceQuery)
+    );
+    const merged = new Map();
+    const addGroup = (category) => {
+      const existing = merged.get(category.id);
+      if (!existing) {
+        merged.set(category.id, { ...category, services: [...(category.services || [])] });
+        return;
+      }
+      // The same category can sit in both the face and body sections; merge it
+      // once so a treatment is never listed twice in the results.
+      const seen = new Set(existing.services.map((service) => service.id));
+      (category.services || []).forEach((service) => {
+        if (!seen.has(service.id)) {
+          existing.services.push(service);
+        }
+      });
+    };
+
+    [
+      ...filterCategoryGroups(faceCategoryGroups, normalizedServiceQuery),
+      ...filterCategoryGroups(bodyCategoryGroups, normalizedServiceQuery),
+      ...filterCategoryGroups(promotionCategoryGroups, normalizedServiceQuery),
+      ...(packageGroup.length
+        ? [{ id: "search-packages", name: bookingCatalogCopy.packagesLabel, services: packageGroup }]
+        : []),
+    ].forEach(addGroup);
+
+    return Array.from(merged.values());
+  }, [
+    isSearching,
+    normalizedServiceQuery,
+    faceCategoryGroups,
+    bodyCategoryGroups,
+    promotionCategoryGroups,
+    packageServices,
+    bookingCatalogCopy.packagesLabel,
+  ]);
 
   const serviceSelections = useMemo(() => {
     const selections = Object.entries(selectedMap)
@@ -819,36 +921,94 @@ export default function BookingInlineForm({
     setSelectedStartAt("");
   }
 
-  useEffect(() => {
-    if (!serviceSelections.length) {
-      setHideNextDateCta(false);
+  const guestContactValid = useMemo(
+    () => guestName.trim().length >= 2 && guestPhone.replace(/\D/g, "").length >= 6,
+    [guestName, guestPhone]
+  );
+
+  const scrollNodeIntoView = useCallback((node) => {
+    if (typeof window === "undefined" || !node) {
       return;
     }
-    setHideNextDateCta(false);
-  }, [serviceSelections]);
+    const stickyHeader = document.querySelector(".clinic-header .sticky-wrapper");
+    const headerHeight = stickyHeader instanceof HTMLElement ? stickyHeader.offsetHeight : 0;
+    const targetTop = node.getBoundingClientRect().top + window.scrollY - headerHeight - 16;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+  }, []);
 
-  useEffect(() => {
-    if (!serviceSelections.length) {
+  const goToStep = useCallback(
+    (nextStep) => {
+      setStep(nextStep);
+      setError("");
+      setMessage("");
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(() => scrollNodeIntoView(formTopRef.current));
+      }
+    },
+    [scrollNodeIntoView]
+  );
+
+  const handleContinue = useCallback(() => {
+    if (step === STEP_SERVICES) {
+      if (!serviceSelections.length) {
+        setError(t("booking.selectAtLeastOne"));
+        return;
+      }
+      if (missingHyaluronicBrandSelections.length) {
+        setError(t("booking.selectBrandAndQty"));
+        scrollNodeIntoView(brandAlertRef.current);
+        return;
+      }
+      goToStep(STEP_DATE);
       return;
     }
 
-    const node = dateStepRef.current;
+    if (step === STEP_DATE) {
+      if (!selectedStartAt) {
+        setError(t("booking.selectFreeSlot"));
+        return;
+      }
+      goToStep(STEP_DETAILS);
+    }
+  }, [
+    step,
+    serviceSelections.length,
+    missingHyaluronicBrandSelections.length,
+    selectedStartAt,
+    goToStep,
+    scrollNodeIntoView,
+    t,
+  ]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+    scrollNodeIntoView(errorRef.current);
+  }, [error, scrollNodeIntoView]);
+
+  useEffect(() => {
+    if (!formOnScreen) {
+      return;
+    }
+    trackBookingFunnel(`step_${step}_view`);
+  }, [step, formOnScreen]);
+
+  useEffect(() => {
+    const node = formTopRef.current;
     if (!node || typeof IntersectionObserver === "undefined") {
-      return;
+      return undefined;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
-        setHideNextDateCta(entries.some((entry) => entry.isIntersecting));
+        setFormOnScreen(entries.some((entry) => entry.isIntersecting));
       },
-      {
-        threshold: 0.2,
-      }
+      { threshold: 0 }
     );
-
     observer.observe(node);
     return () => observer.disconnect();
-  }, [serviceSelections.length]);
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
@@ -1065,29 +1225,26 @@ export default function BookingInlineForm({
     setError("");
     setMessage("");
 
-    if (!user && !guestMode) {
-      const nextPath = encodeURIComponent(googleNextPath || "/booking");
-      window.location.href = `/api/auth/google?next=${nextPath}`;
-      return;
-    }
-
-    if (!user && (guestName.trim().length < 2 || guestPhone.replace(/\D/g, "").length < 6)) {
-      setError(t("booking.guestMissingFields"));
-      return;
-    }
-
     if (!serviceSelections.length) {
+      setStep(STEP_SERVICES);
       setError(t("booking.selectAtLeastOne"));
       return;
     }
 
     if (missingHyaluronicBrandSelections.length) {
+      setStep(STEP_SERVICES);
       setError(t("booking.selectBrandAndQty"));
       return;
     }
 
     if (!selectedStartAt) {
+      setStep(STEP_DATE);
       setError(t("booking.selectFreeSlot"));
+      return;
+    }
+
+    if (!user && !guestContactValid) {
+      setError(t("booking.guestMissingFields"));
       return;
     }
 
@@ -1118,6 +1275,7 @@ export default function BookingInlineForm({
 
       setError("");
       setMessage(user ? t("booking.bookedPending") : t("booking.guestBookedPending"));
+      trackBookingFunnel("booking_completed");
       setSelectedStartAt("");
       setNotes("");
       if (userCacheKey) {
@@ -1132,28 +1290,6 @@ export default function BookingInlineForm({
     } finally {
       setLoading(false);
     }
-  }
-
-  function scrollToDateStep() {
-    setHideNextDateCta(true);
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const targetNode = dateStepRef.current;
-    if (!targetNode) {
-      return;
-    }
-
-    const stickyHeader = document.querySelector(".clinic-header .sticky-wrapper");
-    const headerHeight = stickyHeader instanceof HTMLElement ? stickyHeader.offsetHeight : 0;
-    const targetTop =
-      targetNode.getBoundingClientRect().top + window.scrollY - headerHeight - 16;
-
-    window.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior: "smooth",
-    });
   }
 
   function scrollToSection(sectionRef) {
@@ -1263,160 +1399,202 @@ export default function BookingInlineForm({
   }
 
   const sectionClassName = ["clinic-booking-form", cardClassName].filter(Boolean).join(" ");
-  const shouldShowNextDateCta = serviceSelections.length > 0 && !hideNextDateCta;
-  const nextDateButton = shouldShowNextDateCta ? (
-    <button
-      type="button"
-      className="clinic-glow-btn clinic-next-date-fab"
-      style={nextDateFabStyle}
-      onClick={scrollToDateStep}
-      aria-label={t("booking.nextDateAria")}
-    >
-      <span
-        className="clinic-next-date-fab-icon"
-        style={nextDateFabIconStyle}
-        aria-hidden="true"
-      >
-        v
-      </span>
-      <span className="clinic-btn-label">{t("booking.nextDate")}</span>
-    </button>
-  ) : null;
+  const consultationSelected = Boolean(selectedMap[CONSULTATION_SELECTION_ID]);
+  const summaryDurationLabel = quote ? `${quote.totalDurationMin} min` : "";
+  const summaryPriceLabel = quote ? `${quote.totalPriceRsd} EUR` : "";
+  const stepLabels = [t("booking.stepServices"), t("booking.stepDate"), t("booking.stepDetails")];
+  const canContinueFromStep =
+    step === STEP_SERVICES
+      ? serviceSelections.length > 0 && !missingHyaluronicBrandSelections.length
+      : step === STEP_DATE
+        ? Boolean(selectedStartAt)
+        : true;
 
-  if (!user && !guestMode) {
-    return (
-      <section className={sectionClassName} style={cardStyle}>
-        <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>{t("booking.title")}</h2>
-        <div className="clinic-login-lock">
-          <p style={{ marginTop: 0, color: "var(--clinic-text-muted)" }}>
-            {t("booking.loginRequired")}
-          </p>
-          <a
-            href={`/api/auth/google?next=${encodeURIComponent(googleNextPath || "/")}`}
-            className="btn clinic-glow-btn"
-            style={{ textTransform: "uppercase", fontWeight: 800 }}
-          >
-            {t("booking.loginWithGoogle")}
-          </a>
-          <InAppBrowserNotice />
-          <p style={{ marginBottom: 8, marginTop: 24, color: "var(--clinic-text-muted)" }}>
-            {t("booking.guestIntro")}
-          </p>
-          <button
-            type="button"
-            className="btn clinic-outline-btn clinic-guest-cta"
-            onClick={() => setGuestMode(true)}
-          >
-            {t("booking.guestContinue")}
-          </button>
+  const stickyBar = (
+    <div className="clinic-booking-bar" style={stickyBarStyle}>
+      <div className="clinic-booking-bar__inner" style={stickyBarInnerStyle}>
+        <div className="clinic-booking-bar__info" style={stickyBarInfoStyle}>
+          {serviceSelections.length ? (
+            <>
+              <strong style={{ fontSize: 14 }}>
+                {t("booking.summarySelected", { count: serviceSelections.length })}
+              </strong>
+              {quote ? (
+                <span style={{ fontSize: 13, opacity: 0.85 }}>
+                  {summaryDurationLabel} / {summaryPriceLabel}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            <span style={{ fontSize: 14, opacity: 0.85 }}>{t("booking.summaryEmpty")}</span>
+          )}
         </div>
-      </section>
-    );
-  }
+        <div className="clinic-booking-bar__actions" style={stickyBarActionsStyle}>
+          {step > STEP_SERVICES ? (
+            <button
+              type="button"
+              className="clinic-booking-bar__back"
+              style={stickyBarBackStyle}
+              onClick={() => goToStep(step - 1)}
+            >
+              {t("booking.back")}
+            </button>
+          ) : null}
+          {step < STEP_DETAILS ? (
+            <button
+              type="button"
+              className="clinic-booking-bar__cta"
+              style={stickyBarCtaStyle}
+              onClick={handleContinue}
+              disabled={!canContinueFromStep}
+            >
+              {t("booking.continueCta")}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              form="clinic-booking-form"
+              className="clinic-booking-bar__cta"
+              style={stickyBarCtaStyle}
+              disabled={loading}
+            >
+              {loading ? t("booking.confirming") : t("booking.confirm")}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <section className={sectionClassName} style={cardStyle}>
+    <section className={sectionClassName} style={cardStyle} ref={formTopRef}>
       <h2 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>{t("booking.title")}</h2>
-      {user ? (
-        <p style={{ color: "var(--clinic-text-muted)" }}>
-          {t("booking.loggedInAs", { email: user.email })}
-        </p>
-      ) : (
-        <div className="clinic-guest-contact">
-          <p style={{ marginTop: 0, color: "var(--clinic-text-muted)" }}>
-            {t("booking.guestContactIntro")}
-          </p>
-          <div className="clinic-guest-contact__grid">
-            <label className="clinic-guest-field">
-              <span>{t("booking.guestName")}*</span>
-              <input
-                type="text"
-                value={guestName}
-                autoComplete="name"
-                onChange={(event) => setGuestName(event.target.value)}
-                placeholder={t("booking.guestNamePlaceholder")}
-                required
-              />
-            </label>
-            <label className="clinic-guest-field">
-              <span>{t("booking.guestPhone")}*</span>
-              <input
-                type="tel"
-                value={guestPhone}
-                autoComplete="tel"
-                inputMode="tel"
-                onChange={(event) => setGuestPhone(event.target.value)}
-                placeholder="06x xxx xxxx"
-                required
-              />
-            </label>
-            <label className="clinic-guest-field">
-              <span>{t("booking.guestEmail")}</span>
-              <input
-                type="email"
-                value={guestEmail}
-                autoComplete="email"
-                onChange={(event) => setGuestEmail(event.target.value)}
-                placeholder="email@primer.com"
-              />
-            </label>
-          </div>
-          <button
-            type="button"
-            className="clinic-guest-switch"
-            onClick={() => setGuestMode(false)}
+
+      <ol className="clinic-booking-steps" style={stepListStyle}>
+        {stepLabels.map((label, index) => {
+          const stepNumber = index + 1;
+          const stepState =
+            stepNumber === step ? "is-active" : stepNumber < step ? "is-done" : "";
+          return (
+            <li key={label} className={`clinic-booking-step ${stepState}`}>
+              <button
+                type="button"
+                className="clinic-booking-step__btn"
+                onClick={() => {
+                  if (stepNumber < step) {
+                    goToStep(stepNumber);
+                  }
+                }}
+                disabled={stepNumber > step}
+                aria-current={stepNumber === step ? "step" : undefined}
+              >
+                <span className="clinic-booking-step__dot">
+                  {stepNumber < step ? "✓" : stepNumber}
+                </span>
+                <span className="clinic-booking-step__label">{label}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+
+      <form id="clinic-booking-form" onSubmit={handleBook} style={{ paddingBottom: 112 }}>
+        <div hidden={step !== STEP_SERVICES}>
+          <h3 style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseTreatments")}</h3>
+
+          <div
+            className={`clinic-consultation-card${consultationSelected ? " is-selected" : ""}`}
           >
-            {t("booking.guestBackToLogin")}
-          </button>
-        </div>
-      )}
+            <div className="clinic-consultation-card__text">
+              <strong>{t("booking.notSureTitle")}</strong>
+              <span>{t("booking.notSureBody")}</span>
+            </div>
+            <button
+              type="button"
+              className={`clinic-consultation-card__cta${
+                consultationSelected ? " is-selected" : ""
+              }`}
+              onClick={() => updateConsultationSelected(!consultationSelected)}
+            >
+              {consultationSelected ? t("booking.remove") : t("booking.notSureCta")}
+            </button>
+          </div>
+          {consultationSelected ? (
+            <p className="clinic-booking-note-ok">{t("booking.notSureSelected")}</p>
+          ) : null}
 
-      <form
-        onSubmit={handleBook}
-        style={shouldShowNextDateCta ? { paddingBottom: 96 } : undefined}
-      >
-        <h3 style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseTreatments")}</h3>
-        {(faceCategoryGroups.length || bodyCategoryGroups.length) ? (
-          <div className="clinic-booking-mini-nav">
-            {faceCategoryGroups.length ? (
-              <button
-                type="button"
-                className="clinic-booking-mini-nav__btn"
-                onClick={() => scrollToSection(faceSectionRef)}
-              >
-                {t("booking.face")}
-              </button>
-            ) : null}
-            {bodyCategoryGroups.length ? (
-              <button
-                type="button"
-                className="clinic-booking-mini-nav__btn"
-                onClick={() => scrollToSection(bodySectionRef)}
-              >
-                {t("booking.body")}
+          <div className="clinic-service-search">
+            <input
+              type="search"
+              value={serviceQuery}
+              onChange={(event) => setServiceQuery(event.target.value)}
+              placeholder={t("booking.searchPlaceholder")}
+              aria-label={t("booking.searchPlaceholder")}
+            />
+            {serviceQuery ? (
+              <button type="button" onClick={() => setServiceQuery("")}>
+                {t("booking.clearSearch")}
               </button>
             ) : null}
           </div>
-        ) : null}
-        {selectedServiceLabels.length ? (
-          <div className="clinic-selected-services">
-            {selectedServiceLabels.map((label, labelIndex) => (
-              <span
-                key={label}
-                className="clinic-selected-service-chip clinic-reveal"
-                style={{ "--clinic-reveal-delay": `${Math.min(labelIndex, 8) * 35}ms` }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-        ) : null}
-        {missingHyaluronicBrandSelections.length ? (
-          <p style={{ color: "var(--clinic-danger)", marginBottom: 12 }}>
-            {t("booking.selectBrandAndQty")}
-          </p>
-        ) : null}
 
+          {!isSearching && (faceCategoryGroups.length || bodyCategoryGroups.length) ? (
+            <div className="clinic-booking-mini-nav">
+              {faceCategoryGroups.length ? (
+                <button
+                  type="button"
+                  className="clinic-booking-mini-nav__btn"
+                  onClick={() => scrollToSection(faceSectionRef)}
+                >
+                  {t("booking.face")}
+                </button>
+              ) : null}
+              {bodyCategoryGroups.length ? (
+                <button
+                  type="button"
+                  className="clinic-booking-mini-nav__btn"
+                  onClick={() => scrollToSection(bodySectionRef)}
+                >
+                  {t("booking.body")}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {selectedServiceLabels.length ? (
+            <div className="clinic-selected-services">
+              {selectedServiceLabels.map((label, labelIndex) => (
+                <span
+                  key={label}
+                  className="clinic-selected-service-chip clinic-reveal"
+                  style={{ "--clinic-reveal-delay": `${Math.min(labelIndex, 8) * 35}ms` }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {missingHyaluronicBrandSelections.length ? (
+            <div ref={brandAlertRef} className="clinic-booking-alert">
+              <strong>{t("booking.brandRequiredTitle")}</strong>
+              <span>{t("booking.selectBrandAndQty")}</span>
+            </div>
+          ) : null}
+
+          {isSearching ? (
+            <div style={bookingCatalogStackStyle}>
+              {searchResultGroups.length ? (
+                // A category can appear in more than one section, so the index
+                // keeps the React key unique across merged search results.
+                searchResultGroups.map((category, categoryIndex) =>
+                  renderCategoryGroup(category, categoryIndex, null, `search-${categoryIndex}`)
+                )
+              ) : (
+                <p style={bookingCatalogEmptyStyle}>{t("booking.searchNoResults")}</p>
+              )}
+            </div>
+          ) : (
         <div style={bookingCatalogStackStyle}>
           <div className="clinic-reveal">
             <BookingCatalogToggle
@@ -1433,53 +1611,8 @@ export default function BookingInlineForm({
             />
             <BookingCatalogPanel isOpen={activeCatalogSection === "services"}>
               <>
-                <div
-                  className={`clinic-service-option clinic-reveal is-consultation-row ${
-                    selectedMap[CONSULTATION_SELECTION_ID] ? "is-selected" : ""
-                  }`}
-                  style={{ ...checkboxRowStyle, marginBottom: 12 }}
-                >
-                  <label style={{ display: "flex", gap: 8, width: "100%", cursor: "pointer" }}>
-                    <input
-                      type="checkbox"
-                      checked={Boolean(selectedMap[CONSULTATION_SELECTION_ID])}
-                      onChange={(event) => updateConsultationSelected(event.target.checked)}
-                    />
-                    <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 6 }}>
-                      <strong>{t("booking.consultationName")}</strong>
-                      <span className="clinic-service-option__meta">
-                        <span className="clinic-service-option__pill">
-                          {t("booking.consultationDuration")}
-                        </span>
-                      </span>
-                      <small style={{ color: "var(--clinic-text-muted)", maxWidth: "42rem" }}>
-                        {t("booking.consultationInfo")}
-                      </small>
-                    </span>
-                  </label>
-                </div>
                 {faceCategoryGroups.length || bodyCategoryGroups.length ? (
                   <>
-                    <div className="clinic-booking-mini-nav">
-                      {faceCategoryGroups.length ? (
-                        <button
-                          type="button"
-                          className="clinic-booking-mini-nav__btn"
-                          onClick={() => scrollToSection(faceSectionRef)}
-                        >
-                          {t("booking.face")}
-                        </button>
-                      ) : null}
-                      {bodyCategoryGroups.length ? (
-                        <button
-                          type="button"
-                          className="clinic-booking-mini-nav__btn"
-                          onClick={() => scrollToSection(bodySectionRef)}
-                        >
-                          {t("booking.body")}
-                        </button>
-                      ) : null}
-                    </div>
                     {faceCategoryGroups.map((category, categoryIndex) =>
                       renderCategoryGroup(
                         category,
@@ -1613,17 +1746,35 @@ export default function BookingInlineForm({
             </BookingCatalogPanel>
           </div>
         </div>
+          )}
+        </div>
 
+        <div hidden={step !== STEP_DATE}>
         <h3 ref={dateStepRef} style={{ color: "var(--clinic-text-strong)" }}>{t("booking.chooseDate")}</h3>
 
         {!serviceSelections.length ? (
-          <p style={{ color: "var(--clinic-text-muted)" }}>
-            {t("booking.firstChooseService")}
-          </p>
+          <div className="clinic-booking-alert">
+            <strong>{t("booking.firstChooseService")}</strong>
+            <button
+              type="button"
+              className="clinic-booking-alert__cta"
+              onClick={() => goToStep(STEP_SERVICES)}
+            >
+              {t("booking.changeSelection")}
+            </button>
+          </div>
         ) : !canRequestAvailability ? (
-          <p style={{ color: "var(--clinic-text-muted)" }}>
-            {t("booking.chooseBrandToShowSlots")}
-          </p>
+          <div className="clinic-booking-alert">
+            <strong>{t("booking.brandRequiredTitle")}</strong>
+            <span>{t("booking.chooseBrandToShowSlots")}</span>
+            <button
+              type="button"
+              className="clinic-booking-alert__cta"
+              onClick={() => goToStep(STEP_SERVICES)}
+            >
+              {t("booking.brandRequiredCta")}
+            </button>
+          </div>
         ) : (
           <>
             <div className="clinic-booking-calendar clinic-reveal">
@@ -1656,18 +1807,18 @@ export default function BookingInlineForm({
                 ))}
               </div>
 
-              <div className="clinic-cal-legend" aria-label="Legenda dostupnosti termina">
+              <div className="clinic-cal-legend">
                 <span>
                   <span className="calendar-indicator is-high" />
-                  Vise slobodnih termina
+                  {t("booking.legendHigh")}
                 </span>
                 <span>
                   <span className="calendar-indicator is-medium" />
-                  Ogranicena dostupnost
+                  {t("booking.legendMedium")}
                 </span>
                 <span>
                   <span className="calendar-indicator is-none" />
-                  Nema slobodnih termina
+                  {t("booking.legendNone")}
                 </span>
               </div>
 
@@ -1746,42 +1897,134 @@ export default function BookingInlineForm({
           </>
         )}
 
-        <h3 style={{ marginTop: 20, color: "var(--clinic-text-strong)" }}>{t("booking.note")}</h3>
-        <textarea
-          className="clinic-booking-note-input clinic-glow-field"
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          rows={4}
-          style={{ ...inputStyle, resize: "vertical" }}
-          placeholder={t("booking.notePlaceholder")}
-        />
+        </div>
 
-        {quote ? (
-          <div className="clinic-reveal" style={summaryStyle}>
-            <strong>{t("booking.total")}</strong> {quote.totalDurationMin} min / {quote.totalPriceRsd} EUR
-                {quote.items?.length ? (
-                  <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
-                    {quote.items.map((item) => (
-                      <li
-                        key={`${item.serviceId}-${item.brand || "standard"}`}
-                        style={{ color: "var(--clinic-text-secondary)" }}
-                      >
-                        {item.name} - {item.quantity} {item.unitLabel} -{" "}
-                        {item.finalPriceRsd ? `${item.finalPriceRsd} EUR` : "0 EUR"}
-                        {item.pricingNote ? ` (${item.pricingNote})` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-          </div>
-        ) : null}
+        <div hidden={step !== STEP_DETAILS}>
+          <h3 style={{ marginTop: 0, color: "var(--clinic-text-strong)" }}>
+            {t("booking.identityTitle")}
+          </h3>
 
-        <button type="submit" className="clinic-reveal" style={primaryButtonStyle} disabled={loading}>
-          {loading ? t("booking.confirming") : t("booking.confirm")}
-        </button>
+          {user ? (
+            <p style={{ color: "var(--clinic-text-muted)" }}>
+              {t("booking.loggedInAs", { email: user.email })}
+            </p>
+          ) : (
+            <div className="clinic-guest-contact">
+              <p style={{ marginTop: 0, color: "var(--clinic-text-secondary)" }}>
+                {t("booking.identityGuestIntro")}
+              </p>
+              <div className="clinic-guest-contact__grid">
+                <label className="clinic-guest-field">
+                  <span>{t("booking.guestName")}*</span>
+                  <input
+                    type="text"
+                    value={guestName}
+                    autoComplete="name"
+                    onChange={(event) => setGuestName(event.target.value)}
+                    placeholder={t("booking.guestNamePlaceholder")}
+                  />
+                </label>
+                <label className="clinic-guest-field">
+                  <span>{t("booking.guestPhone")}*</span>
+                  <input
+                    type="tel"
+                    value={guestPhone}
+                    autoComplete="tel"
+                    inputMode="tel"
+                    onChange={(event) => setGuestPhone(event.target.value)}
+                    placeholder="06x xxx xxxx"
+                  />
+                </label>
+                <label className="clinic-guest-field">
+                  <span>{t("booking.guestEmail")}</span>
+                  <input
+                    type="email"
+                    value={guestEmail}
+                    autoComplete="email"
+                    onChange={(event) => setGuestEmail(event.target.value)}
+                    placeholder="email@primer.com"
+                  />
+                </label>
+              </div>
 
-        {message ? <p style={{ color: "var(--clinic-success)" }}>{message}</p> : null}
-        {error ? <p style={{ color: "var(--clinic-danger)" }}>{error}</p> : null}
+              <div className="clinic-guest-login">
+                <span>{t("booking.identityLoginFaster")}</span>
+                <a
+                  href={`/api/auth/google?next=${encodeURIComponent(googleNextPath || "/booking")}`}
+                  className="clinic-outline-btn clinic-guest-login__btn"
+                >
+                  {t("booking.loginWithGoogle")}
+                </a>
+                <InAppBrowserNotice />
+              </div>
+            </div>
+          )}
+
+          <h3 style={{ marginTop: 20, color: "var(--clinic-text-strong)" }}>{t("booking.note")}</h3>
+          <textarea
+            className="clinic-booking-note-input clinic-glow-field"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            rows={4}
+            style={{ ...inputStyle, resize: "vertical" }}
+            placeholder={t("booking.notePlaceholder")}
+          />
+
+          {quote ? (
+            <div className="clinic-reveal" style={summaryStyle}>
+              <div className="clinic-booking-summary__head">
+                <strong>{t("booking.total")}</strong>{" "}
+                <span>
+                  {quote.totalDurationMin} min / {quote.totalPriceRsd} EUR
+                </span>
+                <button
+                  type="button"
+                  className="clinic-booking-alert__cta"
+                  onClick={() => goToStep(STEP_SERVICES)}
+                >
+                  {t("booking.changeSelection")}
+                </button>
+              </div>
+              {selectedStartAt ? (
+                <p style={{ margin: "8px 0 0", color: "var(--clinic-text-secondary)" }}>
+                  {selectedDateLabel} -{" "}
+                  {new Date(selectedStartAt).toLocaleTimeString(intlLocale, {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              ) : null}
+              {quote.items?.length ? (
+                <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                  {quote.items.map((item) => (
+                    <li
+                      key={`${item.serviceId}-${item.brand || "standard"}`}
+                      style={{ color: "var(--clinic-text-secondary)" }}
+                    >
+                      {item.name} - {item.quantity} {item.unitLabel} -{" "}
+                      {item.finalPriceRsd ? `${item.finalPriceRsd} EUR` : "0 EUR"}
+                      {item.pricingNote ? ` (${item.pricingNote})` : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+
+          <button
+            type="submit"
+            className="clinic-reveal clinic-booking-submit"
+            style={primaryButtonStyle}
+            disabled={loading}
+          >
+            {loading ? t("booking.confirming") : t("booking.confirm")}
+          </button>
+        </div>
+
+        <div ref={errorRef} aria-live="polite">
+          {message ? <p style={{ color: "var(--clinic-success)", fontWeight: 600 }}>{message}</p> : null}
+          {error ? <p className="clinic-booking-error">{error}</p> : null}
+        </div>
       </form>
 
       {showUpcoming && user ? (
@@ -1809,7 +2052,7 @@ export default function BookingInlineForm({
           )}
         </section>
       ) : null}
-      {isClient && nextDateButton ? createPortal(nextDateButton, document.body) : null}
+      {isClient && formOnScreen ? createPortal(stickyBar, document.body) : null}
     </section>
   );
 }
@@ -1904,37 +2147,70 @@ const primaryButtonStyle = {
   cursor: "pointer",
 };
 
-const nextDateFabStyle = {
+
+
+const stickyBarStyle = {
   position: "fixed",
-  left: "50%",
-  bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
-  transform: "translateX(-50%)",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 10,
-  width: "min(calc(100vw - 32px), 420px)",
-  padding: "14px 18px",
-  borderRadius: 999,
-  border: "1px solid rgba(255, 255, 255, 0.68)",
-  background: "#050505",
-  color: "#ffffff",
-  WebkitTextFillColor: "#ffffff",
-  fontWeight: 800,
-  letterSpacing: "0.03em",
-  textTransform: "uppercase",
-  boxShadow: "0 20px 45px rgba(5, 22, 42, 0.28)",
+  left: 0,
+  right: 0,
+  bottom: 0,
   zIndex: 40,
+  padding: "10px 12px calc(env(safe-area-inset-bottom, 0px) + 10px)",
+  background: "var(--clinic-bar-bg, rgba(8, 12, 18, 0.94))",
+  borderTop: "1px solid var(--clinic-bar-border, rgba(255, 255, 255, 0.16))",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
 };
 
-const nextDateFabIconStyle = {
-  display: "inline-flex",
+const stickyBarInnerStyle = {
+  margin: "0 auto",
+  maxWidth: 760,
+  display: "flex",
   alignItems: "center",
-  justifyContent: "center",
-  width: 22,
-  height: 22,
-  borderRadius: "50%",
-  background: "rgba(255, 255, 255, 0.18)",
-  fontWeight: 800,
+  gap: 12,
+  justifyContent: "space-between",
 };
 
+const stickyBarInfoStyle = {
+  display: "grid",
+  gap: 2,
+  minWidth: 0,
+  color: "var(--clinic-bar-text, #f6f9ff)",
+};
+
+const stickyBarActionsStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  flexShrink: 0,
+};
+
+const stickyBarBackStyle = {
+  borderRadius: 999,
+  border: "1px solid var(--clinic-bar-border, rgba(255, 255, 255, 0.32))",
+  background: "transparent",
+  color: "var(--clinic-bar-text, #f6f9ff)",
+  padding: "10px 16px",
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const stickyBarCtaStyle = {
+  borderRadius: 999,
+  border: "1px solid var(--clinic-bar-cta-border, rgba(255, 255, 255, 0.6))",
+  background: "var(--clinic-bar-cta-bg, #f6f9ff)",
+  color: "var(--clinic-bar-cta-text, #07080c)",
+  padding: "12px 22px",
+  fontWeight: 800,
+  letterSpacing: "0.02em",
+  textTransform: "uppercase",
+  cursor: "pointer",
+};
+
+const stepListStyle = {
+  display: "flex",
+  gap: 6,
+  listStyle: "none",
+  margin: "0 0 18px",
+  padding: 0,
+};

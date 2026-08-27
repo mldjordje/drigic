@@ -89,6 +89,7 @@ export default function ProfileSetupGate() {
   const [visible, setVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [invalidFields, setInvalidFields] = useState({});
   const [form, setForm] = useState({
     fullName: "",
     gender: "",
@@ -162,26 +163,49 @@ export default function ProfileSetupGate() {
     };
   }, [visible]);
 
+  function updateField(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    setInvalidFields((prev) => {
+      if (!prev[field]) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
   async function saveProfile(event) {
     event.preventDefault();
     const normalizedBirthDate = normalizeBirthDateInput(form.birthDate);
     const normalizedPhone = String(form.phone || "").replace(/[^\d+]/g, "");
-    if (!form.fullName.trim() || !form.gender || !normalizedBirthDate || !normalizedPhone) {
+
+    const missing = {
+      fullName: !form.fullName.trim(),
+      gender: !form.gender,
+      birthDate: !normalizedBirthDate,
+      phone: !normalizedPhone,
+    };
+    if (Object.values(missing).some(Boolean)) {
+      setInvalidFields(missing);
       setError(t("profile.requiredError"));
       return;
     }
     if (normalizedPhone.replace(/\D/g, "").length < 6) {
+      setInvalidFields({ phone: true });
       setError(t("profile.phoneError"));
       return;
     }
     const isoBirthDate = toIsoBirthDate(normalizedBirthDate);
     if (!isoBirthDate) {
+      setInvalidFields({ birthDate: true });
       setError(t("profile.birthDateError"));
       return;
     }
 
     setSaving(true);
     setError("");
+    setInvalidFields({});
     try {
       const response = await fetch("/api/me/profile", {
         method: "PATCH",
@@ -212,83 +236,98 @@ export default function ProfileSetupGate() {
   }
 
   return (
-    <div style={wrapStyle}>
+    <div className="clinic-profile-gate" style={wrapStyle}>
       <div style={backdropStyle} />
-      <form style={cardStyle} onSubmit={saveProfile} noValidate>
-        <h3 style={{ marginTop: 0, marginBottom: 6 }}>{t("profile.title")}</h3>
-        <p style={{ marginTop: 0, color: "#c6d8ee" }}>
-          {t("profile.body")}
-        </p>
+      <form
+        className="clinic-profile-gate__card"
+        style={cardStyle}
+        onSubmit={saveProfile}
+        noValidate
+        aria-labelledby="clinic-profile-gate-title"
+      >
+        <header style={headerStyle}>
+          <span className="clinic-profile-gate__badge" style={badgeStyle}>
+            {t("profile.badge")}
+          </span>
+          <h3 id="clinic-profile-gate-title" style={titleStyle}>
+            {t("profile.title")}
+          </h3>
+          <p style={subtitleStyle}>{t("profile.body")}</p>
+        </header>
 
-        <label style={labelStyle}>
-          {t("profile.fullName")}
-          <input
-            style={inputStyle}
-            value={form.fullName}
-            onChange={(event) =>
-              setForm((prev) => ({ ...prev, fullName: event.target.value }))
-            }
-            required
-          />
-        </label>
+        <div style={fieldGridStyle}>
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>{t("profile.fullName")}*</span>
+            <input
+              style={invalidFields.fullName ? invalidInputStyle : inputStyle}
+              value={form.fullName}
+              autoComplete="name"
+              aria-invalid={invalidFields.fullName ? "true" : undefined}
+              onChange={(event) => updateField("fullName", event.target.value)}
+            />
+            <small style={hintStyle}>{t("profile.hintFullName")}</small>
+          </label>
 
-        <label style={labelStyle}>
-          {t("profile.gender")}
-          <select
-            style={inputStyle}
-            value={form.gender}
-            onChange={(event) => setForm((prev) => ({ ...prev, gender: event.target.value }))}
-            required
-          >
-            <option value="">{t("profile.choose")}</option>
-            <option value="muško">{t("profile.male")}</option>
-            <option value="žensko">{t("profile.female")}</option>
-            <option value="drugo">{t("profile.other")}</option>
-          </select>
-        </label>
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>{t("profile.phone")}*</span>
+            <input
+              type="tel"
+              style={invalidFields.phone ? invalidInputStyle : inputStyle}
+              value={form.phone}
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="06x xxx xxxx"
+              aria-invalid={invalidFields.phone ? "true" : undefined}
+              onChange={(event) => updateField("phone", event.target.value)}
+            />
+            <small style={hintStyle}>{t("profile.hintPhone")}</small>
+          </label>
 
-        <label style={labelStyle}>
-          {t("profile.birthDate")}
-          <input
-            type="text"
-            style={inputStyle}
-            value={form.birthDate}
-            inputMode="numeric"
-            placeholder="DD/MM/YYYY"
-            maxLength={10}
-            title="Unesi datum kao DDMMYYYY ili DD/MM/YYYY"
-            onChange={(event) =>
-              setForm((prev) => ({
-                ...prev,
-                birthDate: normalizeBirthDateInput(event.target.value),
-              }))
-            }
-            required
-          />
-        </label>
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>{t("profile.birthDate")}*</span>
+            <input
+              type="text"
+              style={invalidFields.birthDate ? invalidInputStyle : inputStyle}
+              value={form.birthDate}
+              inputMode="numeric"
+              placeholder="DD/MM/YYYY"
+              maxLength={10}
+              aria-invalid={invalidFields.birthDate ? "true" : undefined}
+              onChange={(event) =>
+                updateField("birthDate", normalizeBirthDateInput(event.target.value))
+              }
+            />
+            <small style={hintStyle}>{t("profile.hintBirthDate")}</small>
+          </label>
 
-        <label style={labelStyle}>
-          {t("profile.phone")}
-          <input
-            type="tel"
-            style={inputStyle}
-            value={form.phone}
-            inputMode="tel"
-            onChange={(event) =>
-              setForm((prev) => ({
-                ...prev,
-                phone: event.target.value,
-              }))
-            }
-            required
-          />
-        </label>
+          <label style={labelStyle}>
+            <span style={labelTextStyle}>{t("profile.gender")}*</span>
+            <select
+              style={invalidFields.gender ? invalidInputStyle : inputStyle}
+              value={form.gender}
+              aria-invalid={invalidFields.gender ? "true" : undefined}
+              onChange={(event) => updateField("gender", event.target.value)}
+            >
+              <option value="">{t("profile.choose")}</option>
+              <option value="muško">{t("profile.male")}</option>
+              <option value="žensko">{t("profile.female")}</option>
+              <option value="drugo">{t("profile.other")}</option>
+            </select>
+            <small style={hintStyle}>{t("profile.hintGender")}</small>
+          </label>
+        </div>
 
-        {error ? <p style={{ color: "#ffabab", margin: 0 }}>{error}</p> : null}
+        {error ? (
+          <p role="alert" style={errorStyle}>
+            {error}
+          </p>
+        ) : null}
 
         <button type="submit" style={buttonStyle} disabled={saving}>
           {saving ? t("profile.saving") : t("profile.save")}
         </button>
+
+        <p style={secureNoteStyle}>{t("profile.secureNote")}</p>
       </form>
     </div>
   );
@@ -310,47 +349,131 @@ const wrapStyle = {
 const backdropStyle = {
   position: "absolute",
   inset: 0,
-  background: "rgba(2,8,14,0.68)",
+  background: "rgba(4, 8, 14, 0.72)",
+  backdropFilter: "blur(6px)",
+  WebkitBackdropFilter: "blur(6px)",
 };
 
 const cardStyle = {
   position: "relative",
   zIndex: 1,
   width: "100%",
-  maxWidth: 520,
-  borderRadius: 16,
-  border: "1px solid rgba(217,232,248,0.42)",
-  background: "linear-gradient(180deg, #132238 0%, #0f1827 100%)",
-  padding: 16,
+  maxWidth: 560,
+  borderRadius: 20,
+  border: "1px solid var(--clinic-gate-border, rgba(17, 24, 39, 0.16))",
+  background: "var(--clinic-gate-bg, #ffffff)",
+  padding: "22px 20px",
   boxSizing: "border-box",
-  color: "#f4f8ff",
+  color: "var(--clinic-gate-text, #0f172a)",
+  display: "grid",
+  gap: 16,
+  boxShadow: "0 28px 70px rgba(3, 10, 22, 0.34)",
+};
+
+const headerStyle = {
   display: "grid",
   gap: 8,
+};
+
+const badgeStyle = {
+  justifySelf: "start",
+  borderRadius: 999,
+  padding: "4px 12px",
+  fontSize: 11,
+  fontWeight: 800,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  background: "var(--clinic-gate-badge-bg, rgba(15, 23, 42, 0.06))",
+  border: "1px solid var(--clinic-gate-border-soft, rgba(17, 24, 39, 0.12))",
+  color: "var(--clinic-gate-text-2, #253040)",
+};
+
+const titleStyle = {
+  margin: 0,
+  fontSize: 22,
+  lineHeight: 1.25,
+  fontWeight: 800,
+  color: "var(--clinic-gate-text, #0f172a)",
+};
+
+const subtitleStyle = {
+  margin: 0,
+  fontSize: 14,
+  lineHeight: 1.5,
+  color: "var(--clinic-gate-text-2, #253040)",
+};
+
+const fieldGridStyle = {
+  display: "grid",
+  gap: 14,
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
 };
 
 const labelStyle = {
   display: "grid",
   gap: 4,
-  color: "#dce9f7",
-  fontWeight: 600,
+  minWidth: 0,
+};
+
+const labelTextStyle = {
+  fontWeight: 700,
+  fontSize: 13,
+  color: "var(--clinic-gate-text, #0f172a)",
 };
 
 const inputStyle = {
   width: "100%",
-  borderRadius: 10,
-  border: "1px solid rgba(217,232,248,0.3)",
-  background: "rgba(10,12,0,0.45)",
-  color: "#f4f8ff",
-  padding: "9px 10px",
-  marginTop: 4,
+  boxSizing: "border-box",
+  borderRadius: 12,
+  border: "1px solid var(--clinic-gate-border, rgba(17, 24, 39, 0.2))",
+  background: "var(--clinic-gate-field-bg, #ffffff)",
+  color: "var(--clinic-gate-text, #0f172a)",
+  padding: "12px 12px",
+  fontSize: 15,
+  minHeight: 46,
+};
+
+const invalidInputStyle = {
+  ...inputStyle,
+  borderColor: "var(--clinic-gate-danger, #c53030)",
+  boxShadow: "0 0 0 3px rgba(197, 48, 48, 0.14)",
+};
+
+const hintStyle = {
+  fontSize: 12,
+  lineHeight: 1.4,
+  color: "var(--clinic-gate-muted, #5b6677)",
+};
+
+const errorStyle = {
+  margin: 0,
+  padding: "10px 12px",
+  borderRadius: 12,
+  fontWeight: 600,
+  fontSize: 13,
+  color: "var(--clinic-gate-danger, #c53030)",
+  border: "1px solid var(--clinic-gate-danger, #c53030)",
+  background: "rgba(197, 48, 48, 0.08)",
 };
 
 const buttonStyle = {
+  width: "100%",
   borderRadius: 999,
-  border: "1px solid rgba(217,232,248,0.5)",
-  background: "rgba(217,232,248,0.14)",
-  color: "#eef5ff",
-  padding: "9px 14px",
-  fontWeight: 700,
+  border: "1px solid var(--clinic-gate-btn-bg, #111827)",
+  background: "var(--clinic-gate-btn-bg, #111827)",
+  color: "var(--clinic-gate-btn-text, #ffffff)",
+  padding: "14px 18px",
+  fontWeight: 800,
+  fontSize: 15,
+  letterSpacing: "0.02em",
   cursor: "pointer",
+  minHeight: 50,
+};
+
+const secureNoteStyle = {
+  margin: 0,
+  textAlign: "center",
+  fontSize: 12,
+  lineHeight: 1.45,
+  color: "var(--clinic-gate-muted, #5b6677)",
 };

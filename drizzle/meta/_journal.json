@@ -134,6 +134,13 @@
       "when": 1785628800000,
       "tag": "0018_email_campaigns",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788134400000,
+      "tag": "0019_booking_funnel_events",
+      "breakpoints": true
     }
   ]
 }
