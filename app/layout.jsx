@@ -6,7 +6,7 @@ import "../public/assets/css/animate.min.css";
 import "../public/assets/css/imageRevealHover.css";
 import "../public/assets/sass/style.scss";
 import "rc-slider/assets/index.css";
-import { Cormorant_Infant, Noto_Sans, Source_Sans_3 } from "next/font/google";
+import { Cormorant_Infant, Fraunces, Noto_Sans, Source_Sans_3 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { cookies } from "next/headers";
@@ -27,6 +27,22 @@ const cormorantInfantTitle = Cormorant_Infant({
   subsets: ["latin", "latin-ext"],
   weight: ["400", "500", "600", "700"],
   variable: "--title-font",
+});
+
+/**
+ * Display font za plaćene landing stranice.
+ *
+ * Fraunces je varijabilni serif sa SOFT i WONK osama — namerno nije
+ * Playfair/Cormorant default koji nosi svaki drugi estetski sajt. Uzima se
+ * jedan fajl (varijabilni), samo latin-ext subset, i koristi se isključivo na
+ * landing stranicama. Tekstualni font se NE menja: Source Sans 3 je već u
+ * bundle-u, pa nova tipografija ne košta nijedan dodatni bajt za telo teksta.
+ */
+const frauncesDisplay = Fraunces({
+  subsets: ["latin", "latin-ext"],
+  axes: ["SOFT", "WONK", "opsz"],
+  variable: "--landing-display-font",
+  display: "swap",
 });
 
 const sourceSansBody = Source_Sans_3({
@@ -219,7 +235,7 @@ export default async function RootLayout({ children }) {
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   const initialSession = sessionToken ? await verifySessionToken(sessionToken) : null;
 
-  const fontRootClass = `${cormorantInfantTitle.variable} ${sourceSansBody.variable} ${notoSansFallback.variable}`;
+  const fontRootClass = `${cormorantInfantTitle.variable} ${sourceSansBody.variable} ${notoSansFallback.variable} ${frauncesDisplay.variable}`;
 
   return (
     <html

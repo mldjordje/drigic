@@ -1,0 +1,226 @@
+/* ==========================================================================
+   Prikaz rezultata.
+
+   Zašto nije običan before/after slider:
+   sve fotografije iz ordinacije su kolaži 1080x1080 sa obe faze u jednoj
+   slici. Umesto da se kolaž prikaže kao statična sličica, CSS-om se izdvaja
+   leva (pre) i desna (posle) polovina i obe se prikazuju U ISTOM OKVIRU,
+   jedna preko druge. Kadar se ne pomera, pa poređenje ne zahteva da oko
+   skače levo-desno — vidi se tačno šta se promenilo, na istom mestu.
+
+   Kontrola je trostruka: automatsko otkrivanje pri ulasku u vidno polje,
+   prevlačenje prstom/mišem, i strelice na tastaturi (role="slider").
+   ========================================================================== */
+
+/* inherits: true je obavezno — --wipe se postavlja na okviru, a koriste ga
+   deca (.after i .handle). Sa inherits:false deca dobijaju initial-value i
+   otkrivanje nikad ne krene. */
+@property --wipe {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 100%;
+}
+
+.rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(78vw, 24rem);
+  gap: 1rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: max(1.25rem, calc((100vw - var(--shell)) / 2));
+  padding-inline: max(1.25rem, calc((100vw - var(--shell)) / 2));
+  padding-bottom: 1.5rem;
+  scrollbar-width: thin;
+}
+
+.case {
+  scroll-snap-align: start;
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.frame {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #0f172a;
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+  --wipe: 100%;
+}
+
+.frame:focus-visible {
+  outline: 2px solid #c9a961;
+  outline-offset: 3px;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.layer img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 200%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+
+/* leva polovina kolaža = stanje pre */
+.before img {
+  left: 0;
+}
+
+/* desna polovina kolaža = stanje posle */
+.after img {
+  left: -100%;
+}
+
+/* "Posle" se otkriva brisanjem preko "pre" — --wipe ide od 100% (nema ništa)
+   do 0% (potpuno otkriveno). Registrovan je preko @property, pa se može
+   animirati kao prava vrednost, bez JS animacije po frejmu. */
+.after {
+  clip-path: inset(0 0 0 var(--wipe));
+  transition: clip-path 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dragging .after {
+  transition: none;
+}
+
+/* Vertikalna linija reza sa hvatištem. Prati --wipe, ne zahteva JS layout. */
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--wipe);
+  width: 1px;
+  background: rgba(255, 255, 255, 0.85);
+  transition: left 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.dragging .handle {
+  transition: none;
+}
+
+.handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+.tag {
+  position: absolute;
+  top: 0.75rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  padding: 0.35rem 0.6rem;
+  border-radius: 2px;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+.tagBefore {
+  left: 0.75rem;
+}
+
+.tagAfter {
+  right: 0.75rem;
+  opacity: calc(1 - var(--wipe) / 100%);
+}
+
+.caseMeta {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.caseTitle {
+  font-family: var(--display, Georgia, serif);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.caseText {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.hintDot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: #c9a961;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.35;
+    scale: 1;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.5;
+  }
+}
+
+.disclaimer {
+  margin-top: 1.25rem;
+  font-size: 0.8125rem;
+  color: #64748b;
+  max-width: 62ch;
+}
+
+@media (min-width: 900px) {
+  .rail {
+    grid-auto-columns: min(34vw, 22rem);
+    gap: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .after,
+  .handle {
+    transition: none !important;
+  }
+
+  .hintDot {
+    animation: none;
+    opacity: 1;
+  }
+}

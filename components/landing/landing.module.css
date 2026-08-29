@@ -1,0 +1,1134 @@
+/* ==========================================================================
+   Landing stranice za plaćeni saobraćaj (Google Ads).
+
+   Zašto poseban CSS modul, a ne custom.scss:
+   custom.scss ima preko 9.000 linija i globalne selektore. Svaka izmena tamo
+   je rizik po ceo sajt. Modul je scope-ovan, tree-shake-uje se sa stranicom i
+   ne može da procuri.
+
+   Motion je pisan scroll-driven CSS-om (animation-timeline), ne scroll
+   listenerima. Razlog nije moda: scroll-driven animacije rade na compositor
+   niti, ne blokiraju main thread i ne troše JS budžet — a ovo je stranica
+   čiji LCP direktno plaćamo kroz cenu klika.
+   ========================================================================== */
+
+.page {
+  /* ---- boje: postojeći brend, drugačija upotreba ---------------------------
+     ink i zlatna ostaju (#0f172a / #c9a961). Zlatna je svedena na hairline
+     linije, eyebrow labele i fokus — nikad kao pozadina dugmeta preko cele
+     širine, jer tada čita kao 2019 "premium" template.                       */
+  --ink: #0f172a;
+  --ink-2: #1e293b;
+  --ink-3: #475569;
+  --ink-4: #64748b;
+  --paper: #f7f4ef;
+  --paper-2: #efeae1;
+  --bone: #ffffff;
+  --gold: #c9a961;
+  --gold-deep: #a8894a;
+  --line: rgba(15, 23, 42, 0.14);
+  --line-soft: rgba(15, 23, 42, 0.07);
+
+  /* ---- tipografija --------------------------------------------------------
+     Display: Fraunces (varijabilni serif, SOFT i WONK ose) — namerno nije
+     Playfair/Cormorant default. Text: Source Sans 3, koji je već u bundle-u,
+     pa novi tekstualni font ne košta nijedan bajt dodatno. Za stranicu čiji
+     se svaki kilobajt plaća, to je jedini pošten izbor.
+     Skala: 1.25 (major third), 8 stepenica.                                   */
+  --display: var(--landing-display-font), "Cormorant Infant", Georgia, serif;
+  --text: var(--body-font-loaded), var(--font-noto-fallback), system-ui, sans-serif;
+
+  --fs-micro: 0.6875rem;
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-base: 1.0625rem;
+  --fs-md: 1.25rem;
+  --fs-lg: clamp(1.375rem, 1.1rem + 1.2vw, 1.75rem);
+  --fs-xl: clamp(1.75rem, 1.3rem + 2.2vw, 2.75rem);
+  --fs-2xl: clamp(2.25rem, 1.4rem + 4vw, 4rem);
+  --fs-3xl: clamp(2.75rem, 1.2rem + 7vw, 6rem);
+
+  --shell: min(100% - 2.5rem, 1240px);
+  --gap: clamp(3.5rem, 7vw, 7.5rem);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--text);
+  font-size: var(--fs-base);
+  line-height: 1.6;
+  overflow-x: clip;
+}
+
+/* Prelaz između stranica. MPA view transition — Chrome/Edge ga primenjuju,
+   ostali browseri ga ignorišu bez ijedne linije JS-a. */
+@view-transition {
+  navigation: auto;
+}
+
+.page :where(h1, h2, h3) {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+  margin: 0;
+  font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 100;
+}
+
+.page :where(p) {
+  margin: 0;
+}
+
+.shell {
+  width: var(--shell);
+  margin-inline: auto;
+}
+
+.section {
+  padding-block: var(--gap);
+  /* Sekcije ispod preloma se ne renderuju dok ne dođu u vidno polje.
+     Direktno smanjuje rad na prvom paint-u. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
+.eyebrow {
+  font-family: var(--text);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 1.75rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* ==========================================================================
+   1. HERO
+
+   Prvi ekran nosi 57% ukupnog vremena gledanja (NN/g eye-tracking), pa nosi
+   samo tri stvari: potvrdu da je posetilac na pravom mestu (H1 = fraza iz
+   oglasa), ko izvodi tretman, i jedan primarni CTA.
+
+   Portret NIJE pozadina ispod teksta. Lice i tekst se tada bore za isti
+   piksel, kontrast pada i oboje gube. Portret stoji kao zaseban kadar, pa i
+   tekst i lice rade svoj posao.
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+  padding-block: clamp(7.5rem, 14vw, 10rem) clamp(3rem, 6vw, 5rem);
+  background:
+    radial-gradient(120% 90% at 85% 8%, rgba(201, 169, 97, 0.13), transparent 58%),
+    linear-gradient(180deg, #0b1120 0%, #0f172a 60%, #111b30 100%);
+  color: var(--bone);
+  overflow: clip;
+  isolation: isolate;
+}
+
+/* Tanka zlatna nit na vrhu — jedini ukras u heroju. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201, 169, 97, 0.55), transparent);
+}
+
+.heroInner {
+  width: var(--shell);
+  margin-inline: auto;
+  display: grid;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: center;
+  max-width: 100%;
+}
+
+.heroCopy {
+  display: grid;
+  gap: 1.5rem;
+  align-content: center;
+}
+
+.heroEyebrow {
+  color: var(--gold);
+}
+
+.h1 {
+  font-size: var(--fs-3xl);
+  color: var(--bone);
+  max-width: 14ch;
+  text-wrap: balance;
+}
+
+.h1 em {
+  font-style: italic;
+  color: var(--gold);
+  font-variation-settings: "SOFT" 60, "WONK" 1;
+}
+
+.heroLead {
+  font-size: var(--fs-md);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 46ch;
+}
+
+/* Portret lekara. Autoritet iznad preloma, bez stock fotografije: poverenje u
+   lekara je razlog #1 za izbor ordinacije, iznad cene i lokacije. */
+.heroPortrait {
+  position: relative;
+  align-self: end;
+  margin: 0;
+  max-width: 20rem;
+}
+
+.heroPortraitFrame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #0b1120;
+  clip-path: inset(0 0 0 0);
+}
+
+.heroPortraitFrame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 16%;
+  filter: saturate(0.92) contrast(1.03);
+}
+
+.heroPortraitCap {
+  display: grid;
+  gap: 0.15rem;
+  margin-top: 0.9rem;
+  padding-left: 0.9rem;
+  border-left: 1px solid rgba(201, 169, 97, 0.6);
+}
+
+.heroPortraitName {
+  font-family: var(--display);
+  font-size: var(--fs-md);
+  color: var(--bone);
+  line-height: 1.1;
+}
+
+.heroPortraitRole {
+  font-size: var(--fs-xs);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.heroFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 clamp(1.25rem, 4vw, 3rem);
+  margin-top: 0.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.heroFact {
+  display: grid;
+  gap: 0.15rem;
+  padding-block: 0.35rem;
+}
+
+.heroFactValue {
+  font-family: var(--display);
+  font-size: var(--fs-lg);
+  color: var(--bone);
+  line-height: 1;
+}
+
+.heroFactLabel {
+  font-size: var(--fs-xs);
+  color: rgba(255, 255, 255, 0.62);
+  letter-spacing: 0.04em;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 900px) {
+  .heroInner {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+
+  .heroPortrait {
+    align-self: center;
+  }
+}
+
+/* ==========================================================================
+   2. DUGMAD
+   CTA copy je konkretan ("Proveri slobodne termine"), nikad "Saznaj više".
+   Sheen prati kursor preko --mx/--my — jedina JS-om vođena mikrointerakcija,
+   i to preko custom propertija, bez layout-a.
+   ========================================================================== */
+
+.btn {
+  --mx: 50%;
+  --my: 50%;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.05rem 1.6rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.4s var(--ease), background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(18rem 18rem at var(--mx) var(--my), rgba(255, 255, 255, 0.22), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.35s;
+  pointer-events: none;
+}
+
+.btn:hover::after {
+  opacity: 1;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.btnPrimary {
+  background: var(--gold);
+  color: #16130c;
+}
+
+.btnPrimary:hover {
+  background: #d8b96f;
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--bone);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+.btnGhost:hover {
+  border-color: var(--bone);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btnDark {
+  background: var(--ink);
+  color: var(--bone);
+}
+
+.btnDark:hover {
+  background: var(--ink-2);
+}
+
+.btnOutline {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.btnOutline:hover {
+  border-color: var(--ink);
+}
+
+.btnIcon {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+/* ==========================================================================
+   3. SEKCIJSKA GLAVA
+   ========================================================================== */
+
+.head {
+  display: grid;
+  gap: 1rem;
+  max-width: 62ch;
+  margin-bottom: clamp(2.5rem, 5vw, 4rem);
+}
+
+.h2 {
+  font-size: var(--fs-2xl);
+  text-wrap: balance;
+}
+
+.lead {
+  font-size: var(--fs-md);
+  color: var(--ink-3);
+  line-height: 1.55;
+  max-width: 54ch;
+}
+
+/* ==========================================================================
+   4. INDIKACIJE — samoidentifikacija
+   84% pacijenata (CIPEES, n=1269) ima jednu konkretnu regiju koja im smeta.
+   Zato lista konkretnih problema, ne lista usluga.
+   ========================================================================== */
+
+.indications {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.indication {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: 0 1.25rem;
+  padding-block: 1.75rem;
+  border-bottom: 1px solid var(--line-soft);
+  position: relative;
+}
+
+.indication::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 1px;
+  width: 0;
+  background: var(--gold);
+  transition: width 0.7s var(--ease);
+}
+
+.indication:hover::after {
+  width: 100%;
+}
+
+.indicationNum {
+  font-family: var(--display);
+  font-size: var(--fs-md);
+  color: var(--gold-deep);
+  line-height: 1.3;
+}
+
+.indicationTitle {
+  font-size: var(--fs-lg);
+  margin-bottom: 0.4rem;
+}
+
+.indicationText {
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  max-width: 52ch;
+}
+
+@media (min-width: 900px) {
+  .indications {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 4rem;
+  }
+}
+
+/* ==========================================================================
+   5. DERISK — "neće izgledati prepravljeno"
+   Strah #1 (56.5% brine da će izgledati "urađeno", 76.4% aktivno odbija
+   upadljiv izgled). Blok je taman jer nosi težinu i razdvaja stranicu ritmom.
+   ========================================================================== */
+
+.derisk {
+  background: var(--ink);
+  color: var(--bone);
+}
+
+.derisk .h2,
+.derisk .indicationTitle {
+  color: var(--bone);
+}
+
+.derisk .lead {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.derisk .eyebrow {
+  color: var(--gold);
+}
+
+.deriskGrid {
+  display: grid;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.deriskItem {
+  background: var(--ink);
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  transition: background-color 0.4s var(--ease);
+}
+
+.deriskItem:hover {
+  background: #131c2f;
+}
+
+.deriskTitle {
+  font-family: var(--display);
+  font-size: var(--fs-lg);
+  color: var(--bone);
+  line-height: 1.1;
+}
+
+.deriskText {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: var(--fs-sm);
+}
+
+@media (min-width: 760px) {
+  .deriskGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ==========================================================================
+   6. OPORAVAK — vremenska linija
+   Progres linije je vezan za scroll (scroll-driven), pa se "puni" dok
+   korisnik prolazi kroz sekciju. Bez JS-a.
+   ========================================================================== */
+
+.timeline {
+  position: relative;
+  display: grid;
+  gap: 0;
+  padding-left: 2.25rem;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 0.4375rem;
+  top: 0.6rem;
+  bottom: 0.6rem;
+  width: 1px;
+  background: var(--line);
+}
+
+.timelineFill {
+  position: absolute;
+  left: 0.4375rem;
+  top: 0.6rem;
+  width: 1px;
+  height: calc(100% - 1.2rem);
+  background: var(--gold);
+  transform-origin: top;
+  transform: scaleY(0);
+}
+
+.timelineStep {
+  position: relative;
+  padding-block: 1.4rem;
+}
+
+.timelineStep::before {
+  content: "";
+  position: absolute;
+  left: -2.25rem;
+  top: 1.85rem;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--gold-deep);
+}
+
+.timelineStage {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  margin-bottom: 0.4rem;
+}
+
+.timelineText {
+  font-size: var(--fs-md);
+  color: var(--ink-2);
+  max-width: 48ch;
+  line-height: 1.45;
+}
+
+/* ==========================================================================
+   7. LEKAR — autoritet
+   Poverenje u lekara je razlog #1 za povratak, iznad cene i lokacije. Zato
+   ime, lice i kredencijali, a ne "naš tim stručnjaka".
+   ========================================================================== */
+
+.doctor {
+  background: var(--paper-2);
+}
+
+.doctorGrid {
+  display: grid;
+  gap: clamp(2rem, 4vw, 4rem);
+  align-items: center;
+}
+
+.doctorMedia {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+.doctorMedia img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+}
+
+.doctorBody {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+}
+
+.doctorQuote {
+  font-family: var(--display);
+  font-size: var(--fs-xl);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.doctorCreds {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.doctorCred {
+  display: grid;
+  grid-template-columns: 0.75rem 1fr;
+  gap: 0.85rem;
+  align-items: baseline;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.doctorCred::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+@media (min-width: 900px) {
+  .doctorGrid {
+    grid-template-columns: 0.85fr 1fr;
+  }
+}
+
+/* ==========================================================================
+   8. CENE
+   Odsustvo cene je izlaz iz stranice. Prikazuju se stvarni opsezi iz baze,
+   ne procene, uz objašnjenje šta cenu određuje.
+   ========================================================================== */
+
+.priceList {
+  border-top: 1px solid var(--line);
+}
+
+.priceRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 1.5rem;
+  align-items: baseline;
+  padding-block: 1.15rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.priceName {
+  font-family: var(--display);
+  font-size: var(--fs-md);
+  line-height: 1.2;
+}
+
+.priceMeta {
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+  grid-column: 1;
+}
+
+.priceValue {
+  font-family: var(--display);
+  font-size: var(--fs-lg);
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.priceNote {
+  margin-top: 1.75rem;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  max-width: 56ch;
+}
+
+/* ==========================================================================
+   9. RECENZIJE
+   Do sada je sajt imao samo dugme koje vodi na Google profil — što plaćeni
+   saobraćaj izvodi sa stranice pre konverzije. Citati sada stoje na stranici,
+   a link ka Google-u je ispod, sekundaran.
+   ========================================================================== */
+
+.reviews {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border-block: 1px solid var(--line);
+}
+
+.review {
+  background: var(--paper);
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+}
+
+.reviewQuote {
+  font-family: var(--display);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.reviewMeta {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.reviewName {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.reviewSource {
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+}
+
+.reviewsFoot {
+  margin-top: 1.75rem;
+  font-size: var(--fs-sm);
+}
+
+.reviewsFoot a {
+  color: var(--ink-3);
+  text-underline-offset: 4px;
+}
+
+@media (min-width: 760px) {
+  .reviews {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ==========================================================================
+   10. FAQ
+   details/summary — semantika koju čitači ekrana razumeju bez ARIA gimnastike.
+   Animacija visine radi preko ::details-content i interpolate-size, bez
+   max-height hakova iz 2019.
+   ========================================================================== */
+
+.faq {
+  border-top: 1px solid var(--line);
+  interpolate-size: allow-keywords;
+}
+
+.faqItem {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.faqQ {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 1.4rem;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--display);
+  font-size: var(--fs-lg);
+  line-height: 1.25;
+  transition: color 0.3s;
+}
+
+.faqQ::-webkit-details-marker {
+  display: none;
+}
+
+.faqQ:hover {
+  color: var(--gold-deep);
+}
+
+.faqSign {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  position: relative;
+  translate: 0 -0.1rem;
+}
+
+.faqSign::before,
+.faqSign::after {
+  content: "";
+  position: absolute;
+  inset: 50% 0 auto 0;
+  height: 1px;
+  background: var(--ink-3);
+  transition: rotate 0.4s var(--ease), opacity 0.3s;
+}
+
+.faqSign::after {
+  rotate: 90deg;
+}
+
+.faqItem[open] .faqSign::after {
+  rotate: 0deg;
+  opacity: 0;
+}
+
+.faqA {
+  padding-bottom: 1.6rem;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  max-width: 62ch;
+}
+
+@supports (interpolate-size: allow-keywords) {
+  .faqItem::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: block-size 0.45s var(--ease), opacity 0.35s, content-visibility 0.45s allow-discrete;
+  }
+
+  .faqItem[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   11. ZAVRŠNI CTA + BOOKING
+   ========================================================================== */
+
+.closer {
+  background: var(--ink);
+  color: var(--bone);
+  text-align: left;
+}
+
+.closer .h2 {
+  color: var(--bone);
+  max-width: 18ch;
+}
+
+.closerGrid {
+  display: grid;
+  gap: 2rem;
+  align-items: end;
+}
+
+.closerMeta {
+  display: grid;
+  gap: 0.4rem;
+  font-size: var(--fs-sm);
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.closerMeta a {
+  color: var(--bone);
+  text-decoration: none;
+}
+
+@media (min-width: 900px) {
+  .closerGrid {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.bookingWrap {
+  background: var(--paper);
+  padding-block: clamp(2.5rem, 5vw, 4rem) 0;
+}
+
+/* Postojeća booking sekcija nosi svoj naslov i sivo-plavu pozadinu iz teme.
+   Na landing stranici naslov je već iznad forme, a pozadina bi prekinula
+   ritam stranice — oboje se gasi, sama forma ostaje netaknuta. */
+.bookingWrap :global(.space) {
+  background: transparent !important;
+  padding-block: 0 0 clamp(3rem, 6vw, 5rem);
+}
+
+.bookingWrap :global(.title-area) {
+  display: none;
+}
+
+/* Tri kartice u tri kolone — u dvokolonskoj mreži četvrto polje ostaje prazno
+   i čita se kao greška. */
+.trio {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .trio {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.bookingHead {
+  width: var(--shell);
+  margin-inline: auto;
+  margin-bottom: 2.5rem;
+  display: grid;
+  gap: 1rem;
+  max-width: min(100% - 2.5rem, 62ch);
+}
+
+/* ==========================================================================
+   12. STICKY CTA (mobilni)
+   Mobilni nosi 7x više saobraćaja i konvertuje 22% slabije (Unbounce 2024).
+   Traka se pojavljuje tek nakon heroja i sklanja se kad je forma u vidnom
+   polju, da ne pokriva sopstveni cilj.
+   ========================================================================== */
+
+.sticky {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  transform: translateY(110%);
+  transition: transform 0.45s var(--ease);
+}
+
+.stickyVisible {
+  transform: translateY(0);
+}
+
+.sticky .btn {
+  justify-content: center;
+  padding-block: 0.9rem;
+}
+
+.stickyCall {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 2px;
+  color: var(--bone);
+  text-decoration: none;
+}
+
+@media (min-width: 860px) {
+  .sticky {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   13. MOTION — reveal
+   Scroll-driven gde je podržano (compositor nit, nula JS-a). Tamo gde nije,
+   IntersectionObserver dodaje .isIn. Oba puta isti vizuelni rezultat.
+   ========================================================================== */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(1.75rem);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+  transition-delay: var(--d, 0ms);
+}
+
+.isIn {
+  opacity: 1;
+  transform: none;
+}
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: revealIn linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 26%;
+  }
+
+  .heroPortraitFrame {
+    animation: portraitReveal 1.1s var(--ease) both;
+    animation-delay: 240ms;
+  }
+
+  .timelineFill {
+    animation: fillLine linear both;
+    animation-timeline: view();
+    animation-range: entry 60% cover 70%;
+  }
+}
+
+@keyframes revealIn {
+  from {
+    opacity: 0;
+    transform: translateY(2rem);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes portraitReveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@keyframes fillLine {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Tekst u heroju ulazi po redovima kroz masku, ne kao ceo blok — oko prati
+   liniju po liniju, isto kako i čita. */
+.lineMask {
+  display: block;
+  overflow: hidden;
+}
+
+.lineMask > span {
+  display: block;
+  translate: 0 105%;
+  animation: lineUp 0.95s var(--ease) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes lineUp {
+  to {
+    translate: 0 0;
+  }
+}
+
+.fadeUp {
+  animation: fadeUp 0.9s var(--ease) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    translate: 0 1.25rem;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* ==========================================================================
+   14. REDUCED MOTION
+   Sve se gasi, ništa se ne krije. Stranica ostaje potpuno upotrebljiva.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .page *,
+  .page *::before,
+  .page *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal,
+  .fadeUp {
+    opacity: 1 !important;
+    transform: none !important;
+    translate: none !important;
+    filter: none !important;
+  }
+
+  .lineMask > span {
+    translate: 0 0 !important;
+  }
+
+  .timelineFill {
+    transform: scaleY(1) !important;
+  }
+
+  .sticky {
+    transform: translateY(0);
+  }
+
+  @supports (animation-timeline: view()) {
+    .heroPortraitFrame {
+      animation: none;
+      clip-path: inset(0 0 0 0);
+      opacity: 1;
+    }
+  }
+}

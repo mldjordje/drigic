@@ -10,8 +10,18 @@ import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import { SITE_NAME, getConfiguredSiteUrl } from "@/lib/site";
 import { SERVICE_CATEGORY_SPECS, getCategorySpecBySlug } from "@/lib/services/category-map";
 import { CLINIC_PHONE_TEL, CLINIC_PHONE_DISPLAY } from "@/lib/clinicContact";
+import { getLandingCopy } from "@/lib/content/landing-copy";
+import { CURATED_BEFORE_AFTER_CASES } from "@/data/before-after-cases";
+import TreatmentLanding from "@/components/landing/TreatmentLanding";
 
-export const dynamic = "force-dynamic";
+/**
+ * Ranije: dynamic = "force-dynamic".
+ * Stranica se renderovala iznova na svaki klik iz oglasa, uključujući i upit
+ * ka bazi, pa je TTFB zavisio od Neon-a. Sada radi ISR na 300s — isti podaci,
+ * ali odgovor kreće odmah. Za saobraćaj koji se plaća po kliku to je razlika
+ * koja se vidi na računu: bounce raste 32% kad učitavanje ode sa 1s na 3s.
+ */
+export const revalidate = 300;
 const CATEGORY_DATA_REVALIDATE = 300;
 
 export async function generateStaticParams() {
@@ -35,14 +45,20 @@ export async function generateMetadata({ params }) {
     "dr igić clinic Niš",
   ];
 
+  const landingCopy = getLandingCopy(category.slug);
+  /* seoTitle već sadrži "| Dr Igić Clinic", a globalni template ga dodaje još
+     jednom — naslov u tabu i u SERP-u je bio dupliran. `absolute` to gasi. */
+  const title = landingCopy?.metaTitle || category.seoTitle;
+  const description = landingCopy?.metaDescription || category.seoDescription;
+
   return {
-    title: category.seoTitle,
-    description: category.seoDescription,
+    title: { absolute: title },
+    description,
     keywords: [...(category.seoKeywords || []), ...locationKeywords],
     alternates: { canonical: canonicalPath },
     openGraph: {
-      title: category.seoTitle,
-      description: category.seoDescription,
+      title,
+      description,
       url: `${siteUrl}${canonicalPath}`,
       type: "article",
       locale: "sr_RS",
@@ -51,8 +67,8 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: "summary_large_image",
-      title: category.seoTitle,
-      description: category.seoDescription,
+      title,
+      description,
       images: ogImages.map((i) => i.url),
     },
   };
@@ -278,6 +294,41 @@ export default async function TreatmentCategoryPage({ params }) {
   const resolvedParams = await params;
   const data = await loadCategoryServices(resolvedParams?.categorySlug);
   if (!data) notFound();
+
+  /* Dve kategorije na koje vode Google Ads oglasi ("fileri niš", "botoks niš")
+     dobijaju landing verziju stranice. Ostale kategorije ostaju na postojećem
+     katalog prikazu — URL, metapodaci i JSON-LD se ne menjaju. */
+  const landingCopy = getLandingCopy(resolvedParams?.categorySlug);
+  if (landingCopy) {
+    const landingFaq = buildFaq(data.categorySpec, data.services);
+    const landingJsonLd = buildJsonLd(
+      data.categorySpec,
+      data.services,
+      landingCopy.faq.map((item) => ({ question: item.q, answer: item.a })).concat(landingFaq),
+      getConfiguredSiteUrl()
+    );
+
+    return (
+      <>
+        <TreatmentLanding
+          copy={landingCopy}
+          cases={CURATED_BEFORE_AFTER_CASES.filter(
+            (item) => item.serviceCategory === landingCopy.categorySlug
+          )}
+          prices={data.services.map((service) => ({
+            id: service.id,
+            name: service.name,
+            price: service.promotion?.price ?? service.price,
+            durationMin: service.durationMin,
+          }))}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(landingJsonLd) }}
+        />
+      </>
+    );
+  }
 
   const cookieStore = await cookies();
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);

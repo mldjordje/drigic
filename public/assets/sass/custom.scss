@@ -10376,3 +10376,13 @@ a.clinic-google-review-btn,
   font-size: 0.88rem;
   cursor: pointer;
 }
+
+
+// ─── Landing stranice (plaćeni saobraćaj) ─────────────────────────
+// Sticky CTA traka na mobilnom zauzima dno ekrana. Globalni telefonski FAB bi
+// seo tačno preko nje, a poziv je već u traci — zato se na tim stranicama gasi.
+.clinic-hide-call-fab .clinic-call-fab {
+  @media (max-width: 859px) {
+    display: none !important;
+  }
+}
