@@ -22,7 +22,13 @@ const BookingInlineForm = dynamic(
   }
 );
 
-export default function BookingSection({ googleNextPath = "/" }) {
+/**
+ * `neutralServiceNames` prosleđuje se samo na stranicama koje su odredište
+ * plaćenog oglasa. Tamo se nazivi usluga prikazuju bez naziva leka na recept,
+ * jer Google proverava i sadržaj odredišne stranice. Na ostatku sajta
+ * (/booking, /cenovnik, /tretmani/botox) pacijent i dalje vidi pravi naziv.
+ */
+export default function BookingSection({ googleNextPath = "/", neutralServiceNames = false }) {
   const { t } = useLocale();
   const { user, isLoading: loading } = useSession();
 
@@ -45,7 +51,11 @@ export default function BookingSection({ googleNextPath = "/" }) {
         ) : null}
 
         {!loading ? (
-          <BookingInlineForm googleNextPath={googleNextPath} showUpcoming={Boolean(user)} />
+          <BookingInlineForm
+            googleNextPath={googleNextPath}
+            showUpcoming={Boolean(user)}
+            neutralServiceNames={neutralServiceNames}
+          />
         ) : null}
       </div>
     </section>

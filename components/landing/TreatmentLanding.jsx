@@ -450,7 +450,10 @@ export default function TreatmentLanding({ copy, cases = [], prices = [], childr
             </p>
           </div>
           <div className="clinic-home5">
-            <BookingSection googleNextPath={copy.publicPath || (copy.categorySlug ? `/tretmani/${copy.categorySlug}` : "/booking")} />
+            <BookingSection
+              googleNextPath={copy.publicPath || (copy.categorySlug ? `/tretmani/${copy.categorySlug}` : "/booking")}
+              neutralServiceNames={Boolean(copy.neutralNames)}
+            />
           </div>
         </div>
 

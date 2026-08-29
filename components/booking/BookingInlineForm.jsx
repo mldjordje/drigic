@@ -16,6 +16,7 @@ import { useSession } from "@/components/common/SessionProvider";
 import { CONSULTATION_SELECTION_ID, HYALURONIC_BRANDS } from "@/lib/booking/constants";
 import { trackBookingFunnel } from "@/lib/analytics/booking-funnel";
 import { trackConversion, trackEvent } from "@/lib/analytics/gtag";
+import { publicCategoryName, publicServiceName } from "@/lib/services/public-names";
 
 const STEP_SERVICES = 1;
 const STEP_DATE = 2;
@@ -410,7 +411,19 @@ export default function BookingInlineForm({
   googleNextPath = "/",
   cardClassName = "",
   showUpcoming = true,
+  /* Samo na odredišnim stranicama plaćenih oglasa: naziv usluge se prikazuje
+     bez naziva leka na recept. Podrazumevano je isključeno, pa pacijent na
+     ostatku sajta vidi naziv pod kojim uslugu i traži. */
+  neutralServiceNames = false,
 }) {
+  const displayServiceName = useCallback(
+    (name) => (neutralServiceNames ? publicServiceName(name) : name),
+    [neutralServiceNames]
+  );
+  const displayCategoryName = useCallback(
+    (name) => (neutralServiceNames ? publicCategoryName(name) : name),
+    [neutralServiceNames]
+  );
   const { t, intlLocale, locale } = useLocale();
   const { user } = useSession();
   const [services, setServices] = useState([]);
@@ -479,7 +492,7 @@ export default function BookingInlineForm({
         map.set(service.id, {
           ...service,
           categoryId: category.id,
-          categoryName: category.name,
+          categoryName: displayCategoryName(category.name),
         });
       });
     });
@@ -594,7 +607,7 @@ export default function BookingInlineForm({
         .forEach((service) => {
           list.push({
             ...service,
-            categoryName: category.name,
+            categoryName: displayCategoryName(category.name),
           });
         });
     });
@@ -803,7 +816,7 @@ export default function BookingInlineForm({
         const durationLabel = service.supportsMl
           ? getMlDurationMin(service.durationMin, selection.quantity)
           : Number(service.durationMin || 0) * Math.max(1, Number(selection.quantity || 1));
-        return `${service.name}${brandLabel}${quantityLabel} - ${durationLabel} min`;
+        return `${displayServiceName(service.name)}${brandLabel}${quantityLabel} - ${durationLabel} min`;
       })
       .filter(Boolean);
   }, [serviceSelections, serviceLookup]);
@@ -1330,7 +1343,7 @@ export default function BookingInlineForm({
         className="clinic-service-category clinic-reveal"
         style={{ "--clinic-reveal-delay": `${Math.min(categoryIndex, 7) * 55}ms` }}
       >
-        <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{category.name}</h4>
+        <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{displayCategoryName(category.name)}</h4>
         <div className="clinic-service-grid clinic-service-grid--desktop-2">
           {(category.services || []).map((service, serviceIndex) => {
             const selected = Boolean(selectedMap[service.id]);
@@ -1355,7 +1368,7 @@ export default function BookingInlineForm({
                     onChange={(event) => updateSelectedService(service, event.target.checked)}
                   />
                   <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 8 }}>
-                    <strong>{service.name}</strong>
+                    <strong>{displayServiceName(service.name)}</strong>
                     <span className="clinic-service-option__meta">
                       <span className="clinic-service-option__pill">
                         {getServiceDurationLabel(service, selectedQuantity)}
@@ -1704,7 +1717,7 @@ export default function BookingInlineForm({
                                     gap: 8,
                                   }}
                                 >
-                                  <strong>{service.name}</strong>
+                                  <strong>{displayServiceName(service.name)}</strong>
                                   <span className="clinic-service-option__meta">
                                     <span className="clinic-service-option__pill">
                                       {getServiceDurationLabel(service)}
