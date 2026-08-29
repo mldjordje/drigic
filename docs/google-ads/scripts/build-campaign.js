@@ -113,6 +113,39 @@ var AD_GROUPS = [
     ]
   },
   {
+    name: 'Estetska medicina | Nis',
+    url: SITE + '/estetska-medicina-nis',
+    cpc: 0.28,
+    keywords: [
+      '"estetska medicina nis"',
+      '"estetski tretmani nis"',
+      '"estetska ordinacija nis"',
+      '"anti age tretmani nis"',
+      '"podmladjivanje lica nis"',
+      '[estetska medicina nis]',
+      '[estetski tretmani nis]'
+    ],
+    headlines: [
+      'Estetska Medicina Niš',
+      'Ordinacija u Centru Niša',
+      'Dr Igić Clinic Niš',
+      'Fileri, Botoks, PRP',
+      'Zakaži Termin Online',
+      'Tretmani Kod Lekara',
+      'Konsultacija i Plan',
+      'Rezultati Pre i Posle',
+      'Cvijićeva 31, Niš',
+      'Proveri Slobodne Termine',
+      'Anti-Age Tretmani Niš'
+    ],
+    descriptions: [
+      'Estetska i anti-age medicina u Nišu. Fileri, botoks, skinbusteri, PRP, mezoterapija.',
+      'Ordinacija dr Nikole Igića, Cvijićeva 31/3. Zakazivanje termina online, 24 sata dnevno.',
+      'Konsultacija, plan tretmana i termin koji vama odgovara. Pogledajte ceo cenovnik.',
+      'Pogledajte rezultate pre i posle i izaberite slobodan termin na sajtu.'
+    ]
+  },
+  {
     name: 'Brend | Dr Igic',
     url: SITE + '/booking',
     cpc: 0.12,

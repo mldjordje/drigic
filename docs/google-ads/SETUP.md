@@ -18,17 +18,18 @@ ostaju bez praćenja.
 Kod: `lib/analytics/gtag.js`, `components/analytics/GoogleTag.jsx`, ugrađeno u
 `app/layout.jsx`. Testovi: `tests/gtag.test.js`.
 
-Kad nalog bude napravljen, uneti u **Vercel > Project > Settings > Environment Variables**
-(Production) i redeploy-ovati:
+Uneti u **Vercel > Project > Settings > Environment Variables** (Production) i redeploy-ovati.
+Nalog je otvoren, Ads ID je poznat:
 
 ```
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-NEXT_PUBLIC_GOOGLE_ADS_ID=AW-XXXXXXXXX
-NEXT_PUBLIC_GOOGLE_ADS_BOOKING_LABEL=AbC-D_efGh
+NEXT_PUBLIC_GOOGLE_ADS_ID=AW-17801652604
+NEXT_PUBLIC_GOOGLE_ADS_BOOKING_LABEL=1IyvCO-ahuocEPzSvqhC
+NEXT_PUBLIC_GA_MEASUREMENT_ID=<opciono, G-XXXXXXXXXX>
 ```
 
-`NEXT_PUBLIC_GOOGLE_ADS_BOOKING_LABEL` je **samo drugi deo** oznake koju Ads pokaže kod
-konverzije: iz `AW-123456789/AbC-D_efGh` uzima se `AbC-D_efGh`.
+Labela je drugi deo oznake iz Ads-a (`AW-17801652604/1IyvCO-ahuocEPzSvqhC`).
+Konverzija se zove **„Zakazan termin - drigic.rs"**, kategorija Book appointment,
+Primary, fiksna vrednost **40 USD**, Count: One.
 
 Provera posle deploy-a: otvoriti drigic.rs, u konzoli `typeof window.gtag` mora biti
 `"function"`, pa u Ads-u sačekati status **Recording conversions** (zna da potraje sat-dva
@@ -40,9 +41,9 @@ posle prvog pravog zakazivanja).
 
 - Google Ads nalog vodi na klijentov Google račun (`drigicclinic@gmail.com`), mi dobijamo
   pristup kao administrator. **Nalog ostaje njegov.**
-- Valuta i vremenska zona se biraju **jednom i ne mogu se menjati**. Preporuka: **EUR**,
-  zona `(GMT+01:00) Belgrade`. Ako se izabere RSD, brojevi u skriptama (`0.30`, `50`)
-  moraju da se pomnože ~117.
+- Valuta naloga je **USD** i ne može se menjati. Svi iznosi u skriptama su u valuti naloga:
+  `TOTAL_BUDGET = 50` znači 50 USD (~46 EUR). Licitacije (0.32 / 0.30 / 0.28 / 0.12) su
+  u dolarima praktično isti iznos kao planirano u evrima, pa ostaju kakve jesu.
 - Kartica se unosi ručno, u samom nalogu (mi ne unosimo podatke kartice).
 - Povezati **Google Business Profile** (za lokaciju u reklami) i **Google Analytics 4**.
 

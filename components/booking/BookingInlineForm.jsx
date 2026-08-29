@@ -1281,9 +1281,10 @@ export default function BookingInlineForm({
       setError("");
       setMessage(user ? t("booking.bookedPending") : t("booking.guestBookedPending"));
       trackBookingFunnel("booking_completed");
-      // Primary Google Ads conversion. Value is the average treatment margin,
-      // not the real price - Ads only needs a stable number to optimize on.
-      trackConversion("booking_submitted", { value: 40, currency: "EUR" });
+      // Primary Google Ads conversion. The Ads conversion action itself is set to a
+      // fixed 40 USD, so this value is only what GA4 records; keep the currency
+      // matching the Ads account (USD) so the two never disagree.
+      trackConversion("booking_submitted", { value: 40, currency: "USD" });
       setSelectedStartAt("");
       setNotes("");
       if (userCacheKey) {
