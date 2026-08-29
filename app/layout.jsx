@@ -154,13 +154,10 @@ const ORGANIZATION_JSON_LD = {
         "@type": "City",
         "name": "Niš",
       },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5.0",
-        "bestRating": "5",
-        "worstRating": "1",
-        "reviewCount": "20",
-      },
+      /* aggregateRating je uklonjen: ocena i broj recenzija nisu bili
+         proverljivi iz sajta, a Googleova pravila za strukturirane podatke
+         traže da ocena odgovara recenzijama koje su stvarno prikazane.
+         Netačan aggregateRating nosi rizik od ručne kazne. */
       "numberOfEmployees": {
         "@type": "QuantitativeValue",
         "value": 1,
@@ -171,11 +168,6 @@ const ORGANIZATION_JSON_LD = {
           "@type": "PropertyValue",
           "name": "Broj tretmana",
           "value": "1200+",
-        },
-        {
-          "@type": "PropertyValue",
-          "name": "Zadovoljstvo pacijenata",
-          "value": "98%",
         },
         {
           "@type": "PropertyValue",

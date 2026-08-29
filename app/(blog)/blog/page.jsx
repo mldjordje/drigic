@@ -8,7 +8,7 @@ import { desc, eq } from "drizzle-orm";
 export const revalidate = 300;
 
 export const metadata = {
-  title: "Blog — Estetska medicina | Dr Igić Clinic Niš",
+  title: { absolute: "Blog — Estetska medicina | Dr Igić Clinic Niš" },
   description:
     "Saveti i stručni tekstovi o estetskoj i anti-age medicini. Hijaluronski fileri, botoks, PRP, nega kože — Dr Igić Clinic, Niš.",
   alternates: { canonical: "/blog" },

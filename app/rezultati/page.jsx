@@ -5,7 +5,7 @@ import { CURATED_BEFORE_AFTER_CASES } from "@/data/before-after-cases";
 import { getConfiguredSiteUrl } from "@/lib/site";
 
 export const metadata = {
-  title: "Rezultati tretmana — Pre i Posle | Dr Igić Clinic Niš",
+  title: { absolute: "Rezultati tretmana — Pre i Posle | Dr Igić Clinic Niš" },
   description:
     "Pogledajte stvarne rezultate pacijenata — fotografije pre i posle tretmana u ordinaciji Dr Igić u Nišu. Hijaluronski fileri, botoks, PRP, mezoterapija, lipoliza.",
   keywords: [

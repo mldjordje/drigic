@@ -3,7 +3,7 @@ import Footer5 from "@/components/footers/Footer5";
 import FounderPageContent from "@/components/homes/home-5/FounderPageContent";
 
 export const metadata = {
-  title: "Dr Nikola Igić — Lekar estetske medicine, Niš | Dr Igić Clinic",
+  title: { absolute: "Dr Nikola Igić — Lekar estetske medicine, Niš | Dr Igić Clinic" },
   description:
     "Dr Nikola Igić, sertifikovani lekar estetske i anti-age medicine u Nišu. Individualni pristup, prirodni rezultati, savremene tehnike. Zakažite konsultaciju.",
   keywords: [

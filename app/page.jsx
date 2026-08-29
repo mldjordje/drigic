@@ -8,7 +8,7 @@ import Hero from "@/components/homes/home-5/Hero";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 
 export const metadata = {
-  title: `${SITE_NAME} — Estetska medicina Niš`,
+  title: { absolute: `${SITE_NAME} — Estetska medicina Niš` },
   description: SITE_DESCRIPTION,
   keywords: [
     "estetska medicina Niš",

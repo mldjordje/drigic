@@ -22,7 +22,7 @@ function isHyaluronicFillerService(service) {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: `Cenovnik estetskih tretmana Niš | ${SITE_NAME}`,
+  title: { absolute: `Cenovnik estetskih tretmana Niš | ${SITE_NAME}` },
   description:
     "Cene estetskih tretmana u ordinaciji Dr Igić u Nišu. Hijaluronski fileri, botoks, skinbusteri, PRP, mezoterapija i više. Sve cene u EUR.",
   keywords: [

@@ -5,7 +5,7 @@ import Header4 from "@/components/headers/Header4";
 import React from "react";
 
 export const metadata = {
-  title: "Kontakt | Dr Igić Clinic",
+  title: { absolute: "Kontakt | Dr Igić Clinic" },
   description: "Kontakt Dr Igić Clinic — telefon, e-mail i mapa ordinacije u Nišu.",
 };
 

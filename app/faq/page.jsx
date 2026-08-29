@@ -9,7 +9,7 @@ import { clinicFaqs } from "@/data/clinic-faq";
 import { getConfiguredSiteUrl } from "@/lib/site";
 
 export const metadata = {
-  title: "Česta pitanja o tretmanima | Dr Igić Clinic Niš",
+  title: { absolute: "Česta pitanja o tretmanima | Dr Igić Clinic Niš" },
   description:
     "Odgovori na najčešća pitanja o estetskim tretmanima u ordinaciji Dr Igić u Nišu — fileri, botoks, PRP, oporavak, cene.",
   alternates: { canonical: "/faq" },

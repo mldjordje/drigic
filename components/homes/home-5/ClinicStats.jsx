@@ -3,29 +3,38 @@
 import React, { useEffect, useRef } from "react";
 import { useLocale } from "@/components/common/LocaleProvider";
 
+/**
+ * Statistika sme da sadrži samo ono što se može dokazati.
+ *
+ * Ranije je ovde stajalo "98% zadovoljnih pacijenata". Taj procenat ne postoji
+ * ni u jednoj evidenciji — nema ankete iza njega. Google Ads politika za
+ * zdravstvo tretira neproverljive tvrdnje o ishodu kao razlog za odbijanje
+ * oglasa, a ovo je sajt na koji ide plaćeni saobraćaj. Zamenjeno činjenicom
+ * koja je tačna i proverljiva: prva konsultacija je besplatna.
+ */
 const STATS = {
   sr: [
     { value: 3, suffix: "+", label: "Višegodišnje iskustvo", sublabel: "u estetskoj medicini" },
     { value: 1200, suffix: "+", label: "Tretmana", sublabel: "uspešno izvedenih" },
-    { value: 98, suffix: "%", label: "Zadovoljnih", sublabel: "pacijenata" },
+    { value: 0, suffix: " €", label: "Konsultacija", sublabel: "prva, bez obaveze" },
     { value: 15, suffix: "+", label: "Procedura", sublabel: "u ponudi" },
   ],
   en: [
     { value: 3, suffix: "+", label: "Years of expertise", sublabel: "in aesthetic medicine" },
     { value: 1200, suffix: "+", label: "Treatments", sublabel: "successfully performed" },
-    { value: 98, suffix: "%", label: "Satisfied", sublabel: "patients" },
+    { value: 0, suffix: " €", label: "Consultation", sublabel: "first one, no obligation" },
     { value: 15, suffix: "+", label: "Procedures", sublabel: "available" },
   ],
   de: [
     { value: 3, suffix: "+", label: "Mehrjährige Erfahrung", sublabel: "in ästhetischer Medizin" },
     { value: 1200, suffix: "+", label: "Behandlungen", sublabel: "erfolgreich durchgeführt" },
-    { value: 98, suffix: "%", label: "Zufriedene", sublabel: "Patienten" },
+    { value: 0, suffix: " €", label: "Beratung", sublabel: "erste, unverbindlich" },
     { value: 15, suffix: "+", label: "Verfahren", sublabel: "im Angebot" },
   ],
   it: [
     { value: 3, suffix: "+", label: "Pluriennale esperienza", sublabel: "in medicina estetica" },
     { value: 1200, suffix: "+", label: "Trattamenti", sublabel: "eseguiti con successo" },
-    { value: 98, suffix: "%", label: "Soddisfatti", sublabel: "pazienti" },
+    { value: 0, suffix: " €", label: "Consulto", sublabel: "il primo, senza impegno" },
     { value: 15, suffix: "+", label: "Procedure", sublabel: "disponibili" },
   ],
 };

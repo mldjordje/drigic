@@ -13,9 +13,12 @@ const STATS = [
     label: { sr: "višegodišnje iskustvo", en: "years of expertise", de: "mehrjährige Erfahrung", it: "pluriennale esperienza" },
   },
   {
-    value: 98,
-    suffix: "%",
-    label: { sr: "zadovoljnih pacijenata", en: "satisfied patients", de: "zufriedene Patienten", it: "pazienti soddisfatti" },
+    // "98% zadovoljnih pacijenata" je uklonjeno — procenat nije zasnovan ni na
+    // jednoj anketi, a neproverljive tvrdnje o ishodu su razlog za odbijanje
+    // oglasa po Google Ads politici za zdravstvo.
+    value: 0,
+    suffix: " €",
+    label: { sr: "prva konsultacija", en: "first consultation", de: "Erstberatung", it: "primo consulto" },
   },
   {
     value: 15,

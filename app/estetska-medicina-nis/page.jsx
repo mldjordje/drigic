@@ -82,13 +82,8 @@ const LOCAL_JSON_LD = {
           "url": `https://drigic.rs/tretmani/${cat.slug}`,
         })),
       },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5.0",
-        "bestRating": "5",
-        "worstRating": "1",
-        "reviewCount": "20",
-      },
+      /* aggregateRating uklonjen — vrednost i broj recenzija nisu proverljivi
+         iz sajta. Recenzije se prikazuju doslovno u telu stranice. */
       "sameAs": [
         "https://drigic.rs",
         "https://www.instagram.com/drigic.clinic/",

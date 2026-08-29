@@ -27,7 +27,7 @@ async function getPost(slug) {
 export async function generateMetadata({ params }) {
   const { id: slug } = await params;
   const post = await getPost(slug);
-  if (!post) return { title: "Blog | Dr Igić Clinic Niš" };
+  if (!post) return { title: { absolute: "Blog | Dr Igić Clinic Niš" } };
 
   const title = post.seoTitle || `${post.title} | Dr Igić Clinic Niš`;
   const description = post.seoDescription ||
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }) {
     "Stručni tekst o estetskoj i anti-age medicini — Dr Igić Clinic, Niš.";
 
   return {
-    title,
+    title: { absolute: title },
     description,
     keywords: post.seoKeywords || [],
     alternates: { canonical: `/blog-details/${post.slug}` },

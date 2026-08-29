@@ -4,7 +4,7 @@ import BeautyPassSection from "@/components/homes/home-5/BeautyPassSection";
 import { SITE_NAME } from "@/lib/site";
 
 export const metadata = {
-  title: `Beauty Pass — istorija tretmana | ${SITE_NAME}`,
+  title: { absolute: `Beauty Pass — istorija tretmana | ${SITE_NAME}` },
   description:
     "Beauty Pass ordinacije Dr Igić: digitalna evidencija svih vaših estetskih tretmana, datuma i preparata, na jednom mestu.",
   alternates: { canonical: "/beauty-pass" },

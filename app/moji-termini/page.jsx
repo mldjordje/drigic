@@ -3,7 +3,7 @@ import Footer5 from "@/components/footers/Footer5";
 import MyBookingsSection from "@/components/my-bookings/MyBookingsSection";
 
 export const metadata = {
-  title: "Moji termini | Dr Igić Clinic",
+  title: { absolute: "Moji termini | Dr Igić Clinic" },
   description: "Pregled, izmena i otkazivanje termina.",
 };
 
