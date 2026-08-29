@@ -9,7 +9,7 @@ import { SITE_NAME } from "@/lib/site";
 export const metadata = {
   title: { absolute: `Zakazivanje termina Niš | ${SITE_NAME}` },
   description:
-    "Online zakazivanje termina za estetske tretmane u ordinaciji Dr Igić u Nišu. Pregled slobodnih termina u realnom vremenu — fileri, botoks, PRP, mezoterapija i druge procedure.",
+    "Online zakazivanje termina za estetske tretmane u ordinaciji Dr Igić u Nišu. Pregled slobodnih termina u realnom vremenu — fileri, tretman mimičnih bora, PRP, mezoterapija i druge procedure.",
   alternates: { canonical: "/booking" },
 };
 

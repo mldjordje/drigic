@@ -127,7 +127,7 @@ const ORGANIZATION_JSON_LD = {
         "height": 60,
       },
       "description":
-        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Specijalizovani tretmani: hijaluronski fileri, botox, skinbusteri, PRP, mezoterapija i dr.",
+        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Specijalizovani tretmani: hijaluronski fileri, tretman mimičnih bora, skinbusteri, PRP, mezoterapija i dr.",
       "medicalSpecialty": [
         "Aesthetic Medicine",
         "Anti-Age Medicine",
@@ -189,7 +189,7 @@ const ORGANIZATION_JSON_LD = {
         "knowsAbout": [
           "Aesthetic medicine",
           "Hyaluronic fillers",
-          "Botox",
+          "Facial wrinkle treatment",
           "Skinboosters",
           "PRP",
           "Mesotherapy",

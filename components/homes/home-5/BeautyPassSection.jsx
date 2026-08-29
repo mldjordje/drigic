@@ -626,7 +626,7 @@ export default function BeautyPassSection({ googleNextPath = "/" }) {
                     rows={2}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Npr. Botoks čelo, korekcija usana..."
+                    placeholder="Npr. mimične bore čelo, korekcija usana..."
                   />
                 </div>
 

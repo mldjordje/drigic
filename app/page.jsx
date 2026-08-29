@@ -14,7 +14,7 @@ export const metadata = {
     "estetska medicina Niš",
     "dr igić clinic",
     "hijaluronski fileri Niš",
-    "botoks Niš",
+    "mimične bore Niš",
     "PRP Niš",
     "mezoterapija Niš",
     "anti-age medicina Niš",
@@ -43,7 +43,7 @@ const HOME_JSON_LD = {
           "name": "Koje estetske tretmane nudi Dr Igić Clinic u Nišu?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Dr Igić Clinic u Nišu nudi: hijaluronske filere (usne, konture, podočnjaci), botoks tretmane, skinbustere za hidrataciju kože, kolagen stimulatore, polinukleotide i egzosome, lipolizu, hemijski piling, dermapen, PRP terapiju i mezoterapiju. Svi tretmani se izvode bez operacije.",
+            "text": "Dr Igić Clinic u Nišu nudi: hijaluronske filere (usne, konture, podočnjaci), tretman mimičnih bora, skinbustere za hidrataciju kože, kolagen stimulatore, polinukleotide i egzosome, lipolizu, hemijski piling, dermapen, PRP terapiju i mezoterapiju. Svi tretmani se izvode bez operacije.",
           },
         },
         {
@@ -64,10 +64,10 @@ const HOME_JSON_LD = {
         },
         {
           "@type": "Question",
-          "name": "Koliko traje efekat botoksa?",
+          "name": "Koliko traje efekat tretmana mimičnih bora?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Efekat botoksa u ordinaciji Dr Igić počinje da se vidi nakon 3–5 dana, puni rezultat je vidljiv za 10–14 dana, a traje prosečno 3–6 meseci u zavisnosti od regije, doze i individualnih karakteristika pacijenta.",
+            "text": "Efekat tretmana mimičnih bora u ordinaciji Dr Igić počinje da se vidi nakon 3–5 dana, puni rezultat je vidljiv za 10–14 dana, a traje prosečno 3–6 meseci u zavisnosti od regije, doze i individualnih karakteristika pacijenta.",
           },
         },
         {

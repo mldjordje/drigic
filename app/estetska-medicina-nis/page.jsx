@@ -2,6 +2,7 @@ import TreatmentLanding from "@/components/landing/TreatmentLanding";
 import { getLandingCopy } from "@/lib/content/landing-copy";
 import { CURATED_BEFORE_AFTER_CASES } from "@/data/before-after-cases";
 import { getCachedServicesCatalog } from "@/lib/catalog/services";
+import { publicCategoryName, publicServiceName, publicText } from "@/lib/services/public-names";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 
 // ISR: stranica prima plaćeni saobraćaj, pa ne sme da čeka bazu na svaki klik.
@@ -9,28 +10,28 @@ export const revalidate = 300;
 
 export const metadata = {
   // absolute: naslov već sadrži ime ordinacije, globalni template ga je dodavao drugi put
-  title: { absolute: "Estetska medicina Niš — Dr Igić Clinic | Fileri, Botoks, PRP" },
+  title: { absolute: "Estetska medicina Niš — Dr Igić Clinic | Fileri, Mimične bore, PRP" },
   description:
-    "Ordinacija estetske i anti-age medicine u Nišu — Dr Nikola Igić. Hijaluronski fileri, botoks, PRP, mezoterapija, skinbusteri. Cvijićeva 31/3, Niš. Zakaži online.",
+    "Ordinacija estetske i anti-age medicine u Nišu — Dr Nikola Igić. Hijaluronski fileri, tretman mimičnih bora, PRP, mezoterapija, skinbusteri. Cvijićeva 31/3, Niš. Zakaži online.",
   keywords: [
     "estetska medicina Niš",
     "estetski tretmani Niš",
     "hijaluronski fileri Niš",
-    "botoks Niš",
+    "mimične bore Niš",
     "PRP Niš",
     "mezoterapija Niš",
     "anti-age medicina Niš",
     "estetska ordinacija Niš",
     "dr igić clinic Niš",
     "fileri usne Niš",
-    "botox Niš cena",
+    "cena tretmana bora Niš",
     "estetika lica Niš",
   ],
   alternates: { canonical: "/estetska-medicina-nis" },
   openGraph: {
     title: "Estetska medicina Niš — Dr Igić Clinic",
     description:
-      "Ordinacija estetske i anti-age medicine u Nišu. Hijaluronski fileri, botoks, PRP, mezoterapija. Zakažite konsultaciju.",
+      "Ordinacija estetske i anti-age medicine u Nišu. Hijaluronski fileri, tretman mimičnih bora, PRP, mezoterapija. Zakažite konsultaciju.",
     type: "website",
     locale: "sr_RS",
   },
@@ -46,7 +47,7 @@ const LOCAL_JSON_LD = {
       "url": "https://drigic.rs/estetska-medicina-nis",
       "image": "https://drigic.rs/assets/img/doctor-about.webp",
       "description":
-        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Dr Nikola Igić — sertifikovani lekar estetske medicine. Hijaluronski fileri, botoks, PRP, mezoterapija, skinbusteri i drugi tretmani bez operacije.",
+        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Dr Nikola Igić — sertifikovani lekar estetske medicine. Hijaluronski fileri, tretman mimičnih bora, PRP, mezoterapija, skinbusteri i drugi tretmani bez operacije.",
       "address": {
         "@type": "PostalAddress",
         "streetAddress": "Cvijićeva 31/3",
@@ -74,12 +75,14 @@ const LOCAL_JSON_LD = {
         "@type": "OfferCatalog",
         "name": "Estetski tretmani Niš",
         "url": "https://drigic.rs/tretmani",
+        // Kategorija "Botox" ide pod javnim nazivom i na /tretmani/mimicne-bore:
+        // ovo je odredište plaćenog oglasa i ne sme da sadrži naziv leka na recept.
         "itemListElement": SERVICE_CATEGORY_SPECS.map((cat, i) => ({
           "@type": "Offer",
           "position": i + 1,
-          "name": cat.name,
-          "description": cat.shortDescription,
-          "url": `https://drigic.rs/tretmani/${cat.slug}`,
+          "name": publicCategoryName(cat.name),
+          "description": publicText(cat.shortDescription),
+          "url": `https://drigic.rs/tretmani/${cat.slug === "botox" ? "mimicne-bore" : cat.slug}`,
         })),
       },
       /* aggregateRating uklonjen — vrednost i broj recenzija nisu proverljivi
@@ -107,7 +110,7 @@ const LOCAL_JSON_LD = {
           "name": "Koji estetski tretmani su dostupni u Nišu kod Dr Igića?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "U Dr Igić Clinic u Nišu dostupni su: hijaluronski fileri, botoks, skinbusteri, kolagen stimulatori, polinukleotidi i egzozomi, lipoliza, hemijski piling, dermapen, PRP i mezoterapija — sve bez operacije.",
+            "text": "U Dr Igić Clinic u Nišu dostupni su: hijaluronski fileri, tretman mimičnih bora, skinbusteri, kolagen stimulatori, polinukleotidi i egzozomi, lipoliza, hemijski piling, dermapen, PRP i mezoterapija — sve bez operacije.",
           },
         },
         {
@@ -146,7 +149,8 @@ export default async function EstetkaMedacinaNis() {
         .slice(0, 1)
         .map((service) => ({
           id: service.id,
-          name: `${category.name} — ${service.name}`,
+          // Naziv leka na recept ne sme na stranicu na koju vodi oglas.
+          name: `${publicCategoryName(category.name)} — ${publicServiceName(service.name)}`,
           price: service.promotion?.promoPriceRsd ?? service.priceRsd,
           durationMin: service.durationMin,
         }))
@@ -157,7 +161,13 @@ export default async function EstetkaMedacinaNis() {
     <>
       <TreatmentLanding
         copy={copy}
-        cases={CURATED_BEFORE_AFTER_CASES.slice(0, 10)}
+        cases={CURATED_BEFORE_AFTER_CASES.slice(0, 10).map((item) => ({
+          id: item.id,
+          collageImageUrl: item.collageImageUrl,
+          treatmentType: publicText(item.treatmentType),
+          summary: publicText(item.summary),
+          imageAlt: publicText(item.imageAlt),
+        }))}
         prices={prices}
       />
       <script
