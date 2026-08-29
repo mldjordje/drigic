@@ -15,6 +15,7 @@ import InAppBrowserNotice from "@/components/common/InAppBrowserNotice";
 import { useSession } from "@/components/common/SessionProvider";
 import { CONSULTATION_SELECTION_ID, HYALURONIC_BRANDS } from "@/lib/booking/constants";
 import { trackBookingFunnel } from "@/lib/analytics/booking-funnel";
+import { trackConversion, trackEvent } from "@/lib/analytics/gtag";
 
 const STEP_SERVICES = 1;
 const STEP_DATE = 2;
@@ -992,6 +993,10 @@ export default function BookingInlineForm({
       return;
     }
     trackBookingFunnel(`step_${step}_view`);
+    if (step === 1) {
+      // Secondary signal in Ads: reached the wizard, has not booked yet.
+      trackEvent("booking_started");
+    }
   }, [step, formOnScreen]);
 
   useEffect(() => {
@@ -1276,6 +1281,10 @@ export default function BookingInlineForm({
       setError("");
       setMessage(user ? t("booking.bookedPending") : t("booking.guestBookedPending"));
       trackBookingFunnel("booking_completed");
+      // Primary Google Ads conversion. The Ads conversion action itself is set to a
+      // fixed 40 USD, so this value is only what GA4 records; keep the currency
+      // matching the Ads account (USD) so the two never disagree.
+      trackConversion("booking_submitted", { value: 40, currency: "USD" });
       setSelectedStartAt("");
       setNotes("");
       if (userCacheKey) {
