@@ -6,9 +6,6 @@ import { LOCALE_COOKIE_KEY, resolveLocale, translate } from "@/lib/i18n";
 import { getCachedServicesCatalog } from "@/lib/catalog/services";
 import { SERVICE_CATEGORY_SPECS } from "@/lib/services/category-map";
 import { HYALURONIC_BRANDS } from "@/lib/booking/constants";
-/* Cenovnik je jedan klik od stranica na koje vode oglasi, pa i on ide bez
-   naziva lekova na recept. Vidi lib/services/public-names.js. */
-import { publicCategoryName, publicServiceName, publicText } from "@/lib/services/public-names";
 import { SITE_NAME } from "@/lib/site";
 
 function normalizeTextKey(value = "") {
@@ -27,11 +24,11 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: { absolute: `Cenovnik estetskih tretmana Niš | ${SITE_NAME}` },
   description:
-    "Cene estetskih tretmana u ordinaciji Dr Igić u Nišu. Hijaluronski fileri, tretman mimičnih bora, skinbusteri, PRP, mezoterapija i više. Sve cene u EUR.",
+    "Cene estetskih tretmana u ordinaciji Dr Igić u Nišu. Hijaluronski fileri, botoks, skinbusteri, PRP, mezoterapija i više. Sve cene u EUR.",
   keywords: [
     "cene estetskih tretmana Niš",
     "cenovnik fileri Niš",
-    "cena tretmana bora Niš",
+    "botoks cena Niš",
     "estetska medicina cene Niš",
     "dr igić clinic cenovnik",
   ],
@@ -120,9 +117,9 @@ export default async function CenovnikPage() {
                     </span>
                     <h2 className="clinic-pricing-category-title">
                       {cat.slug ? (
-                        <Link href={`/tretmani/${cat.slug === "botox" ? "mimicne-bore" : cat.slug}`}>{publicCategoryName(cat.name)}</Link>
+                        <Link href={`/tretmani/${cat.slug}`}>{cat.name}</Link>
                       ) : (
-                        publicCategoryName(cat.name)
+                        cat.name
                       )}
                     </h2>
                   </div>
@@ -145,10 +142,10 @@ export default async function CenovnikPage() {
                         return (
                           <tr key={service.id} className={hasPromoPrice ? "has-promo" : ""}>
                             <td>
-                              <span className="clinic-pricing-service-name">{publicServiceName(service.name)}</span>
+                              <span className="clinic-pricing-service-name">{service.name}</span>
                               {service.description ? (
                                 <span className="clinic-pricing-service-desc">
-                                  {publicText(service.description)}
+                                  {service.description}
                                 </span>
                               ) : null}
                             </td>
@@ -182,7 +179,7 @@ export default async function CenovnikPage() {
 
                   {cat.slug ? (
                     <div className="clinic-pricing-category-footer">
-                      <Link href={`/tretmani/${cat.slug === "botox" ? "mimicne-bore" : cat.slug}`} className="clinic-treatment-link">
+                      <Link href={`/tretmani/${cat.slug}`} className="clinic-treatment-link">
                         {t("pricing.viewCategory")}
                       </Link>
                     </div>

@@ -16,10 +16,6 @@ import { useSession } from "@/components/common/SessionProvider";
 import { CONSULTATION_SELECTION_ID, HYALURONIC_BRANDS } from "@/lib/booking/constants";
 import { trackBookingFunnel } from "@/lib/analytics/booking-funnel";
 import { trackConversion, trackEvent } from "@/lib/analytics/gtag";
-/* Javni prikaz naziva usluga. Baza čuva stvarne nazive; ovde se sklanjaju
-   nazivi lekova na recept, koje Google Ads i domaći propisi ne dozvoljavaju
-   na stranici na koju vodi oglas. Vidi lib/services/public-names.js. */
-import { publicCategoryName, publicServiceName } from "@/lib/services/public-names";
 
 const STEP_SERVICES = 1;
 const STEP_DATE = 2;
@@ -483,7 +479,7 @@ export default function BookingInlineForm({
         map.set(service.id, {
           ...service,
           categoryId: category.id,
-          categoryName: publicCategoryName(category.name),
+          categoryName: category.name,
         });
       });
     });
@@ -598,7 +594,7 @@ export default function BookingInlineForm({
         .forEach((service) => {
           list.push({
             ...service,
-            categoryName: publicCategoryName(category.name),
+            categoryName: category.name,
           });
         });
     });
@@ -807,7 +803,7 @@ export default function BookingInlineForm({
         const durationLabel = service.supportsMl
           ? getMlDurationMin(service.durationMin, selection.quantity)
           : Number(service.durationMin || 0) * Math.max(1, Number(selection.quantity || 1));
-        return `${publicServiceName(service.name)}${brandLabel}${quantityLabel} - ${durationLabel} min`;
+        return `${service.name}${brandLabel}${quantityLabel} - ${durationLabel} min`;
       })
       .filter(Boolean);
   }, [serviceSelections, serviceLookup]);
@@ -1334,7 +1330,7 @@ export default function BookingInlineForm({
         className="clinic-service-category clinic-reveal"
         style={{ "--clinic-reveal-delay": `${Math.min(categoryIndex, 7) * 55}ms` }}
       >
-        <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{publicCategoryName(category.name)}</h4>
+        <h4 style={{ marginBottom: 8, color: "var(--clinic-text-strong)" }}>{category.name}</h4>
         <div className="clinic-service-grid clinic-service-grid--desktop-2">
           {(category.services || []).map((service, serviceIndex) => {
             const selected = Boolean(selectedMap[service.id]);
@@ -1359,7 +1355,7 @@ export default function BookingInlineForm({
                     onChange={(event) => updateSelectedService(service, event.target.checked)}
                   />
                   <span style={{ color: "var(--clinic-text-strong)", display: "grid", gap: 8 }}>
-                    <strong>{publicServiceName(service.name)}</strong>
+                    <strong>{service.name}</strong>
                     <span className="clinic-service-option__meta">
                       <span className="clinic-service-option__pill">
                         {getServiceDurationLabel(service, selectedQuantity)}
@@ -1708,7 +1704,7 @@ export default function BookingInlineForm({
                                     gap: 8,
                                   }}
                                 >
-                                  <strong>{publicServiceName(service.name)}</strong>
+                                  <strong>{service.name}</strong>
                                   <span className="clinic-service-option__meta">
                                     <span className="clinic-service-option__pill">
                                       {getServiceDurationLabel(service)}
