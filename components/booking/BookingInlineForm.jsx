@@ -1241,11 +1241,11 @@ export default function BookingInlineForm({
     t,
   ]);
 
-  async function handleBook(event, { replaceBookingId = null } = {}) {
+  async function handleBook(event, { replaceBookingId = null, allowAdditional = false } = {}) {
     event?.preventDefault?.();
     setError("");
     setMessage("");
-    if (!replaceBookingId) {
+    if (!replaceBookingId && !allowAdditional) {
       setExistingBooking(null);
     }
 
@@ -1282,6 +1282,7 @@ export default function BookingInlineForm({
           startAt: selectedStartAt,
           notes,
           ...(replaceBookingId ? { replaceBookingId } : {}),
+          ...(allowAdditional ? { allowAdditional: true } : {}),
           ...(user
             ? {}
             : {
@@ -1305,6 +1306,13 @@ export default function BookingInlineForm({
           scrollToSection(errorRef);
           return;
         }
+      }
+
+      if (response.status === 409 && data?.details?.code === "TOO_MANY_BOOKINGS") {
+        setExistingBooking(null);
+        throw new Error(
+          t("booking.tooManyBookings").replace("{limit}", String(data.details.limit || 3))
+        );
       }
 
       if (!response.ok || !data?.ok) {
@@ -1499,7 +1507,10 @@ export default function BookingInlineForm({
             >
               {t("booking.continueCta")}
             </button>
-          ) : (
+          ) : message || existingBooking ? null : (
+            // Hidden once the booking is confirmed or the patient is choosing
+            // between rescheduling and an extra appointment: a live submit button
+            // there would just re-send the same request.
             <button
               type="submit"
               form="clinic-booking-form"
@@ -2099,6 +2110,19 @@ export default function BookingInlineForm({
                     ...primaryButtonStyle,
                     background: "transparent",
                     color: "var(--clinic-text-strong)",
+                  }}
+                  disabled={loading}
+                  onClick={() => handleBook(null, { allowAdditional: true })}
+                >
+                  {t("booking.bookAdditional")}
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...primaryButtonStyle,
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--clinic-text-secondary)",
                   }}
                   disabled={loading}
                   onClick={() => setExistingBooking(null)}

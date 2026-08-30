@@ -48,6 +48,12 @@ const payloadSchema = z.object({
    * in the same transaction, so the patient never ends up holding both.
    */
   replaceBookingId: z.string().uuid().optional(),
+  /**
+   * The other answer to "you already have an appointment": a patient booking two
+   * separate treatments on two days is legitimate, so they can confirm the extra
+   * appointment instead of moving the first one.
+   */
+  allowAdditional: z.boolean().optional(),
   guest: z
     .object({
       fullName: z.string().min(2).max(120),
@@ -64,6 +70,12 @@ async function lockEmployeeSchedule(tx, employeeId) {
 }
 
 const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
+
+/**
+ * Ceiling on appointments a patient may hold at once. Two separate treatments on
+ * two days is normal; a dozen is someone clicking through the form.
+ */
+const MAX_ACTIVE_BOOKINGS = 3;
 
 /**
  * Upcoming bookings the patient is still holding.
@@ -159,24 +171,39 @@ export async function POST(request) {
       guestContact = resolved.guest;
     }
 
-    // A patient may hold one upcoming appointment. Booking again is almost always
-    // an attempt to move the existing one, so answer with what they already have
-    // and let them confirm the swap instead of quietly creating a second row.
+    // Booking while already holding an appointment is usually an attempt to move
+    // that one, so the patient is shown what they have and picks: reschedule, or
+    // confirm this really is an extra appointment (two treatments, two days).
+    // Nothing is created until they choose.
     const replaceBookingId = parsed.data.replaceBookingId || null;
+    const allowAdditional = parsed.data.allowAdditional === true;
     const activeBookings = await findActiveBookings(db, bookingUser.id, {
       excludeBookingId: replaceBookingId,
     });
+    const serializeBooking = (booking) => ({
+      id: booking.id,
+      status: booking.status,
+      startsAt: booking.startsAt,
+      endsAt: booking.endsAt,
+      durationMin: booking.totalDurationMin,
+    });
 
-    if (activeBookings.length) {
+    if (activeBookings.length >= MAX_ACTIVE_BOOKINGS) {
+      return fail(
+        409,
+        `Vec imate ${activeBookings.length} zakazana termina. Otkazite ili prezakazite jedan pre novog.`,
+        {
+          code: "TOO_MANY_BOOKINGS",
+          limit: MAX_ACTIVE_BOOKINGS,
+          bookings: activeBookings.map(serializeBooking),
+        }
+      );
+    }
+
+    if (activeBookings.length && !allowAdditional) {
       return fail(409, "Vec imate zakazan termin.", {
         code: "EXISTING_BOOKING",
-        bookings: activeBookings.map((booking) => ({
-          id: booking.id,
-          status: booking.status,
-          startsAt: booking.startsAt,
-          endsAt: booking.endsAt,
-          durationMin: booking.totalDurationMin,
-        })),
+        bookings: activeBookings.map(serializeBooking),
       });
     }
 
