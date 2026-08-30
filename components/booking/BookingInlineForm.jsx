@@ -450,6 +450,9 @@ export default function BookingInlineForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  // Set when the API refuses a second appointment: holds the booking the patient
+  // is already sitting on, so the form can offer moving it instead of stacking.
+  const [existingBooking, setExistingBooking] = useState(null);
   const [isClient, setIsClient] = useState(false);
   // The form is also mounted (collapsed) inside the homepage hero panel, so the
   // sticky action bar and funnel tracking only kick in once it is on screen.
@@ -1238,10 +1241,13 @@ export default function BookingInlineForm({
     t,
   ]);
 
-  async function handleBook(event) {
-    event.preventDefault();
+  async function handleBook(event, { replaceBookingId = null } = {}) {
+    event?.preventDefault?.();
     setError("");
     setMessage("");
+    if (!replaceBookingId) {
+      setExistingBooking(null);
+    }
 
     if (!serviceSelections.length) {
       setStep(STEP_SERVICES);
@@ -1275,6 +1281,7 @@ export default function BookingInlineForm({
           serviceSelections,
           startAt: selectedStartAt,
           notes,
+          ...(replaceBookingId ? { replaceBookingId } : {}),
           ...(user
             ? {}
             : {
@@ -1287,12 +1294,32 @@ export default function BookingInlineForm({
         }),
       });
       const data = await parseResponse(response);
+
+      // The patient already holds an appointment: show it and offer the swap
+      // rather than letting a second request through.
+      if (response.status === 409 && data?.details?.code === "EXISTING_BOOKING") {
+        const [firstBooking] = data.details.bookings || [];
+        if (firstBooking) {
+          setExistingBooking(firstBooking);
+          setError("");
+          scrollToSection(errorRef);
+          return;
+        }
+      }
+
       if (!response.ok || !data?.ok) {
         throw new Error(data?.message || t("booking.bookingFailed"));
       }
 
+      setExistingBooking(null);
       setError("");
-      setMessage(user ? t("booking.bookedPending") : t("booking.guestBookedPending"));
+      setMessage(
+        data.replacedBookingId
+          ? t("booking.bookingReplaced")
+          : user
+            ? t("booking.bookedPending")
+            : t("booking.guestBookedPending")
+      );
       trackBookingFunnel("booking_completed");
       // Primary Google Ads conversion. The Ads conversion action itself is set to a
       // fixed 40 USD, so this value is only what GA4 records; keep the currency
@@ -1897,7 +1924,12 @@ export default function BookingInlineForm({
                     <button
                       type="button"
                       key={slot.startAt}
-                      onClick={() => setSelectedStartAt(slot.startAt)}
+                      onClick={() => {
+                        // Picking a new slot means the previous confirmation is
+                        // stale; bring the submit button back.
+                        setMessage("");
+                        setSelectedStartAt(slot.startAt);
+                      }}
                       className={`clinic-slot-button clinic-reveal ${
                         selectedStartAt === slot.startAt ? "is-active" : ""
                       }`}
@@ -2033,18 +2065,72 @@ export default function BookingInlineForm({
             </div>
           ) : null}
 
-          <button
-            type="submit"
-            className="clinic-reveal clinic-booking-submit"
-            style={primaryButtonStyle}
-            disabled={loading}
-          >
-            {loading ? t("booking.confirming") : t("booking.confirm")}
-          </button>
+          {existingBooking ? (
+            <div
+              className="clinic-reveal"
+              style={{
+                ...cardStyle,
+                borderColor: "var(--clinic-accent, #c084fc)",
+                display: "grid",
+                gap: 10,
+              }}
+            >
+              <strong style={{ color: "var(--clinic-text-strong)" }}>
+                {t("booking.existingBookingTitle")}
+              </strong>
+              <p style={{ margin: 0, color: "var(--clinic-text-secondary)" }}>
+                {t("booking.existingBookingIntro").replace(
+                  "{date}",
+                  new Date(existingBooking.startsAt).toLocaleString(intlLocale)
+                )}
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button
+                  type="button"
+                  style={primaryButtonStyle}
+                  disabled={loading}
+                  onClick={() => handleBook(null, { replaceBookingId: existingBooking.id })}
+                >
+                  {loading ? t("booking.confirming") : t("booking.rescheduleToNew")}
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...primaryButtonStyle,
+                    background: "transparent",
+                    color: "var(--clinic-text-strong)",
+                  }}
+                  disabled={loading}
+                  onClick={() => setExistingBooking(null)}
+                >
+                  {t("booking.keepExistingBooking")}
+                </button>
+              </div>
+            </div>
+          ) : message ? null : (
+            <button
+              type="submit"
+              className="clinic-reveal clinic-booking-submit"
+              style={primaryButtonStyle}
+              disabled={loading}
+            >
+              {loading ? t("booking.confirming") : t("booking.confirm")}
+            </button>
+          )}
         </div>
 
         <div ref={errorRef} aria-live="polite">
-          {message ? <p style={{ color: "var(--clinic-success)", fontWeight: 600 }}>{message}</p> : null}
+          {message ? (
+            // Success replaces the submit button: an empty form left standing is
+            // what pushed patients into booking the same visit two or three times.
+            <div style={{ ...cardStyle, display: "grid", gap: 6, marginTop: 12 }}>
+              <strong style={{ color: "var(--clinic-success)" }}>{t("booking.bookingSentTitle")}</strong>
+              <p style={{ margin: 0, color: "var(--clinic-text-strong)", fontWeight: 600 }}>{message}</p>
+              <p style={{ margin: 0, color: "var(--clinic-text-secondary)", fontSize: 14 }}>
+                {t("booking.bookAnotherHint")}
+              </p>
+            </div>
+          ) : null}
           {error ? <p className="clinic-booking-error">{error}</p> : null}
         </div>
       </form>

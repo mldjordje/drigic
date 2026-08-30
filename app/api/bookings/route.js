@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
 import { created, fail, readJson } from "@/lib/api/http";
 import { consumeRateLimit, getRequestIp } from "@/lib/api/rate-limit";
 import { getSessionFromRequest } from "@/lib/auth/guards";
@@ -42,6 +42,12 @@ const payloadSchema = z.object({
     .optional(),
   startAt: z.string().datetime(),
   notes: z.string().max(1000).optional(),
+  /**
+   * Set only when the client already saw the "you already have an appointment" answer
+   * and chose to move it: the old booking is cancelled and the new one created
+   * in the same transaction, so the patient never ends up holding both.
+   */
+  replaceBookingId: z.string().uuid().optional(),
   guest: z
     .object({
       fullName: z.string().min(2).max(120),
@@ -55,6 +61,42 @@ async function lockEmployeeSchedule(tx, employeeId) {
   await tx.execute(
     sql`SELECT pg_advisory_xact_lock(hashtextextended(${employeeId}, 0))`
   );
+}
+
+const ACTIVE_BOOKING_STATUSES = ["pending", "confirmed"];
+
+/**
+ * Upcoming bookings the patient is still holding.
+ *
+ * Slot conflicts alone do not stop a patient from stacking appointments: three
+ * consecutive free slots are three valid bookings as far as the calendar is
+ * concerned. Someone trying to *move* an appointment has no other button to
+ * press, so they book again — and the clinic gets duplicates to clean up by
+ * hand. The create route asks for this list first and refuses to silently add
+ * a second one.
+ */
+async function findActiveBookings(executor, userId, { excludeBookingId } = {}) {
+  const filters = [
+    eq(schema.bookings.userId, userId),
+    inArray(schema.bookings.status, ACTIVE_BOOKING_STATUSES),
+    gt(schema.bookings.startsAt, new Date()),
+  ];
+
+  if (excludeBookingId) {
+    filters.push(sql`${schema.bookings.id} <> ${excludeBookingId}`);
+  }
+
+  return executor
+    .select({
+      id: schema.bookings.id,
+      status: schema.bookings.status,
+      startsAt: schema.bookings.startsAt,
+      endsAt: schema.bookings.endsAt,
+      totalDurationMin: schema.bookings.totalDurationMin,
+    })
+    .from(schema.bookings)
+    .where(and(...filters))
+    .orderBy(asc(schema.bookings.startsAt));
 }
 
 export async function POST(request) {
@@ -117,6 +159,49 @@ export async function POST(request) {
       guestContact = resolved.guest;
     }
 
+    // A patient may hold one upcoming appointment. Booking again is almost always
+    // an attempt to move the existing one, so answer with what they already have
+    // and let them confirm the swap instead of quietly creating a second row.
+    const replaceBookingId = parsed.data.replaceBookingId || null;
+    const activeBookings = await findActiveBookings(db, bookingUser.id, {
+      excludeBookingId: replaceBookingId,
+    });
+
+    if (activeBookings.length) {
+      return fail(409, "Vec imate zakazan termin.", {
+        code: "EXISTING_BOOKING",
+        bookings: activeBookings.map((booking) => ({
+          id: booking.id,
+          status: booking.status,
+          startsAt: booking.startsAt,
+          endsAt: booking.endsAt,
+          durationMin: booking.totalDurationMin,
+        })),
+      });
+    }
+
+    let bookingToReplace = null;
+    if (replaceBookingId) {
+      [bookingToReplace] = await db
+        .select()
+        .from(schema.bookings)
+        .where(
+          and(
+            eq(schema.bookings.id, replaceBookingId),
+            eq(schema.bookings.userId, bookingUser.id)
+          )
+        )
+        .limit(1);
+
+      if (!bookingToReplace) {
+        return fail(404, "Termin koji menjate nije pronadjen.");
+      }
+
+      if (!ACTIVE_BOOKING_STATUSES.includes(bookingToReplace.status)) {
+        return fail(409, `Termin se ne moze prezakazati u statusu '${bookingToReplace.status}'.`);
+      }
+    }
+
     const guestNoteParts = guestContact
       ? [
           `Gost: ${guestContact.fullName}`,
@@ -124,8 +209,15 @@ export async function POST(request) {
           guestContact.email ? `Email: ${guestContact.email}` : null,
         ].filter(Boolean)
       : [];
+    const replacedFromNote = bookingToReplace
+      ? `Prezakazano sa termina ${new Date(bookingToReplace.startsAt).toLocaleString("sr-RS", {
+          timeZone: "Europe/Belgrade",
+        })}`
+      : "";
     const bookingNotes =
-      [guestNoteParts.join(" | "), parsed.data.notes || ""].filter(Boolean).join("\n") || null;
+      [guestNoteParts.join(" | "), replacedFromNote, parsed.data.notes || ""]
+        .filter(Boolean)
+        .join("\n") || null;
     const clientEmail =
       guestContact?.email ||
       (isPlaceholderGuestEmail(bookingUser.email) ? "" : bookingUser.email || "");
@@ -140,11 +232,47 @@ export async function POST(request) {
         employeeId: employee.id,
         startsAt: startAt,
         endsAt,
+        // The appointment being moved must not block its own replacement.
+        excludeBookingId: bookingToReplace?.id,
         tx,
       });
 
       if (conflicts.length) {
         throw new Error("Requested slot is no longer available.");
+      }
+
+      if (bookingToReplace) {
+        const [stillActive] = await tx
+          .select({ status: schema.bookings.status })
+          .from(schema.bookings)
+          .where(eq(schema.bookings.id, bookingToReplace.id))
+          .limit(1);
+
+        if (!stillActive || !ACTIVE_BOOKING_STATUSES.includes(stillActive.status)) {
+          throw new Error("Booking to replace is no longer active.");
+        }
+
+        await tx
+          .update(schema.bookings)
+          .set({
+            status: "cancelled",
+            cancelledAt: new Date(),
+            cancellationReason: "Prezakazano na novi termin",
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.bookings.id, bookingToReplace.id));
+
+        try {
+          await tx.insert(schema.bookingStatusLog).values({
+            bookingId: bookingToReplace.id,
+            previousStatus: stillActive.status,
+            nextStatus: "cancelled",
+            changedByUserId: bookingUser.id,
+            note: "Cancelled because the patient rescheduled to a new slot",
+          });
+        } catch (logError) {
+          console.error("[bookings.create] replace status log insert failed", logError);
+        }
       }
 
       [createdBooking] = await tx
@@ -283,6 +411,7 @@ export async function POST(request) {
     return created({
       ok: true,
       booking: createdBooking,
+      replacedBookingId: bookingToReplace?.id || null,
       quote,
     });
   } catch (error) {
@@ -290,6 +419,9 @@ export async function POST(request) {
     const message = error?.message || "Booking failed.";
     if (message.includes("Requested slot is no longer available")) {
       return fail(409, message);
+    }
+    if (message.includes("Booking to replace is no longer active")) {
+      return fail(409, "Termin koji menjate je u medjuvremenu promenjen. Osvezite stranicu.");
     }
     if (message.includes("invalid or inactive")) {
       return fail(400, message);
