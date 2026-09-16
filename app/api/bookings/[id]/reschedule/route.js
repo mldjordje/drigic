@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { fail, ok, readJson } from "@/lib/api/http";
+import { fail, invalidPayload, ok, readJson } from "@/lib/api/http";
 import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
 import { addMinutes, findConflicts, isWithinBookingWindow, isWithinWorkHours } from "@/lib/booking/engine";
@@ -28,7 +28,10 @@ export async function PATCH(request, { params }) {
   const body = (await readJson(request)) || {};
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {
-    return fail(400, "Invalid payload", parsed.error.flatten());
+    return invalidPayload(parsed.error, {
+      route: "bookings/reschedule",
+      labels: { startAt: "termin", note: "napomena (najviše 400 znakova)" },
+    });
   }
 
   const db = getDb();

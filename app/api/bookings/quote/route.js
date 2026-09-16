@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { fail, ok, readJson } from "@/lib/api/http";
+import { fail, invalidPayload, ok, readJson } from "@/lib/api/http";
 import { CONSULTATION_SELECTION_ID, resolveQuote } from "@/lib/booking/engine";
 
 export const runtime = "nodejs";
@@ -21,7 +21,10 @@ export async function POST(request) {
   const body = await readJson(request);
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {
-    return fail(400, "Invalid payload", parsed.error.flatten());
+    return invalidPayload(parsed.error, {
+      route: "bookings/quote",
+      labels: { serviceIds: "usluge", serviceSelections: "usluge" },
+    });
   }
 
   try {

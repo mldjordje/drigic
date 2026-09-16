@@ -165,6 +165,11 @@ function getUserCacheKey(user) {
   return String(user?.id || user?.sub || user?.email || "").trim();
 }
 
+// zod v4's email regex, which the booking API validates against. The browser's own
+// type="email" check lets "ana@gmail" through, and the server then rejects it.
+const GUEST_EMAIL_PATTERN =
+  /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9-]*\.)+[A-Za-z]{2,}$/;
+
 function serializeServiceSelections(selections) {
   return JSON.stringify(
     [...(Array.isArray(selections) ? selections : [])]
@@ -939,8 +944,11 @@ export default function BookingInlineForm({
   }
 
   const guestContactValid = useMemo(
-    () => guestName.trim().length >= 2 && guestPhone.replace(/\D/g, "").length >= 6,
-    [guestName, guestPhone]
+    () =>
+      guestName.trim().length >= 2 &&
+      guestPhone.replace(/\D/g, "").length >= 6 &&
+      (!guestEmail.trim() || GUEST_EMAIL_PATTERN.test(guestEmail.trim())),
+    [guestName, guestPhone, guestEmail]
   );
 
   const scrollNodeIntoView = useCallback((node) => {
@@ -1986,6 +1994,7 @@ export default function BookingInlineForm({
                     value={guestName}
                     autoComplete="name"
                     onChange={(event) => setGuestName(event.target.value)}
+                    maxLength={120}
                     placeholder={t("booking.guestNamePlaceholder")}
                   />
                 </label>
@@ -1997,6 +2006,7 @@ export default function BookingInlineForm({
                     autoComplete="tel"
                     inputMode="tel"
                     onChange={(event) => setGuestPhone(event.target.value)}
+                    maxLength={32}
                     placeholder="06x xxx xxxx"
                   />
                 </label>
@@ -2007,6 +2017,7 @@ export default function BookingInlineForm({
                     value={guestEmail}
                     autoComplete="email"
                     onChange={(event) => setGuestEmail(event.target.value)}
+                    maxLength={255}
                     placeholder="email@primer.com"
                   />
                 </label>
@@ -2030,6 +2041,7 @@ export default function BookingInlineForm({
             className="clinic-booking-note-input clinic-glow-field"
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
+            maxLength={1000}
             rows={4}
             style={{ ...inputStyle, resize: "vertical" }}
             placeholder={t("booking.notePlaceholder")}

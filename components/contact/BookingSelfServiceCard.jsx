@@ -355,6 +355,7 @@ export default function BookingSelfServiceCard() {
                       <input
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
+                        maxLength={400}
                         placeholder="Npr. promenio/la sam planove"
                         className="clinic-glow-field"
                         style={fieldStyle}
@@ -505,6 +506,7 @@ export default function BookingSelfServiceCard() {
                       <input
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
+                        maxLength={400}
                         placeholder="Npr. razlog promene termina"
                         className="clinic-glow-field"
                         style={fieldStyle}

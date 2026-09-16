@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import { fail, ok, readJson } from "@/lib/api/http";
+import { fail, invalidPayload, ok, readJson } from "@/lib/api/http";
 import { sendTransactionalEmail } from "@/lib/auth/email";
 import { requireUser } from "@/lib/auth/guards";
 import { getDb, schema } from "@/lib/db/client";
@@ -85,7 +85,10 @@ export async function PATCH(request, { params }) {
   const body = (await readJson(request)) || {};
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {
-    return fail(400, "Invalid payload", parsed.error.flatten());
+    return invalidPayload(parsed.error, {
+      route: "bookings/cancel",
+      labels: { reason: "razlog (najviše 400 znakova)" },
+    });
   }
 
   const db = getDb();

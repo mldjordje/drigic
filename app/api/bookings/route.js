@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
-import { created, fail, readJson } from "@/lib/api/http";
+import { created, fail, invalidPayload, readJson } from "@/lib/api/http";
 import { consumeRateLimit, getRequestIp } from "@/lib/api/rate-limit";
 import { getSessionFromRequest } from "@/lib/auth/guards";
 import { sendTransactionalEmail } from "@/lib/auth/email";
@@ -118,7 +118,21 @@ export async function POST(request) {
     const body = await readJson(request);
     const parsed = payloadSchema.safeParse(body);
     if (!parsed.success) {
-      return fail(400, "Invalid payload", parsed.error.flatten());
+      return invalidPayload(parsed.error, {
+        route: "bookings",
+        labels: {
+          serviceIds: "usluge",
+          serviceSelections: "usluge",
+          startAt: "termin",
+          notes: "napomena (najviše 1000 znakova)",
+          replaceBookingId: "termin za zamenu",
+          allowAdditional: "dodatni termin",
+          guest: "kontakt podaci",
+          "guest.fullName": "ime",
+          "guest.phone": "telefon",
+          "guest.email": "email",
+        },
+      });
     }
 
     // Guests can book without an account; the request must then carry contact details.
