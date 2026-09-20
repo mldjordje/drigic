@@ -15,6 +15,7 @@ import SitePageTracker from "@/components/analytics/SitePageTracker";
 import AppProviders from "@/components/common/AppProviders";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 import { LOCALE_COOKIE_KEY, resolveLocale } from "@/lib/i18n";
+import { organizationGraph } from "@/lib/seo/organization";
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
@@ -111,116 +112,6 @@ export const metadata = {
   // omitted because the site has no per-locale URLs (locale is cookie-based).
 };
 
-const ORGANIZATION_JSON_LD = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": ["MedicalOrganization", "LocalBusiness"],
-      "@id": "https://drigic.rs/#organization",
-      "name": "Dr Igić Clinic",
-      "alternateName": "Klinika Dr Igić",
-      "url": "https://drigic.rs",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://drigic.rs/assets/img/logo.png",
-        "width": 200,
-        "height": 60,
-      },
-      "description":
-        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Specijalizovani tretmani: hijaluronski fileri, tretman mimičnih bora, skinbusteri, PRP, mezoterapija i dr.",
-      "medicalSpecialty": [
-        "Aesthetic Medicine",
-        "Anti-Age Medicine",
-        "Regenerative Medicine",
-      ],
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Cvijićeva 31/3",
-        "addressLocality": "Niš",
-        "addressRegion": "Nišavski okrug",
-        "postalCode": "18000",
-        "addressCountry": "RS",
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": "43.3209",
-        "longitude": "21.8954",
-      },
-      "telephone": "+381062238888",
-      "email": "drigicclinic@gmail.com",
-      "openingHours": "Mo-Fr 16:00-21:00",
-      "priceRange": "€€",
-      "areaServed": {
-        "@type": "City",
-        "name": "Niš",
-      },
-      /* aggregateRating je uklonjen: ocena i broj recenzija nisu bili
-         proverljivi iz sajta, a Googleova pravila za strukturirane podatke
-         traže da ocena odgovara recenzijama koje su stvarno prikazane.
-         Netačan aggregateRating nosi rizik od ručne kazne. */
-      "numberOfEmployees": {
-        "@type": "QuantitativeValue",
-        "value": 1,
-      },
-      "foundingDate": "2022",
-      "additionalProperty": [
-        {
-          "@type": "PropertyValue",
-          "name": "Broj tretmana",
-          "value": "1200+",
-        },
-        {
-          "@type": "PropertyValue",
-          "name": "Dostupne procedure",
-          "value": "15+",
-        },
-      ],
-      "sameAs": [
-        "https://www.instagram.com/drigic.clinic/",
-        "https://maps.google.com/?cid=16708722205926497279",
-        "https://g.page/r/CQxFm_yQyYsVEAE",
-      ],
-      "employee": {
-        "@type": "Physician",
-        "@id": "https://drigic.rs/nikola-igic#physician",
-        "name": "Dr Nikola Igić",
-        "jobTitle": "Osnivač i lekar",
-        "url": "https://drigic.rs/nikola-igic",
-        "knowsAbout": [
-          "Aesthetic medicine",
-          "Hyaluronic fillers",
-          "Facial wrinkle treatment",
-          "Skinboosters",
-          "PRP",
-          "Mesotherapy",
-          "Anti-age treatments",
-        ],
-      },
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Tretmani i usluge",
-        "url": "https://drigic.rs/tretmani",
-      },
-    },
-    {
-      "@type": "WebSite",
-      "@id": "https://drigic.rs/#website",
-      "name": "Dr Igić Clinic",
-      "url": "https://drigic.rs",
-      "publisher": { "@id": "https://drigic.rs/#organization" },
-      "inLanguage": ["sr", "en", "de", "it"],
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": "https://drigic.rs/tretmani?q={search_term_string}",
-        },
-        "query-input": "required name=search_term_string",
-      },
-    },
-  ],
-};
-
 export default async function RootLayout({ children }) {
   const cookieStore = await cookies();
   const locale = resolveLocale(cookieStore.get(LOCALE_COOKIE_KEY)?.value);
@@ -238,7 +129,9 @@ export default async function RootLayout({ children }) {
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationGraph()).replace(/</g, "\\u003c"),
+          }}
         />
       </head>
       <body

@@ -126,7 +126,15 @@ export default function TreatmentLanding({ copy, cases = [], prices = [], childr
                 ))}
               </h1>
 
-              <p className={`${styles.heroLead} ${styles.fadeUp}`} style={{ "--d": "420ms" }}>
+              {/* `data-answer` marks the one paragraph that answers the query on
+                  its own, with no surrounding context. The page's JSON-LD points
+                  `speakable` at this selector, so the marked text and the quoted
+                  text are always the same sentence. */}
+              <p
+                className={`${styles.heroLead} ${styles.fadeUp}`}
+                style={{ "--d": "420ms" }}
+                data-answer
+              >
                 {copy.lead}
               </p>
 

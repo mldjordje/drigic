@@ -208,12 +208,7 @@ function buildJsonLd(categorySpec, services, faq, siteUrl) {
         "howPerformed": categorySpec.procedure || undefined,
         "followup": categorySpec.aftercare || undefined,
         "procedureType": { "@type": "MedicalProcedureType", "name": "Aesthetic and regenerative medicine" },
-        "recognizingAuthority": {
-          "@type": "MedicalOrganization",
-          "name": "Dr Igić Clinic",
-          "@id": "https://drigic.rs/#organization",
-          "url": siteUrl,
-        },
+        "recognizingAuthority": { "@id": "https://drigic.rs/#organization" },
         "performedBy": {
           "@type": "Physician",
           "@id": "https://drigic.rs/nikola-igic#physician",

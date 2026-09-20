@@ -37,65 +37,39 @@ export const metadata = {
   },
 };
 
+const PAGE_URL = "https://drigic.rs/estetska-medicina-nis";
+
+/**
+ * This page does NOT declare a second business node. It used to publish its
+ * own `MedicalClinic` with its own id, name and address — one clinic showing
+ * up as two entities to anything that reads the graph. The clinic is declared
+ * once, in the root layout, and every page references that id instead.
+ */
 const LOCAL_JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": ["MedicalClinic", "LocalBusiness"],
-      "@id": "https://drigic.rs/estetska-medicina-nis#clinic",
-      "name": "Dr Igić Clinic — Estetska medicina Niš",
-      "url": "https://drigic.rs/estetska-medicina-nis",
-      "image": "https://drigic.rs/assets/img/doctor-about.webp",
+      "@type": "WebPage",
+      "@id": `${PAGE_URL}#webpage`,
+      "url": PAGE_URL,
+      "name": "Estetska medicina Niš — Dr Igić Clinic",
       "description":
-        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Dr Nikola Igić — sertifikovani lekar estetske medicine. Hijaluronski fileri, tretman mimičnih bora, PRP, mezoterapija, skinbusteri i drugi tretmani bez operacije.",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "Cvijićeva 31/3",
-        "addressLocality": "Niš",
-        "addressRegion": "Nišavski okrug",
-        "postalCode": "18000",
-        "addressCountry": "RS",
+        "Ordinacija estetske, anti-age i regenerativne medicine u Nišu. Dr Nikola Igić — hijaluronski fileri, tretman mimičnih bora, PRP, mezoterapija, skinbusteri i drugi tretmani bez operacije.",
+      "inLanguage": "sr",
+      "isPartOf": { "@id": "https://drigic.rs/#website" },
+      "about": { "@id": "https://drigic.rs/#organization" },
+      "primaryImageOfPage": "https://drigic.rs/assets/img/doctor-about.webp",
+      "significantLink": SERVICE_CATEGORY_SPECS.map(
+        (cat) => `https://drigic.rs/tretmani/${cat.slug === "botox" ? "mimicne-bore" : cat.slug}`
+      ),
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": ["[data-answer]"],
       },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": "43.3209",
-        "longitude": "21.8954",
-      },
-      "telephone": "+381062238888",
-      "email": "drigicclinic@gmail.com",
-      "openingHours": "Mo-Fr 16:00-21:00",
-      "priceRange": "€€",
-      "areaServed": [
-        { "@type": "City", "name": "Niš" },
-        { "@type": "City", "name": "Niška Banja" },
-        { "@type": "City", "name": "Aleksinac" },
-      ],
-      "medicalSpecialty": ["Aesthetic Medicine", "Anti-Age Medicine", "Regenerative Medicine"],
-      "hasOfferCatalog": {
-        "@type": "OfferCatalog",
-        "name": "Estetski tretmani Niš",
-        "url": "https://drigic.rs/tretmani",
-        // Kategorija "Botox" ide pod javnim nazivom i na /tretmani/mimicne-bore:
-        // ovo je odredište plaćenog oglasa i ne sme da sadrži naziv leka na recept.
-        "itemListElement": SERVICE_CATEGORY_SPECS.map((cat, i) => ({
-          "@type": "Offer",
-          "position": i + 1,
-          "name": publicCategoryName(cat.name),
-          "description": publicText(cat.shortDescription),
-          "url": `https://drigic.rs/tretmani/${cat.slug === "botox" ? "mimicne-bore" : cat.slug}`,
-        })),
-      },
-      /* aggregateRating uklonjen — vrednost i broj recenzija nisu proverljivi
-         iz sajta. Recenzije se prikazuju doslovno u telu stranice. */
-      "sameAs": [
-        "https://drigic.rs",
-        "https://www.instagram.com/drigic.clinic/",
-        "https://maps.google.com/?cid=16708722205926497279",
-      ],
     },
     {
       "@type": "FAQPage",
-      "@id": "https://drigic.rs/estetska-medicina-nis#faq",
+      "@id": `${PAGE_URL}#faq`,
       "mainEntity": [
         {
           "@type": "Question",
@@ -125,6 +99,7 @@ const LOCAL_JSON_LD = {
     },
     {
       "@type": "BreadcrumbList",
+      "@id": `${PAGE_URL}#breadcrumb`,
       "itemListElement": [
         { "@type": "ListItem", "position": 1, "name": "Početna", "item": "https://drigic.rs" },
         { "@type": "ListItem", "position": 2, "name": "Estetska medicina Niš", "item": "https://drigic.rs/estetska-medicina-nis" },

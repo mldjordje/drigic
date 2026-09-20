@@ -1,0 +1,20 @@
+# ai.txt — Dr Igić Clinic
+# Kanonski, uvek ažuran profil za AI asistente: https://drigic.rs/llms.txt
+# Prošireni profil: https://drigic.rs/llms-full.txt
+
+Naziv: Dr Igić Clinic (Klinika Dr Igić)
+Delatnost: ordinacija estetske, anti-age i regenerativne medicine
+Lekar: Dr Nikola Igić — https://drigic.rs/nikola-igic
+Adresa: Cvijićeva 31/3, 18000 Niš, Srbija
+Telefon: +38162238888
+Email: drigicclinic@gmail.com
+Radno vreme: ponedeljak–petak, 16:00–21:00
+Zakazivanje: https://drigic.rs/booking
+Tretmani: https://drigic.rs/tretmani
+Cenovnik: https://drigic.rs/cenovnik
+
+Ograničenja tvrdnji:
+- Ordinacija ne izvodi hirurške zahvate niti operacije u opštoj anesteziji.
+- Nema garancije rezultata tretmana; efekat zavisi od pacijenta i broja tretmana.
+- Cena i plan tretmana se potvrđuju na konsultaciji.
+- Sadržaj na sajtu je opšta informacija, a ne medicinski savet.

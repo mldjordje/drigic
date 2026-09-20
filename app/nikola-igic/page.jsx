@@ -38,21 +38,10 @@ const PHYSICIAN_JSON_LD = {
         "Sertifikovani lekar estetske i anti-age medicine u Nišu. Osnivač ordinacije Dr Igić Clinic. Specijalizuje se za prirodne, suptilne rezultate prilagođene individualnoj anatomiji pacijenta.",
       "url": "https://drigic.rs/nikola-igic",
       "image": "https://drigic.rs/assets/img/team/dr-igic.webp",
-      "worksFor": {
-        "@type": "MedicalOrganization",
-        "@id": "https://drigic.rs/#organization",
-      },
-      "workLocation": {
-        "@type": "MedicalClinic",
-        "name": "Dr Igić Clinic",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "Cvijićeva 31/3",
-          "addressLocality": "Niš",
-          "postalCode": "18000",
-          "addressCountry": "RS",
-        },
-      },
+      "worksFor": { "@id": "https://drigic.rs/#organization" },
+      // Same clinic as the one declared in the root layout — referenced by id
+      // so the doctor and the practice stay one pair of entities, not four.
+      "workLocation": { "@id": "https://drigic.rs/#organization" },
       "medicalSpecialty": [
         "Aesthetic Medicine",
         "Anti-Age Medicine",

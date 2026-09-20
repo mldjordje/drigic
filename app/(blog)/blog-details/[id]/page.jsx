@@ -69,15 +69,10 @@ export default async function BlogPageDetails({ params }) {
       name: "Dr Nikola Igić",
       url: `${siteUrl}/nikola-igic`,
     },
-    publisher: {
-      "@type": "MedicalOrganization",
-      name: "Dr Igić Clinic",
-      url: siteUrl,
-      logo: {
-        "@type": "ImageObject",
-        url: `${siteUrl}/assets/img/logo.png`,
-      },
-    },
+    // Reference, not a second declaration: the clinic is described once in
+    // the root layout, and an anonymous copy here would read as another
+    // business with the same name.
+    publisher: { "@id": `${siteUrl}/#organization` },
     datePublished: post.publishedAt,
     dateModified: post.updatedAt || post.publishedAt,
     url: `${siteUrl}/blog-details/${post.slug}`,
