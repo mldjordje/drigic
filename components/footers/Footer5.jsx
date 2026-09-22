@@ -102,7 +102,7 @@ export default function Footer5() {
               </p>
               <p className="copyright-text">
                 Dizajn i razvoj:{" "}
-                <a className="credit" href="https://adspire.rs" target="_blank" rel="noopener">
+                <a className="credit" href="https://adspire.rs/online-zakazivanje/kozmeticki-saloni-i-estetske-klinike" target="_blank" rel="noopener">
                   Adspire
                 </a>
               </p>
